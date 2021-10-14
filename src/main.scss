@@ -1,0 +1,39 @@
+/* Manage font */
+@font-face {
+  font-family: 'Montserrat';
+  src: url('./assets/font/Montserrat-Medium.ttf');
+  font-weight: normal;
+  font-style: normal;
+}
+$typoOptions: display-4 display-3 display-2 display-1 headline title subtitle-1 subtitle-2 body-1 body-2 caption overline; 
+%font-choice {
+  font-family: 'Montserrat' !important;
+}
+@mixin md-typography {
+  @each $typoOption in $typoOptions {
+    .#{$typoOption} {
+      @extend %font-choice;
+    }
+  }
+}
+.v-application {
+  @extend %font-choice;
+  @include md-typography;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #ffb000;
+}
+
+/** Custom NULL item in selec input */
+.theme--light .null-list-item{
+  color: rgba(0, 0, 0, 0.6)
+}
+.theme--dark .null-list-item {
+  color: rgba(255, 255, 255, 0.7)
+}
