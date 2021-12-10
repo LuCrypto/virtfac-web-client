@@ -100,7 +100,7 @@ export default class DrawingShopComponent extends Vue {
     this.menuItemList.push(new MenuItem('Download file', 'mdi-download', () => true))
     this.menuItemList.push(new MenuItem('Save image', 'mdi-camera', () => true))
 
-    const mapper = new Mapper(CAEExampleFormat1)
+    // const mapper = new Mapper(CAEExampleFormat1)
   }
 
   onRightMouseDrag (): void {

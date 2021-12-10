@@ -24,7 +24,7 @@
       <v-list>
         <v-list-item-group v-for="(routeCategory, i) in routeCategoryList" :key="i">
           <v-subheader>{{ routeCategory.header }}</v-subheader>
-          <v-list-item v-for="(routeItem, j) in routeCategory.routeItemList" :key="j" router :to="routeItem.route">
+          <v-list-item v-for="(routeItem, j) in routeCategory.routeItemList" :key="j" router :to="routeItem.to" :href="routeItem.href">
             <v-list-item-action>
               <v-icon>{{ routeItem.icon }}</v-icon>
             </v-list-item-action>
@@ -46,12 +46,14 @@ class RouteItem {
   icon: string
   title: string
   subtitle: string | null
-  route: string
-  constructor (icon: string, title: string, subtitle:string | null, route: string) {
+  to: string
+  href: string
+  constructor (icon: string, title: string, subtitle:string | null, to: string, href: string) {
     this.icon = icon
     this.title = title
     this.subtitle = subtitle
-    this.route = route
+    this.to = to
+    this.href = href
   }
 }
 
@@ -69,16 +71,17 @@ export default class NavBar extends Vue {
   drawer = true
   routeCategoryList: RouteCategory[] = [
     new RouteCategory('About us', [
-      new RouteItem('mdi-home', 'Home', null, '/home'),
-      new RouteItem('mdi-rocket-launch', 'Products', null, '/about'),
-      new RouteItem('mdi-heart', 'Partners', null, '/about'),
-      new RouteItem('mdi-map-marker', 'We were there !', null, '/about'),
-      new RouteItem('mdi-calendar-text-outline', 'Events', null, '/about')
+      new RouteItem('mdi-home', 'Home', null, '/home', ''),
+      new RouteItem('mdi-rocket-launch', 'Context', null, '', '/home#Le_contexte_du_projet_VIRTFac_:_Industrie_4.0.2C_l.27usine_du_futur'),
+      new RouteItem('mdi-code-tags', 'Developments', null, '', '/home#Les_d.C3.A9veloppements_du_projet'),
+      new RouteItem('mdi-human-dolly', 'Ergonomie', null, '', '/home#Ergonom.io.2C_l.27ergonomie_pour_l.27industrie_4.0'),
+      new RouteItem('mdi-at', 'Contacts', null, '', '/home#Contact')
     ]),
     new RouteCategory('Softs', [
-      new RouteItem('mdi-graph', 'Contradiction Analysis', 'Expert approach', '/contradiction-analysis-expert'),
-      new RouteItem('mdi-robot', 'Contradiction Analysis', 'Simulation approach', '/contradiction-analysis-simulation'),
-      new RouteItem('mdi-arrow-decision', 'Routing  Analysis', 'a.k.a. Drawing Shop', '/drawing-shop')
+      new RouteItem('mdi-graph', 'Contradiction Analysis', 'Expert approach', '/contradiction-analysis-expert', ''),
+      new RouteItem('mdi-robot', 'Contradiction Analysis', 'Simulation approach', '/contradiction-analysis-simulation', ''),
+      new RouteItem('mdi-arrow-decision', 'Routing  Analysis', 'a.k.a. Drawing Shop', '/drawing-shop', ''),
+      new RouteItem('mdi-human', 'Ergonom.io', 'Ergonomics and flow analysis', '/ergonom-io', '')
     ])
   ]
 

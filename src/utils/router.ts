@@ -4,6 +4,7 @@ import Home from '../views/Home.vue'
 import DrawingShop from '@/views/DrawingShop.vue'
 import ContradictionAnalysisExpert from '@/views/ContradictionAnalysisExpert.vue'
 import ContradictionAnalysisSimulation from '@/views/ContradictionAnalysisSimulation.vue'
+import ErgonomIO from '@/views/ErgonomIO.vue'
 
 Vue.use(VueRouter)
 
@@ -13,11 +14,6 @@ const routes: Array<RouteConfig> = [
     name: 'home',
     alias: '/home',
     component: Home
-  },
-  {
-    path: '/about',
-    name: 'About',
-    component: () => import('@/views/About.vue')
   },
   {
     path: '/drawing-shop',
@@ -33,6 +29,11 @@ const routes: Array<RouteConfig> = [
     path: '/contradiction-analysis-simulation',
     name: 'ContradictionAnalysisSimulation',
     component: ContradictionAnalysisSimulation
+  },
+  {
+    path: '/ergonom-io',
+    name: 'ErgonomIO',
+    component: ErgonomIO
   }
 ]
 

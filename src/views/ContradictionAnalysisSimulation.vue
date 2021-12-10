@@ -29,8 +29,8 @@ import DrawingShopComponent from '@/components/DrawingShopComponent.vue'
 import OpenFilePopUp from '@/components/popup/OpenFilePopUp.vue'
 import FormatSelectorPopUp from '@/components/popup/FormatSelectorPopUp.vue'
 import RangeBar, { RangeBarData } from '@/components/charts/RangeBar.vue'
-import Mapper from '@/utils/mapper'
-import CAEExampleFormat1 from '@/exemples/CAEExampleFormat1'
+// import Mapper from '@/utils/mapper'
+// import CAEExampleFormat1 from '@/exemples/CAEExampleFormat1'
 
 @Component({
   components: {

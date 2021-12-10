@@ -37,3 +37,39 @@ $typoOptions: display-4 display-3 display-2 display-1 headline title subtitle-1 
 .theme--dark .null-list-item {
   color: rgba(255, 255, 255, 0.7)
 }
+
+/**  Custom CSS for external content*/
+.external-content {
+  border-style: solid;
+  border-width: 0;
+  width: 100%;
+  opacity: 0;
+  transition: opacity 2s;
+  position: relative;
+  max-width: 700px;
+  margin: 0 auto;
+  * {
+    border-radius: 5px !important;
+  }
+}
+.external-content>div>div {
+  background-color: transparent !important;
+}
+.external-content img {
+  width: auto !important;
+  max-width: 100% !important;
+  height: auto !important;
+}
+.external-content .footer a{
+  color: white !important;
+  margin: 5px;
+}
+.external-content .smallbox {
+  img {
+    margin: 20px;
+  }
+  text-align: left !important;
+}
+.visible {
+  opacity: 1;
+}
