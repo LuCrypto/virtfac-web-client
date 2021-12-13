@@ -5,7 +5,8 @@
   font-weight: normal;
   font-style: normal;
 }
-$typoOptions: display-4 display-3 display-2 display-1 headline title subtitle-1 subtitle-2 body-1 body-2 caption overline; 
+$typoOptions: display-4 display-3 display-2 display-1 headline title subtitle-1
+  subtitle-2 body-1 body-2 caption overline;
 %font-choice {
   font-family: 'Montserrat' !important;
 }
@@ -31,11 +32,11 @@ $typoOptions: display-4 display-3 display-2 display-1 headline title subtitle-1 
 }
 
 /** Custom NULL item in selec input */
-.theme--light .null-list-item{
-  color: rgba(0, 0, 0, 0.6)
+.theme--light .null-list-item {
+  color: rgba(0, 0, 0, 0.6);
 }
 .theme--dark .null-list-item {
-  color: rgba(255, 255, 255, 0.7)
+  color: rgba(255, 255, 255, 0.7);
 }
 
 /**  Custom CSS for external content*/
@@ -52,7 +53,7 @@ $typoOptions: display-4 display-3 display-2 display-1 headline title subtitle-1 
     border-radius: 5px !important;
   }
 }
-.external-content>div>div {
+.external-content > div > div {
   background-color: transparent !important;
 }
 .external-content img {
@@ -60,7 +61,7 @@ $typoOptions: display-4 display-3 display-2 display-1 headline title subtitle-1 
   max-width: 100% !important;
   height: auto !important;
 }
-.external-content .footer a{
+.external-content .footer a {
   color: white !important;
   margin: 5px;
 }
@@ -72,4 +73,10 @@ $typoOptions: display-4 display-3 display-2 display-1 headline title subtitle-1 
 }
 .visible {
   opacity: 1;
+}
+
+/** 3D viewer */
+.viewer-3d {
+  width: 100% !important;
+  height: 100% !important;
 }
