@@ -1,6 +1,8 @@
 <template>
-    <canvas class="nodeViewer" ref="canvas"
-      style="
+  <canvas
+    class="nodeViewer"
+    ref="canvas"
+    style="
       width: 100%;
       height:100%;
       -webkit-touch-callout: none;
@@ -9,8 +11,8 @@
       -moz-user-select: none;
       -ms-user-select: none;
       user-select: none;"
-    >
-    </canvas>
+  >
+  </canvas>
 </template>
 
 <script lang="ts">
@@ -49,9 +51,9 @@ class ViewerTheme {
 
 @Component
 export default class NodeViewer extends Vue {
-  context:CanvasRenderingContext2D | null = null
+  context: CanvasRenderingContext2D | null = null
   scale = 1
-  transform:T = new T(null, null)
+  transform: T = new T(null, null)
   canvas: HTMLCanvasElement | null = null
   darkTheme: ViewerTheme = new ViewerTheme(null, '#333333', null, '#dddddd')
   lightTheme: ViewerTheme = new ViewerTheme(null, '#dddddd', null, '#333333')
@@ -63,20 +65,20 @@ export default class NodeViewer extends Vue {
     this.update(null)
   }
 
-  untransformingV (v:V) : V {
+  untransformingV (v: V): V {
     return v.addV(this.transform.position).multN(this.scale)
   }
 
-  unscalingV (v:V) : V {
+  unscalingV (v: V): V {
     return v.multN(this.scale)
   }
 
-  unscalingN (n:number) : number {
+  unscalingN (n: number): number {
     return n * this.scale
   }
 
-  getTransform () : T {
-    let size : V | null = null
+  getTransform (): T {
+    let size: V | null = null
     if (this.canvas != null) {
       size = new V(this.canvas.offsetWidth, this.canvas.offsetHeight)
       this.canvas.width = size.x
@@ -85,7 +87,7 @@ export default class NodeViewer extends Vue {
     return new T(null, size)
   }
 
-  update (data: ActionCallbackData | null) : void {
+  update (data: ActionCallbackData | null): void {
     if (data == null) {
       this.scale = 1
       this.transform = this.getTransform()
@@ -100,7 +102,7 @@ export default class NodeViewer extends Vue {
     this.draw()
   }
 
-  drawPointGrid () : void {
+  drawPointGrid (): void {
     if (this.context == null) return
     const canvasSize = this.transform.size
     const step = 100 * this.scale
@@ -117,14 +119,19 @@ export default class NodeViewer extends Vue {
 
       for (let i = 0; i < canvasSize.x; i += step) {
         for (let j = 0; j < canvasSize.y; j += step) {
-          this.context.fillRect(i + mod.x - gridSize / 2, j + mod.y - gridSize / 2, gridSize, gridSize)
+          this.context.fillRect(
+            i + mod.x - gridSize / 2,
+            j + mod.y - gridSize / 2,
+            gridSize,
+            gridSize
+          )
         }
       }
       this.context.globalAlpha = 1
     }
   }
 
-  drawLineGrid () : void {
+  drawLineGrid (): void {
     if (this.context == null) return
     const canvasSize = this.transform.size
     const step = 100 * this.scale
@@ -140,23 +147,34 @@ export default class NodeViewer extends Vue {
       this.context.fillStyle = this.theme.gridColor
 
       for (let i = 0; i < Math.max(canvasSize.x, canvasSize.y); i += step) {
-        this.context.fillRect(0, i + mod.y - gridSize / 2, canvasSize.x, gridSize)
-        this.context.fillRect(i + mod.x - gridSize / 2, 0, gridSize, canvasSize.y)
+        this.context.fillRect(
+          0,
+          i + mod.y - gridSize / 2,
+          canvasSize.x,
+          gridSize
+        )
+        this.context.fillRect(
+          i + mod.x - gridSize / 2,
+          0,
+          gridSize,
+          canvasSize.y
+        )
       }
       this.context.globalAlpha = 1
     }
   }
 
-  drawRoundedRectangle (transform: T, radius: number) : void {
+  drawRoundedRectangle (transform: T, radius: number): void {
     if (this.context == null) return
 
     const x = transform.position.x
     const y = transform.position.y
     const sx = transform.size.x
     const sy = transform.size.y
-    const r = typeof radius !== 'number'
-      ? 0
-      : Math.max(0, Math.min(radius, Math.min(sx / 2, sy / 2)))
+    const r =
+      typeof radius !== 'number'
+        ? 0
+        : Math.max(0, Math.min(radius, Math.min(sx / 2, sy / 2)))
     this.context.beginPath()
     this.context.moveTo(x + r, y)
     this.context.lineTo(x + sx - r, y)
@@ -170,11 +188,15 @@ export default class NodeViewer extends Vue {
     this.context.closePath()
   }
 
-  drawFlowLink (node1: T, node2: T) : void {
+  drawFlowLink (node1: T, node2: T): void {
     if (this.context == null) return
 
-    const t1 = this.untransformingV(node1.position).addV(this.unscalingV(node1.size.divN(2)))
-    const t2 = this.untransformingV(node2.position).addV(this.unscalingV(node2.size.divN(2)))
+    const t1 = this.untransformingV(node1.position).addV(
+      this.unscalingV(node1.size.divN(2))
+    )
+    const t2 = this.untransformingV(node2.position).addV(
+      this.unscalingV(node2.size.divN(2))
+    )
     this.context.beginPath()
     this.context.moveTo(t1.x, t1.y)
     this.context.lineTo(t2.x, t2.y)
@@ -183,7 +205,7 @@ export default class NodeViewer extends Vue {
     this.context.stroke()
   }
 
-  drawFlowNode (node: T) : void {
+  drawFlowNode (node: T): void {
     if (this.context == null) return
     this.context.fillStyle = this.theme.nodeColor
     const t = new T(
@@ -194,15 +216,15 @@ export default class NodeViewer extends Vue {
     this.context.fill()
   }
 
-  draw () : void {
+  draw (): void {
     if (this.context == null) return
 
-    console.log(this.$vuetify.theme)
+    // console.log(this.$vuetify.theme)
 
     this.theme = this.$vuetify.theme.dark ? this.darkTheme : this.lightTheme
     this.context.clearRect(0, 0, this.transform.size.x, this.transform.size.y)
     this.drawLineGrid()
-    const nodeList : T[] = [
+    const nodeList: T[] = [
       new T(new V(0, 0), null),
       new T(new V(0, 70), null),
       new T(new V(70, 70), null),
@@ -213,7 +235,7 @@ export default class NodeViewer extends Vue {
       new T(new V(70, 210), null),
       new T(new V(140, 210), null)
     ]
-    const linkList : number[][] = [
+    const linkList: number[][] = [
       [0, 1],
       [0, 2],
       [1, 3],
@@ -226,7 +248,9 @@ export default class NodeViewer extends Vue {
       [5, 8]
     ]
 
-    linkList.forEach(link => this.drawFlowLink(nodeList[link[0]], nodeList[link[1]]))
+    linkList.forEach(link =>
+      this.drawFlowLink(nodeList[link[0]], nodeList[link[1]])
+    )
     nodeList.forEach(node => this.drawFlowNode(node))
   }
 }
