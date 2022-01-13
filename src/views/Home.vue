@@ -2,6 +2,7 @@
   <v-container class="home" fluid>
     <v-card elevation="3" class="pa-6" >
       <div class="external-content" ref="content"></div>
+      <iframe src="http://localhost:8070/hellowebsite"></iframe>
     </v-card>
   </v-container>
 </template>
