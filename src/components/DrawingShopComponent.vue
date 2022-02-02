@@ -1,10 +1,19 @@
 <template>
   <v-card elevation="3" height="700" class="d-flex flex-row">
     <v-navigation-drawer stateless permanent :mini-variant="menuCollapse">
-      <v-list nav dense class="d-flex flex-column justify-start;" style="height: 100%">
+      <v-list
+        nav
+        dense
+        class="d-flex flex-column justify-start;"
+        style="height: 100%"
+      >
         <v-list-item-group v-model="selectedMenuItem" color="primary">
-          <v-list-item v-for="(menuItem, i) in menuItemList" :key="i"
-            class="justify-start" @click.stop="menuItem.action">
+          <v-list-item
+            v-for="(menuItem, i) in menuItemList"
+            :key="i"
+            class="justify-start"
+            @click.stop="menuItem.action"
+          >
             <v-list-item-icon>
               <v-icon v-text="menuItem.icon"></v-icon>
             </v-list-item-icon>
@@ -14,7 +23,10 @@
           </v-list-item>
         </v-list-item-group>
         <v-list-item-group class="mt-auto">
-          <v-list-item class="justify-start" @click="menuCollapse = !menuCollapse">
+          <v-list-item
+            class="justify-start"
+            @click="menuCollapse = !menuCollapse"
+          >
             <v-list-item-icon>
               <v-icon v-if="menuCollapse" v-text="'mdi-arrow-right'"></v-icon>
               <v-icon v-if="!menuCollapse" v-text="'mdi-arrow-left'"></v-icon>
@@ -27,7 +39,8 @@
       </v-list>
     </v-navigation-drawer>
     <v-container style="width: auto; margin: 0; flex-grow: 1;">
-      <action-container ref="actionContainer"
+      <action-container
+        ref="actionContainer"
         @action-left-mouse-click="() => true"
         @action-middle-mouse-click="() => true"
         @action-right-mouse-click="() => true"
@@ -44,7 +57,10 @@
         <node-viewer ref="nodeViewer"></node-viewer>
       </action-container>
     </v-container>
-    <open-file-pop-up ref="filePopUp" @handleFile="handleFile"></open-file-pop-up>
+    <open-file-pop-up
+      ref="filePopUp"
+      @handleFile="handleFile"
+    ></open-file-pop-up>
   </v-card>
 </template>
 
@@ -65,7 +81,7 @@ class MenuItem {
   text: string
   icon: string
   action: () => void
-  constructor (text : string, icon: string, action: () => void) {
+  constructor (text: string, icon: string, action: () => void) {
     this.text = text
     this.icon = icon
     this.action = action
@@ -84,7 +100,7 @@ export default class DrawingShopComponent extends Vue {
   nodeViewer: NodeViewer | null = null
   actionContainer: ActionContainer | null = null
   menuCollapse = false
-  filePopUp : OpenFilePopUp | null = null
+  filePopUp: OpenFilePopUp | null = null
   menuItemList: MenuItem[] = []
 
   mounted (): void {
@@ -92,12 +108,18 @@ export default class DrawingShopComponent extends Vue {
     this.actionContainer = this.$refs.actionContainer as ActionContainer
     this.filePopUp = this.$refs.filePopUp as OpenFilePopUp
 
-    this.menuItemList.push(new MenuItem('Open File', 'mdi-file-document', () => {
-      this.openFilePopUp()
-    }))
-    this.menuItemList.push(new MenuItem('Display shape', 'mdi-graph-outline', () => true))
+    this.menuItemList.push(
+      new MenuItem('Open File', 'mdi-file-document', () => {
+        this.openFilePopUp()
+      })
+    )
+    this.menuItemList.push(
+      new MenuItem('Display shape', 'mdi-graph-outline', () => true)
+    )
     this.menuItemList.push(new MenuItem('Settings', 'mdi-cog', () => true))
-    this.menuItemList.push(new MenuItem('Download file', 'mdi-download', () => true))
+    this.menuItemList.push(
+      new MenuItem('Download file', 'mdi-download', () => true)
+    )
     this.menuItemList.push(new MenuItem('Save image', 'mdi-camera', () => true))
 
     // const mapper = new Mapper(CAEExampleFormat1)
@@ -115,7 +137,7 @@ export default class DrawingShopComponent extends Vue {
     }
   }
 
-  onUpdate (data:ActionCallbackData): void {
+  onUpdate (data: ActionCallbackData): void {
     if (this.nodeViewer != null) {
       this.nodeViewer.update(data)
     }
@@ -133,21 +155,26 @@ export default class DrawingShopComponent extends Vue {
     } else {
       const reader = new FileReader()
       const name = file.name
-      reader.onload = (e) => {
+      reader.onload = e => {
         if (e == null || e.target == null) {
           console.error('Cannot read file...')
           return
         }
         var data = e.target.result
         var workbook = XLSX.read(data, { type: 'binary' })
-        console.log('Excel File = ', name, workbook, JSON.stringify(workbook.Sheets[workbook.SheetNames[0]]))
+        console.log(
+          'Excel File = ',
+          name,
+          workbook,
+          JSON.stringify(workbook.Sheets[workbook.SheetNames[0]])
+        )
         const mapper = new Mapper(workbook.Sheets[workbook.SheetNames[0]])
       }
       reader.readAsBinaryString(file)
     }
   }
 
-  openFilePopUp ():void {
+  openFilePopUp (): void {
     if (this.filePopUp != null) {
       this.filePopUp.open()
     } else {
@@ -155,7 +182,7 @@ export default class DrawingShopComponent extends Vue {
     }
   }
 
-  selectSheetPopUp (workbook:any): void {
+  selectSheetPopUp (workbook: any): void {
     console.log(workbook)
     // this.$refs.excel.active = true;
     // console.log(workbook);

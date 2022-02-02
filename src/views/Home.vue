@@ -1,8 +1,9 @@
 <template>
   <v-container class="home" fluid>
-    <v-card elevation="3" class="pa-6" >
+    <v-card elevation="3" class="pa-6">
       <div class="external-content" ref="content"></div>
-      <iframe src="http://localhost:8070/hellowebsite"></iframe>
+      <!-- <iframe src="http://localhost:8070/hellowebsite"></iframe> -->
+      Content from odoo here.
     </v-card>
   </v-container>
 </template>
@@ -20,11 +21,14 @@ export default class Home extends Vue {
   }
 
   load (): void {
-    fetch(this.url).then((response) => {
-      response.text().then((body) => {
-        const bodyDom:HTMLElement = document.createElement('div')
+    /*
+    fetch(this.url).then(response => {
+      response.text().then(body => {
+        const bodyDom: HTMLElement = document.createElement('div')
         bodyDom.innerHTML = body
-        const contentDom:HTMLElement = bodyDom.querySelector('#mw-content-text') as HTMLElement
+        const contentDom: HTMLElement = bodyDom.querySelector(
+          '#mw-content-text'
+        ) as HTMLElement
         const content = contentDom.innerHTML
         if (this.dom != null) {
           this.dom.innerHTML = content
@@ -34,9 +38,11 @@ export default class Home extends Vue {
         }
       })
     })
+
+    */
   }
 
-  isLoaded (content: string):void {
+  isLoaded (content: string): void {
     console.log(content)
   }
 }

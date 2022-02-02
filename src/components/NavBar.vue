@@ -2,7 +2,7 @@
   <nav class="nav-bar">
     <!-- Vertical bar -->
     <v-app-bar app color="primary" light>
-      <v-app-bar-nav-icon @click="drawer=!drawer"></v-app-bar-nav-icon>
+      <v-app-bar-nav-icon @click="drawer = !drawer"></v-app-bar-nav-icon>
       <div class="d-flex align-center">
         <div class="display-2 font-weight-black">VIRTFac</div>
       </div>
@@ -11,26 +11,44 @@
         <v-icon>mdi-account-circle</v-icon>
       </v-btn>
       <v-btn target="#" text class="mr-2 d-none d-sm-block">
-        <span class="mr-4">Connexion</span>
+        <span class="mr-4" @click="openConnexionPopup()">Connexion</span>
         <v-icon>mdi-account-circle</v-icon>
+        <connexion-pop-up ref="connexionPopUp"></connexion-pop-up>
       </v-btn>
-      <v-btn icon @click="toggleDarkMode" :color="getInvertThemeColor">
+      <v-btn
+        icon
+        @click="toggleDarkMode"
+        :color="this.$vuetify.theme.dark ? 'white' : 'black'"
+      >
         <v-icon>mdi-circle-half-full</v-icon>
       </v-btn>
     </v-app-bar>
 
     <!-- Side nav bar -->
-    <v-navigation-drawer v-model="drawer" app width="300" mobile-breakpoint="1000">
+    <v-navigation-drawer
+      v-model="drawer"
+      app
+      width="300"
+      mobile-breakpoint="1000"
+    >
       <v-list>
-        <v-list-item-group v-for="(routeCategory, i) in routeCategoryList" :key="i">
-          <v-subheader>{{ routeCategory.header }}</v-subheader>
-          <v-list-item v-for="(routeItem, j) in routeCategory.routeItemList" :key="j" router :to="routeItem.to" :href="routeItem.href">
+        <v-list-item-group v-for="(category, i) in categories.keys()" :key="i">
+          <v-subheader>{{ category }}</v-subheader>
+          <v-list-item
+            v-for="(route, j) in categories.get(category)"
+            :key="j"
+            router
+            :to="route.path"
+            :href="route.href"
+          >
             <v-list-item-action>
-              <v-icon>{{ routeItem.icon }}</v-icon>
+              <v-icon>{{ route.icon }}</v-icon>
             </v-list-item-action>
             <v-list-item-content>
-              <v-list-item-title>{{ routeItem.title }}</v-list-item-title>
-              <v-list-item-subtitle v-if="routeItem.subtitle != null">{{ routeItem.subtitle }}</v-list-item-subtitle>
+              <v-list-item-title>{{ route.name }}</v-list-item-title>
+              <v-list-item-subtitle v-if="route.subname != null">{{
+                route.subname
+              }}</v-list-item-subtitle>
             </v-list-item-content>
           </v-list-item>
         </v-list-item-group>
@@ -41,56 +59,50 @@
 
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator'
+import { routes, Route } from '@/utils/router'
+import ConnexionPopUp from '@/components/popup/ConnexionPopUp.vue'
 
-class RouteItem {
-  icon: string
-  title: string
-  subtitle: string | null
-  to: string
-  href: string
-  constructor (icon: string, title: string, subtitle:string | null, to: string, href: string) {
-    this.icon = icon
-    this.title = title
-    this.subtitle = subtitle
-    this.to = to
-    this.href = href
+@Component({
+  components: {
+    ConnexionPopUp
   }
-}
-
-class RouteCategory {
-  header: string
-  routeItemList: RouteItem[]
-  constructor (header: string, routeItemList: RouteItem[]) {
-    this.header = header
-    this.routeItemList = routeItemList
-  }
-}
-
-@Component
+})
 export default class NavBar extends Vue {
   drawer = true
-  routeCategoryList: RouteCategory[] = [
-    new RouteCategory('About us', [
-      new RouteItem('mdi-home', 'Home', null, '/home', ''),
-      new RouteItem('mdi-rocket-launch', 'Context', null, '', '/home#Le_contexte_du_projet_VIRTFac_:_Industrie_4.0.2C_l.27usine_du_futur'),
-      new RouteItem('mdi-code-tags', 'Developments', null, '', '/home#Les_d.C3.A9veloppements_du_projet'),
-      new RouteItem('mdi-human-dolly', 'Ergonomie', null, '', '/home#Ergonom.io.2C_l.27ergonomie_pour_l.27industrie_4.0'),
-      new RouteItem('mdi-at', 'Contacts', null, '', '/home#Contact')
-    ]),
-    new RouteCategory('Softs', [
-      new RouteItem('mdi-graph', 'Contradiction Analysis', 'Expert approach', '/contradiction-analysis-expert', ''),
-      new RouteItem('mdi-robot', 'Contradiction Analysis', 'Simulation approach', '/contradiction-analysis-simulation', ''),
-      new RouteItem('mdi-arrow-decision', 'Routing  Analysis', 'a.k.a. Drawing Shop', '/drawing-shop', ''),
-      new RouteItem('mdi-human', 'Ergonom.io', 'Ergonomics and flow analysis', '/ergonom-io', '')
-    ])
-  ]
+  connexionPopup: ConnexionPopUp | null = null
+  categories: Map<string, Route[]> = new Map()
 
-  toggleDarkMode () : void{
+  created (): void {
+    routes
+      .filter(route => route.visibility)
+      .forEach(route => {
+        if (route.category === undefined) return
+        const category = this.categories.get(route.category)
+        if (category !== undefined) {
+          category.push(route)
+        } else {
+          this.categories.set(route.category, [route])
+        }
+      })
+  }
+
+  mounted (): void {
+    this.connexionPopup = this.$refs.connexionPopup as ConnexionPopUp
+  }
+
+  openConnexionPopup (): void {
+    if (this.connexionPopup) {
+      console.log(this.connexionPopup)
+      this.connexionPopup.open()
+    }
+  }
+
+  toggleDarkMode (): void {
     this.$vuetify.theme.dark = !this.$vuetify.theme.dark
     this.$root.$emit('changeDarkMode')
   }
 
-  get getInvertThemeColor () : string {
+  get getInvertThemeColor (): string {
     return this.$vuetify.theme.dark ? 'white' : 'black'
   }
 }
