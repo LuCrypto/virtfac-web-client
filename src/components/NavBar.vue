@@ -7,18 +7,41 @@
         <div class="display-2 font-weight-black">VIRTFac</div>
       </div>
       <v-spacer></v-spacer>
-      <v-btn target="#" icon color="grey darken-4" class="mr-2 d-sm-none">
+
+      <!-- Small login button -->
+      <v-btn
+        v-if="avatar == null"
+        target="#"
+        icon
+        color="grey darken-4"
+        class="mr-2 d-sm-none"
+        @click="() => $refs.connexionPopUp.open()"
+      >
         <v-icon>mdi-account-circle</v-icon>
       </v-btn>
-      <v-btn target="#" text class="mr-2 d-none d-sm-block">
-        <span class="mr-4" @click="openConnexionPopup()">Connexion</span>
-        <v-icon>mdi-account-circle</v-icon>
-        <connexion-pop-up ref="connexionPopUp"></connexion-pop-up>
+
+      <!-- Big login button -->
+      <v-btn
+        v-if="avatar == null"
+        target="#"
+        text
+        class="mr-2 d-none d-sm-block"
+        @click="() => $refs.connexionPopUp.open()"
+      >
+        <v-icon class="mr-2">mdi-account-circle</v-icon>
+        <span>Connexion</span>
       </v-btn>
+
+      <!-- Avatar -->
+      <v-avatar v-if="avatar != null">
+        <img :src="avatar" alt="John" />
+      </v-avatar>
+
+      <!-- Dark mode switcher -->
       <v-btn
         icon
         @click="toggleDarkMode"
-        :color="this.$vuetify.theme.dark ? 'white' : 'black'"
+        :color="$vuetify.theme.dark ? 'white' : 'black'"
       >
         <v-icon>mdi-circle-half-full</v-icon>
       </v-btn>
@@ -54,6 +77,9 @@
         </v-list-item-group>
       </v-list>
     </v-navigation-drawer>
+
+    <!-- Popup -->
+    <connexion-pop-up ref="connexionPopUp"></connexion-pop-up>
   </nav>
 </template>
 
@@ -69,8 +95,8 @@ import ConnexionPopUp from '@/components/popup/ConnexionPopUp.vue'
 })
 export default class NavBar extends Vue {
   drawer = true
-  connexionPopup: ConnexionPopUp | null = null
   categories: Map<string, Route[]> = new Map()
+  avatar = null
 
   created (): void {
     routes
@@ -87,23 +113,15 @@ export default class NavBar extends Vue {
   }
 
   mounted (): void {
-    this.connexionPopup = this.$refs.connexionPopup as ConnexionPopUp
-  }
-
-  openConnexionPopup (): void {
-    if (this.connexionPopup) {
-      console.log(this.connexionPopup)
-      this.connexionPopup.open()
-    }
+    this.$root.$on('user-connection', () => {
+      console.log('USER : ', Vue.prototype.$globals.get('user'))
+      this.avatar = Vue.prototype.$globals.get('user').picture
+    })
   }
 
   toggleDarkMode (): void {
     this.$vuetify.theme.dark = !this.$vuetify.theme.dark
     this.$root.$emit('changeDarkMode')
-  }
-
-  get getInvertThemeColor (): string {
-    return this.$vuetify.theme.dark ? 'white' : 'black'
   }
 }
 </script>

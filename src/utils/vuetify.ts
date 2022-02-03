@@ -52,15 +52,14 @@ class Themes {
 
 Vue.use(Vuetify)
 Vue.use(Themes)
-Vue.mixin({
-  data: () => {
-    return {
-      get customProperties () {
-        return 'hello world !'
-      }
-    }
-  }
-})
+Vue.prototype.$globals = new Map()
+// Vue.mixin({
+//   data: () => {
+//     return {
+//       message: 'Hello World'
+//     }
+//   }
+// })
 
 /**
  * Global instantiation of Vuetify components

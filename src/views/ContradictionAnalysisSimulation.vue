@@ -2,24 +2,35 @@
   <v-container class="spacing-playground pa-6 contradiction-analysis">
     <v-card elevation="3" class="mx-auto mb-6">
       <v-card-title>Contradiction Analysis</v-card-title>
-      <v-card-subtitle>Contradiction analysis via a simulation approach (Naser) </v-card-subtitle>
+      <v-card-subtitle
+        >Contradiction analysis via a simulation approach (Naser)
+      </v-card-subtitle>
     </v-card>
     Feature under development, based on the work of Mohamed.
     <v-spacer class="mt-6"></v-spacer>
     <v-btn color="primary" @click="openFilePopUp">
       <v-icon left v-text="'mdi-file-document'"></v-icon>
       Open file
-      <input ref="uploadFileInput" style="display: none" type="file"/>
+      <input ref="uploadFileInput" style="display: none" type="file" />
     </v-btn>
     <v-btn color="primary" class="ml-6" @click="openFormatSelectorPopUp">
       <v-icon left v-text="'mdi-file-document'"></v-icon>
       Format Select
-      <input ref="uploadFileInput" style="display: none" type="file"/>
+      <input ref="uploadFileInput" style="display: none" type="file" />
     </v-btn>
     <v-spacer class="mt-6"></v-spacer>
-    <range-bar :rangeBarChartData="chartData" :defaultRange="[20, 80]"></range-bar>
-    <open-file-pop-up ref="openFilePopUp" @validated="handleFile"></open-file-pop-up>
-    <format-selector-pop-up ref="formatSelectorPopUp" @selectedFormat="selectedFormat"></format-selector-pop-up>
+    <range-bar
+      :rangeBarChartData="chartData"
+      :defaultRange="[20, 80]"
+    ></range-bar>
+    <open-file-pop-up
+      ref="openFilePopUp"
+      @validated="handleFile"
+    ></open-file-pop-up>
+    <format-selector-pop-up
+      ref="formatSelectorPopUp"
+      @selectedFormat="selectedFormat"
+    ></format-selector-pop-up>
   </v-container>
 </template>
 
@@ -41,8 +52,8 @@ import RangeBar, { RangeBarData } from '@/components/charts/RangeBar.vue'
   }
 })
 export default class ContradictionAnalysisExpert extends Vue {
-  filePopUp : OpenFilePopUp | null = null
-  formatSelectorPopUp : FormatSelectorPopUp | null = null
+  filePopUp: OpenFilePopUp | null = null
+  formatSelectorPopUp: FormatSelectorPopUp | null = null
   chartTextStyle = '#ffffff'
   chartData = [
     new RangeBarData('label 1', 10),
@@ -55,7 +66,8 @@ export default class ContradictionAnalysisExpert extends Vue {
 
   mounted (): void {
     this.filePopUp = this.$refs.openFilePopUp as OpenFilePopUp
-    this.formatSelectorPopUp = this.$refs.formatSelectorPopUp as FormatSelectorPopUp
+    this.formatSelectorPopUp = this.$refs
+      .formatSelectorPopUp as FormatSelectorPopUp
     // this.formatSelectorPopUp.open('ORIGINAL_FORMAT')
 
     // const mapper = new Mapper(CAEExampleFormat1)
@@ -63,7 +75,7 @@ export default class ContradictionAnalysisExpert extends Vue {
     console.log(this.$data.customProperties)
   }
 
-  openFormatSelectorPopUp ():void {
+  openFormatSelectorPopUp (): void {
     if (this.formatSelectorPopUp != null) {
       this.formatSelectorPopUp.open('ORIGINAL_FORMAT')
     } else {
@@ -71,7 +83,7 @@ export default class ContradictionAnalysisExpert extends Vue {
     }
   }
 
-  openFilePopUp ():void {
+  openFilePopUp (): void {
     if (this.filePopUp != null) {
       this.filePopUp.open()
     } else {

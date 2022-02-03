@@ -9,6 +9,20 @@
     <div v-else>
       <router-view></router-view>
     </div>
+    <v-snackbar v-model="snackbarShow" :timeout="snackbarTime">
+      {{ snackbarText }}
+
+      <template v-slot:action="{ attrs }">
+        <v-btn
+          color="primary"
+          text
+          v-bind="attrs"
+          @click="snackbarShow = false"
+        >
+          Close
+        </v-btn>
+      </template>
+    </v-snackbar>
   </v-app>
 </template>
 
@@ -27,5 +41,19 @@ export default class App extends Vue {
   query = this.router.currentRoute.query
   fullpage: boolean = this.query.fullpage === 'true'
   transparency: boolean = this.query.transparency === 'true'
+  snackbarShow = false
+  snackbarTime = 2000
+  snackbarText = ''
+
+  mounted () {
+    console.log(Vue.prototype.$globals)
+    this.$root.$on('bottom-message', (message: string) => {
+      this.snackbarShow = true
+      this.snackbarText = message
+    })
+    this.$root.$on('user-disconnection', () => {
+      Vue.prototype.$globals.set('user', undefined)
+    })
+  }
 }
 </script>

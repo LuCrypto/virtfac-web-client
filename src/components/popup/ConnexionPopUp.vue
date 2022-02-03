@@ -2,7 +2,63 @@
   <v-dialog v-model="show" max-width="600px">
     <!-- Popup -->
     <v-card>
-      Connexion
+      <!-- Popup -->
+      <v-toolbar color="primary" flat>
+        <v-toolbar-title style="color: black">
+          <v-icon
+            left
+            style="color: black"
+            v-text="'mdi-account-circle'"
+          ></v-icon>
+          Connexion
+        </v-toolbar-title>
+      </v-toolbar>
+      <v-card-text class="mt-5">
+        <v-form>
+          <v-text-field
+            prepend-icon="mdi-login"
+            name="login"
+            label="Login"
+            type="text"
+            v-model="login"
+            @keyup.enter="loginRequest"
+          ></v-text-field>
+          <v-text-field
+            id="password"
+            prepend-icon="mdi-lock"
+            name="password"
+            label="Password"
+            :type="showPassword ? 'text' : 'password'"
+            v-model="password"
+            :append-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'"
+            @click:append="() => (showPassword = !showPassword)"
+            @keyup.enter="loginRequest"
+          ></v-text-field>
+        </v-form>
+        <div>
+          To create an account, you need an organization manager to send you a
+          login link.
+        </div>
+      </v-card-text>
+      <v-card-actions class="pb-5">
+        <v-spacer></v-spacer>
+        <v-btn
+          color="primary"
+          @click="loginRequest"
+          dark
+          :disabled="!login || !password || waiting"
+        >
+          <v-progress-circular
+            v-if="waiting"
+            :size="20"
+            :width="3"
+            class="mr-2"
+            indeterminate
+            color="primary"
+          ></v-progress-circular>
+          Sign in
+        </v-btn>
+      </v-card-actions>
     </v-card>
   </v-dialog>
 </template>
@@ -15,9 +71,14 @@ import { Component, Vue } from 'vue-property-decorator'
 })
 export default class ConnexionPopUp extends Vue {
   show = false
+  login = ''
+  password = ''
+  waiting = false
+  showPassword = false
 
   mounted (): void {
     console.log('Data Format Selector Popup is open.')
+    this.$emit('message', 'Hello World !')
   }
 
   public open (): void {
@@ -32,6 +93,47 @@ export default class ConnexionPopUp extends Vue {
   validated (): void {
     this.$emit('validated')
     this.show = false
+  }
+
+  loginRequest (): void {
+    this.waiting = true
+    fetch('http://localhost:1337/login', {
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json'
+      },
+      method: 'POST',
+      body: JSON.stringify({
+        login: this.login,
+        password: this.password
+      })
+    })
+      .then(response => {
+        if (!response.ok) {
+          return response.json().then(json => {
+            this.$root.$emit('bottom-message', json.message)
+          })
+        }
+        response.json().then(json => {
+          this.$root.$emit(
+            'bottom-message',
+            `Welcome back ${json.user.pseudo}.`
+          )
+          Vue.prototype.$globals.set('user', json.user)
+          this.$root.$emit('user-connection', json.user)
+          this.show = false
+        })
+      })
+      .catch(error => {
+        console.error(error)
+        this.$root.$emit(
+          'bottom-message',
+          'Unable to connect to VIRTFac server.'
+        )
+      })
+      .finally(() => {
+        this.waiting = false
+      })
   }
 }
 </script>
