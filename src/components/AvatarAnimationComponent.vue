@@ -39,7 +39,7 @@
       </v-list>
     </v-navigation-drawer>
     <v-container style="width: auto; margin: 0; flex-grow: 1;">
-      <ModelViewer></ModelViewer>
+      <ModelViewer ref="viewer"></ModelViewer>
     </v-container>
   </v-card>
 </template>
@@ -50,6 +50,7 @@ import Component from 'vue-class-component'
 import * as THREE from 'three'
 import V from '@/utils/vector'
 import ModelViewer from '@/components/ModelViewer.vue'
+// import AVATAR from '@/utils/avatar'
 
 class MenuItem {
   text: string
@@ -71,6 +72,7 @@ export default class AvatarAnimationComponent extends Vue {
   selectedMenuItem = -1
   menuCollapse = false
   menuItemList: MenuItem[] = []
+  viewer: ModelViewer | null = null
 
   mounted (): void {
     this.menuItemList.push(
@@ -89,6 +91,13 @@ export default class AvatarAnimationComponent extends Vue {
     this.menuItemList.push(
       new MenuItem('Download FBX File', 'mdi-download', () => true)
     )
+    this.viewer = this.$refs.viewer as ModelViewer
+    if (this.viewer != null) {
+      this.viewer
+        .loadGLTF('./avatar.gltf')
+        .then(gltf => console.log('Hello', gltf))
+        .catch(e => console.error('Cannot load GLTF', e))
+    }
   }
 }
 </script>

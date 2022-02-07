@@ -1,7 +1,9 @@
 <template>
   <v-card elevation="3" class="ma-3 mb-6">
     <v-card-title>Ergonom.io</v-card-title>
-    <v-card-subtitle>Salut en fait</v-card-subtitle>
+    <v-card-subtitle
+      >Voici un menu qui a pour but d'être utilisé ailleur</v-card-subtitle
+    >
   </v-card>
 </template>
 

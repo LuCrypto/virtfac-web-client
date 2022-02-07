@@ -26,15 +26,15 @@
         target="#"
         text
         class="mr-2 d-none d-sm-block"
-        @click="() => $refs.connexionPopUp.open()"
+        @click="() => $refs.loginPopUp.open()"
       >
         <v-icon class="mr-2">mdi-account-circle</v-icon>
         <span>Connexion</span>
       </v-btn>
 
       <!-- Avatar -->
-      <v-avatar v-if="avatar != null">
-        <img :src="avatar" alt="John" />
+      <v-avatar v-if="avatar != null" @click="() => $refs.accountPopUp.open()">
+        <img :src="avatar" alt="Profile picture" />
       </v-avatar>
 
       <!-- Dark mode switcher -->
@@ -79,24 +79,28 @@
     </v-navigation-drawer>
 
     <!-- Popup -->
-    <connexion-pop-up ref="connexionPopUp"></connexion-pop-up>
+    <login-pop-up ref="loginPopUp"></login-pop-up>
+    <account-pop-up ref="accountPopUp"></account-pop-up>
   </nav>
 </template>
 
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator'
 import { routes, Route } from '@/utils/router'
-import ConnexionPopUp from '@/components/popup/ConnexionPopUp.vue'
+import LoginPopUp from '@/components/popup/LoginPopUp.vue'
+import AccountPopUp from '@/components/popup/AccountPopUp.vue'
+import { Session, User } from '@/utils/session'
 
 @Component({
   components: {
-    ConnexionPopUp
+    LoginPopUp,
+    AccountPopUp
   }
 })
 export default class NavBar extends Vue {
   drawer = true
   categories: Map<string, Route[]> = new Map()
-  avatar = null
+  avatar: string | null = null
 
   created (): void {
     routes
@@ -113,14 +117,24 @@ export default class NavBar extends Vue {
   }
 
   mounted (): void {
-    this.$root.$on('user-connection', () => {
-      console.log('USER : ', Vue.prototype.$globals.get('user'))
-      this.avatar = Vue.prototype.$globals.get('user').picture
-    })
+    this.$root.$on('user-connection', (user: User) => this.setUser(user))
+    this.$root.$on('user-disconnection', () => this.removeUser())
+    this.setUser(Session.getUser())
+  }
+
+  setUser (user: User | null): void {
+    if (user != null && user.picture != null) {
+      this.avatar = user.picture
+    }
+  }
+
+  removeUser (): void {
+    this.avatar = null
   }
 
   toggleDarkMode (): void {
     this.$vuetify.theme.dark = !this.$vuetify.theme.dark
+    Session.setTheme('dark')
     this.$root.$emit('changeDarkMode')
   }
 }

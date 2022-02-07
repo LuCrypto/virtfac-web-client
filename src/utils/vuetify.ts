@@ -1,6 +1,7 @@
 import Vue from 'vue'
 import Vuetify from 'vuetify/lib/framework'
 import colors from 'vuetify/es5/util/colors'
+import { Session } from './session'
 
 class Themes {
   static themes = {
@@ -69,7 +70,7 @@ export default new Vuetify({
     options: {
       customProperties: true
     },
-    dark: true,
+    dark: Session.getTheme() === 'dark',
     themes: Themes.themes
   }
 })
