@@ -1,28 +1,39 @@
 <template>
-  <v-card elevation="5" class="format-preview mx-auto mt-5" style="padding: 5px; background-color: rgba(255,255,255,0.1);" width="400px">
+  <v-card
+    elevation="5"
+    class="format-preview mx-auto mt-5"
+    style="padding: 5px; background-color: rgba(255,255,255,0.1);"
+    width="400px"
+  >
     <div v-for="rowIndex in shapeList.length" :key="rowIndex" class="d-flex">
       <div
         v-for="columnIndex in shapeList[0].length"
         :key="columnIndex"
-        :ref="(rowIndex - 1) + '_' + (columnIndex - 1)"
-        class="flex-grow-1" style="margin:5px;"
+        :ref="rowIndex - 1 + '_' + (columnIndex - 1)"
+        class="flex-grow-1"
+        style="margin:5px;"
       >
-        <div style="width: 20px; height: 4px; margin: 15px auto; background-color: black; border-radius: 10px;"></div>
+        <div
+          style="width: 20px; height: 4px; margin: 15px auto; background-color: black; border-radius: 10px;"
+        ></div>
       </div>
     </div>
   </v-card>
 </template>
 
-<script  lang="ts">
+<script lang="ts">
 import { Component, Prop, Vue, Watch } from 'vue-property-decorator'
 
 @Component
 export default class FormatPreview extends Vue {
-  @Prop({ default: () => 'aaaaa aaaaa aaaaa aaaaa aaaaa aaaaa' }) private shapes!: string
-  @Prop({ default: () => '_____ _____ _____ _____ _____ _____' }) private colors!: string
+  @Prop({ default: () => 'aaaaa aaaaa aaaaa aaaaa aaaaa aaaaa' })
+  private shapes!: string
 
-  shapeList : string[] = []
-  colorList : string[] = []
+  @Prop({ default: () => '_____ _____ _____ _____ _____ _____' })
+  private colors!: string
+
+  shapeList: string[] = []
+  colorList: string[] = []
 
   created (): void {
     this.updateShapeAndColorList()
@@ -34,7 +45,8 @@ export default class FormatPreview extends Vue {
 
   getShape (rowIndex: number, columnIndex: number): string {
     return rowIndex >= 0 && rowIndex < this.shapeList.length
-      ? this.shapeList[rowIndex].charAt(columnIndex) : ''
+      ? this.shapeList[rowIndex].charAt(columnIndex)
+      : ''
   }
 
   getColor (rowIndex: number, columnIndex: number): string {
@@ -50,26 +62,36 @@ export default class FormatPreview extends Vue {
       'rgba(255,   0, 255, 0.5)', // k: pink
       'rgba(127, 127, 127, 0.5)' // m: middle grey
     ]
-    const color = rowIndex >= 0 && rowIndex < this.colorList.length
-      ? this.colorList[rowIndex].charAt(columnIndex) || '_' : '_'
-    return colors[Math.max(0, ('_roygcbpkm').indexOf(color))]
+    const color =
+      rowIndex >= 0 && rowIndex < this.colorList.length
+        ? this.colorList[rowIndex].charAt(columnIndex) || '_'
+        : '_'
+    return colors[Math.max(0, '_roygcbpkm'.indexOf(color))]
   }
 
   getMargin (value: string, rowIndex: number, columnIndex: number): number[] {
     const size = 5
-    const marginTop = value !== this.getShape(rowIndex - 1, columnIndex) ? size : 0
-    const marginRight = value !== this.getShape(rowIndex, columnIndex + 1) ? size : 0
-    const marginBottom = value !== this.getShape(rowIndex + 1, columnIndex) ? size : 0
-    const marginLeft = value !== this.getShape(rowIndex, columnIndex - 1) ? size : 0
+    const marginTop =
+      value !== this.getShape(rowIndex - 1, columnIndex) ? size : 0
+    const marginRight =
+      value !== this.getShape(rowIndex, columnIndex + 1) ? size : 0
+    const marginBottom =
+      value !== this.getShape(rowIndex + 1, columnIndex) ? size : 0
+    const marginLeft =
+      value !== this.getShape(rowIndex, columnIndex - 1) ? size : 0
     return [marginTop, marginRight, marginBottom, marginLeft]
   }
 
   getPadding (value: string, rowIndex: number, columnIndex: number): number[] {
     const size = 5
-    const paddingTop = value === this.getShape(rowIndex - 1, columnIndex) ? size : 0
-    const paddingRight = value === this.getShape(rowIndex, columnIndex + 1) ? size : 0
-    const paddingBottom = value === this.getShape(rowIndex + 1, columnIndex) ? size : 0
-    const paddingLeft = value === this.getShape(rowIndex, columnIndex - 1) ? size : 0
+    const paddingTop =
+      value === this.getShape(rowIndex - 1, columnIndex) ? size : 0
+    const paddingRight =
+      value === this.getShape(rowIndex, columnIndex + 1) ? size : 0
+    const paddingBottom =
+      value === this.getShape(rowIndex + 1, columnIndex) ? size : 0
+    const paddingLeft =
+      value === this.getShape(rowIndex, columnIndex - 1) ? size : 0
     return [paddingTop, paddingRight, paddingBottom, paddingLeft]
   }
 
@@ -83,16 +105,18 @@ export default class FormatPreview extends Vue {
   }
 
   convertAttributeToStyle (
-    value:string,
-    margin:number[],
-    padding:number[],
-    borderRadius:number[],
-    color:string
-  ):string {
+    value: string,
+    margin: number[],
+    padding: number[],
+    borderRadius: number[],
+    color: string
+  ): string {
     return [
       `margin: ${margin.map(size => size + 'px').join(' ')} !important`,
       `padding: ${padding.map(size => size + 'px').join(' ')} !important`,
-      `border-radius: ${borderRadius.map(size => size + 'px').join(' ')} !important`,
+      `border-radius: ${borderRadius
+        .map(size => size + 'px')
+        .join(' ')} !important`,
       `opacity: ${value === '_' ? '0' : '1'}`,
       `background-color: ${color} !important`
     ].join(';')
@@ -103,7 +127,7 @@ export default class FormatPreview extends Vue {
     this.colorList = this.colors.split(' ')
   }
 
-  updateDom ():void {
+  updateDom (): void {
     this.updateShapeAndColorList()
     this.shapeList.forEach((row, rowIndex) => {
       row.split('').forEach((_, columnIndex) => {
@@ -114,25 +138,28 @@ export default class FormatPreview extends Vue {
         const borderRadius = this.getBorderRadius(margin)
         const color = this.getColor(rowIndex, columnIndex)
 
-        dom[0].setAttribute('style', this.convertAttributeToStyle(
-          value,
-          margin,
-          padding,
-          borderRadius,
-          color
-        ))
+        dom[0].setAttribute(
+          'style',
+          this.convertAttributeToStyle(
+            value,
+            margin,
+            padding,
+            borderRadius,
+            color
+          )
+        )
       })
     })
   }
 
   @Watch('shapes')
-  onShapesChanged (shapes:string):void {
+  onShapesChanged (shapes: string): void {
     this.shapes = shapes
     this.updateDom()
   }
 
-  @Watch('Colors')
-  onColorsChanged (colors:string):void {
+  @Watch('colors')
+  onColorsChanged (colors: string): void {
     this.colors = colors
     this.updateDom()
   }

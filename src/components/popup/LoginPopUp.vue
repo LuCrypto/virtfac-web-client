@@ -66,6 +66,7 @@
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator'
 import { Session, User } from '@/utils/session'
+import API from '@/utils/api'
 
 @Component({
   components: {}
@@ -88,39 +89,22 @@ export default class LoginPopUp extends Vue {
 
   loginRequest (): void {
     this.waiting = true
-    fetch('http://localhost:1337/login', {
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json'
-      },
-      method: 'POST',
-      body: JSON.stringify({
+    API.post(
+      this,
+      '/login',
+      JSON.stringify({
         login: this.login,
         password: this.password
       })
-    })
-      .then(response => {
-        if (!response.ok) {
-          return response.json().then(json => {
-            this.$root.$emit('bottom-message', json.message)
-          })
-        }
-        response.json().then(json => {
-          const user = new User(json.user)
-          Session.setUser(user)
-          this.$root.$emit('bottom-message', `Welcome back ${user.pseudo}.`)
-          this.$root.$emit('user-connection', user)
-          this.login = ''
-          this.password = ''
-          this.show = false
-        })
-      })
-      .catch(error => {
-        console.error(error)
-        this.$root.$emit(
-          'bottom-message',
-          'Unable to connect to VIRTFac server.'
-        )
+    )
+      .then((json: any) => {
+        const user = new User(json.user)
+        Session.setUser(user)
+        this.$root.$emit('bottom-message', `Welcome back ${user.pseudo}.`)
+        this.$root.$emit('user-connection', user)
+        this.login = ''
+        this.password = ''
+        this.show = false
       })
       .finally(() => {
         this.waiting = false

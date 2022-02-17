@@ -98,7 +98,7 @@ import { Session, User } from '@/utils/session'
   }
 })
 export default class NavBar extends Vue {
-  drawer = true
+  drawer = false
   categories: Map<string, Route[]> = new Map()
   avatar: string | null = null
 

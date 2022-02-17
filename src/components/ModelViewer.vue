@@ -9,6 +9,7 @@ import * as THREE from 'three'
 import V from '@/utils/vector'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 import { GLTFLoader, GLTF } from 'three/examples/jsm/loaders/GLTFLoader'
+import { Material } from 'three'
 // import AVATAR from '@/utils/avatar'
 
 @Component
@@ -41,8 +42,8 @@ export default class ModelViewer extends Vue {
         antialias: true
       })
       this.renderer.setClearColor(0x000000, 0)
-      this.renderer.shadowMap.enabled = true
-      this.renderer.shadowMap.type = THREE.PCFSoftShadowMap
+      // this.renderer.shadowMap.enabled = true
+      // this.renderer.shadowMap.type = THREE.PCFSoftShadowMap
       // Create ambiant light
       const ambiant = new THREE.AmbientLight(0xffffff)
       this.scene.add(ambiant)
@@ -54,8 +55,9 @@ export default class ModelViewer extends Vue {
       this.scene.add(sun)
       sun.shadow.mapSize.width = 1024
       sun.shadow.mapSize.height = 1024
-      sun.shadow.camera.near = 0.5
-      sun.shadow.camera.far = 500
+      sun.shadow.camera.near = 0.1
+      sun.shadow.camera.far = 100
+      // sun.shadow.bias = 0.00000001
       // Create sun visualizer
       const sunHelper = new THREE.DirectionalLightHelper(sun, 4, 0xffb000)
       this.scene.add(sunHelper)

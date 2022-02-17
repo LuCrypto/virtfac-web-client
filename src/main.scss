@@ -81,6 +81,11 @@ $typoOptions: display-4 display-3 display-2 display-1 headline title subtitle-1
   opacity: 1;
 }
 
+/** Set cursor on table rows */
+.v-data-table tbody tr :hover {
+  cursor: pointer;
+}
+
 /** 3D viewer */
 .viewer-3d {
   width: 100% !important;

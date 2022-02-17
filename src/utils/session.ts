@@ -6,6 +6,7 @@ export class User {
   login = ''
   pseudo = ''
   picture = ''
+  token = ''
   constructor (attributes?: Partial<User>) {
     Object.assign(this, attributes)
   }
@@ -23,6 +24,11 @@ export class Session {
   static getUser (): User | null {
     const data = window.localStorage.getItem('virtfac-user')
     return data == null ? null : new User(JSON.parse(data))
+  }
+
+  static getToken (): string | null {
+    const user = Session.getUser()
+    return user == null ? null : user.token
   }
 
   static setUser (user: User): void {

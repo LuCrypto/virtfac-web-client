@@ -1,5 +1,6 @@
 <template>
   <v-app :style="this.transparency ? 'background-color: transparent;' : ''">
+    <!-- Display of not vue in fullpage -->
     <div v-if="!this.fullpage">
       <nav-bar></nav-bar>
       <v-main>
@@ -9,6 +10,8 @@
     <div v-else>
       <router-view></router-view>
     </div>
+
+    <!-- Global bottom message -->
     <v-snackbar v-model="snackbarShow" :timeout="snackbarTime">
       {{ snackbarText }}
 

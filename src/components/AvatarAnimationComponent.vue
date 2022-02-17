@@ -41,16 +41,18 @@
     <v-container style="width: auto; margin: 0; flex-grow: 1;">
       <ModelViewer ref="viewer"></ModelViewer>
     </v-container>
+    <open-file-pop-up
+      ref="openFilePopUp"
+      application="ERGONOM_IO"
+    ></open-file-pop-up>
   </v-card>
 </template>
 
 <script lang="ts">
 import Vue from 'vue'
 import Component from 'vue-class-component'
-import * as THREE from 'three'
-import V from '@/utils/vector'
 import ModelViewer from '@/components/ModelViewer.vue'
-// import AVATAR from '@/utils/avatar'
+import OpenFilePopUp from '@/components/popup/OpenFilePopUp.vue'
 
 class MenuItem {
   text: string
@@ -65,7 +67,8 @@ class MenuItem {
 
 @Component({
   components: {
-    ModelViewer
+    ModelViewer,
+    OpenFilePopUp
   }
 })
 export default class AvatarAnimationComponent extends Vue {
@@ -73,13 +76,16 @@ export default class AvatarAnimationComponent extends Vue {
   menuCollapse = false
   menuItemList: MenuItem[] = []
   viewer: ModelViewer | null = null
+  openFilePopUp: OpenFilePopUp | null = null
 
   mounted (): void {
+    this.openFilePopUp = this.$refs.openFilePopUp as OpenFilePopUp
     this.menuItemList.push(
-      new MenuItem('Open Axis Neuron BVH File', 'mdi-file-document', () => true)
-    )
-    this.menuItemList.push(
-      new MenuItem('Open Mixamo FBX File', 'mdi-file-document', () => true)
+      new MenuItem('Open Axis Neuron BVH File', 'mdi-file-document', () => {
+        if (this.openFilePopUp != null) {
+          this.openFilePopUp.open()
+        }
+      })
     )
     this.menuItemList.push(
       new MenuItem('Display shape', 'mdi-graph-outline', () => true)
@@ -95,7 +101,9 @@ export default class AvatarAnimationComponent extends Vue {
     if (this.viewer != null) {
       this.viewer
         .loadGLTF('./avatar.gltf')
-        .then(gltf => console.log('Hello', gltf))
+        .then(gltf =>
+          console.log('Avatar is loaded. Structure :', gltf.scene.children[0])
+        )
         .catch(e => console.error('Cannot load GLTF', e))
     }
   }
