@@ -44,6 +44,7 @@
     <open-file-pop-up
       ref="openFilePopUp"
       application="ERGONOM_IO"
+      :singleSelect="true"
     ></open-file-pop-up>
   </v-card>
 </template>

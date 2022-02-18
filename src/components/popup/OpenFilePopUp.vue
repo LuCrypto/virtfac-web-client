@@ -25,7 +25,7 @@
                 class="primary black--text mr-6"
                 fab
                 small
-                @click="showMenu = !showMenu"
+                @click="groupSettingsPopUp = !groupSettingsPopUp"
               >
                 <v-icon v-text="'mdi-folder-account'"></v-icon>
               </v-btn>
@@ -78,7 +78,7 @@
 
           <!-- Button to show column filter -->
           <v-layout row v-if="this.isMobileView">
-            <v-btn class="ma-6 flex-grow-1" @click="headerSetup">
+            <v-btn class="ma-6 flex-grow-1" @click="rowFilterPopUp = true">
               <v-icon left v-text="'mdi-filter-variant'"></v-icon>Set
               columns</v-btn
             >
@@ -97,17 +97,19 @@
               :fixed-header="!this.isMobileView"
               :search="'true'"
               :show-select="true"
-              :single-select="singleSelect"
+              :single-select="this.singleSelect"
               :mobile-breakpoint="this.isMobileView ? 99999 : 0"
               no-data-text="No files are uploaded yet."
               @click:row="toggleSelectedFile"
               :custom-filter="customFilter"
+              :loading="waitingTasks > 0"
+              loading-text="Loading... Please wait"
             >
               <!-- Custom header button for "actions" column -->
               <template v-slot:[`header.actions`]>
                 <v-icon
                   v-text="'mdi-filter-variant'"
-                  @click="headerSetup()"
+                  @click="rowFilterPopUp = true"
                 ></v-icon>
               </template>
 
@@ -238,19 +240,29 @@ export default class OpenFilePopUp extends Vue {
   @Prop({ default: () => 'all' }) private application!: string
   @Prop({ default: () => true }) private singleSelect!: boolean
 
+  show = true
+  waitingTasks = 2
+
+  /* Group bar */
+  groupSettingsPopUp = false
+  myGroupList: APIGroupItem[] = []
+  selectedGroupId = 0
+
+  /* Search bar */
+  search = ''
+
+  /* Tag list input */
   tagList: string[] = []
+  tagValues = []
+
+  /* Table row filter */
   rowFilterPopUp = false
   rowFilter = []
 
-  tagValues = []
-  showMenu = false
-  show = true
-  waiting = false
-  uploadFileInput: HTMLInputElement | null = null
-  model = 'tab-my-files'
-  search = ''
-  calories = ''
-
+  /* Table properties */
+  refreshTableKey = 0
+  myfileList: APIFileItem[] = []
+  selectedFile: APIFileItem[] = []
   headersSelector: DataTableHeaderSelector[] = [
     new DataTableHeaderSelector({
       header: {
@@ -298,6 +310,10 @@ export default class OpenFilePopUp extends Vue {
     })
   ]
 
+  get isMobileView (): boolean {
+    return this.$vuetify.breakpoint.smAndDown
+  }
+
   get activeHeaders (): DataTableHeader[] {
     return this.headersSelector
       .filter(selector => selector.active)
@@ -308,33 +324,19 @@ export default class OpenFilePopUp extends Vue {
     return this.headersSelector.filter(selector => selector.editable)
   }
 
-  myfileList: APIFileItem[] = []
-  sharedFileList: APIFileItem[] = []
-  selectedItem = 0
-  selectedFile: APIFileItem[] = []
-  refreshTableKey = 0
-
-  /** Group bar */
-  myGroupList: APIGroupItem[] = this.initialGroupList()
-  selectedGroupId = 0
-
   mounted (): void {
-    this.myfileList = []
-    this.waiting = true
     this.getAllGroups()
     this.getAllFiles()
   }
 
-  initialGroupList (): APIGroupItem[] {
-    return [new APIGroupItem({ id: 0, name: 'All' })]
-  }
-
   getAllGroups (): void {
-    API.get(this, '/get-all-groups', null).then((groupList: any) => {
-      this.myGroupList = this.initialGroupList()
+    API.get(this, '/get-all-groups', null).then((reponse: Response) => {
+      const groupList = (reponse as unknown) as APIGroupItem[]
+      this.myGroupList = [new APIGroupItem({ id: 0, name: 'All' })]
       groupList.forEach((groupInfo: Partial<APIGroupItem>) => {
         this.myGroupList.push(new APIGroupItem(groupInfo))
       })
+      this.waitingTasks -= 1
     })
   }
 
@@ -345,13 +347,16 @@ export default class OpenFilePopUp extends Vue {
       new URLSearchParams({
         application: this.application
       })
-    ).then((fileList: any) => {
+    ).then((response: Response) => {
+      const fileList = (response as unknown) as APIFileItem[]
+      this.myfileList = []
       fileList.forEach((fileInfo: Partial<APIFileItem>) => {
         if (fileInfo.name && fileInfo.creationDate) {
           this.myfileList.push(new APIFileItem(fileInfo))
         }
       })
       this.getAllTags()
+      this.waitingTasks -= 1
     })
   }
 
@@ -366,16 +371,6 @@ export default class OpenFilePopUp extends Vue {
     })
   }
 
-  open (): void {
-    this.show = true
-    this.$nextTick(() => {
-      this.uploadFileInput = this.$refs.uploadFileInput as HTMLInputElement
-      if (this.uploadFileInput != null) {
-        this.uploadFileInput.value = ''
-      }
-    })
-  }
-
   /*
     "value" is not used, because value take each column value without column information.
     Instead, I use "item" with all data included in current row.
@@ -386,7 +381,11 @@ export default class OpenFilePopUp extends Vue {
     on table component when tag list changes.
    */
 
-  customFilter (value: any, search: string | null, item: APIFileItem): boolean {
+  customFilter (
+    _value: unknown,
+    _search: string | null,
+    item: APIFileItem
+  ): boolean {
     const itemTags = item.getTags()
     const groupFilter =
       this.selectedGroupId === 0 || item.idGroup === this.selectedGroupId
@@ -398,22 +397,10 @@ export default class OpenFilePopUp extends Vue {
     return groupFilter && searchFilter && tagFilter
   }
 
-  cancel (): void {
-    this.$emit('cancel')
-    this.show = false
-  }
-
-  validated (): void {
-    this.$emit('validated', null) // TODO : get file data
-    this.show = false
-  }
-
   openUploadFile (): void {
-    if (this.uploadFileInput != null) {
-      this.uploadFileInput.click()
-    } else {
-      console.log(this.$refs.uploadFileInput)
-    }
+    const uploadFileInput = this.$refs.uploadFileInput as HTMLElement
+    if (uploadFileInput == null) return
+    uploadFileInput.click()
   }
 
   updateUploadFile (e: Event): void {
@@ -427,7 +414,18 @@ export default class OpenFilePopUp extends Vue {
   }
 
   // Toggle row selection on click
-  toggleSelectedFile (item: any, row: any): void {
+  toggleSelectedFile (
+    item: APIFileItem,
+    row: {
+      expand: (value: boolean) => void
+      headers: DataTableHeader[]
+      isExpanded: boolean
+      isMobile: boolean
+      isSelected: boolean
+      item: APIFileItem
+      select: (value: boolean) => void
+    }
+  ): void {
     row.select(!row.isSelected)
   }
 
@@ -436,22 +434,20 @@ export default class OpenFilePopUp extends Vue {
     console.log('file settings : ', item)
   }
 
-  deleteFile (item: APIFileItem): void {
-    // TODO
-    console.log('delete file : ', item)
+  /* Popup actions */
+
+  open (): void {
+    this.show = true
   }
 
-  headerSetup (): void {
-    // TODO
-    this.rowFilterPopUp = true
+  cancel (): void {
+    this.$emit('cancel')
+    this.show = false
   }
 
-  updateTagList (tagName: string): void {
-    this.tagList = this.tagList.filter(tag => tag !== tagName)
-  }
-
-  get isMobileView () {
-    return this.$vuetify.breakpoint.smAndDown
+  validated (): void {
+    this.$emit('validated', null) // TODO : get file data
+    this.show = false
   }
 }
 </script>
