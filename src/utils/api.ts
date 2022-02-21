@@ -32,15 +32,27 @@ export default class API {
       console.log(`%c Fetch ${url}`, 'color: #bada55')
       fetch(url, request)
         .then(response => {
-          response.json().then(json => {
-            if (!response.ok) {
-              console.error(json.message)
-              component.$root.$emit('bottom-message', json.message)
-              reject(json.message)
-              return
-            }
-            resolve(json)
-          })
+          if (!response.ok) {
+            console.error(response.statusText)
+            component.$root.$emit(
+              'bottom-message',
+              'Sorry, your request could not be executed'
+            )
+            reject(response.statusText)
+            return
+          }
+          response
+            .json()
+            .then(json => {
+              resolve(json)
+            })
+            .catch(error => {
+              console.error(error)
+              component.$root.$emit(
+                'bottom-message',
+                'Sorry, your request could not be executed'
+              )
+            })
         })
         .catch(error => {
           console.error(url, request, error)

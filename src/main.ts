@@ -5,6 +5,7 @@ import vuetify from './utils/vuetify'
 
 import './main.scss'
 
+Vue.config.devtools = false
 Vue.config.productionTip = false
 
 new Vue({

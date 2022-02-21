@@ -1,12 +1,12 @@
 <template>
-  <v-dialog v-model="show">
+  <v-dialog v-model="show" @validated="() => true">
     <!-- Popup -->
     <v-card>
       <!-- Header -->
       <v-toolbar color="primary" flat>
         <v-toolbar-title class="black--text">
           <v-icon left v-text="'mdi-file-document'"></v-icon>
-          Open files
+          {{ openFile ? 'Open files' : 'Files manager' }}
         </v-toolbar-title>
       </v-toolbar>
 
@@ -115,8 +115,7 @@
 
               <!-- Item for "name" column -->
               <template v-slot:[`item.name`]="{ item }">
-                <span>{{ item.getName() }}</span>
-                <span class="primary--text">{{ item.getExtention() }}</span>
+                <span class="primary--text">{{ item.getName() }}</span>
               </template>
 
               <!-- Item for "modificationDate" column -->
@@ -130,26 +129,26 @@
               </template>
 
               <!-- Custom item for "formatInfo" column -->
-              <template v-slot:[`item.formatInfo`]="{ item }">
+              <template v-slot:[`item.mime`]="{ item }">
                 <v-tooltip top>
                   <template v-slot:activator="{ on, attrs }">
                     <v-chip
                       v-bind="attrs"
                       v-on="on"
-                      :color="item.formatInfo.color"
+                      :color="item.fileMIME.structure ? 'primary' : 'grey'"
                       dark
                     >
-                      {{ item.formatInfo.acronym }}
+                      {{ item.fileMIME.formatStructure }}
                     </v-chip>
                   </template>
-                  <span>{{ item.formatInfo.acronymText }}</span>
+                  <span>{{ item.mime }}</span>
                 </v-tooltip>
               </template>
 
               <!-- Custom item for "actions" columns -->
               <template v-slot:[`item.actions`]="{ item }">
                 <v-icon
-                  @click="fileSettings(item)"
+                  @click="openFileSettings(item)"
                   v-text="'mdi-dots-horizontal'"
                 ></v-icon>
               </template>
@@ -183,6 +182,54 @@
                 </v-list>
               </v-card>
             </v-dialog>
+
+            <!-- Small pop up for file settings filter -->
+            <v-dialog v-model="fileSettingsPopUp" max-width="300px">
+              <v-card>
+                <v-card-title class="text-h5">File settings</v-card-title>
+                <v-container fluid class="overflow-y-auto">
+                  <v-layout wrap column class="px-3 pb-3">
+                    <v-flex class="my-3">
+                      <h4 class="primary--text">Filename</h4>
+                      <v-text-field
+                        dense
+                        hide-details
+                        outlined
+                        :value="fileSettings.name"
+                      ></v-text-field>
+                    </v-flex>
+                    <v-flex>
+                      <h4 class="primary--text">Creation date</h4>
+                      {{ fileSettings.getCreationDate() }}
+                    </v-flex>
+                    <v-flex>
+                      <h4 class="primary--text">Modification date</h4>
+                      {{ fileSettings.getModificationDate() }}
+                    </v-flex>
+                    <v-flex>
+                      <h4 class="primary--text">Tags</h4>
+                      {{ fileSettings.tags }}
+                    </v-flex>
+                    <v-flex>
+                      <h4 class="primary--text">Format</h4>
+                      {{ fileSettings.mime }}
+                    </v-flex>
+                    <v-flex class="my-3">
+                      <h4 class="primary--text">Structure</h4>
+                      <v-select
+                        v-model="fileSettings.fileMIME"
+                        :items="formatList"
+                        item-text="formatStructure"
+                        return-object
+                        outlined
+                        dense
+                        hide-details
+                      ></v-select>
+                    </v-flex>
+                  </v-layout>
+                </v-container>
+              </v-card>
+            </v-dialog>
           </v-layout>
 
           <!-- Bottom buttons -->
@@ -208,8 +255,18 @@
               class="ml-6 mt-6 flex-grow-1 black--text"
               color="primary"
               @click="validated()"
-              :disabled="selectedFile.length != 1"
+              :disabled="selectedFile.length == 0 || loadFileTasksNumber > 0"
+              v-if="openFile"
             >
+              <v-progress-circular
+                v-if="loadFileTasks > 0"
+                :size="20"
+                :width="3"
+                class="mr-2"
+                :value="(1.0 - loadFileTasks / loadFileTasksNumber) * 100"
+                :indeterminate="loadFileTasksNumber === loadFileTasks"
+                color="primary"
+              ></v-progress-circular>
               Open selected
             </v-btn>
           </v-layout>
@@ -223,8 +280,7 @@
 import { Component, Prop, Vue } from 'vue-property-decorator'
 import { DataTableHeader } from 'vuetify/types'
 import API from '@/utils/api'
-import { APIFileItem, APIGroupItem } from '@/utils/models'
-import { FormatInfo } from '@/utils/format'
+import { APIFileItem, APIGroupItem, APIFile, APIFileMIME } from '@/utils/models'
 
 class DataTableHeaderSelector {
   active = true
@@ -239,9 +295,10 @@ class DataTableHeaderSelector {
 export default class OpenFilePopUp extends Vue {
   @Prop({ default: () => 'all' }) private application!: string
   @Prop({ default: () => true }) private singleSelect!: boolean
+  @Prop({ default: () => false }) private openFile!: boolean
 
   show = true
-  waitingTasks = 2
+  waitingTasks = 3
 
   /* Group bar */
   groupSettingsPopUp = false
@@ -297,10 +354,10 @@ export default class OpenFilePopUp extends Vue {
     new DataTableHeaderSelector({
       header: {
         text: 'Format',
-        value: 'formatInfo',
+        value: 'mime',
         align: 'start',
-        sort: (a: FormatInfo, b: FormatInfo): number => {
-          return a.acronym < b.acronym ? -1 : a > b ? 1 : 0
+        sort: (a: string, b: string): number => {
+          return a < b ? -1 : a > b ? 1 : 0
         }
       }
     }),
@@ -310,6 +367,16 @@ export default class OpenFilePopUp extends Vue {
     })
   ]
 
+  /* File loader */
+  loadFileTasks = 0
+  loadFileTasksNumber = 0
+
+  /* File settings */
+  fileSettingsPopUp = false
+  fileSettings: APIFileItem = new APIFileItem()
+  myFormatList: APIFileMIME[] = []
+
+  /* Getters */
   get isMobileView (): boolean {
     return this.$vuetify.breakpoint.smAndDown
   }
@@ -324,8 +391,21 @@ export default class OpenFilePopUp extends Vue {
     return this.headersSelector.filter(selector => selector.editable)
   }
 
+  get formatList (): APIFileMIME[] {
+    return this.myFormatList.filter(
+      mime =>
+        mime.media === this.fileSettings.fileMIME.media &&
+        mime.format === this.fileSettings.fileMIME.format
+    )
+  }
+
   mounted (): void {
+    this.load()
+  }
+
+  load (): void {
     this.getAllGroups()
+    this.getAllFormats()
     this.getAllFiles()
   }
 
@@ -340,6 +420,23 @@ export default class OpenFilePopUp extends Vue {
     })
   }
 
+  getAllFormats (): void {
+    API.get(
+      this,
+      '/application-format',
+      new URLSearchParams({
+        application: this.application
+      })
+    ).then((reponse: Response) => {
+      this.myFormatList = []
+      const formatList = (reponse as unknown) as string[]
+      this.myFormatList = formatList.map(MIME =>
+        APIFileMIME.parseFromString(MIME)
+      )
+      this.waitingTasks -= 1
+    })
+  }
+
   getAllFiles (): void {
     API.get(
       this,
@@ -349,6 +446,7 @@ export default class OpenFilePopUp extends Vue {
       })
     ).then((response: Response) => {
       const fileList = (response as unknown) as APIFileItem[]
+      console.log(fileList)
       this.myfileList = []
       fileList.forEach((fileInfo: Partial<APIFileItem>) => {
         if (fileInfo.name && fileInfo.creationDate) {
@@ -403,19 +501,39 @@ export default class OpenFilePopUp extends Vue {
     uploadFileInput.click()
   }
 
+  uploadFile (file: APIFile): void {
+    API.post(this, '/file', JSON.stringify(file))
+      .then((json: any) => {
+        console.log(json)
+        console.log('file is uploaded')
+      })
+      .finally(() => {
+        this.load()
+      })
+  }
+
   updateUploadFile (e: Event): void {
     if (e.target == null) return
     const target = e.target as HTMLInputElement
     if (target.files != null && target.files.length > 0) {
       // TODO : Upload file and select format before validation
-      this.$emit('validated', target.files[0])
-      this.show = false
+
+      [...target.files].forEach(file =>
+        this.uploadFile(
+          new APIFile({
+            name: file.name,
+            idGroup: 0,
+            modificationDate: file.lastModified,
+            tags: '[]'
+          })
+        )
+      )
     }
   }
 
   // Toggle row selection on click
   toggleSelectedFile (
-    item: APIFileItem,
+    _item: APIFileItem,
     row: {
       expand: (value: boolean) => void
       headers: DataTableHeader[]
@@ -429,14 +547,18 @@ export default class OpenFilePopUp extends Vue {
     row.select(!row.isSelected)
   }
 
-  fileSettings (item: APIFileItem): void {
+  openFileSettings (item: APIFileItem): void {
     // TODO
-    console.log('file settings : ', item)
+    this.fileSettings = new APIFileItem(item)
+    this.fileSettingsPopUp = true
   }
 
   /* Popup actions */
 
   open (): void {
+    this.selectedFile = []
+    this.loadFileTasks = 0
+    this.loadFileTasksNumber = 0
     this.show = true
   }
 
@@ -446,8 +568,26 @@ export default class OpenFilePopUp extends Vue {
   }
 
   validated (): void {
-    this.$emit('validated', null) // TODO : get file data
-    this.show = false
+    this.loadFileTasks = this.selectedFile.length
+    this.loadFileTasksNumber = this.loadFileTasks
+    const fileResult: APIFile[] = []
+    this.selectedFile.forEach(file => {
+      API.get(
+        this,
+        '/file-by-id',
+        new URLSearchParams({
+          id: `${file.id}`
+        })
+      ).then((response: Response) => {
+        const file = (response as unknown) as APIFile
+        fileResult.push(file)
+        this.loadFileTasks -= 1
+        if (this.loadFileTasks === 0) {
+          this.$emit('fileInput', fileResult)
+          this.show = false
+        }
+      })
+    })
   }
 }
 </script>

@@ -43,8 +43,10 @@
     </v-container>
     <open-file-pop-up
       ref="openFilePopUp"
-      application="ERGONOM_IO"
-      :singleSelect="true"
+      application="ERGONOM_IO_ANALYSIS"
+      :singleSelect="false"
+      :openFile="true"
+      @fileInput="onFileInput"
     ></open-file-pop-up>
   </v-card>
 </template>
@@ -54,6 +56,7 @@ import Vue from 'vue'
 import Component from 'vue-class-component'
 import ModelViewer from '@/components/ModelViewer.vue'
 import OpenFilePopUp from '@/components/popup/OpenFilePopUp.vue'
+import { APIFile } from '@/utils/models'
 
 class MenuItem {
   text: string
@@ -107,6 +110,10 @@ export default class AvatarAnimationComponent extends Vue {
         )
         .catch(e => console.error('Cannot load GLTF', e))
     }
+  }
+
+  onFileInput (files: APIFile[]): void {
+    console.log('File received :', files)
   }
 }
 </script>

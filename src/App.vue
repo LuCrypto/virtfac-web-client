@@ -45,7 +45,7 @@ export default class App extends Vue {
   fullpage: boolean = this.query.fullpage === 'true'
   transparency: boolean = this.query.transparency === 'true'
   snackbarShow = false
-  snackbarTime = 2000
+  snackbarTime = 4000
   snackbarText = ''
 
   mounted () {

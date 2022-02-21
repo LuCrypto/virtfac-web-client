@@ -1,19 +1,19 @@
 enum FORMAT_TYPE {
-    NULL = 'NULL',
-    ORIGINAL_FORMAT = 'ORIGINAL_FORMAT',
-    LATEST_FORMAT = 'LATEST_FORMAT',
-    ORIGINAL_EXPERT_FORMAT = 'ORIGINAL_EXPERT_FORMAT'
+  NULL = 'NULL',
+  ORIGINAL_FORMAT = 'ORIGINAL_FORMAT',
+  LATEST_FORMAT = 'LATEST_FORMAT',
+  ORIGINAL_EXPERT_FORMAT = 'ORIGINAL_EXPERT_FORMAT'
 }
 
 interface FormatInfo {
-    id: string
-    text: string
-    acronym: string
-    acronymText: string
-    hint: string
-    shapes: string
-    colors: string
-    color: string
+  id: string
+  text: string
+  acronym: string
+  acronymText: string
+  hint: string
+  shapes: string
+  colors: string
+  color: string
 }
 
 const FORMAT_INFO: Record<FORMAT_TYPE, FormatInfo> = {
@@ -50,7 +50,8 @@ const FORMAT_INFO: Record<FORMAT_TYPE, FormatInfo> = {
   ORIGINAL_EXPERT_FORMAT: {
     id: 'ORIGINAL_EXPERT_FORMAT',
     text: 'Original format with expert',
-    hint: 'Original excel format to manually analyse constraints with an expert',
+    hint:
+      'Original excel format to manually analyse constraints with an expert',
     acronym: 'OEF',
     acronymText: 'OEF for "Original Format with Expert"',
     shapes: '_abbb cbccc cbccc d_eee d_eee d_eee',
