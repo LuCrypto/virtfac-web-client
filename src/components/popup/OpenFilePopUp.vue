@@ -186,7 +186,9 @@
             <!-- Small pop up for file settings filter -->
             <v-dialog v-model="fileSettingsPopUp" max-width="300px">
               <v-card>
-                <v-card-title class="text-h5">File settings</v-card-title>
+                <v-card-title class="text-h5 black--text primary"
+                  >File settings</v-card-title
+                >
                 <v-container fluid class="overflow-y-auto">
                   <v-layout wrap column class="px-3 pb-3">
                     <v-flex class="my-3">
@@ -195,7 +197,7 @@
                         dense
                         hide-details
                         outlined
-                        :value="fileSettings.name"
+                        v-model="fileSettings.name"
                       ></v-text-field>
                     </v-flex>
                     <v-flex>
@@ -228,6 +230,28 @@
                     </v-flex>
                   </v-layout>
                 </v-container>
+                <v-card-actions>
+                  <v-spacer></v-spacer>
+                  <v-btn text @click="fileSettingsPopUp = false">
+                    Cancel
+                  </v-btn>
+                  <v-btn
+                    color="primary"
+                    class="black--text"
+                    @click="saveFileSettings"
+                    :disabled="fileSettingsIsSaving"
+                  >
+                    <v-progress-circular
+                      v-if="fileSettingsIsSaving"
+                      :size="20"
+                      :width="3"
+                      class="mr-2"
+                      indeterminate
+                      color="primary"
+                    ></v-progress-circular>
+                    Save changes
+                  </v-btn>
+                </v-card-actions>
               </v-card>
             </v-dialog>
           </v-layout>
@@ -280,7 +304,13 @@
 import { Component, Prop, Vue } from 'vue-property-decorator'
 import { DataTableHeader } from 'vuetify/types'
 import API from '@/utils/api'
-import { APIFileItem, APIGroupItem, APIFile, APIFileMIME } from '@/utils/models'
+import {
+  APIFileItem,
+  APIGroupItem,
+  APIFile,
+  APIFileMIME,
+  APIFileUpdate
+} from '@/utils/models'
 
 class DataTableHeaderSelector {
   active = true
@@ -320,6 +350,7 @@ export default class OpenFilePopUp extends Vue {
   refreshTableKey = 0
   myfileList: APIFileItem[] = []
   selectedFile: APIFileItem[] = []
+  selectedFileAfterLoad = 0
   headersSelector: DataTableHeaderSelector[] = [
     new DataTableHeaderSelector({
       header: {
@@ -374,6 +405,7 @@ export default class OpenFilePopUp extends Vue {
   /* File settings */
   fileSettingsPopUp = false
   fileSettings: APIFileItem = new APIFileItem()
+  fileSettingsIsSaving = false
   myFormatList: APIFileMIME[] = []
 
   /* Getters */
@@ -404,6 +436,7 @@ export default class OpenFilePopUp extends Vue {
   }
 
   load (): void {
+    this.fileSettingsIsSaving = false
     this.getAllGroups()
     this.getAllFormats()
     this.getAllFiles()
@@ -446,11 +479,14 @@ export default class OpenFilePopUp extends Vue {
       })
     ).then((response: Response) => {
       const fileList = (response as unknown) as APIFileItem[]
-      console.log(fileList)
       this.myfileList = []
       fileList.forEach((fileInfo: Partial<APIFileItem>) => {
         if (fileInfo.name && fileInfo.creationDate) {
-          this.myfileList.push(new APIFileItem(fileInfo))
+          const fileItem = new APIFileItem(fileInfo)
+          this.myfileList.push(fileItem)
+          if (this.selectedFileAfterLoad !== 0) {
+            this.selectedFile = [fileItem]
+          }
         }
       })
       this.getAllTags()
@@ -496,20 +532,22 @@ export default class OpenFilePopUp extends Vue {
   }
 
   openUploadFile (): void {
-    const uploadFileInput = this.$refs.uploadFileInput as HTMLElement
+    const uploadFileInput = this.$refs.uploadFileInput as HTMLInputElement
     if (uploadFileInput == null) return
+    uploadFileInput.value = ''
     uploadFileInput.click()
   }
 
   uploadFile (file: APIFile): void {
+    console.log('UPPLOAD', file)
+
     API.post(this, '/file', JSON.stringify(file))
-      .then((json: any) => {
-        console.log(json)
-        console.log('file is uploaded')
-      })
-      .finally(() => {
+      .then((response: Response) => {
+        const id = ((response as unknown) as { id: number }).id
+        this.selectedFileAfterLoad = id
         this.load()
       })
+      .catch(e => console.warn(e))
   }
 
   updateUploadFile (e: Event): void {
@@ -518,16 +556,25 @@ export default class OpenFilePopUp extends Vue {
     if (target.files != null && target.files.length > 0) {
       // TODO : Upload file and select format before validation
 
-      [...target.files].forEach(file =>
-        this.uploadFile(
-          new APIFile({
-            name: file.name,
-            idGroup: 0,
-            modificationDate: file.lastModified,
-            tags: '[]'
-          })
-        )
-      )
+      [...target.files].forEach(file => {
+        console.log(file)
+
+        const reader = new FileReader()
+        reader.onload = () => {
+          this.uploadFile(
+            new APIFile({
+              name: file.name,
+              idGroup: this.selectedGroupId,
+              uri: reader.result as string
+            })
+          )
+        }
+        reader.onerror = error => {
+          console.error(error)
+          this.$root.$emit('bottom-message', 'Sorry, we cannot read this file.')
+        }
+        reader.readAsDataURL(file)
+      })
     }
   }
 
@@ -548,15 +595,32 @@ export default class OpenFilePopUp extends Vue {
   }
 
   openFileSettings (item: APIFileItem): void {
-    // TODO
     this.fileSettings = new APIFileItem(item)
     this.fileSettingsPopUp = true
+  }
+
+  saveFileSettings (): void {
+    this.fileSettingsIsSaving = true
+    API.patch(this, '/file', JSON.stringify(this.fileSettings)).then(
+      (response: Response) => {
+        const fileUpdate = (response as unknown) as APIFileUpdate
+        if (fileUpdate.response !== 1) return
+        this.fileSettingsIsSaving = false
+        this.fileSettingsPopUp = false
+        this.myfileList.forEach(file => {
+          if (file.id === this.fileSettings.id) {
+            Object.assign(file, fileUpdate.file)
+          }
+        })
+      }
+    )
   }
 
   /* Popup actions */
 
   open (): void {
     this.selectedFile = []
+    this.selectedFileAfterLoad = 0
     this.loadFileTasks = 0
     this.loadFileTasksNumber = 0
     this.show = true

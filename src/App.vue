@@ -49,7 +49,6 @@ export default class App extends Vue {
   snackbarText = ''
 
   mounted () {
-    console.log(Vue.prototype.$globals)
     this.$root.$on('bottom-message', (message: string) => {
       this.snackbarShow = true
       this.snackbarText = message

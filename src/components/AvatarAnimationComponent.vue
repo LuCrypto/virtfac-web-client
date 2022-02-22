@@ -44,7 +44,7 @@
     <open-file-pop-up
       ref="openFilePopUp"
       application="ERGONOM_IO_ANALYSIS"
-      :singleSelect="false"
+      :singleSelect="true"
       :openFile="true"
       @fileInput="onFileInput"
     ></open-file-pop-up>
@@ -113,7 +113,14 @@ export default class AvatarAnimationComponent extends Vue {
   }
 
   onFileInput (files: APIFile[]): void {
-    console.log('File received :', files)
+    const file = files[0].uri
+    const fileContent = file.split('base64,')[1]
+    const content = atob(fileContent)
+
+    if (this.viewer != null) {
+      const bvh = this.viewer.loadBVH(content)
+      this.viewer.animateBVH(bvh)
+    }
   }
 }
 </script>

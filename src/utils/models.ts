@@ -41,6 +41,13 @@ export class APIFileMIME {
     const [media, format, structure] = APIFileMIME.valuesFromString(MIMEString)
     return new APIFileMIME({ media, format, structure })
   }
+
+  // Convert MIME to string
+  toString () {
+    const structure = this.structure != null ? `.${this.structure}` : ''
+    const format = this.format != null ? `/${this.format}${structure}` : ''
+    return `${this.media}${format}`
+  }
 }
 
 export class APIFileItem {
@@ -50,17 +57,33 @@ export class APIFileItem {
   idGroup = 0
   modificationDate = 0
   tags = '[]'
-  mime = ''
   fileMIME = new APIFileMIME()
   // formatInfo: FormatInfo
 
+  set mime (mime: string) {
+    this.fileMIME = APIFileMIME.parseFromString(mime)
+  }
+
+  get mime (): string {
+    return this.fileMIME.toString()
+  }
+
   constructor (attributes?: Partial<APIFileItem>) {
     Object.assign(this, attributes)
-    this.fileMIME = APIFileMIME.parseFromString(this.mime)
 
     // const formatKey = Object.keys(FORMAT_TYPE)[Math.floor(Math.random() * 4)]
     // const formatType = formatKey as FORMAT_TYPE
     // this.formatInfo = FORMAT_INFO[formatType]
+  }
+
+  // toJOSON is automaticaly call by JSON.stringify
+  // We need this to add getter mime to JSON
+  toJSON (): any {
+    const { mime, ...file } = this
+    return {
+      mime,
+      ...file
+    }
   }
 
   getDate (dateValue: number): string {
@@ -92,6 +115,11 @@ export class APIFileItem {
   }
 }
 
+export interface APIFileUpdate {
+  response: number
+  file: APIFileItem
+}
+
 export class APIGroupItem {
   id = 0
   idUserOwner = 0
@@ -106,7 +134,7 @@ export class APIGroupItem {
 }
 
 export class APIFile extends APIFileItem {
-  content = ''
+  uri = ''
   constructor (attributes?: Partial<APIFile>) {
     super(attributes)
     Object.assign(this, attributes)

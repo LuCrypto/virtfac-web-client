@@ -77,8 +77,8 @@ export default class API {
     return API.fetch(component, 'GET', path, null, params)
   }
 
-  static update (component: Vue, path: string, body: string): Promise<Response> {
-    return API.fetch(component, 'UPDATE', path, body, null)
+  static patch (component: Vue, path: string, body: string): Promise<Response> {
+    return API.fetch(component, 'PATCH', path, body, null)
   }
 
   static delete (component: Vue, path: string, body: string): Promise<Response> {
