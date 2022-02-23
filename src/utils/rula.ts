@@ -11,12 +11,11 @@ export class AxisMarker {
   parent: THREE.Bone
   mesh: THREE.Mesh = new THREE.Mesh()
   transform: THREE.Matrix4 | null = null
-
   constructor (parent: THREE.Bone, transform: THREE.Matrix4 | null) {
     this.name = `marker-${parent.name}`
     this.parent = parent
     this.transform = transform
-    const geometry = new THREE.CircleGeometry(0.1, 32)
+    const geometry = new THREE.CircleGeometry(0.05, 32)
     if (this.transform) {
       geometry.applyMatrix4(this.transform)
     }
@@ -35,34 +34,6 @@ export class AxisMarker {
 
     this.mesh = new THREE.Mesh(geometry, material)
     this.mesh.matrixAutoUpdate = false
-  }
-
-  buidlGeometry (): THREE.BufferGeometry {
-    const size = 0.1
-    const geometry = new THREE.BufferGeometry()
-    const vertices = new Float32Array([
-      // bottom left
-      -0.5 * size,
-      -0.5 * size,
-      0,
-      // bottom right
-      0.5 * size,
-      -0.5 * size,
-      0,
-      // upper right
-      0.5 * size,
-      0.5 * size,
-      0,
-      // upper left
-      -0.5 * size,
-      0.5 * size,
-      0
-    ])
-    const uvs = new Float32Array([0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0])
-    geometry.setIndex([0, 1, 2, 2, 3, 0])
-    geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3))
-    geometry.setAttribute('uv', new THREE.BufferAttribute(uvs, 2))
-    return geometry
   }
 
   update (): void {
@@ -114,9 +85,10 @@ export class AxisMarker {
 }
 
 export default class RULA {
+  axeList: THREE.AxesHelper[] = []
   boneSettings: RULABonesSettings[] = [
     {
-      name: 'Hips',
+      name: 'Spine',
       transform: new THREE.Matrix4().makeRotationFromEuler(
         new THREE.Euler(Math.PI / 2, Math.PI / 2, 0)
       )
@@ -158,35 +130,95 @@ export default class RULA {
         .filter(setting => setting.name === bone.name)
         .pop()
       if (setting) {
-        const marker = new AxisMarker(bone, setting.transform)
-        this.markers.push(marker)
-        group.add(marker.mesh)
+        // const marker = new AxisMarker(bone, setting.transform)
+        // this.markers.push(marker)
+        // group.add(marker.mesh)
+        const axesHelper = new THREE.AxesHelper(10)
+        bone.children.push(axesHelper)
+        axesHelper.parent = bone
+        axesHelper.name = bone.name
+        this.axeList.push(axesHelper)
       }
     })
 
     this.scene.add(group)
   }
 
+  computeNeckScore (angles: THREE.Vector3): number {
+    let score = 0
+    // Inclinaison de la tête
+    if (angles.x < -5) score += 4
+    if (angles.x > 0 && angles.x <= 10) score += 2
+    if (angles.x > 10 && angles.x <= 20) score += 3
+
+    // Rotation de la nuque
+    if (angles.z < -5 || angles.z > 5) score += 1
+
+    // Inclinaison de la nuque
+    if (angles.y < -5 || angles.y > 5) score += 1
+    return score
+  }
+
+  computeSpineScore (angles: THREE.Vector3): number {
+    let score = 0
+    // Baissage de tronc
+    if (angles.x <= 5) score += 1
+    if (angles.x > 5 && angles.x <= 20) score += 2
+    if (angles.x > 20 && angles.x <= 60) score += 3
+    if (angles.x > 60) score += 4
+
+    // Inclinaison latérale du tronc
+    if (angles.z < -5 || angles.z > 5) score += 1
+
+    // Rotation du tronc
+    if (angles.y < -5 || angles.z > 5) score += 1
+
+    return score
+  }
+
   update (): void {
-    const index = 0
-    this.markers.forEach((marker, index) => {
-      marker.update()
-      // index++
-      // if (index === 3) {
-      // const position = marker.position
-      // const rotation = (marker.parent && marker.parent.rotation) || {
-      //   x: 0,
-      //   y: 0,
-      //   z: 0
-      // }
-      // const material = marker.material as THREE.MeshLambertMaterial
-      // material.color = new THREE.Color(
-      //   Math.abs(Math.sin(rotation.x) * 255),
-      //   Math.abs(Math.sin(rotation.y) * 255),
-      //   Math.abs(Math.sin(rotation.z) * 255)
-      // )
-      // }
-      // console.log(marker.name, position, rotation)
+    if (this.axeList.length === 0) return
+
+    this.axeList.forEach(axe => {
+      if (axe.parent == null) return
+      const q = axe.parent.quaternion
+      const rot = new THREE.Euler().setFromQuaternion(q, 'XYZ')
+      const f = (n: number) => Math.floor(n * 100) / 100
+      const a = (n: number) => (n / (2 * Math.PI)) * 360
+      const r = new Vector3(a(rot.x), a(rot.y), a(rot.z))
+      const score = 0
+
+      switch (axe.name) {
+        case 'Spine':
+          // score += this.computeSpineScore(r)
+          // console.log(axe.name, f(r.x), f(r.y), f(r.z), score)
+          break
+        case 'Neck':
+          // score += this.computeNeckScore(r)
+          // console.log(axe.name, f(r.x), f(r.y), f(r.z), score)
+          break
+      }
     })
+
+    // const index = 0
+    // this.markers.forEach((marker, index) => {
+    //  marker.update()
+    // index++
+    // if (index === 3) {
+    // const position = marker.position
+    // const rotation = (marker.parent && marker.parent.rotation) || {
+    //   x: 0,
+    //   y: 0,
+    //   z: 0
+    // }
+    // const material = marker.material as THREE.MeshLambertMaterial
+    // material.color = new THREE.Color(
+    //   Math.abs(Math.sin(rotation.x) * 255),
+    //   Math.abs(Math.sin(rotation.y) * 255),
+    //   Math.abs(Math.sin(rotation.z) * 255)
+    // )
+    // }
+    // console.log(marker.name, position, rotation)
+    // })
   }
 }

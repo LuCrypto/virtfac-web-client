@@ -87,8 +87,12 @@ $typoOptions: display-4 display-3 display-2 display-1 headline title subtitle-1
 }
 
 /** 3D viewer */
-.viewer-3d,
-.viewer-3d > canvas {
+.viewer-3d {
+  display: flex;
+  flex-direction: column;
   width: 100% !important;
   height: 100% !important;
+}
+.viewer-3d > canvas {
+  flex-grow: 1;
 }

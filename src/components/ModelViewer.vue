@@ -1,5 +1,13 @@
 <template>
-  <div class="viewer-3d" ref="canvasContainer"></div>
+  <div class="viewer-3d" ref="canvasContainer">
+    <v-slider
+      v-model="animationValue"
+      @input="rula.update()"
+      min="0"
+      max="1"
+      step="0.001"
+    ></v-slider>
+  </div>
 </template>
 
 <script lang="ts">
@@ -30,6 +38,9 @@ export default class ModelViewer extends Vue {
   scene: THREE.Scene
   rula: RULA
   renderer: THREE.WebGLRenderer
+
+  animationValue = 0
+  animationDuration = 0
 
   constructor () {
     super()
@@ -186,6 +197,7 @@ export default class ModelViewer extends Vue {
     this.rula.update()
 
     this.mixer = new THREE.AnimationMixer(skeletonHelper)
+    this.animationDuration = bvh.clip.duration
     this.mixer
       .clipAction(bvh.clip)
       .setEffectiveWeight(1.0)
@@ -197,8 +209,7 @@ export default class ModelViewer extends Vue {
       this.updateSize()
       if (this.mixer) {
         const delta = this.clock.getDelta() / 10
-        this.mixer.update(delta)
-        this.rula.update()
+        this.mixer.setTime(this.animationValue * this.animationDuration)
       }
       this.renderer.render(this.scene, this.camera)
     }
