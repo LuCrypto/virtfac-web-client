@@ -11,7 +11,7 @@
       </v-toolbar>
 
       <!-- Popup content -->
-      <v-card :height="this.isMobileView ? 500 : undefined">
+      <v-card :height="this.isMobileView ? 470 : undefined">
         <v-container
           fluid
           style="height: 100%; max-height: 100%"
@@ -93,7 +93,7 @@
               :items="myfileList"
               :key="refreshTableKey"
               item-key="id"
-              :height="this.isMobileView ? undefined : 550"
+              :height="this.isMobileView ? undefined : 530"
               :fixed-header="!this.isMobileView"
               :search="'true'"
               :show-select="true"
@@ -327,7 +327,7 @@ export default class OpenFilePopUp extends Vue {
   @Prop({ default: () => true }) private singleSelect!: boolean
   @Prop({ default: () => false }) private openFile!: boolean
 
-  show = true
+  show = false
   waitingTasks = 3
 
   /* Group bar */
