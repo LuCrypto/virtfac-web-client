@@ -1,92 +1,63 @@
 import * as THREE from 'three'
-import { Matrix4, Vector3 } from 'three'
 
 interface RULABonesSettings {
   name: string
   transform: THREE.Matrix4 | null
   marker: THREE.AxesHelper | null
-  computeScore: (angles: THREE.Vector3) => number
+  computeScore: (angles: THREE.Vector3, scores: Map<string, number>) => void
 }
 
-// export class AxisMarker {
-//   name: string
-//   parent: THREE.Bone
-//   mesh: THREE.Mesh = new THREE.Mesh()
-//   transform: THREE.Matrix4 | null = null
-//   constructor (parent: THREE.Bone, transform: THREE.Matrix4 | null) {
-//     this.name = `marker-${parent.name}`
-//     this.parent = parent
-//     this.transform = transform
-//     const geometry = new THREE.CircleGeometry(0.05, 32)
-//     if (this.transform) {
-//       geometry.applyMatrix4(this.transform)
-//     }
+class RULALocalScores {
+  epaule = 1
+  coude = 1
+  poignetEtTorsionDuPoignet = 1
+  postureDutronc = 1
+  jambes = 1
+  nuqueTroncEtJambes = 1
+  brasEtPoignet = 1
+}
 
-//     const uniforms = {
-//       colorB: { type: 'vec3', value: new THREE.Color(0xff0000) },
-//       colorA: { type: 'vec3', value: new THREE.Color(0x00ff00) }
-//     }
-
-//     const material = new THREE.ShaderMaterial({
-//       uniforms: uniforms,
-//       fragmentShader: this.fragmentShader(),
-//       vertexShader: this.vertexShader(),
-//       side: THREE.DoubleSide
-//     })
-
-//     this.mesh = new THREE.Mesh(geometry, material)
-//     this.mesh.matrixAutoUpdate = false
-//   }
-
-//   update (): void {
-//     const root = this.parent.parent == null ? this.parent : this.parent.parent
-
-//     root.getWorldQuaternion(this.mesh.quaternion)
-//     this.parent.getWorldPosition(this.mesh.position)
-//     this.mesh.updateMatrix()
-//   }
-
-//   vertexShader (): string {
-//     return `
-//       varying vec2 vUv;
-
-//       void main() {
-//         vUv = uv;
-
-//         vec4 modelViewPosition = modelViewMatrix * vec4(position, 1.0);
-//         gl_Position = projectionMatrix * modelViewPosition;
-//       }
-//     `
-//   }
-
-//   fragmentShader (): string {
-//     return `
-//       #define M_PI 3.1415926535897932384626433832795
-//       uniform vec3 colorA;
-//       uniform vec3 colorB;
-//       varying vec2 vUv;
-
-//       void main() {
-//         vec2 a = vec2(1.0, 0.0);
-//         vec2 b = vUv - vec2(0.5, 0.5);
-//         float a_b = dot(a, b);
-//         float la = length(a);
-//         float lb = length(b);
-//         float den = la * lb;
-//         if(den < 0.0) {
-//           gl_FragColor = vec4(0.0, 0.0, 0.0, 0.0);
-//         } else {
-//           float t = acos(a_b / den);
-//           float a = b.y < 0.0 ? 2.0 * M_PI - t : t;
-//           float v = a / (2.0 * M_PI);
-//           gl_FragColor = vec4(v, v, v, 1.0);
-//         }
-//       }
-//   `
-//   }
-// }
+const RULA_TABLE_A = [
+  [1, 2, 2, 2, 2, 3, 3, 3],
+  [2, 2, 2, 2, 3, 3, 3, 3],
+  [2, 3, 3, 3, 3, 3, 4, 4],
+  [2, 3, 3, 3, 3, 4, 4, 4],
+  [3, 3, 3, 3, 3, 4, 4, 4],
+  [3, 4, 4, 4, 4, 4, 5, 5],
+  [3, 3, 4, 4, 4, 4, 5, 5],
+  [3, 4, 4, 4, 4, 4, 5, 5],
+  [4, 4, 4, 4, 4, 5, 5, 5],
+  [4, 4, 4, 4, 4, 5, 5, 5],
+  [4, 4, 4, 4, 4, 5, 5, 5],
+  [4, 4, 4, 5, 5, 5, 6, 6],
+  [5, 5, 5, 5, 5, 6, 6, 7],
+  [5, 6, 6, 6, 6, 6, 7, 7],
+  [6, 6, 6, 7, 7, 7, 7, 8],
+  [7, 7, 7, 7, 7, 8, 8, 9],
+  [8, 8, 8, 8, 8, 9, 9, 9],
+  [9, 9, 9, 9, 9, 9, 9, 9]
+]
+const RULA_TABLE_B = [
+  [1, 3, 2, 3, 3, 4, 5, 5, 6, 6, 7, 7],
+  [2, 3, 2, 3, 4, 5, 5, 5, 6, 7, 7, 7],
+  [3, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 7],
+  [5, 5, 5, 6, 6, 7, 7, 7, 7, 7, 8, 8],
+  [7, 7, 7, 7, 7, 8, 8, 8, 8, 8, 8, 8],
+  [8, 8, 8, 8, 8, 8, 8, 9, 9, 9, 9, 9]
+]
+const RULA_TABLE_C = [
+  [1, 2, 3, 3, 4, 5, 5],
+  [2, 2, 3, 4, 4, 5, 5],
+  [3, 3, 3, 4, 4, 5, 6],
+  [3, 3, 3, 4, 5, 6, 6],
+  [4, 4, 4, 5, 6, 7, 7],
+  [4, 4, 5, 6, 6, 7, 7],
+  [5, 5, 6, 6, 7, 7, 7],
+  [5, 5, 6, 7, 7, 7, 7]
+]
 
 export default class RULA {
+  data: Map<string, number>[] = []
   boneSettings: RULABonesSettings[] = [
     {
       name: 'Spine',
@@ -94,7 +65,7 @@ export default class RULA {
         new THREE.Euler(Math.PI / 2, Math.PI / 2, 0)
       ),
       marker: null,
-      computeScore: (angles: THREE.Vector3): number => {
+      computeScore: (angles, scores) => {
         let score = 0
         // Baissage de tronc
         if (angles.x <= 5) score += 1
@@ -108,7 +79,7 @@ export default class RULA {
         // Rotation du tronc
         if (angles.y < -5 || angles.z > 5) score += 1
 
-        return score
+        scores.set('POSTURE_DU_TRONC', score)
       }
     },
     {
@@ -117,7 +88,7 @@ export default class RULA {
         new THREE.Euler(0, 0, Math.PI / 2)
       ),
       marker: null,
-      computeScore: (angles: THREE.Vector3): number => {
+      computeScore: (angles, scores) => {
         let score = 0
         // Inclinaison de la tête
         if (angles.x < -5) score += 4
@@ -129,14 +100,14 @@ export default class RULA {
 
         // Inclinaison de la nuque
         if (angles.y < -5 || angles.y > 5) score += 1
-        return score
+        scores.set('NUQUE', score)
       }
     },
     {
       name: 'RightArm',
       transform: null,
       marker: null,
-      computeScore: (angles: THREE.Vector3): number => {
+      computeScore: (angles, scores) => {
         let score = 0
 
         // Position vers l'arrière de l'épaule
@@ -151,28 +122,28 @@ export default class RULA {
         // Orientation du bras (= position du coude sur le PDF ??)
         if (angles.x < -10 || angles.x > 10) score += 1
 
-        return score
+        scores.set('EPAULE_DROITE', score)
       }
     },
     {
       name: 'RightForeArm',
       transform: null,
       marker: null,
-      computeScore: (angles: THREE.Vector3): number => {
+      computeScore: (angles, scores) => {
         let score = 0
 
         if (angles.y < 60) score += 2
         if (angles.y >= 60 && angles.y < 100) score += 1
         if (angles.y >= 100) score += 2
 
-        return score
+        scores.set('COUDE_DROIT', score)
       }
     },
     {
       name: 'RightHand',
       transform: null,
       marker: null,
-      computeScore: (angles: THREE.Vector3): number => {
+      computeScore: (angles, scores) => {
         let score = 0
 
         // Lever la main vers le haut
@@ -185,21 +156,23 @@ export default class RULA {
 
         // Tourner la main (neutre autour de -15° )
         if (angles.y > -10 || angles.y < -20) score += 1
+        scores.set('POIGNET_DROIT', score)
+
+        score = 0
 
         // Torsion du poignet (différence partielle/extrème jugée à +-10°)
         if (angles.x > 5 && angles.x <= 10) score += 1
         if (angles.x > 10) score += 2
         if (angles.x < -5 || angles.x >= -10) score += 1
         if (angles.x < 10) score += 2
-
-        return score
+        scores.set('TORSION_POIGNET_DROIT', score)
       }
     },
     {
       name: 'LeftArm',
       transform: new THREE.Matrix4().makeScale(-1, 1, 1),
       marker: null,
-      computeScore: (angles: THREE.Vector3): number => {
+      computeScore: (angles, scores) => {
         let score = 0
 
         // Position vers l'arrière de l'épaule
@@ -214,28 +187,28 @@ export default class RULA {
         // Orientation du bras (= position du coude sur le PDF ??)
         if (angles.x < -10 || angles.x > 10) score += 1
 
-        return score
+        scores.set('EPAULE_GAUCHE', score)
       }
     },
     {
       name: 'LeftForeArm',
       transform: new THREE.Matrix4().makeScale(-1, 1, 1),
       marker: null,
-      computeScore: (angles: THREE.Vector3): number => {
+      computeScore: (angles, scores) => {
         let score = 0
 
         if (angles.y > -60) score += 2
         if (angles.y <= -60 && angles.y > -100) score += 1
         if (angles.y <= -100) score += 2
 
-        return score
+        scores.set('COUDE_GAUCHE', score)
       }
     },
     {
       name: 'LeftHand',
       transform: new THREE.Matrix4().makeScale(-1, 1, 1),
       marker: null,
-      computeScore: (angles: THREE.Vector3): number => {
+      computeScore: (angles, scores) => {
         let score = 0
 
         // Lever la main vers le haut
@@ -248,39 +221,32 @@ export default class RULA {
 
         // Tourner la main (neutre autour de 15° )
         if (angles.y < 10 || angles.y > 20) score += 1
+        scores.set('POIGNET_GAUCHE', score)
 
+        score = 0
         // Torsion du poignet (différence partielle/extrème jugée à +-10°)
         if (angles.x > 5 && angles.x <= 10) score += 1
         if (angles.x > 10) score += 2
         if (angles.x < -5 || angles.x >= -10) score += 1
         if (angles.x < 10) score += 2
 
-        return score
+        scores.set('TORSION_POIGNET_GAUCHE', score)
       }
     }
   ]
 
   scene: THREE.Scene
-  // markers: AxisMarker[] = []
 
   constructor (scene: THREE.Scene) {
     this.scene = scene
   }
 
   createRULAMarkers (skeleton: THREE.SkeletonHelper): void {
-    const skeletonBones = skeleton.bones
-    // const group = new THREE.Group()
-    // group.name = 'RulaMarkers'
-    // this.scene.add(group)
-
-    skeletonBones.map(bone => {
+    skeleton.bones.map(bone => {
       const setting = this.boneSettings
         .filter(setting => setting.name === bone.name)
         .pop()
       if (setting) {
-        // const marker = new AxisMarker(bone, setting.transform)
-        // this.markers.push(marker)
-        // group.add(marker.mesh)
         const axesHelper = new THREE.AxesHelper(10)
         bone.children.push(axesHelper)
         axesHelper.parent = bone
@@ -290,8 +256,131 @@ export default class RULA {
     })
   }
 
+  getLocalScore (
+    scores: Map<string, number>,
+    name: string,
+    min = -Infinity,
+    max = Infinity
+  ): number {
+    const value = scores.get(name) || 1
+    return value < min ? min : value > max ? max : value
+  }
+
+  computeGlobalScore (scores: Map<string, number>): void {
+    /*
+      "POSTURE_DU_TRONC"
+      "NUQUE"
+      "EPAULE_DROITE"
+      "COUDE_DROIT"
+      "POIGNET_DROIT"
+      "TORSION_POIGNET_DROIT"
+      "EPAULE_GAUCHE"
+      "COUDE_GAUCHE"
+      "POIGNET_GAUCHE"
+      "TORSION_POIGNET_GAUCHE"
+    */
+
+    // Step 1
+    scores.set(
+      'EPAULE',
+      Math.max(
+        this.getLocalScore(scores, 'EPAULE_DROITE'),
+        this.getLocalScore(scores, 'EPAULE_GAUCHE')
+      )
+    )
+
+    // Step 2
+    scores.set(
+      'COUDE',
+      Math.max(
+        this.getLocalScore(scores, 'COUDE_DROIT'),
+        this.getLocalScore(scores, 'COUDE_GAUCHE')
+      )
+    )
+
+    // Step 3
+    scores.set(
+      'POIGNET',
+      Math.max(
+        this.getLocalScore(scores, 'POIGNET_DROIT'),
+        this.getLocalScore(scores, 'POIGNET_GAUCHE')
+      )
+    )
+
+    // Step 4
+    scores.set(
+      'TORSION_POIGNET',
+      Math.max(
+        this.getLocalScore(scores, 'TORSION_POIGNET_DROIT'),
+        this.getLocalScore(scores, 'TORSION_POIGNET_GAUCHE')
+      )
+    )
+
+    // Step 5
+    const RowTableA =
+      this.getLocalScore(scores, 'EPAULE', 1, 6) +
+      this.getLocalScore(scores, 'COUDE', 1, 3)
+
+    const ColumnTableA =
+      this.getLocalScore(scores, 'POIGNET', 1, 4) +
+      this.getLocalScore(scores, 'TORSION_POIGNET', 1, 2)
+
+    const valueTableA = RULA_TABLE_A[RowTableA][ColumnTableA]
+
+    // Step 6
+    const valueMuscleActivityTop = 0
+
+    // Step 7
+    const weightScoreTop = 0
+
+    // Step 8
+    scores.set(
+      'POIGNET_ET_BRAS',
+      valueTableA + valueMuscleActivityTop + weightScoreTop
+    )
+
+    // Step 9 : "NUQUE"
+
+    // Step 10 : "POSTURE_DU_TRONC"
+
+    // Step 11
+    scores.set('JAMBES', 2)
+
+    // Step 12
+    const RowTableB = this.getLocalScore(scores, 'NUQUE', 1, 6)
+    const ColumnTableB =
+      this.getLocalScore(scores, 'POSTURE_DU_TRONC', 1, 6) +
+      this.getLocalScore(scores, 'JAMBES', 1, 2)
+    const valueTableB = RULA_TABLE_B[RowTableB][ColumnTableB]
+
+    // Step 13
+    const valueMuscleActivityBottom = 0
+
+    // Step 14
+    const weightScoreBottom = 0
+
+    // Step 15
+    scores.set(
+      'NUQUE_TRONC_ET_JAMBES',
+      valueTableB + valueMuscleActivityBottom + weightScoreBottom
+    )
+
+    // Final step
+    const RowTableC = this.getLocalScore(scores, 'NUQUE', 1, 8)
+    const ColumnTableC = this.getLocalScore(
+      scores,
+      'NUQUE_TRONC_ET_JAMBES',
+      1,
+      7
+    )
+    const valueTableC = RULA_TABLE_C[RowTableC][ColumnTableC]
+
+    scores.set('FINAL_SCORE', valueTableC)
+    this.data.push(new Map(scores))
+  }
+
   update (): void {
-    const score = 0
+    const scores = new Map<string, number>()
 
     this.boneSettings.forEach(setting => {
       if (setting.marker == null || setting.marker.parent == null) return
@@ -300,45 +389,46 @@ export default class RULA {
       const q = setting.marker.parent.quaternion
       const r = new THREE.Euler().setFromQuaternion(q, 'XYZ')
       const radToDegrees = (n: number) => (n / (2 * Math.PI)) * 360
-      const angles = new Vector3(
+      const angles = new THREE.Vector3(
         radToDegrees(r.x),
         radToDegrees(r.y),
         radToDegrees(r.z)
       )
 
-      // Compute score
-      const localScore = setting.computeScore(angles)
+      // Compute local score
+      setting.computeScore(angles, scores)
 
       // Debug angle and local score
       const f = (n: number) => Math.floor(n * 100) / 100
-      console.log(
-        setting.name,
-        f(angles.x),
-        f(angles.y),
-        f(angles.z),
-        localScore
-      )
+      // console.log(
+      //   setting.name,
+      //   f(angles.x),
+      //   f(angles.y),
+      //   f(angles.z),
+      //   localScore
+      // )
     })
+    this.computeGlobalScore(scores)
+  }
 
-    // const index = 0
-    // this.markers.forEach((marker, index) => {
-    //  marker.update()
-    // index++
-    // if (index === 3) {
-    // const position = marker.position
-    // const rotation = (marker.parent && marker.parent.rotation) || {
-    //   x: 0,
-    //   y: 0,
-    //   z: 0
-    // }
-    // const material = marker.material as THREE.MeshLambertMaterial
-    // material.color = new THREE.Color(
-    //   Math.abs(Math.sin(rotation.x) * 255),
-    //   Math.abs(Math.sin(rotation.y) * 255),
-    //   Math.abs(Math.sin(rotation.z) * 255)
-    // )
-    // }
-    // console.log(marker.name, position, rotation)
-    // })
+  download (filename: string, text: string) {
+    const element = document.createElement('a')
+    element.setAttribute(
+      'href',
+      'data:text/plain;charset=utf-8,' + encodeURIComponent(text)
+    )
+    element.setAttribute('download', filename)
+    element.style.display = 'none'
+    document.body.appendChild(element)
+    element.click()
+    document.body.removeChild(element)
+  }
+
+  export (): void {
+    let csv = ''
+    const header = [...this.data[0].keys()].join(',')
+    const values = this.data.map(o => [...o.values()].join(',')).join('\n')
+    csv += header + '\n' + values
+    this.download('data.csv', csv)
   }
 }

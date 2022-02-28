@@ -42,6 +42,8 @@ export default class ModelViewer extends Vue {
   animationValue = 0
   animationDuration = 0
 
+  terminated = false
+
   constructor () {
     super()
     this.camera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000)
@@ -198,8 +200,13 @@ export default class ModelViewer extends Vue {
 
     this.mixer = new THREE.AnimationMixer(skeletonHelper)
     this.animationDuration = bvh.clip.duration
+
+    this.mixer.addEventListener('finished', e => {
+      this.terminated = true
+    })
     this.mixer
       .clipAction(bvh.clip)
+      .setLoop(THREE.LoopOnce, 1)
       .setEffectiveWeight(1.0)
       .play()
   }
@@ -208,8 +215,16 @@ export default class ModelViewer extends Vue {
     if (this.renderer && this.scene && this.camera) {
       this.updateSize()
       if (this.mixer) {
-        const delta = this.clock.getDelta() / 10
-        this.mixer.setTime(this.animationValue * this.animationDuration)
+        const delta = this.clock.getDelta()
+        if (this.terminated) {
+          this.rula.export()
+          this.terminated = false
+        } else {
+          this.rula.update()
+        }
+
+        this.mixer.update(delta)
+        // this.mixer.setTime(this.animationValue * this.animationDuration)
       }
       this.renderer.render(this.scene, this.camera)
     }

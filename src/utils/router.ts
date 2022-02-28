@@ -1,10 +1,14 @@
 import Vue, { ComponentOptions, AsyncComponent } from 'vue'
 import VueRouter, { RouteConfig } from 'vue-router'
 import Home from '../views/Home.vue'
-import DrawingShop from '@/views/DrawingShop.vue'
-import ContradictionAnalysisExpert from '@/views/ContradictionAnalysisExpert.vue'
-import ContradictionAnalysisSimulation from '@/views/ContradictionAnalysisSimulation.vue'
-import ErgonomIO from '@/views/ErgonomIO.vue'
+
+// Contradiction analysis
+import AboutContradictionAnalysis from '@/views/ContradictionAnalysis/AboutContradictionAnalysis.vue'
+
+import DrawingShop from '@/views/RoutingAnalysis/RoutingAnalysis.vue'
+import ContradictionAnalysisExpert from '@/views/ContradictionAnalysis/ExpertApproach.vue'
+import ContradictionAnalysisSimulation from '@/views/ContradictionAnalysis/SimulationApproach.vue'
+import ErgonomIO from '@/views/ErgonomIO/ErgonomIO.vue'
 import ErgonomioMainMenu from '@/components/ergonomio_ui/ErgonomioMainMenu.vue'
 
 Vue.use(VueRouter)
@@ -27,6 +31,7 @@ export class Route {
 }
 
 export const routes: Array<Route> = [
+  // Web front pages
   new Route({
     icon: 'mdi-home',
     name: 'Home',
@@ -60,44 +65,100 @@ export const routes: Array<Route> = [
     href: '/home#Contact',
     category: 'About us'
   }),
+
+  // COntradiction analyse
+  new Route({
+    icon: 'mdi-information-outline',
+    name: 'About',
+    subname: '',
+    path: '/about-contradiction-analysis-expert',
+    category: 'Contradiction Analysis',
+    component: AboutContradictionAnalysis
+  }),
   new Route({
     icon: 'mdi-graph',
-    name: 'Contradiction Analysis',
-    subname: 'Expert approach',
+    name: 'Expert approach',
+    subname: '',
     path: '/contradiction-analysis-expert',
-    category: 'Softs',
+    category: 'Contradiction Analysis',
     component: ContradictionAnalysisExpert
   }),
   new Route({
     icon: 'mdi-robot',
-    name: 'Contradiction Analysis',
-    subname: 'Simulation approach',
+    name: 'Simulation approach',
+    subname: '',
     path: '/contradiction-analysis-simulation',
-    category: 'Softs',
+    category: 'Contradiction Analysis',
     component: ContradictionAnalysisSimulation
+  }),
+
+  // Routing analysis
+  new Route({
+    icon: 'mdi-information-outline',
+    name: 'About',
+    subname: '',
+    path: '/about-drawing-shop',
+    category: 'Routing  Analysis',
+    component: DrawingShop
   }),
   new Route({
     icon: 'mdi-arrow-decision',
     name: 'Routing  Analysis',
     subname: 'a.k.a. Drawing Shop',
     path: '/drawing-shop',
-    category: 'Softs',
+    category: 'Routing  Analysis',
     component: DrawingShop
+  }),
+
+  // Ergonom.io
+  new Route({
+    icon: 'mdi-information-outline',
+    name: 'About',
+    subname: '',
+    path: '/about-ergonom-io',
+    category: 'Ergonom.io',
+    component: ErgonomIO
+  }),
+  new Route({
+    icon: 'mdi-factory',
+    name: 'Ergonom.io',
+    subname: 'A virtual twin tool',
+    path: '/ergonom-io',
+    category: 'Ergonom.io',
+    component: ErgonomIO
+  }),
+  new Route({
+    icon: 'mdi-gesture-swipe',
+    name: 'Ergonomics',
+    subname: 'Tool for ergonomic analysis',
+    path: '/ergonom-io-analysis',
+    category: 'Ergonom.io',
+    component: ErgonomIO
+  }),
+  new Route({
+    icon: 'mdi-package-variant-closed',
+    name: 'Assets',
+    subname: 'Asset management',
+    path: '/ergonom-io-assets',
+    category: 'Ergonom.io',
+    component: ErgonomIO
   }),
   new Route({
     icon: 'mdi-human',
-    name: 'Ergonom.io',
-    subname: 'Ergonomics and flow analysis',
-    path: '/ergonom-io',
-    category: 'Softs',
+    name: 'Avatars',
+    subname: 'Manage your avatars',
+    path: '/ergonom-io-avatars',
+    category: 'Ergonom.io',
     component: ErgonomIO
   }),
+
+  // Hidded menus
   new Route({
     icon: 'mdi-human',
     name: 'ErgonomioMainMenu',
     subname: 'Ergonomics and flow analysis',
     path: '/ergonom-io-menu-main',
-    category: 'Softs',
+    category: 'Ergonom.io',
     component: ErgonomioMainMenu,
     visibility: false
   })

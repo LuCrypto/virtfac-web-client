@@ -9,7 +9,7 @@
 </template>
 
 <script lang="ts">
-import AvatarAnimationComponent from '@/components/AvatarAnimationComponent.vue'
+import AvatarAnimationComponent from '@/components/ErgonomicsAnalysisComponent.vue'
 import { Component, Vue } from 'vue-property-decorator'
 @Component({
   components: {
