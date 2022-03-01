@@ -12,7 +12,8 @@ export default class API {
     return new Promise((resolve, reject) => {
       const token = Session.getToken()
       const url =
-        `http://10.244.212.243:1337${path}` + (params != null ? `?${params}` : '')
+        `http://10.244.77.203:8070${path}` +
+        (params != null ? `?${params}` : '')
       const contentType: string =
         method === 'GET'
           ? 'application/x-www-form-urlencoded'
