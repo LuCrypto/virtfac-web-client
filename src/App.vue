@@ -4,11 +4,11 @@
     <div v-if="!this.fullpage">
       <nav-bar></nav-bar>
       <v-main>
-        <router-view></router-view>
+        <router-view class="ma-0 pa-0"></router-view>
       </v-main>
     </div>
     <div v-else>
-      <router-view></router-view>
+      <router-view class="ma-0 pa-0"></router-view>
     </div>
 
     <!-- Global bottom message -->

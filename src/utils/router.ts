@@ -10,6 +10,7 @@ import ContradictionAnalysisExpert from '@/views/ContradictionAnalysis/ExpertApp
 import ContradictionAnalysisSimulation from '@/views/ContradictionAnalysis/SimulationApproach.vue'
 import ContradictionAnalysisGraph from '@/views/ContradictionAnalysis/ExpertApproach2.vue'
 import ErgonomIO from '@/views/ErgonomIO/ErgonomIO.vue'
+import ErgonomIOAnalysis from '@/views/ErgonomIO/ErgonomIOAnalysis.vue'
 import ErgonomioMainMenu from '@/components/ergonomio_ui/ErgonomioMainMenu.vue'
 
 Vue.use(VueRouter)
@@ -137,12 +138,12 @@ export const routes: Array<Route> = [
     component: ErgonomIO
   }),
   new Route({
-    icon: 'mdi-gesture-swipe',
-    name: 'Ergonomics',
+    icon: 'mdi-finance',
+    name: 'Gesture analysis',
     subname: 'Tool for ergonomic analysis',
     path: '/ergonom-io-analysis',
     category: 'Ergonom.io',
-    component: ErgonomIO
+    component: ErgonomIOAnalysis
   }),
   new Route({
     icon: 'mdi-package-variant-closed',
