@@ -39,6 +39,13 @@
       </v-list>
     </v-navigation-drawer>
     <v-container style="width: auto; margin: 0; flex-grow: 1;">
+      <v-slider
+        v-model="animationValue"
+        @input="rula.update()"
+        min="0"
+        max="1"
+        step="0.001"
+      ></v-slider>
       <ModelViewer ref="viewer"></ModelViewer>
     </v-container>
     <open-file-pop-up
@@ -57,6 +64,12 @@ import Component from 'vue-class-component'
 import ModelViewer from '@/components/ModelViewer.vue'
 import OpenFilePopUp from '@/components/popup/OpenFilePopUp.vue'
 import { APIFile } from '@/utils/models'
+import * as THREE from 'three'
+import RULA from '@/utils/rula'
+
+class SkeletonHelper extends THREE.SkeletonHelper {
+  skeleton: THREE.Skeleton | null = null
+}
 
 class MenuItem {
   text: string
@@ -81,9 +94,20 @@ export default class AvatarAnimationComponent extends Vue {
   menuItemList: MenuItem[] = []
   viewer: ModelViewer | null = null
   openFilePopUp: OpenFilePopUp | null = null
+  animationValue = 0
+  rula: RULA | null = null
+  bvhSkeletonHelper: SkeletonHelper | null = null
+  mixer: THREE.AnimationMixer | null = null
+  animationDuration = 0
 
   mounted (): void {
     this.openFilePopUp = this.$refs.openFilePopUp as OpenFilePopUp
+    this.viewer = this.$refs.viewer as ModelViewer
+    this.createMenu()
+    this.createAvatar()
+  }
+
+  createMenu (): void {
     this.menuItemList.push(
       new MenuItem('Open Axis Neuron BVH File', 'mdi-file-document', () => {
         if (this.openFilePopUp != null) {
@@ -101,26 +125,80 @@ export default class AvatarAnimationComponent extends Vue {
     this.menuItemList.push(
       new MenuItem('Download FBX File', 'mdi-download', () => true)
     )
-    this.viewer = this.$refs.viewer as ModelViewer
-    if (this.viewer != null) {
-      this.viewer
-        .loadGLTF('./avatar.gltf')
-        .then(gltf =>
-          console.log('Avatar is loaded. Structure :', gltf.scene.children[0])
-        )
-        .catch(e => console.error('Cannot load GLTF', e))
-    }
+  }
+
+  createAvatar (): void {
+    if (this.viewer == null) return
+    const viewer = this.viewer
+    this.viewer
+      .loadGLTFFromPath('./avatar.gltf')
+      .then(gltf => {
+        gltf.scene.children[0].position.set(0, 0, -2)
+        gltf.scene.traverse(child => {
+          if (child instanceof THREE.Bone && child.name === 'mixamorig1Hips') {
+            const helper = new THREE.SkeletonHelper(child)
+            const mat = helper.material as THREE.LineBasicMaterial
+            mat.linewidth = 3
+            helper.visible = true
+            viewer.scene.add(helper)
+          }
+        })
+        console.log('Avatar is loaded. Structure :', gltf.scene.children[0])
+      })
+      .catch(e => console.error('Cannot load GLTF', e))
+  }
+
+  loadBVHAndAnimate (content: string): void {
+    if (this.viewer == null) return
+    if (this.viewer.scene == null) return
+
+    const scene = this.viewer.scene
+
+    // Load BVH
+    const bvh = this.viewer.loadBVHFromContent(content)
+
+    this.bvhSkeletonHelper = new SkeletonHelper(bvh.skeleton.bones[0])
+    this.bvhSkeletonHelper.skeleton = bvh.skeleton
+    scene.add(this.bvhSkeletonHelper)
+
+    const boneContainer = new THREE.Group()
+    boneContainer.add(bvh.skeleton.bones[0])
+    boneContainer.scale.set(0.005, 0.005, 0.005)
+    scene.add(boneContainer)
+    console.log('SKELETON', scene.children[8])
+
+    this.mixer = new THREE.AnimationMixer(this.bvhSkeletonHelper)
+    this.animationDuration = bvh.clip.duration
+    this.mixer
+      .clipAction(bvh.clip)
+      .setLoop(THREE.LoopOnce, 1)
+      .setEffectiveWeight(1.0)
+      .play()
+
+    this.displayRULA()
+    this.viewer.update = () => this.update()
+  }
+
+  // Enable or not RULA visualization
+  displayRULA (): void {
+    if (this.viewer == null) return
+    if (this.viewer.scene == null) return
+    if (this.bvhSkeletonHelper == null) return
+    this.rula = new RULA(this.viewer.scene)
+    this.rula.createRULAMarkers(this.bvhSkeletonHelper)
+    this.rula.update()
+  }
+
+  update (): void {
+    if (this.rula == null) return
+    this.rula.update()
   }
 
   onFileInput (files: APIFile[]): void {
     const file = files[0].uri
     const fileContent = file.split('base64,')[1]
     const content = atob(fileContent)
-
-    if (this.viewer != null) {
-      const bvh = this.viewer.loadBVH(content)
-      this.viewer.animateBVH(bvh)
-    }
+    this.loadBVHAndAnimate(content)
   }
 }
 </script>

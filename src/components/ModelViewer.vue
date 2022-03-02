@@ -1,13 +1,5 @@
 <template>
-  <div class="viewer-3d" ref="canvasContainer">
-    <v-slider
-      v-model="animationValue"
-      @input="rula.update()"
-      min="0"
-      max="1"
-      step="0.001"
-    ></v-slider>
-  </div>
+  <div class="viewer-3d" ref="canvasContainer"></div>
 </template>
 
 <script lang="ts">
@@ -18,12 +10,8 @@ import V from '@/utils/vector'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 import { GLTFLoader, GLTF } from 'three/examples/jsm/loaders/GLTFLoader'
 import { BVHLoader, BVH } from 'three/examples/jsm/loaders/BVHLoader'
-import RULA from '@/utils/rula'
-// import AVATAR from '@/utils/avatar'
 
-class SkeletonHelper extends THREE.SkeletonHelper {
-  skeleton: THREE.Skeleton | null = null
-}
+// import AVATAR from '@/utils/avatar'
 
 @Component
 export default class ModelViewer extends Vue {
@@ -36,19 +24,17 @@ export default class ModelViewer extends Vue {
 
   camera: THREE.PerspectiveCamera
   scene: THREE.Scene
-  rula: RULA
   renderer: THREE.WebGLRenderer
 
   animationValue = 0
   animationDuration = 0
 
-  terminated = false
+  update: (() => void) | null = null
 
   constructor () {
     super()
     this.camera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000)
     this.scene = new THREE.Scene()
-    this.rula = new RULA(this.scene)
     this.renderer = new THREE.WebGLRenderer({
       antialias: true
     })
@@ -104,25 +90,18 @@ export default class ModelViewer extends Vue {
     floor.receiveShadow = true
     this.scene.add(floor)
 
-    const createCube = (
-      x: number,
-      y: number,
-      z: number,
-      color: number
-    ): void => {
-      const geometry = new THREE.BoxGeometry(1, 1, 1)
-      const material = new THREE.MeshLambertMaterial({ color: color })
-      const cube = new THREE.Mesh(geometry, material)
-      cube.position.set(x, y, z)
-      if (this.scene) this.scene.add(cube)
-    }
-
-    createCube(-1, 0.5, -1, 0x005500)
-    createCube(-1, 1.5, -1, 0x550000)
-
     // Update scene
     this.updateSize()
     this.loop()
+  }
+
+  // Simple method to add cube in scene
+  createCube (x: number, y: number, z: number, color: number) {
+    const geometry = new THREE.BoxGeometry(1, 1, 1)
+    const material = new THREE.MeshLambertMaterial({ color: color })
+    const cube = new THREE.Mesh(geometry, material)
+    cube.position.set(x, y, z)
+    if (this.scene) this.scene.add(cube)
   }
 
   updateSize () {
@@ -139,31 +118,20 @@ export default class ModelViewer extends Vue {
     }
   }
 
-  loadGLTF (path: string): Promise<GLTF> {
+  loadGLTFFromPath (path: string): Promise<GLTF> {
     console.log(`Load <${path}>`)
     const loader = new GLTFLoader()
     return new Promise((resolve, reject) =>
       loader.load(
         path,
         object => {
-          object.scene.children[0].position.set(0, 0, -2)
           object.scene.traverse(child => {
             if (child instanceof THREE.Mesh) {
               child.castShadow = true
               child.receiveShadow = true
-            } else if (
-              child instanceof THREE.Bone &&
-              child.name === 'mixamorig1Hips'
-            ) {
-              const helper = new THREE.SkeletonHelper(child)
-              const mat = helper.material as THREE.LineBasicMaterial
-              mat.linewidth = 3
-              helper.visible = true
-              if (this.scene) this.scene.add(helper)
             }
           })
           if (this.scene != null) this.scene.add(object.scene)
-
           resolve(object)
         },
         undefined,
@@ -172,7 +140,7 @@ export default class ModelViewer extends Vue {
     )
   }
 
-  loadBVH (content: string): BVH {
+  loadBVHFromContent (content: string): BVH {
     console.log('Load BVH')
     return new BVHLoader().parse(content)
   }
@@ -183,48 +151,11 @@ export default class ModelViewer extends Vue {
   http://lo-th.github.io/root/blending2/index_bvh.html
   */
 
-  animateBVH (bvh: BVH): void {
-    if (!this.scene) return
-    const skeletonHelper = new SkeletonHelper(bvh.skeleton.bones[0])
-    skeletonHelper.skeleton = bvh.skeleton
-
-    const boneContainer = new THREE.Group()
-    boneContainer.add(bvh.skeleton.bones[0])
-    boneContainer.scale.set(0.005, 0.005, 0.005)
-    this.scene.add(skeletonHelper)
-    this.scene.add(boneContainer)
-    console.log('SKELETON', this.scene.children[8])
-
-    this.rula.createRULAMarkers(skeletonHelper)
-    this.rula.update()
-
-    this.mixer = new THREE.AnimationMixer(skeletonHelper)
-    this.animationDuration = bvh.clip.duration
-
-    this.mixer.addEventListener('finished', e => {
-      this.terminated = true
-    })
-    this.mixer
-      .clipAction(bvh.clip)
-      .setLoop(THREE.LoopOnce, 1)
-      .setEffectiveWeight(1.0)
-      .play()
-  }
-
   draw () {
     if (this.renderer && this.scene && this.camera) {
       this.updateSize()
-      if (this.mixer) {
-        const delta = this.clock.getDelta()
-        if (this.terminated) {
-          this.rula.export()
-          this.terminated = false
-        } else {
-          this.rula.update()
-        }
-
-        this.mixer.update(delta)
-        // this.mixer.setTime(this.animationValue * this.animationDuration)
+      if (this.update) {
+        this.update()
       }
       this.renderer.render(this.scene, this.camera)
     }
