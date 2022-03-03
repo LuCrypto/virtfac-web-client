@@ -169,7 +169,7 @@ export default class NV extends Vue {
       this.graph.download('graph.json')
     })
     this.graph.nodeFields.set('position', 'Vec2')
-    this.graph.nodeFields.set('color', 'string')
+    // this.graph.nodeFields.set('color', 'string')
     this.graph.nodeIdField = 'name'
 
     this.graph.setData<{(): void }>('upload', () => {
@@ -181,7 +181,7 @@ export default class NV extends Vue {
         if (f != null) {
           const fr = new FileReader()
           fr.onload = event => {
-            this.graph.applyJson(fr.result as string)
+            this.graph.applyJson(JSON.parse(fr.result as string))
           }
           fr.readAsText(f, 'utf8')
         }
