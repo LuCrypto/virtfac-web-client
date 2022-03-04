@@ -221,6 +221,7 @@ export default class ContradictionExpert extends Vue {
               name: text,
               type: 'graph_position',
               initialProject: this.fileName,
+              date: new Date(),
               data: this.constraintGraph.getRawGraph().toJsonOBJ()
             }
             API.post(
@@ -261,12 +262,21 @@ export default class ContradictionExpert extends Vue {
             }
           },
           {
-            text: 'Initial project',
+            text: 'Initial Project',
             value: 'initialProject',
             align: 'start',
             sortable: true,
             sort: (a: unknown, b: unknown) => {
               return (a as string).localeCompare(b as string)
+            }
+          },
+          {
+            text: 'Date',
+            value: 'date',
+            align: 'end',
+            sortable: true,
+            sort: (a: unknown, b: unknown) => {
+              return new Date(a as string) < new Date(b as string) ? 1 : -1
             }
           }
           )
@@ -274,6 +284,7 @@ export default class ContradictionExpert extends Vue {
       const m = new Array<{
         name: string
         initialProject: string
+        date: string
         return: unknown
       }>()
       r.forEach(item => {
@@ -284,6 +295,12 @@ export default class ContradictionExpert extends Vue {
             setting.initialProject === undefined
               ? 'N.A.'
               : setting.initialProject,
+          date:
+            setting.date === undefined
+              ? 'N.A.'
+              : new Date(setting.date).toLocaleTimeString() +
+                ' ' +
+                new Date(setting.date).toLocaleDateString(),
           return: item
         }
         if (setting.type === 'graph_position') {
