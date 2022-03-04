@@ -8,6 +8,7 @@ import AboutContradictionAnalysis from '@/views/ContradictionAnalysis/AboutContr
 import DrawingShop from '@/views/RoutingAnalysis/RoutingAnalysis.vue'
 import ContradictionAnalysisExpert from '@/views/ContradictionAnalysis/ExpertApproach.vue'
 import ContradictionAnalysisSimulation from '@/views/ContradictionAnalysis/SimulationApproach.vue'
+import ContradictionAnalysisGraph from '@/views/ContradictionAnalysis/ExpertApproach2.vue'
 import ErgonomIO from '@/views/ErgonomIO/ErgonomIO.vue'
 import ErgonomIOAnalysis from '@/views/ErgonomIO/ErgonomIOAnalysis.vue'
 import ErgonomioMainMenu from '@/components/ergonomio_ui/ErgonomioMainMenu.vue'
@@ -83,6 +84,14 @@ export const routes: Array<Route> = [
     path: '/contradiction-analysis-expert',
     category: 'Contradiction Analysis',
     component: ContradictionAnalysisExpert
+  }),
+  new Route({
+    icon: 'mdi-graph',
+    name: 'Expert approach 2 ',
+    subname: '',
+    path: '/contradiction-analysis-expert2',
+    category: 'Contradiction Analysis',
+    component: ContradictionAnalysisGraph
   }),
   new Route({
     icon: 'mdi-robot',
