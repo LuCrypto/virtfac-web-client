@@ -5,12 +5,17 @@ import Home from '../views/Home.vue'
 // Contradiction analysis
 import AboutContradictionAnalysis from '@/views/ContradictionAnalysis/AboutContradictionAnalysis.vue'
 
+import AboutRoutingAnalysis from '@/views/RoutingAnalysis/AboutRoutingAnalysis.vue'
 import DrawingShop from '@/views/RoutingAnalysis/RoutingAnalysis.vue'
-import ContradictionAnalysisExpert from '@/views/ContradictionAnalysis/ExpertApproach.vue'
-import ContradictionAnalysisSimulation from '@/views/ContradictionAnalysis/SimulationApproach.vue'
+// import ContradictionAnalysisExpert from '@/views/ContradictionAnalysis/ExpertApproach.vue'
+import ContradictionAnalysisSimulation from '@/views/ContradictionAnalysis/SimulationApproach2.vue'
 import ContradictionAnalysisGraph from '@/views/ContradictionAnalysis/ExpertApproach2.vue'
+
+import AboutErgonomIO from '@/views/ErgonomIO/AboutErgonomIO.vue'
 import ErgonomIO from '@/views/ErgonomIO/ErgonomIO.vue'
 import ErgonomIOAnalysis from '@/views/ErgonomIO/ErgonomIOAnalysis.vue'
+import ErgonomIOAssets from '@/views/ErgonomIO/ErgonomIOAssets.vue'
+import ErgonomIOAvatars from '@/views/ErgonomIO/ErgonomIOAvatars.vue'
 import ErgonomioMainMenu from '@/components/ergonomio_ui/ErgonomioMainMenu.vue'
 
 Vue.use(VueRouter)
@@ -23,9 +28,12 @@ export class Route {
   subname: string | undefined = undefined
   path = ''
   alias: string | undefined = undefined
-  href = ''
+  href: string | undefined = undefined
   category = 'Other'
   visibility = true
+  restricted = true
+
+  replace = false
   component: Component | undefined = undefined
   constructor (attributes?: Partial<Route>) {
     Object.assign(this, attributes)
@@ -37,57 +45,33 @@ export const routes: Array<Route> = [
   new Route({
     icon: 'mdi-home',
     name: 'Home',
-    path: '/',
-    alias: '/home',
+    path: '/home',
     category: 'About us',
+    restricted: false,
     component: Home
   }),
-  new Route({
-    icon: 'mdi-rocket-launch',
-    name: 'Context',
-    href:
-      '/home#Le_contexte_du_projet_VIRTFac_:_Industrie_4.0.2C_l.27usine_du_futur',
-    category: 'About us'
-  }),
-  new Route({
-    icon: 'mdi-code-tags',
-    name: 'Developments',
-    href: '/home#Les_d.C3.A9veloppements_du_projet',
-    category: 'About us'
-  }),
-  new Route({
-    icon: 'mdi-human-dolly',
-    name: 'Ergonomie',
-    href: '/home#Ergonom.io.2C_l.27ergonomie_pour_l.27industrie_4.0',
-    category: 'About us'
-  }),
-  new Route({
-    icon: 'mdi-at',
-    name: 'Contacts',
-    href: '/home#Contact',
-    category: 'About us'
-  }),
 
-  // COntradiction analyse
+  // Contradiction analyse
   new Route({
     icon: 'mdi-information-outline',
-    name: 'About',
+    name: 'About contradiction',
     subname: '',
     path: '/about-contradiction-analysis-expert',
     category: 'Contradiction Analysis',
+    restricted: false,
     component: AboutContradictionAnalysis
   }),
+  // new Route({
+  //   icon: 'mdi-graph',
+  //   name: 'Expert approach',
+  //   subname: '',
+  //   path: '/contradiction-analysis-expert',
+  //   category: 'Contradiction Analysis',
+  //   component: ContradictionAnalysisExpert
+  // }),
   new Route({
     icon: 'mdi-graph',
     name: 'Expert approach',
-    subname: '',
-    path: '/contradiction-analysis-expert',
-    category: 'Contradiction Analysis',
-    component: ContradictionAnalysisExpert
-  }),
-  new Route({
-    icon: 'mdi-graph',
-    name: 'Expert approach 2 ',
     subname: '',
     path: '/contradiction-analysis-expert2',
     category: 'Contradiction Analysis',
@@ -105,17 +89,18 @@ export const routes: Array<Route> = [
   // Routing analysis
   new Route({
     icon: 'mdi-information-outline',
-    name: 'About',
+    name: 'About routing analysis',
     subname: '',
-    path: '/about-drawing-shop',
+    path: '/about-routing-analysis',
     category: 'Routing  Analysis',
-    component: DrawingShop
+    restricted: false,
+    component: AboutRoutingAnalysis
   }),
   new Route({
     icon: 'mdi-arrow-decision',
     name: 'Routing  Analysis',
     subname: 'a.k.a. Drawing Shop',
-    path: '/drawing-shop',
+    path: '/routing-analysis',
     category: 'Routing  Analysis',
     component: DrawingShop
   }),
@@ -123,11 +108,12 @@ export const routes: Array<Route> = [
   // Ergonom.io
   new Route({
     icon: 'mdi-information-outline',
-    name: 'About',
+    name: 'About Ergonom.io',
     subname: '',
     path: '/about-ergonom-io',
     category: 'Ergonom.io',
-    component: ErgonomIO
+    restricted: false,
+    component: AboutErgonomIO
   }),
   new Route({
     icon: 'mdi-factory',
@@ -151,7 +137,7 @@ export const routes: Array<Route> = [
     subname: 'Asset management',
     path: '/ergonom-io-assets',
     category: 'Ergonom.io',
-    component: ErgonomIO
+    component: ErgonomIOAssets
   }),
   new Route({
     icon: 'mdi-human',
@@ -159,7 +145,7 @@ export const routes: Array<Route> = [
     subname: 'Manage your avatars',
     path: '/ergonom-io-avatars',
     category: 'Ergonom.io',
-    component: ErgonomIO
+    component: ErgonomIOAvatars
   }),
 
   // Hidded menus

@@ -4,6 +4,13 @@
 
 import { FORMAT_TYPE, FORMAT_INFO, FormatInfo } from '@/utils/format'
 
+export interface APIOdooMenuItem {
+  id: number
+  name: string
+  url: string
+  childId: APIOdooMenuItem[]
+}
+
 export class APIFileMIME {
   media: string | null = null
   format: string | null = null

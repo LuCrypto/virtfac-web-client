@@ -56,7 +56,7 @@
     >
       <v-list>
         <v-list-item-group v-for="(category, i) in categories.keys()" :key="i">
-          <v-subheader>{{ category }}</v-subheader>
+          <v-subheader v-if="avatar != null">{{ category }}</v-subheader>
           <v-list-item
             v-for="(route, j) in categories.get(category)"
             :key="j"
@@ -90,6 +90,9 @@ import { routes, Route } from '@/utils/router'
 import LoginPopUp from '@/components/popup/LoginPopUp.vue'
 import AccountPopUp from '@/components/popup/AccountPopUp.vue'
 import { Session, User } from '@/utils/session'
+import API from '@/utils/api'
+import { APIOdooMenuItem } from '@/utils/models'
+import Home from '../views/Home.vue'
 
 @Component({
   components: {
@@ -103,8 +106,22 @@ export default class NavBar extends Vue {
   avatar: string | null = null
 
   created (): void {
+    this.updateMenu()
+    // this.getMainMenu()
+  }
+
+  mounted (): void {
+    this.$root.$on('user-connection', (user: User) => this.setUser(user))
+    this.$root.$on('user-disconnection', () => this.removeUser())
+    this.setUser(Session.getUser())
+  }
+
+  updateMenu (): void {
+    this.categories = new Map()
     routes
-      .filter(route => route.visibility)
+      .filter(route => {
+        return route.visibility && !(route.restricted && !this.avatar)
+      })
       .forEach(route => {
         if (route.category === undefined) return
         const category = this.categories.get(route.category)
@@ -116,20 +133,39 @@ export default class NavBar extends Vue {
       })
   }
 
-  mounted (): void {
-    this.$root.$on('user-connection', (user: User) => this.setUser(user))
-    this.$root.$on('user-disconnection', () => this.removeUser())
-    this.setUser(Session.getUser())
+  getMainMenu (): void {
+    API.get(this, '/odoo/web-main-menu', null).then((response: Response) => {
+      const mainMenu = (response as unknown) as APIOdooMenuItem[]
+
+      console.log('MAIN', mainMenu)
+      const category = this.categories.get('About us')
+      if (!mainMenu || !category) return
+      mainMenu.forEach(item => {
+        console.log('ITEM', item)
+        category.push(
+          new Route({
+            icon: 'mdi-information-outline',
+            name: item.name,
+            subname: '',
+            category: 'About us',
+            replace: true,
+            component: Home
+          })
+        )
+      })
+    })
   }
 
   setUser (user: User | null): void {
     if (user != null && user.picture != null) {
       this.avatar = user.picture
     }
+    this.updateMenu()
   }
 
   removeUser (): void {
     this.avatar = null
+    this.updateMenu()
   }
 
   toggleDarkMode (): void {

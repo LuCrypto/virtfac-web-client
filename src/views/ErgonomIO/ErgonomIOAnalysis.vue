@@ -1,11 +1,8 @@
 <template>
-  <v-container class="spacing-playground pa-6 contradiction-analysis">
-    <v-card elevation="3" class="mx-auto mb-6">
-      <v-card-title>Ergonom.io</v-card-title>
-      <v-card-subtitle
-        >Analysis tool for ergonomics and flow visualisation in virtual
-        reality</v-card-subtitle
-      >
+  <v-container class="spacing-playground pa-6 contradiction-analysis" fluid>
+    <v-card elevation="3" class="mx-auto mb-6 flex-grow-1">
+      <v-card-title>Ergonom.io Analysis</v-card-title>
+      <v-card-subtitle>Analysis tool for ergonom.io</v-card-subtitle>
     </v-card>
     <avatar-animation-component></avatar-animation-component>
   </v-container>

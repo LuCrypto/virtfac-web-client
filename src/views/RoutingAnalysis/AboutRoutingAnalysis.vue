@@ -9,7 +9,7 @@
 import { Component, Vue } from 'vue-property-decorator'
 
 @Component
-export default class AboutContradictionAnalysis extends Vue {
-  page = 'http://10.244.77.203/about-contradiction-analysis'
+export default class AboutRoutingAnalysis extends Vue {
+  page = 'http://10.244.77.203/about-routing-analysis'
 }
 </script>

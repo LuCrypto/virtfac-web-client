@@ -1,5 +1,17 @@
 <template>
-  <v-card elevation="3" height="700" class="d-flex flex-row">
+  <v-card
+    elevation="3"
+    height="700"
+    style="width: 100%"
+    class="d-flex flex-row"
+  >
+    <open-file-pop-up
+      ref="openFilePopUp"
+      application="ERGONOM_IO_ANALYSIS"
+      :singleSelect="true"
+      :openFile="true"
+      @fileInput="onFileInput"
+    ></open-file-pop-up>
     <v-navigation-drawer stateless permanent :mini-variant="menuCollapse">
       <v-list
         nav
@@ -38,23 +50,25 @@
         </v-list-item-group>
       </v-list>
     </v-navigation-drawer>
-    <v-container style="width: auto; margin: 0; flex-grow: 1;">
+    <div
+      style="width: 100%; max-width: none;display: flex; flex-direction: column;"
+    >
+      <div style="width: 100%; height: 10px; flex-grow: 1;">
+        <div class="currentScore">
+          Score RULA : {{ this.rula ? this.rula.currentScore : 0 }}
+        </div>
+        <ModelViewer ref="viewer"></ModelViewer>
+      </div>
       <v-slider
         v-model="animationValue"
         @input="rula.update()"
+        dense
         min="0"
         max="1"
         step="0.001"
+        class="flex-grow-0 px-6 pt-5"
       ></v-slider>
-      <ModelViewer ref="viewer"></ModelViewer>
-    </v-container>
-    <open-file-pop-up
-      ref="openFilePopUp"
-      application="ERGONOM_IO_ANALYSIS"
-      :singleSelect="true"
-      :openFile="true"
-      @fileInput="onFileInput"
-    ></open-file-pop-up>
+    </div>
   </v-card>
 </template>
 
@@ -98,32 +112,28 @@ export default class AvatarAnimationComponent extends Vue {
   rula: RULA | null = null
   bvhSkeletonHelper: SkeletonHelper | null = null
   mixer: THREE.AnimationMixer | null = null
+  animationTime = 0
   animationDuration = 0
+  clock = new THREE.Clock()
 
   mounted (): void {
     this.openFilePopUp = this.$refs.openFilePopUp as OpenFilePopUp
     this.viewer = this.$refs.viewer as ModelViewer
     this.createMenu()
     this.createAvatar()
+    this.rula = new RULA(this.viewer.scene)
   }
 
   createMenu (): void {
     this.menuItemList.push(
-      new MenuItem('Open Axis Neuron BVH File', 'mdi-file-document', () => {
+      new MenuItem('Open BVH File', 'mdi-file-document', () => {
         if (this.openFilePopUp != null) {
           this.openFilePopUp.open()
         }
       })
     )
     this.menuItemList.push(
-      new MenuItem('Display shape', 'mdi-graph-outline', () => true)
-    )
-    this.menuItemList.push(new MenuItem('Settings', 'mdi-cog', () => true))
-    this.menuItemList.push(
-      new MenuItem('Download JSON File', 'mdi-download', () => true)
-    )
-    this.menuItemList.push(
-      new MenuItem('Download FBX File', 'mdi-download', () => true)
+      new MenuItem('Download RULA analysis', 'mdi-download', () => true)
     )
   }
 
@@ -169,9 +179,10 @@ export default class AvatarAnimationComponent extends Vue {
 
     this.mixer = new THREE.AnimationMixer(this.bvhSkeletonHelper)
     this.animationDuration = bvh.clip.duration
+    this.animationTime = 0
     this.mixer
       .clipAction(bvh.clip)
-      .setLoop(THREE.LoopOnce, 1)
+      .setLoop(THREE.LoopRepeat, Infinity)
       .setEffectiveWeight(1.0)
       .play()
 
@@ -184,7 +195,7 @@ export default class AvatarAnimationComponent extends Vue {
     if (this.viewer == null) return
     if (this.viewer.scene == null) return
     if (this.bvhSkeletonHelper == null) return
-    this.rula = new RULA(this.viewer.scene)
+    if (this.rula == null) return
     this.rula.createRULAMarkers(this.bvhSkeletonHelper)
     this.rula.update()
   }
@@ -192,6 +203,12 @@ export default class AvatarAnimationComponent extends Vue {
   update (): void {
     if (this.rula == null) return
     this.rula.update()
+
+    if (this.mixer == null) return
+    const delta = this.clock.getDelta()
+    this.animationTime = (this.animationTime + delta) % this.animationDuration
+    this.animationValue = this.animationTime / this.animationDuration
+    this.mixer.setTime(this.animationTime)
   }
 
   onFileInput (files: APIFile[]): void {

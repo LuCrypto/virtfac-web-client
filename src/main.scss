@@ -95,4 +95,30 @@ $typoOptions: display-4 display-3 display-2 display-1 headline title subtitle-1
 }
 .viewer-3d > canvas {
   flex-grow: 1;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.currentScore {
+  position: absolute;
+  font-size: 20px;
+  min-width: 20px;
+  padding: 20px;
+  margin: 10px;
+  border-radius: 5px;
+  line-height: 20px;
+  text-align: center;
+  background-color: #252525;
+  right: 0;
+}
+
+/* iframe */
+iframe {
+  border-style: solid;
+  border-width: 0;
+}
+
+/* fix container */
+.page {
+  height: 100%;
 }

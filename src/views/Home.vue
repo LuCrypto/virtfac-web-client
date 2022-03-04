@@ -1,49 +1,24 @@
 <template>
-  <v-container class="home" fluid>
-    <v-card elevation="3" class="pa-6">
-      <div class="external-content" ref="content"></div>
-      <!-- <iframe src="http://localhost:8070/hellowebsite"></iframe> -->
-      Content from odoo here.
-    </v-card>
+  <v-container fluid class="d-flex">
+    <iframe v-if="page" class="flex-grow-1 fill-height" :src="page"></iframe>
+    <div v-else>No page to display</div>
   </v-container>
 </template>
 
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator'
+import VueRouter from 'vue-router'
 
 @Component
 export default class Home extends Vue {
-  url = 'http://192.168.0.15:1337/web-content'
-  dom: HTMLElement | null = null
+  base = 'http://10.244.77.203/'
+  page: string | (string | null)[] = ''
+
   mounted (): void {
-    this.dom = this.$refs.content as HTMLElement
-    this.load()
-  }
-
-  load (): void {
-    /*
-    fetch(this.url).then(response => {
-      response.text().then(body => {
-        const bodyDom: HTMLElement = document.createElement('div')
-        bodyDom.innerHTML = body
-        const contentDom: HTMLElement = bodyDom.querySelector(
-          '#mw-content-text'
-        ) as HTMLElement
-        const content = contentDom.innerHTML
-        if (this.dom != null) {
-          this.dom.innerHTML = content
-          console.log(this.dom)
-          this.dom.classList.add('visible')
-          console.log(this.dom)
-        }
-      })
-    })
-
-    */
-  }
-
-  isLoaded (content: string): void {
-    console.log(content)
+    const router: VueRouter = this.$router
+    const query = router.currentRoute.query
+    this.page = `${this.base}`
+    console.log('hello home', router.currentRoute.query)
   }
 }
 </script>
