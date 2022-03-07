@@ -276,7 +276,7 @@ export default class ContradictionExpert extends Vue {
             align: 'end',
             sortable: true,
             sort: (a: unknown, b: unknown) => {
-              return new Date(a as string) < new Date(b as string) ? 1 : -1
+              return new Date(a as string) > new Date(b as string) ? 1 : -1
             }
           }
           )
