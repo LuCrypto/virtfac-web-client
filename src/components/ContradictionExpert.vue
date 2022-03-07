@@ -48,6 +48,8 @@
       :openFile="true"
       @fileInput="handleFile"
     ></open-file-pop-up>
+    <select-pop-up ref="selectPopUp"></select-pop-up>
+    <input-field-pop-up ref="inputFieldPopUp"></input-field-pop-up>
   </v-card>
 </template>
 
@@ -68,6 +70,9 @@ import CAEExampleFormat1 from '@/exemples/CAEExampleFormat1'
 import { ConstraintGraph } from '@/utils/graph/constraintGraph'
 import { Graph } from '@/utils/graph/graph'
 import { IWorkBook } from 'ts-xlsx'
+import API from '@/utils/api'
+import SelectPopUp from '@/components/popup/SelectPopUp.vue'
+import InputFieldPopUp from '@/components/popup/InputFieldPopUp.vue'
 
 class MenuItem {
   text: string
@@ -80,21 +85,33 @@ class MenuItem {
   }
 }
 
+interface SettingItem {
+  id: number
+  idApplication: number
+  name: string
+  json: string
+}
+
 @Component({
   components: {
     ActionContainer,
     OpenFilePopUp,
-    NV
+    NV,
+    SelectPopUp,
+    InputFieldPopUp
   }
 })
 export default class ContradictionExpert extends Vue {
   selectedMenuItem = -1
   nodeViewer: NV | null = null
+  selectPopUp: SelectPopUp | null = null
+  inputFieldPopUp: InputFieldPopUp | null = null
   actionContainer: ActionContainer | null = null
   menuCollapse = false
   filePopUp: OpenFilePopUp | null = null
   menuItemList: MenuItem[] = []
   constraintGraph: ConstraintGraph = new ConstraintGraph()
+  fileName = ''
 
   getGraph (): Graph {
     return (this.constraintGraph as ConstraintGraph).getRawGraph()
@@ -105,6 +122,8 @@ export default class ContradictionExpert extends Vue {
     this.nodeViewer = this.$refs.nodeViewer as NV
     this.actionContainer = this.$refs.actionContainer as ActionContainer
     this.filePopUp = this.$refs.filePopUp as OpenFilePopUp
+    this.selectPopUp = this.$refs.selectPopUp as SelectPopUp
+    this.inputFieldPopUp = this.$refs.inputFieldPopUp as InputFieldPopUp
 
     this.menuItemList.push(
       new MenuItem('Open File', 'mdi-file-document', () => {
@@ -112,7 +131,14 @@ export default class ContradictionExpert extends Vue {
       })
     )
     this.menuItemList.push(
-      new MenuItem('Display shape', 'mdi-graph-outline', () => true)
+      new MenuItem('Save shape', 'mdi-graph-outline', () => {
+        this.saveShape()
+      })
+    )
+    this.menuItemList.push(
+      new MenuItem('Load shape', 'mdi-graph-outline', () => {
+        this.loadShape()
+      })
     )
     this.menuItemList.push(new MenuItem('Settings', 'mdi-cog', () => true))
     this.menuItemList.push(
@@ -162,10 +188,148 @@ export default class ContradictionExpert extends Vue {
       })
       console.log(workbook)
       this.constraintGraph.loadXLSX(workbook as IWorkBook)
+      this.fileName = files[0].name
     }
   }
 
   // dropHandler(e : )
+  saveShape (): void {
+    /*
+    const settingOBJ = {
+      name: this.fileName,
+      type: 'graph_position',
+      data: this.constraintGraph.getRawGraph().toJsonOBJ()
+    }
+    API.post(
+      this,
+      '/application-settings',
+      JSON.stringify({
+        idApplication: 2,
+        name: this.fileName,
+        json: JSON.stringify(settingOBJ)
+      })
+    )
+    */
+    if (this.inputFieldPopUp != null) {
+      this.inputFieldPopUp.open(
+        'Save Shape',
+        'enter shape name',
+        this.fileName,
+        text => {
+          if (text != null) {
+            const settingOBJ = {
+              name: text,
+              type: 'graph_position',
+              initialProject: this.fileName,
+              date: new Date(),
+              data: this.constraintGraph.getRawGraph().toJsonOBJ()
+            }
+            API.post(
+              this,
+              '/application-settings',
+              JSON.stringify({
+                idApplication: 2,
+                name: text,
+                json: JSON.stringify(settingOBJ)
+              })
+            )
+          }
+        }
+      )
+    }
+  }
+
+  loadShape (): void {
+    API.get(
+      this,
+      '/application-settings',
+      new URLSearchParams({ application: 'CONTRADICTION_ANALYSIS' })
+    ).then(response => {
+      const headers = new Array<{
+        text: string
+        value: string
+        align: string
+        sortable: boolean
+        sort: {(a: unknown, b: unknown): number }
+          }>(
+          {
+            text: 'Name',
+            value: 'name',
+            align: 'start',
+            sortable: true,
+            sort: (a: unknown, b: unknown) => {
+              return (a as string).localeCompare(b as string)
+            }
+          },
+          {
+            text: 'Initial Project',
+            value: 'initialProject',
+            align: 'start',
+            sortable: true,
+            sort: (a: unknown, b: unknown) => {
+              return (a as string).localeCompare(b as string)
+            }
+          },
+          {
+            text: 'Date',
+            value: 'date',
+            align: 'end',
+            sortable: true,
+            sort: (a: unknown, b: unknown) => {
+              return new Date(a as string) < new Date(b as string) ? 1 : -1
+            }
+          }
+          )
+      const r = (response as unknown) as SettingItem[]
+      const m = new Array<{
+        name: string
+        initialProject: string
+        date: string
+        return: unknown
+      }>()
+      r.forEach(item => {
+        const setting = JSON.parse(item.json)
+        const it = {
+          name: item.name,
+          initialProject:
+            setting.initialProject === undefined
+              ? 'N.A.'
+              : setting.initialProject,
+          date:
+            setting.date === undefined
+              ? 'N.A.'
+              : new Date(setting.date).toLocaleTimeString() +
+                ' ' +
+                new Date(setting.date).toLocaleDateString(),
+          return: item
+        }
+        if (setting.type === 'graph_position') {
+          m.push(it)
+        }
+      })
+
+      if (this.selectPopUp != null) {
+        this.selectPopUp.open(headers, m, item => {
+          if (item != null) {
+            const settingItem = (item as Record<string, unknown>)
+              .return as SettingItem
+            this.getGraph().applyJson(JSON.parse(settingItem.json).data)
+          }
+        })
+      }
+      /*
+      ;(this.selectPopUp as SelectPopUp).open(m, selected => {
+        if (selected == null) console.log('null')
+        else {
+          console.log(JSON.parse((selected as SettingItem).json))
+          this.getGraph().applyJson(
+            JSON.parse((selected as SettingItem).json).data
+          )
+        }
+      })
+      */
+    })
+  }
 
   openFilePopUp (): void {
     if (this.filePopUp != null) {

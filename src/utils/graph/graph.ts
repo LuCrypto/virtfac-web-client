@@ -142,6 +142,16 @@ export class Graph extends MetaData {
   public nodeIdField: string | undefined = ''
 
   public download (name = 'graph.json') {
+    const a = document.createElement('a')
+    const file = new Blob([JSON.stringify(this.toJsonOBJ())], {
+      type: 'text/plain'
+    })
+    a.href = URL.createObjectURL(file)
+    a.download = name
+    a.click()
+  }
+
+  public toJsonOBJ (): unknown {
     const saveObject = {
       nodeIdField: this.nodeIdField || 'DEFAULT_ID',
       nodeFields: Object.fromEntries(this.nodeFields),
@@ -169,20 +179,12 @@ export class Graph extends MetaData {
         data: Object.fromEntries(nodeMap)
       })
     })
-
-    {
-      const a = document.createElement('a')
-      const file = new Blob([JSON.stringify(saveObject)], {
-        type: 'text/plain'
-      })
-      a.href = URL.createObjectURL(file)
-      a.download = name
-      a.click()
-    }
+    return saveObject
   }
 
-  public applyJson (json: string) {
-    const object = JSON.parse(json) as savedObject
+  public applyJson (json: Record<string, unknown>) {
+    // const object = JSON.parse(json) as savedObject
+    const object = (json as unknown) as savedObject
 
     const nodeMap = new Map<string, Node>()
     this.foreachNode(node => {
@@ -190,12 +192,14 @@ export class Graph extends MetaData {
     })
 
     object.nodes.forEach(data => {
-      const node = nodeMap.get(data.id) as Node
-      const dArray = data.data as Record<string, unknown>
-      if (dArray !== null && dArray !== undefined) {
-        Object.entries(dArray).forEach(metaData => {
-          node.setData(metaData[0], metaData[1])
-        })
+      const node = nodeMap.get(data.id)
+      if (node !== undefined) {
+        const dArray = data.data as Record<string, unknown>
+        if (dArray !== null && dArray !== undefined) {
+          Object.entries(dArray).forEach(metaData => {
+            node.setData(metaData[0], metaData[1])
+          })
+        }
       }
     })
   }
