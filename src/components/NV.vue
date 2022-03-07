@@ -23,6 +23,7 @@ import { ConstraintGraph } from '@/utils/graph/constraintGraph'
 import Component from 'vue-class-component'
 
 import domtoimage from 'dom-to-image'
+import { Session } from '@/utils/session'
 
 @Component({
   props: {
@@ -37,6 +38,20 @@ export default class NV extends Vue {
   private nodeMap: Map<Node, NvNode> = new Map<Node, NvNode>()
 
   private container: NvContainer | null = null
+
+  private setTheme (name: string | null) {
+    if (name === null) return
+    if (name === 'light') {
+      this.themeID = 0
+    }
+    if (name === 'dark') {
+      this.themeID = 1
+    }
+    if (this.container == null) return
+    this.container.theme = this.themes[this.themeID]
+    this.container.updateTransform()
+    this.container.updateTheme()
+  }
 
   public themes: NvTheme[] = new Array<NvTheme>(
     new NvTheme({ name: 'LIGHT' }),
@@ -151,6 +166,11 @@ export default class NV extends Vue {
       }
     })
     */
+
+    this.$root.$on('changeDarkMode', () => {
+      this.setTheme(Session.getTheme())
+    })
+
     console.log("i'm mounted")
 
     const colors = {
