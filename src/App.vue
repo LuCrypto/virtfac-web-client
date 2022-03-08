@@ -1,14 +1,14 @@
 <template>
   <v-app :style="this.transparency ? 'background-color: transparent;' : ''">
     <!-- Display of not vue in fullpage -->
-    <div v-if="!this.fullpage">
+    <div v-if="!this.fullpage" class="page">
       <nav-bar></nav-bar>
-      <v-main>
-        <router-view class="ma-0 pa-0"></router-view>
+      <v-main class="page">
+        <router-view class="ma-0 pa-0 page fluid"></router-view>
       </v-main>
     </div>
     <div v-else>
-      <router-view class="ma-0 pa-0"></router-view>
+      <router-view class="ma-0 pa-0 page fluid"></router-view>
     </div>
 
     <!-- Global bottom message -->

@@ -45,7 +45,7 @@ export default class ModelViewer extends Vue {
     // Create scene
     const fogColor = new THREE.Color(0xa0a0a0)
     this.scene.background = fogColor
-    // this.scene.fog = new THREE.Fog(fogColor, 0.0025, 20)
+    this.scene.fog = new THREE.Fog(fogColor, 0.0025, 20)
     // Create camera
     this.camera.position.set(1.5, 2.5, 1.5)
     this.camera.lookAt(new THREE.Vector3(0, 5, 0))
@@ -71,16 +71,16 @@ export default class ModelViewer extends Vue {
     sun.shadow.camera.far = 100
     // sun.shadow.bias = 0.00000001
     // Create sun visualizer
-    const sunHelper = new THREE.DirectionalLightHelper(sun, 4, 0xffb000)
-    this.scene.add(sunHelper)
+    // const sunHelper = new THREE.DirectionalLightHelper(sun, 4, 0xffb000)
+    // this.scene.add(sunHelper)
     // Create grid visualizer
     const gridHelper = new THREE.GridHelper(100, 100, 0x898989, 0x898989)
     gridHelper.position.set(0, 0.001, 0)
     this.scene.add(gridHelper)
     // Create axis visualizer
-    const axesHelper = new THREE.AxesHelper(50)
-    axesHelper.position.set(0, 0.002, 0)
-    this.scene.add(axesHelper)
+    // const axesHelper = new THREE.AxesHelper(50)
+    // axesHelper.position.set(0, 0.002, 0)
+    // this.scene.add(axesHelper)
     // Create floor
     const floor = new THREE.Mesh(
       new THREE.PlaneGeometry(2000, 2000),

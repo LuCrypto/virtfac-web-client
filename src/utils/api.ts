@@ -1,5 +1,8 @@
+import dotenv from 'dotenv'
 import Vue from 'vue'
 import { Session } from './session'
+
+dotenv.config({ path: './.env' })
 
 export default class API {
   static fetch (
@@ -9,10 +12,13 @@ export default class API {
     body: string | null,
     params: URLSearchParams | null
   ): Promise<Response> {
+    const apiIP = process.env.VUE_APP_API_SERVER_IP
+    const apiPort = process.env.VUE_APP_API_SERVER_PORT
+    console.log('API HOST =', process.env)
     return new Promise((resolve, reject) => {
       const token = Session.getToken()
       const url =
-        `http://10.244.77.203:8071${path}` +
+        `http://${apiIP}:${apiPort}${path}` +
         (params != null ? `?${params}` : '')
       const contentType: string =
         method === 'GET'

@@ -58,6 +58,7 @@ const RULA_TABLE_C = [
 
 export default class RULA {
   data: Map<string, number>[] = []
+  currentScore = 0
   boneSettings: RULABonesSettings[] = [
     {
       name: 'Spine',
@@ -377,6 +378,7 @@ export default class RULA {
 
     scores.set('FINAL_SCORE', valueTableC)
     this.data.push(new Map(scores))
+    this.currentScore = valueTableC
   }
 
   update (): void {
