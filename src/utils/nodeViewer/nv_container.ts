@@ -4,6 +4,7 @@ import { NvLink } from './nv_link'
 import { NvTheme } from './nv_theme'
 import { NvSocket } from './nv_socket'
 import { V } from './v'
+import { DelayedCallback } from '../graph/delayedCallback'
 
 export class NvContainer {
   private nodes: Map<number, NvNode> = new Map<number, NvNode>()
@@ -277,6 +278,7 @@ export class NvContainer {
       'transform-origin': `${this.origin.x} ${this.origin.y}`
     })
 
+    this.refreshContainerSizeCaller.call()
     this.updateTheme()
   }
 
@@ -304,6 +306,25 @@ export class NvContainer {
       if (r.y + r.height > rect.ymax) rect.ymax = r.y + r.height
     })
     return rect
+  }
+
+  private refreshContainerSize () {
+    const rect = this.getBoundingNodeRect()
+    this.content.setStyle({
+      width: Math.trunc(rect.xmax - rect.xmin) / this.getScale() + 'px',
+      height: Math.trunc(rect.ymax - rect.ymin) / this.getScale() + 'px'
+    })
+  }
+
+  private refreshContainerSizeCaller: DelayedCallback = new DelayedCallback(
+    () => {
+      this.refreshContainerSize()
+    },
+    5
+  )
+
+  public callRefreshContainerSize () {
+    this.refreshContainerSizeCaller.call()
   }
 
   public translate (translation: V) {
