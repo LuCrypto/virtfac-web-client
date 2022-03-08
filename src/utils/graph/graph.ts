@@ -192,12 +192,14 @@ export class Graph extends MetaData {
     })
 
     object.nodes.forEach(data => {
-      const node = nodeMap.get(data.id) as Node
-      const dArray = data.data as Record<string, unknown>
-      if (dArray !== null && dArray !== undefined) {
-        Object.entries(dArray).forEach(metaData => {
-          node.setData(metaData[0], metaData[1])
-        })
+      const node = nodeMap.get(data.id)
+      if (node !== undefined) {
+        const dArray = data.data as Record<string, unknown>
+        if (dArray !== null && dArray !== undefined) {
+          Object.entries(dArray).forEach(metaData => {
+            node.setData(metaData[0], metaData[1])
+          })
+        }
       }
     })
   }

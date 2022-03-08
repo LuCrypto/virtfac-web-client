@@ -103,6 +103,7 @@ export class NvContainer {
   public dragMouseUp (event: MouseEvent) {
     document.onmouseup = null
     document.onmousemove = null
+    event.preventDefault()
   }
 
   public unscale (v: V): V {
@@ -222,7 +223,7 @@ export class NvContainer {
         l.delete()
       })
     } else {
-      throw new Error('node doesn\'t exists')
+      throw new Error("node doesn't exists")
     }
   }
 
@@ -277,5 +278,36 @@ export class NvContainer {
     })
 
     this.updateTheme()
+  }
+
+  public getBoundingNodeRect (): {
+    xmin: number
+    xmax: number
+    ymin: number
+    ymax: number
+    } {
+    const rect = {
+      xmin: Number.MAX_VALUE,
+      xmax: Number.MIN_VALUE,
+      ymin: Number.MAX_VALUE,
+      ymax: Number.MIN_VALUE
+    }
+    this.nodes.forEach((value: NvNode, key: number) => {
+      const r = value
+        .getContainer()
+        .getDom()
+        .getBoundingClientRect()
+      if (r.x < rect.xmin) rect.xmin = r.x
+      if (r.y < rect.ymin) rect.ymin = r.y
+
+      if (r.x + r.width > rect.xmax) rect.xmax = r.x + r.width
+      if (r.y + r.height > rect.ymax) rect.ymax = r.y + r.height
+    })
+    return rect
+  }
+
+  public translate (translation: V) {
+    this.position = this.position.add(translation)
+    this.updateTransform()
   }
 }

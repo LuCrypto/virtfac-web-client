@@ -23,6 +23,7 @@ import { ConstraintGraph } from '@/utils/graph/constraintGraph'
 import Component from 'vue-class-component'
 
 import domtoimage from 'dom-to-image'
+import { Session } from '@/utils/session'
 
 @Component({
   props: {
@@ -38,14 +39,28 @@ export default class NV extends Vue {
 
   private container: NvContainer | null = null
 
+  private setTheme (name: string | null) {
+    if (name === null) return
+    if (name === 'light') {
+      this.themeID = 0
+    }
+    if (name === 'dark') {
+      this.themeID = 1
+    }
+    if (this.container == null) return
+    this.container.theme = this.themes[this.themeID]
+    this.container.updateTransform()
+    this.container.updateTheme()
+  }
+
   public themes: NvTheme[] = new Array<NvTheme>(
     new NvTheme({ name: 'LIGHT' }),
     new NvTheme({
       name: 'DARK',
       backgroundColor: '#151515',
-      gridColor: '#202020',
+      gridColor: '#1E1E1E',
       gridSize: '50',
-      gridPointPercent: '8',
+      gridPointPercent: '98',
       nodeTextColor: '#eeeeee',
       nodeContentBackgroundColor: '#353535',
       nodeSocketBackgroundColor: '#252525',
@@ -94,6 +109,16 @@ export default class NV extends Vue {
     const scale = this.container.getScale()
     const rect = this.container.getRect()
     this.container.setScale(1)
+    const nodeRect = this.container.getBoundingNodeRect()
+    if (
+      nodeRect.xmin === Number.MAX_VALUE ||
+      nodeRect.xmax === Number.MIN_VALUE ||
+      nodeRect.ymin === Number.MAX_VALUE ||
+      nodeRect.ymax === Number.MIN_VALUE
+    ) {
+      this.container.setScale(scale)
+      return
+    }
 
     const container = this.container.getContainer()
     const oldValues = {
@@ -104,14 +129,20 @@ export default class NV extends Vue {
       top: container.getDom().style.top
     }
 
+    this.container.translate(
+      new V(-nodeRect.xmin + rect.width / 2, -nodeRect.ymin + rect.height / 2)
+    )
+
     console.log(oldValues)
 
     container.getDom().style.position = 'absolute'
     container.getDom().style.left = '0px'
     container.getDom().style.top = '0px'
-    container.getDom().style.width = rect.width / scale + 'px'
-    container.getDom().style.height = rect.height / scale + 'px'
-
+    container.getDom().style.width =
+      Math.trunc(nodeRect.xmax - nodeRect.xmin) + 'px'
+    container.getDom().style.height =
+      Math.trunc(nodeRect.ymax - nodeRect.ymin) + 'px'
+    /*
     console.log(
       'scale:' +
         scale +
@@ -120,11 +151,15 @@ export default class NV extends Vue {
         ' new height:' +
         rect.height / scale
     )
+*/
+    console.log(
+      container.getDom().style.width + ' ' + container.getDom().style.height
+    )
 
     domtoimage
       .toPng(this.$refs.container as Element, {
-        width: rect.width / scale,
-        height: rect.height / scale
+        width: Math.trunc(nodeRect.xmax - nodeRect.xmin),
+        height: Math.trunc(nodeRect.ymax - nodeRect.ymin)
       })
       .then(dataUrl => {
         const link = document.createElement('a')
@@ -142,15 +177,10 @@ export default class NV extends Vue {
   }
 
   mounted () {
-    /*
-    window.addEventListener('storage', e => {
-      if (e.key === 'virtfac-theme') {
-        console.log(e.newValue)
-      } else {
-        console.log(e.key, e.newValue)
-      }
+    this.$root.$on('changeDarkMode', () => {
+      this.setTheme(Session.getTheme())
     })
-    */
+
     console.log("i'm mounted")
 
     const colors = {
@@ -286,7 +316,7 @@ export default class NV extends Vue {
         (this.nodeMap.get(arg.link.getNode()) as NvNode).sockets.in[0]
       )
       link.setLink(arg.link)
-      //*
+
       arg.link.onDataChanged().addMappedListener('path', arg => {
         if (arg.value !== undefined) {
           const d = arg.value as Vec2[]
@@ -295,13 +325,38 @@ export default class NV extends Vue {
           link.updatePath(undefined)
         }
       })
-
-      /**/
     }, this)
 
-    this.container.theme = new NvTheme({ name: 'LIGHT' })
+    // this.container.theme = new NvTheme({ name: 'LIGHT' })
+    this.setTheme(Session.getTheme())
     this.container.updateTransform()
     this.container.updateTheme()
+
+    this.container.getContainer().getDom().ondragover = (ev: DragEvent) => {
+      ev.preventDefault()
+    }
+    this.container.getContainer().getDom().ondrop = (ev: DragEvent) => {
+      console.log(ev)
+      if (ev.dataTransfer != null && ev.dataTransfer.files.length > 0) {
+        const f: File | null = ev.dataTransfer.files.item(0)
+        try {
+          if (f != null) {
+            const fr = new FileReader()
+            fr.onload = event => {
+              this.graph.applyJson(JSON.parse(fr.result as string))
+            }
+            fr.readAsText(f, 'utf8')
+          }
+        } catch (error) {
+          console.error(error)
+        }
+      }
+      ev.preventDefault()
+    }
+    this.container
+      .getContainer()
+      .getDom()
+      .setAttribute('draggable', 'true')
   }
 }
 </script>

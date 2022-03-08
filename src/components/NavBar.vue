@@ -170,7 +170,7 @@ export default class NavBar extends Vue {
 
   toggleDarkMode (): void {
     this.$vuetify.theme.dark = !this.$vuetify.theme.dark
-    Session.setTheme('dark')
+    Session.setTheme(this.$vuetify.theme.dark ? 'dark' : 'light')
     this.$root.$emit('changeDarkMode')
   }
 }

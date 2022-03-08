@@ -12,7 +12,7 @@ export default class API {
     return new Promise((resolve, reject) => {
       const token = Session.getToken()
       const url =
-        `http://10.244.77.203:8070${path}` +
+        `http://10.244.77.203:8071${path}` +
         (params != null ? `?${params}` : '')
       const contentType: string =
         method === 'GET'
