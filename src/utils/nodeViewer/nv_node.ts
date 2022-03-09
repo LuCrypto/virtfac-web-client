@@ -114,9 +114,12 @@ export class NvNode {
   public dragMouseDown (event: MouseEvent) {
     event = event || window.event
     event.preventDefault()
+    /*
     this.positionStart = this.root
       .unscale(new V(event.clientX, event.clientY))
       .sub(this.position)
+      */
+    this.positionStart = this.root.clientPosToLocalPos(event.clientX, event.clientY).sub(this.position)
     // .sub(new V(this.content.getDom().getBoundingClientRect().width/2, this.content.getDom().getBoundingClientRect().height/2)
     document.onmouseup = e => this.dragMouseUp(e)
     document.onmousemove = e => this.dragMouseMove(e)
@@ -132,7 +135,7 @@ export class NvNode {
     event.preventDefault()
     this.userSetPosition(
       this.root
-        .unscale(new V(event.clientX, event.clientY))
+        .clientPosToLocalPos(event.clientX, event.clientY)
         .sub(this.positionStart)
     )
     this.updateLinks()

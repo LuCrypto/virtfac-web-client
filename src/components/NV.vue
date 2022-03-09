@@ -460,7 +460,7 @@ export default class NV extends Vue {
   min-width: 12px;
   max-width: 400px;
   width: 100%;
-  margin: var(--space);
+  padding: var(--space);
   cursor: move;
   font-smooth: never;
   -webkit-font-smoothing: none;

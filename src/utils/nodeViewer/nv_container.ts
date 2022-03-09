@@ -111,6 +111,10 @@ export class NvContainer {
     return v.mult(1 / this.size)
   }
 
+  public absolutePos (v: V) : V {
+    return v.mult(1 / this.size).sub(this.position)
+  }
+
   public setScale (scale: number) {
     const rect = this.container.getDom().getBoundingClientRect()
     const offset = new V(-this.position.x, -this.position.y)
@@ -179,12 +183,15 @@ export class NvContainer {
       0,
       Math.min(NvContainer.validZoom.length - 1, this.zoomLevel)
     )
-
     this.size = NvContainer.validZoom[this.zoomLevel]
     this.position = new V(
       (center.x - rect.width * (offset.x / rect.width) * this.size) / this.size,
       (center.y - rect.height * (offset.y / rect.height) * this.size) /
         this.size
+    )
+
+    this.positionStart = this.unscale(new V(event.clientX, event.clientY)).sub(
+      this.position
     )
 
     this.updateTransform()
