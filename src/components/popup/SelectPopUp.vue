@@ -38,7 +38,31 @@
               :show-select="false"
               :single-select="true"
               @click:row="returnSelectedRow"
-            ></v-data-table>
+            >
+              <template v-if="isMenuActive" v-slot:[`item.actions`]="{ item }">
+                <v-tooltip
+                  bottom
+                  v-for="action in menuItemList"
+                  v-bind:key="action.text"
+                >
+                  <template v-slot:activator="{ on, attrs }">
+                    <v-avatar
+                      color="info"
+                      class="ml-1 mt-1 mb-1 elevation-4"
+                      size="30"
+                      @click.stop="action.action(item)"
+                      v-bind="attrs"
+                      v-on="on"
+                    >
+                      <v-icon medium color="">
+                        {{ action.icon }}
+                      </v-icon>
+                    </v-avatar>
+                  </template>
+                  <span>{{ action.text }}</span>
+                </v-tooltip>
+              </template>
+            </v-data-table>
           </v-layout>
           <v-layout justify-center>
             <v-card>
@@ -63,16 +87,19 @@ import Component from 'vue-class-component'
 
 class MenuItem {
   text: string
-  action: () => void
-  constructor (text: string, action: () => void) {
+  icon: string
+  action: (item: unknown) => void
+  constructor (text: string, icon: string, action: (item: unknown) => void) {
     this.text = text
     this.action = action
+    this.icon = icon
   }
 }
 
 @Component
 export default class SelectPopUp extends Vue {
   menuItemList: MenuItem[] = []
+  isMenuActive = false
   callback: { (selected: unknown | null): void } | null = null
   show = false
   refreshTableKey = 0
@@ -100,12 +127,31 @@ export default class SelectPopUp extends Vue {
       sort: { (a: unknown, b: unknown): number }
     }[],
     items: unknown[],
-    callback: { (item: unknown): void }
+    callback: { (item: unknown): void },
+    actions: MenuItem[] | null = null
   ) {
     this.headers = headers
     this.items = items
     this.callback = callback
     this.show = true
+    if (actions == null) {
+      this.isMenuActive = false
+    } else {
+      this.isMenuActive = true
+      this.menuItemList = actions
+      this.headers.push({
+        text: 'Actions',
+        value: 'actions',
+        align: 'end',
+        sortable: false,
+        sort: (a, b) => {
+          return -1
+        }
+      })
+      this.items.forEach(item => {
+        (item as Record<string, unknown>).actions = actions
+      })
+    }
   }
   /*
   public open (

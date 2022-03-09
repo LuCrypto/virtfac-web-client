@@ -309,25 +309,55 @@ export default class ContradictionExpert extends Vue {
       })
 
       if (this.selectPopUp != null) {
-        this.selectPopUp.open(headers, m, item => {
-          if (item != null) {
-            const settingItem = (item as Record<string, unknown>)
-              .return as SettingItem
-            this.getGraph().applyJson(JSON.parse(settingItem.json).data)
-          }
-        })
+        this.selectPopUp.open(
+          headers,
+          m,
+          item => {
+            if (item != null) {
+              const settingItem = (item as Record<string, unknown>)
+                .return as SettingItem
+              this.getGraph().applyJson(JSON.parse(settingItem.json).data)
+            }
+          },
+          new Array<{
+            text: string
+            icon: string
+            action: {(item: unknown): void }
+              }>(
+              {
+                text: 'download',
+                icon: 'mdi-download',
+                action: item => {
+                  const a = document.createElement('a')
+                  const file = new Blob(
+                    [
+                      JSON.stringify(
+                        JSON.parse(
+                          ((item as Record<string, unknown>)
+                            .return as SettingItem).json
+                        ).data
+                      )
+                    ],
+                    {
+                      type: 'text/plain'
+                    }
+                  )
+                  a.href = URL.createObjectURL(file)
+                  a.download =
+                  ((item as Record<string, unknown>).name as string) + '.json'
+                  a.click()
+                }
+              },
+              {
+                text: 'delete',
+                icon: 'mdi-delete-outline',
+                action: item => {
+                  console.log('delete item')
+                }
+              }
+              )
+        )
       }
-      /*
-      ;(this.selectPopUp as SelectPopUp).open(m, selected => {
-        if (selected == null) console.log('null')
-        else {
-          console.log(JSON.parse((selected as SettingItem).json))
-          this.getGraph().applyJson(
-            JSON.parse((selected as SettingItem).json).data
-          )
-        }
-      })
-      */
     })
   }
 

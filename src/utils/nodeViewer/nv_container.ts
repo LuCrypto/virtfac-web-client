@@ -75,6 +75,10 @@ export class NvContainer {
     this.container.getDom().onmousedown = e => this.dragMouseDown(e)
     this.container.getDom().onwheel = e => this.zoom(e)
 
+    this.container.getDom().oncontextmenu = e => {
+      e.preventDefault()
+    }
+
     this.updateTransform()
   }
 
@@ -111,7 +115,7 @@ export class NvContainer {
     return v.mult(1 / this.size)
   }
 
-  public absolutePos (v: V) : V {
+  public absolutePos (v: V): V {
     return v.mult(1 / this.size).sub(this.position)
   }
 
