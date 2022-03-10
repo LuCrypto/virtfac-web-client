@@ -406,6 +406,11 @@ export default class NV extends Vue {
       .getContainer()
       .getDom()
       .setAttribute('draggable', 'true')
+
+    this.nodeMap.forEach((value: NvNode) => {
+      value.setPosition(value.getPosition())
+      value.updateLinks()
+    })
   }
 }
 </script>
