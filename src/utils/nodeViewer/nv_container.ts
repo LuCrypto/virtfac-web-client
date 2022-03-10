@@ -342,4 +342,9 @@ export class NvContainer {
     this.position = this.position.add(translation)
     this.updateTransform()
   }
+
+  public setPosition (position: V) {
+    this.position = position
+    this.updateTransform()
+  }
 }

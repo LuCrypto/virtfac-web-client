@@ -111,34 +111,70 @@ export class NvNode {
     })
   }
 
+  private currentButton = -1
+  private translationButton = -1
+  private translationStartPosition: V = new V(0, 0)
+  private translationActive = false
+
   public dragMouseDown (event: MouseEvent) {
     event = event || window.event
+
     event.preventDefault()
-    /*
-    this.positionStart = this.root
-      .unscale(new V(event.clientX, event.clientY))
-      .sub(this.position)
-      */
-    this.positionStart = this.root.clientPosToLocalPos(event.clientX, event.clientY).sub(this.position)
-    // .sub(new V(this.content.getDom().getBoundingClientRect().width/2, this.content.getDom().getBoundingClientRect().height/2)
-    document.onmouseup = e => this.dragMouseUp(e)
-    document.onmousemove = e => this.dragMouseMove(e)
+    if (this.currentButton === -1 || this.currentButton === event.button) {
+      /*
+      this.positionStart = this.root
+        .unscale(new V(event.clientX, event.clientY))
+        .sub(this.position)
+        */
+      this.positionStart = this.root
+        .clientPosToLocalPos(event.clientX, event.clientY)
+        .sub(this.position)
+      // .sub(new V(this.content.getDom().getBoundingClientRect().width/2, this.content.getDom().getBoundingClientRect().height/2)
+      document.onmouseup = e => this.dragMouseUp(e)
+      document.onmousemove = e => this.dragMouseMove(e)
+
+      this.currentButton = event.button
+    } else {
+      this.translationActive = true
+      this.translationButton = event.button
+      this.translationStartPosition = this.root
+        .unscale(new V(event.clientX, event.clientY))
+        .sub(this.root.getPosition())
+    }
   }
 
   public dragMouseUp (event: MouseEvent) {
-    document.onmouseup = null
-    document.onmousemove = null
+    if (event.button === this.currentButton) {
+      this.currentButton = -1
+      document.onmouseup = null
+      document.onmousemove = null
+      this.translationActive = false
+      this.translationButton = -1
+    } else if (event.button === this.translationButton) {
+      this.translationActive = false
+      this.translationButton = -1
+      // this.root.dragMouseUp(event)
+    }
   }
 
   public dragMouseMove (event: MouseEvent) {
     event = event || window.event
     event.preventDefault()
-    this.userSetPosition(
-      this.root
-        .clientPosToLocalPos(event.clientX, event.clientY)
-        .sub(this.positionStart)
-    )
-    this.updateLinks()
+
+    if (this.translationActive) {
+      this.root.setPosition(
+        this.root
+          .unscale(new V(event.clientX, event.clientY))
+          .sub(this.translationStartPosition)
+      )
+    } else {
+      this.userSetPosition(
+        this.root
+          .clientPosToLocalPos(event.clientX, event.clientY)
+          .sub(this.positionStart)
+      )
+      this.updateLinks()
+    }
   }
 
   public setImage (url: string, width: string, height: string) {
@@ -186,7 +222,9 @@ export class NvNode {
       side === 'top' ? -1 : side === 'bottom' ? 1 : 0
     )
     const socket = new NvSocket(this, type, text, color, tangent)
-    if (!socket.getHideWhenNotLinked()) { this.socketContainer[side].appendChild(socket.container) }
+    if (!socket.getHideWhenNotLinked()) {
+      this.socketContainer[side].appendChild(socket.container)
+    }
     this.socketContainerMap.set(socket, this.socketContainer[side])
     this.sockets[type].push(socket)
     if (text.toLowerCase() === 'in') {

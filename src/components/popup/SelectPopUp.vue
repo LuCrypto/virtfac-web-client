@@ -47,7 +47,7 @@
                 >
                   <template v-slot:activator="{ on, attrs }">
                     <v-avatar
-                      color="info"
+                      color="primary"
                       class="ml-1 mt-1 mb-1 elevation-4"
                       size="30"
                       @click.stop="action.action(item)"
