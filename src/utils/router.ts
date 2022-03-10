@@ -17,6 +17,7 @@ import ErgonomIOAnalysis from '@/views/ErgonomIO/ErgonomIOAnalysis.vue'
 import ErgonomIOAssets from '@/views/ErgonomIO/ErgonomIOAssets.vue'
 import ErgonomIOAvatars from '@/views/ErgonomIO/ErgonomIOAvatars.vue'
 import ErgonomioMainMenu from '@/components/ergonomio_ui/ErgonomioMainMenu.vue'
+import DatabaseViewer from '@/views/APIDocumentation/DatabaseViewer.vue'
 
 Vue.use(VueRouter)
 
@@ -146,6 +147,16 @@ export const routes: Array<Route> = [
     path: '/ergonom-io-avatars',
     category: 'Ergonom.io',
     component: ErgonomIOAvatars
+  }),
+
+  // Documentation
+  new Route({
+    icon: 'mdi-database',
+    name: 'Database',
+    subname: 'Show database structure',
+    path: '/documentation-database',
+    category: 'Documentation',
+    component: DatabaseViewer
   }),
 
   // Hidded menus

@@ -53,13 +53,14 @@
       app
       width="300"
       mobile-breakpoint="1000"
+      :key="$vuetify.theme.dark"
     >
       <v-list>
         <v-list-item-group v-for="(category, i) in categories.keys()" :key="i">
           <v-subheader v-if="avatar != null">{{ category }}</v-subheader>
           <v-list-item
             v-for="(route, j) in categories.get(category)"
-            :key="j"
+            :key="j * i"
             router
             :to="route.path"
             :href="route.href"

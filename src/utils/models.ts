@@ -4,6 +4,12 @@
 
 import { FORMAT_TYPE, FORMAT_INFO, FormatInfo } from '@/utils/format'
 
+export interface APIDatabaseStructureItem {
+  name: string
+  type: string
+  tableName: string
+}
+
 export interface APIOdooMenuItem {
   id: number
   name: string
