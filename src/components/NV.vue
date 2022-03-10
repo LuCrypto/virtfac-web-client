@@ -109,7 +109,8 @@ export default class NV extends Vue {
     const scale = this.container.getScale()
     const rect = this.container.getRect()
     this.container.setScale(1)
-    const nodeRect = this.container.getBoundingNodeRect()
+
+    let nodeRect = this.container.getBoundingNodeRect()
     if (
       nodeRect.xmin === Number.MAX_VALUE ||
       nodeRect.xmax === Number.MIN_VALUE ||
@@ -128,20 +129,24 @@ export default class NV extends Vue {
       left: container.getDom().style.left,
       top: container.getDom().style.top
     }
-
+    /*
     this.container.translate(
-      new V(-nodeRect.xmin + rect.width / 2, -nodeRect.ymin + rect.height / 2)
+      new V(
+        -nodeRect.xmin,
+        -nodeRect.ymin
+      )
     )
-
+    */
+    console.log(this.container.getBoundingNodeRect())
     console.log(oldValues)
 
     container.getDom().style.position = 'absolute'
     container.getDom().style.left = '0px'
     container.getDom().style.top = '0px'
     container.getDom().style.width =
-      Math.trunc(nodeRect.xmax - nodeRect.xmin) + 'px'
+      Math.trunc(nodeRect.xmax - nodeRect.xmin + 40) + 'px'
     container.getDom().style.height =
-      Math.trunc(nodeRect.ymax - nodeRect.ymin) + 'px'
+      Math.trunc(nodeRect.ymax - nodeRect.ymin + 40) + 'px'
     /*
     console.log(
       'scale:' +
@@ -152,14 +157,30 @@ export default class NV extends Vue {
         rect.height / scale
     )
 */
+    nodeRect = this.container.getBoundingNodeRect()
+    this.container.translate(
+      new V(
+        -nodeRect.xmin + 20 /* + rect.width / 2 */,
+        -nodeRect.ymin + 20 /* + rect.height / 2 */
+      )
+    )
     console.log(
       container.getDom().style.width + ' ' + container.getDom().style.height
     )
 
+    console.log(container.getDom().getBoundingClientRect())
+    this.container.translate(
+      new V(
+        container.getDom().getBoundingClientRect().x,
+        container.getDom().getBoundingClientRect().y
+      )
+    )
+
+    console.log(this.container.getBoundingNodeRect())
     domtoimage
       .toPng(this.$refs.container as Element, {
-        width: Math.trunc(nodeRect.xmax - nodeRect.xmin),
-        height: Math.trunc(nodeRect.ymax - nodeRect.ymin)
+        width: Math.trunc(nodeRect.xmax - nodeRect.xmin) + 40,
+        height: Math.trunc(nodeRect.ymax - nodeRect.ymin) + 40
       })
       .then(dataUrl => {
         const link = document.createElement('a')
@@ -280,6 +301,7 @@ export default class NV extends Vue {
           const pos = arg.value as Vec2
           n.setPosition(new V(pos.x, pos.y))
           n.updateLinks()
+          if (this.container != null) this.container.callRefreshContainerSize()
         },
         this
       )
@@ -381,7 +403,7 @@ export default class NV extends Vue {
   position: relative;
   width: 100%;
   height: 100%;
-  overflow: hidden;
+  overflow: clip;
   background-position: 0px 0px;
   background-repeat: repeat;
 }
