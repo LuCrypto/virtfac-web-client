@@ -197,6 +197,114 @@ export default class NV extends Vue {
       })
   }
 
+  private addNode (node: Node) {
+    if (this.container == null) return
+    const pos = node.getOrAddData<Vec2>('position', new Vector2(0, 0))
+    const n = this.container.addNode(new V(pos.x, pos.y))
+    n.userSetPosition = position => {
+      node.setData<Vec2>('position', new Vector2(position.x, position.y))
+    }
+    this.nodeMap.set(node, n)
+    n.addSocket(
+      'top',
+      'In',
+      node.getDataOrDefault<string | null>('color', null)
+    )
+    n.addSocket(
+      'top',
+      'Out',
+      node.getDataOrDefault<string | null>('color', null)
+    )
+    n.addSocket(
+      'bottom',
+      'In',
+      node.getDataOrDefault<string | null>('color', null)
+    )
+    n.addSocket(
+      'bottom',
+      'Out',
+      node.getDataOrDefault<string | null>('color', null)
+    )
+    n.addSocket(
+      'left',
+      'In',
+      node.getDataOrDefault<string | null>('color', null)
+    )
+    n.addSocket(
+      'left',
+      'Out',
+      node.getDataOrDefault<string | null>('color', null)
+    )
+    n.addSocket(
+      'right',
+      'In',
+      node.getDataOrDefault<string | null>('color', null)
+    )
+    n.addSocket(
+      'right',
+      'Out',
+      node.getDataOrDefault<string | null>('color', null)
+    )
+    node.onDataChanged().addMappedListener(
+      'name',
+      arg => {
+        // n.getContent().getDom().innerHTML = arg.value as string
+        n.setText(arg.value as string, true)
+      },
+      this
+    )
+    node.onDataChanged().addMappedListener(
+      'position',
+      arg => {
+        const pos = arg.value as Vec2
+        n.setPosition(new V(pos.x, pos.y))
+        n.updateLinks()
+        if (this.container != null) this.container.callRefreshContainerSize()
+      },
+      this
+    )
+    /*
+            arg.node.onDataChanged().addMappedListener('img', (arg) => {
+                console.log("hello");
+                n.setImage(arg.value as string);
+            }, this);
+            */
+    if (node.getData<string | undefined>('img') !== undefined) {
+      n.setImage(
+        node.getData<string>('img'),
+        node.getData<string>('img-width'),
+        node.getData<string>('img-height')
+      )
+      n.setText(node.getDataOrDefault<string>('name', 'unnamed'))
+    } else {
+      // n.getContent().getDom().innerHTML = arg.node.getDataOrDefault<string>('name', 'unnamed');
+      n.setText(node.getDataOrDefault<string>('name', 'unnamed'), true)
+    }
+  }
+
+  private addLink (l: Link) {
+    if (this.container == null) return
+    const link = this.container.addLink(
+      (this.nodeMap.get(l.getOriginNode()) as NvNode).sockets.out[0],
+      (this.nodeMap.get(l.getNode()) as NvNode).sockets.in[0]
+    )
+    link.setLink(l)
+
+    l.onDataChanged().addMappedListener('path', arg => {
+      if (arg.value !== undefined) {
+        const d = arg.value as Vec2[]
+        link.updatePath(d.map(v => new V(v.x, v.y)))
+      } else {
+        link.updatePath(undefined)
+      }
+    })
+
+    if (l.getData<Vec2[] | undefined>('path') !== undefined) {
+      link.updatePath(l.getData<Vec2[]>('path').map(v => new V(v.x, v.y)))
+    }
+    // coucou
+  }
+
   mounted () {
     this.$root.$on('changeDarkMode', () => {
       this.setTheme(Session.getTheme())
@@ -241,89 +349,21 @@ export default class NV extends Vue {
     })
 
     this.graph.onNodeAdded().addListener(arg => {
-      if (this.container == null) return
-      const pos = arg.node.getOrAddData<Vec2>('position', new Vector2(0, 0))
-      const n = this.container.addNode(new V(pos.x, pos.y))
-      n.userSetPosition = position => {
-        arg.node.setData<Vec2>('position', new Vector2(position.x, position.y))
-      }
-      this.nodeMap.set(arg.node, n)
-      n.addSocket(
-        'top',
-        'In',
-        arg.node.getDataOrDefault<string | null>('color', null)
-      )
-      n.addSocket(
-        'top',
-        'Out',
-        arg.node.getDataOrDefault<string | null>('color', null)
-      )
-      n.addSocket(
-        'bottom',
-        'In',
-        arg.node.getDataOrDefault<string | null>('color', null)
-      )
-      n.addSocket(
-        'bottom',
-        'Out',
-        arg.node.getDataOrDefault<string | null>('color', null)
-      )
-      n.addSocket(
-        'left',
-        'In',
-        arg.node.getDataOrDefault<string | null>('color', null)
-      )
-      n.addSocket(
-        'left',
-        'Out',
-        arg.node.getDataOrDefault<string | null>('color', null)
-      )
-      n.addSocket(
-        'right',
-        'In',
-        arg.node.getDataOrDefault<string | null>('color', null)
-      )
-      n.addSocket(
-        'right',
-        'Out',
-        arg.node.getDataOrDefault<string | null>('color', null)
-      )
-      arg.node.onDataChanged().addMappedListener(
-        'name',
-        arg => {
-          n.getContent().getDom().innerHTML = arg.value as string
-        },
-        this
-      )
-      arg.node.onDataChanged().addMappedListener(
-        'position',
-        arg => {
-          const pos = arg.value as Vec2
-          n.setPosition(new V(pos.x, pos.y))
-          n.updateLinks()
-          if (this.container != null) this.container.callRefreshContainerSize()
-        },
-        this
-      )
-      /*
-            arg.node.onDataChanged().addMappedListener('img', (arg) => {
-                console.log("hello");
-                n.setImage(arg.value as string);
-            }, this);
-            */
-      if (arg.node.getData<string | undefined>('img') !== undefined) {
-        n.setImage(
-          arg.node.getData<string>('img'),
-          arg.node.getData<string>('img-width'),
-          arg.node.getData<string>('img-height')
-        )
-        n.setText(arg.node.getDataOrDefault<string>('name', 'unnamed'))
-      } else {
-        // n.getContent().getDom().innerHTML = arg.node.getDataOrDefault<string>('name', 'unnamed');
-        n.setText(arg.node.getDataOrDefault<string>('name', 'unnamed'), true)
-      }
-      // n.setImage('/assets/logo.png');
+      this.addNode(arg.node)
     }, this)
+
+    this.graph.foreachNode(n => {
+      this.addNode(n)
+    })
+
+    this.container.updateTransform()
+
+    this.graph.foreachNode(n => {
+      n.foreachLink(l => {
+        this.addLink(l)
+      })
+      ;(this.nodeMap.get(n) as NvNode).updateLinks()
+    })
 
     this.graph.onNodeRemoved().addListener(arg => {
       if (this.container == null) return
@@ -331,22 +371,9 @@ export default class NV extends Vue {
       this.nodeMap.delete(arg.node)
       this.container.removeNode(n)
     }, this)
-    this.graph.onLinkAdded().addListener(arg => {
-      if (this.container == null) return
-      const link = this.container.addLink(
-        (this.nodeMap.get(arg.link.getOriginNode()) as NvNode).sockets.out[0],
-        (this.nodeMap.get(arg.link.getNode()) as NvNode).sockets.in[0]
-      )
-      link.setLink(arg.link)
 
-      arg.link.onDataChanged().addMappedListener('path', arg => {
-        if (arg.value !== undefined) {
-          const d = arg.value as Vec2[]
-          link.updatePath(d.map(v => new V(v.x, v.y)))
-        } else {
-          link.updatePath(undefined)
-        }
-      })
+    this.graph.onLinkAdded().addListener(arg => {
+      this.addLink(arg.link)
     }, this)
 
     // this.container.theme = new NvTheme({ name: 'LIGHT' })
@@ -379,6 +406,11 @@ export default class NV extends Vue {
       .getContainer()
       .getDom()
       .setAttribute('draggable', 'true')
+
+    this.nodeMap.forEach((value: NvNode) => {
+      value.setPosition(value.getPosition())
+      value.updateLinks()
+    })
   }
 }
 </script>
@@ -460,7 +492,7 @@ export default class NV extends Vue {
   min-width: 12px;
   max-width: 400px;
   width: 100%;
-  margin: var(--space);
+  padding: var(--space);
   cursor: move;
   font-smooth: never;
   -webkit-font-smoothing: none;

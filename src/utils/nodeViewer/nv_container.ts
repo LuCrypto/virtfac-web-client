@@ -75,6 +75,10 @@ export class NvContainer {
     this.container.getDom().onmousedown = e => this.dragMouseDown(e)
     this.container.getDom().onwheel = e => this.zoom(e)
 
+    this.container.getDom().oncontextmenu = e => {
+      e.preventDefault()
+    }
+
     this.updateTransform()
   }
 
@@ -109,6 +113,10 @@ export class NvContainer {
 
   public unscale (v: V): V {
     return v.mult(1 / this.size)
+  }
+
+  public absolutePos (v: V): V {
+    return v.mult(1 / this.size).sub(this.position)
   }
 
   public setScale (scale: number) {
@@ -179,12 +187,15 @@ export class NvContainer {
       0,
       Math.min(NvContainer.validZoom.length - 1, this.zoomLevel)
     )
-
     this.size = NvContainer.validZoom[this.zoomLevel]
     this.position = new V(
       (center.x - rect.width * (offset.x / rect.width) * this.size) / this.size,
       (center.y - rect.height * (offset.y / rect.height) * this.size) /
         this.size
+    )
+
+    this.positionStart = this.unscale(new V(event.clientX, event.clientY)).sub(
+      this.position
     )
 
     this.updateTransform()
@@ -329,6 +340,11 @@ export class NvContainer {
 
   public translate (translation: V) {
     this.position = this.position.add(translation)
+    this.updateTransform()
+  }
+
+  public setPosition (position: V) {
+    this.position = position
     this.updateTransform()
   }
 }
