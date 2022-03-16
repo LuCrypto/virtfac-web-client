@@ -23,7 +23,7 @@ export class BpWallNode {
     this.point.getDom().setAttribute('width', `${size}`)
     this.point.getDom().setAttribute('height', `${size}`)
     this.point.setStyle({ fill: `${bpContainer.getTheme().WallNodeColor}` })
-    this.container.getSVG().appendChild(this.point)
+    this.container.getNodeLayer().appendChild(this.point)
 
     const p = node.getData<Vec2>('position')
     if (p !== undefined) this.setPos(p.x, p.y)

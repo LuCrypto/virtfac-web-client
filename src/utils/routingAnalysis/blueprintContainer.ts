@@ -95,15 +95,20 @@ export class BlueprintContainer {
   private container: NvEl
   private content: NvEl
   private img: NvEl
-  private svg: NvEl
+  private svgNodeLayer: NvEl
+  private svgLinkLayer: NvEl
 
   private bp: Blueprint
 
   private wallNodeMap: Map<Node, BpWallNode> = new Map<Node, BpWallNode>()
   private wallLinkMap: Map<Link, BpWallLink> = new Map<Link, BpWallLink>()
 
-  public getSVG () {
-    return this.svg
+  public getNodeLayer () {
+    return this.svgNodeLayer
+  }
+
+  public getLinkLayer () {
+    return this.svgLinkLayer
   }
 
   public getTheme () {
@@ -116,12 +121,14 @@ export class BlueprintContainer {
     this.parentNode = parentNode
     this.container = new NvEl('div')
     this.content = new NvEl('div')
-    this.svg = new NvEl('svg')
+    this.svgNodeLayer = new NvEl('svg')
+    this.svgLinkLayer = new NvEl('svg')
     this.img = new NvEl('img')
     this.content.appendChild(this.img)
     parentNode.appendChild(this.content.getDom())
     parentNode.appendChild(this.container.getDom())
-    parentNode.appendChild(this.svg.getDom())
+    parentNode.appendChild(this.svgLinkLayer.getDom())
+    parentNode.appendChild(this.svgNodeLayer.getDom())
     // this.grid = new Grid(new V(0, 0), new V(100, 100))
     this.updateTransform()
     // this.container.getDom().onmousemove = e => this.mouseMove(e)
@@ -141,7 +148,16 @@ export class BlueprintContainer {
       bottom: '0px',
       'image-rendering': 'pixelated'
     })
-    this.svg.setStyle({
+    this.svgLinkLayer.setStyle({
+      position: 'absolute',
+      top: '0px',
+      bottom: '0px',
+      width: '1px',
+      height: '1px',
+      'transform-origin': '0px 0px',
+      overflow: 'visible'
+    })
+    this.svgNodeLayer.setStyle({
       position: 'absolute',
       top: '0px',
       bottom: '0px',
@@ -203,6 +219,21 @@ export class BlueprintContainer {
     this.bp.onWallLinkDataChanged().addMappedListener('length', arg => {
       (this.wallLinkMap.get(arg.link) as BpWallLink).refreshPos()
     })
+
+    this.snapXLine = new NvEl('path')
+    this.snapYLine = new NvEl('path')
+
+    const snapLineStyle = {
+      'pointer-events': 'none',
+      'stroke-dasharray': '2,3',
+      'stroke-width': '1',
+      stroke: `${this.theme.WallSnapLineColor}`
+    }
+
+    this.snapXLine.setStyle(snapLineStyle)
+    this.snapYLine.setStyle(snapLineStyle)
+
+    this.svgLinkLayer.appendChild(this.snapXLine, this.snapYLine)
   }
 
   public clientPosToContainerPos (x: number, y: number): V {
@@ -255,6 +286,28 @@ export class BlueprintContainer {
     }
   }
 
+  private snapXLine: NvEl
+  private snapYLine: NvEl
+
+  private displayXsnap (node: Node, snappedPos: V) {
+    const p = node.getData<Vec2>('position')
+    this.snapXLine
+      .getDom()
+      .setAttribute('d', `M${new V(p.x, p.y).str()} L${snappedPos.str()}`)
+  }
+
+  private displayYsnap (node: Node, snappedPos: V) {
+    const p = node.getData<Vec2>('position')
+    this.snapYLine
+      .getDom()
+      .setAttribute('d', `M${new V(p.x, p.y).str()} L${snappedPos.str()}`)
+  }
+
+  private hideSnap () {
+    this.snapXLine.getDom().setAttribute('d', '')
+    this.snapYLine.getDom().setAttribute('d', '')
+  }
+
   private snapedWallNode: BpWallNode | null = null
 
   private angleStep = Math.PI / 4
@@ -287,11 +340,28 @@ export class BlueprintContainer {
           const p = this.snapedWallNode.getNode().getData<Vec2>('position')
           pos = new V(p.x, p.y)
           n = this.snapedWallNode.getNode()
-        } else n = this.bp.addWallNode(new Vector2(pos.x, pos.y))
+        } else {
+          n = this.bp.addWallNode(new Vector2(pos.x, pos.y))
+        }
         const n2 = this.bp.addWallNode(new Vector2(pos.x, pos.y))
         this.bp.addWall(n, n2)
         document.onmousemove = e1 => {
+          this.hideSnap()
           const p2 = this.clientPosToContainerPos(e1.clientX, e1.clientY)
+          let snapX: Node | null = null
+          let snapY: Node | null = null
+          this.wallNodeMap.forEach((value: BpWallNode, key: Node) => {
+            if (key === n2 || key === n) return
+            const p = key.getData<Vec2>('position')
+            if (Math.abs(p2.x - p.x) < 10) {
+              p2.x = p.x
+              snapX = key
+            }
+            if (Math.abs(p2.y - p.y) < 10) {
+              p2.y = p.y
+              snapY = key
+            }
+          })
           if (Vector2.norm(Vector2.minus(p2, pos)) > 0.1) {
             let angle = Vector2.angle(Vector2.minus(p2, pos))
             if (angle < 0) angle = Math.PI + (Math.PI + angle)
@@ -300,26 +370,31 @@ export class BlueprintContainer {
               tmpTargetAngle += this.angleStep
             }
             tmpTargetAngle = -tmpTargetAngle + Math.PI / 2
-            n2.setData<Vec2>(
-              'position',
-              Vector2.plus(
-                Vector2.multiply(
-                  new Vector2(
-                    Math.cos(tmpTargetAngle),
-                    Math.sin(tmpTargetAngle)
-                  ),
-                  Vector2.norm(Vector2.minus(p2, pos))
-                ),
-                pos
-              )
+            const newP = Vector2.plus(
+              Vector2.multiply(
+                new Vector2(Math.cos(tmpTargetAngle), Math.sin(tmpTargetAngle)),
+                Vector2.norm(Vector2.minus(p2, pos))
+              ),
+              pos
             )
+            if (snapX !== null) {
+              newP.x = p2.x
+              this.displayXsnap(snapX, new V(newP.x, newP.y))
+            }
+            if (snapY !== null) {
+              newP.y = p2.y
+              this.displayYsnap(snapY, new V(newP.x, newP.y))
+            }
+            n2.setData<Vec2>('position', newP)
           }
         }
         document.onmouseup = e1 => {
-          this.defaultMode()
-          document.onmouseup = null
-          document.onmousemove = null
-          console.log(this)
+          if (e1.button === 0) {
+            this.defaultMode()
+            document.onmouseup = null
+            document.onmousemove = null
+            this.hideSnap()
+          }
         }
       }
       e.preventDefault()
@@ -371,15 +446,21 @@ export class BlueprintContainer {
   }
 
   public onMouseDown (event: MouseEvent) {
-    if (this.container.getDom().onmousedown != null) { (this.container.getDom().onmousedown as { (e: MouseEvent): void })(event) }
+    if (this.container.getDom().onmousedown != null) {
+      (this.container.getDom().onmousedown as { (e: MouseEvent): void })(event)
+    }
   }
 
   public onMouseUp (event: MouseEvent) {
-    if (this.container.getDom().onmouseup != null) { (this.container.getDom().onmouseup as { (e: MouseEvent): void })(event) }
+    if (this.container.getDom().onmouseup != null) {
+      (this.container.getDom().onmouseup as { (e: MouseEvent): void })(event)
+    }
   }
 
   public onMouseMove (event: MouseEvent) {
-    if (this.container.getDom().onmousemove != null) { (this.container.getDom().onmousemove as { (e: MouseEvent): void })(event) }
+    if (this.container.getDom().onmousemove != null) {
+      (this.container.getDom().onmousemove as { (e: MouseEvent): void })(event)
+    }
   }
 
   updateTransform () {
@@ -388,7 +469,11 @@ export class BlueprintContainer {
       left: `${this.position.x * this.size}px`,
       top: `${this.position.y * this.size}px`
     })
-    this.svg.setStyle({
+    this.svgLinkLayer.setStyle({
+      transform: `translate(${this.position.x * this.size}px, ${this.position
+        .y * this.size}px) scale(${this.size})`
+    })
+    this.svgNodeLayer.setStyle({
       transform: `translate(${this.position.x * this.size}px, ${this.position
         .y * this.size}px) scale(${this.size})`
     })

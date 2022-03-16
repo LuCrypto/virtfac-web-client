@@ -15,7 +15,7 @@ export class BpWallLink {
     this.link = link
     this.line = new NvEl('path')
     this.container = bpContainer
-    this.container.getSVG().appendChild(this.line)
+    this.container.getLinkLayer().appendChild(this.line)
   }
 
   public refreshPos () {
@@ -37,5 +37,6 @@ export class BpWallLink {
         'stroke-width',
         '' + this.container.getTheme().WallLinkStrokeWidth
       )
+    this.line.setStyle({ 'pointer-events': 'none' })
   }
 }
