@@ -78,6 +78,7 @@ export class NvLink {
           .style.getPropertyValue('background-color') as string
       )
     // this.path.getDom().onmouseover = (e) => {NV_Link.mouseOver(e, this)};
+    this.path.setStyle({ 'pointer-events': 'visiblestroke' })
     this.path.getDom().onmouseenter = e => {
       this.path.getDom().onmousemove = e => {
         NvLink.mouseMove(e, this)

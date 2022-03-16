@@ -151,6 +151,7 @@ export class NvContainer {
 
 /**/
 
+  /*
   static validZoom: Array<number> = new Array<number>(
     1.5,
     1.25,
@@ -165,6 +166,7 @@ export class NvContainer {
   )
 
   public zoomLevel = 2
+*/
 
   public zoom (event: WheelEvent) {
     event.preventDefault()
@@ -178,9 +180,9 @@ export class NvContainer {
       (offset.y + this.position.y) * this.size
     )
 
-    // this.size += event.deltaY * -0.0001;
-    // this.size = Math.min(Math.max(.125, this.size), 4);
-
+    this.size += event.deltaY * -0.001
+    this.size = Math.min(Math.max(0.125, this.size), 4)
+    /*
     if (event.deltaY < 0) this.zoomLevel--
     else this.zoomLevel++
     this.zoomLevel = Math.max(
@@ -188,6 +190,7 @@ export class NvContainer {
       Math.min(NvContainer.validZoom.length - 1, this.zoomLevel)
     )
     this.size = NvContainer.validZoom[this.zoomLevel]
+    */
     this.position = new V(
       (center.x - rect.width * (offset.x / rect.width) * this.size) / this.size,
       (center.y - rect.height * (offset.y / rect.height) * this.size) /
