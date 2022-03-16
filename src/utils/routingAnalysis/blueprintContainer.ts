@@ -377,14 +377,11 @@ export class BlueprintContainer {
               ),
               pos
             )
-            if (snapX !== null) {
-              newP.x = p2.x
-              this.displayXsnap(snapX, new V(newP.x, newP.y))
-            }
-            if (snapY !== null) {
-              newP.y = p2.y
-              this.displayYsnap(snapY, new V(newP.x, newP.y))
-            }
+            if (snapX !== null) newP.x = p2.x
+            if (snapY !== null) newP.y = p2.y
+            if (snapX !== null) this.displayXsnap(snapX, new V(newP.x, newP.y))
+            if (snapY !== null) this.displayYsnap(snapY, new V(newP.x, newP.y))
+
             n2.setData<Vec2>('position', newP)
           }
         }
