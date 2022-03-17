@@ -86,6 +86,12 @@ class Grid {
 }
 
 export class BlueprintContainer {
+  public optAlignSnap = true
+  public optAlignSnapDist = 10
+
+  public optAngleSnap = true
+  public optAngleSnapStep: number = Math.PI / 4
+
   private theme: BpTheme
   private parentNode: HTMLElement
   private grid: Grid | null = null
@@ -310,8 +316,8 @@ export class BlueprintContainer {
 
   private snapedWallNode: BpWallNode | null = null
 
-  private angleStep = Math.PI / 4
   private positionStart: V = new V(0, 0)
+
   public defaultMode () {
     this.container.getDom().onmousedown = null
     this.container.getDom().onmouseup = null
@@ -353,11 +359,11 @@ export class BlueprintContainer {
           this.wallNodeMap.forEach((value: BpWallNode, key: Node) => {
             if (key === n2 || key === n) return
             const p = key.getData<Vec2>('position')
-            if (Math.abs(p2.x - p.x) < 10) {
+            if (Math.abs(p2.x - p.x) < this.optAlignSnapDist) {
               p2.x = p.x
               snapX = key
             }
-            if (Math.abs(p2.y - p.y) < 10) {
+            if (Math.abs(p2.y - p.y) < this.optAlignSnapDist) {
               p2.y = p.y
               snapY = key
             }
@@ -365,9 +371,9 @@ export class BlueprintContainer {
           if (Vector2.norm(Vector2.minus(p2, pos)) > 0.1) {
             let angle = Vector2.angle(Vector2.minus(p2, pos))
             if (angle < 0) angle = Math.PI + (Math.PI + angle)
-            let tmpTargetAngle = angle - (angle % this.angleStep)
-            if (angle % this.angleStep > this.angleStep / 2) {
-              tmpTargetAngle += this.angleStep
+            let tmpTargetAngle = angle - (angle % this.optAngleSnapStep)
+            if (angle % this.optAngleSnapStep > this.optAngleSnapStep / 2) {
+              tmpTargetAngle += this.optAngleSnapStep
             }
             tmpTargetAngle = -tmpTargetAngle + Math.PI / 2
             const newP = Vector2.plus(
@@ -438,6 +444,13 @@ export class BlueprintContainer {
     if (this.grid !== null) {
       this.grid.pointSize = Math.trunc(4 / this.size)
     }
+    const snapLineStyle = {
+      'stroke-dasharray': `${2 / this.size},${3 / this.size}`,
+      'stroke-width': `${1 / this.size}`
+    }
+
+    this.snapXLine.setStyle(snapLineStyle)
+    this.snapYLine.setStyle(snapLineStyle)
 
     this.updateTransform()
   }

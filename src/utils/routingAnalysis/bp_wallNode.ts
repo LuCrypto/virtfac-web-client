@@ -48,6 +48,7 @@ export class BpWallNode {
     this.point.getDom().onmousemove = e => {
       this.container.onMouseMove(e)
     }
+    this.point.getDom().onwheel = e => this.container.zoom(e)
   }
 
   public setPos (x: number, y: number) {
