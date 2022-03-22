@@ -86,6 +86,7 @@ export class NvLink {
 
     this.path.setStyle({ 'pointer-events': 'none' })
     this.pointerEventPath.getDom().onmouseenter = e => {
+      console.log('enter')
       this.pointerEventPath.getDom().onmousemove = e => {
         NvLink.mouseMove(e, this)
       }
@@ -107,8 +108,18 @@ export class NvLink {
       const theme = nvLink.nodeIn.getRoot().theme
       nvLink.tooltip = new NvEl('div', 'node')
       nvLink.tooltip.setStyle({
-        'background-color': theme.nodeContentBackgroundColor
+        'background-color': theme.nodeContentBackgroundColor,
+        'z-index': '1',
+        'pointer-events': 'none',
+        'transform-origin': '0 0 0',
+        transform: `scale(${Math.max(0.725 / nvLink.root.getScale(), 1)})`
       })
+
+      nvLink.root.onScaleChanged().addListener(arg => {
+        (nvLink.tooltip as NvEl).setStyle({
+          transform: `scale(${Math.max(0.725 / nvLink.root.getScale(), 1)})`
+        })
+      }, nvLink)
 
       {
         const p = new NvEl('p')
@@ -200,6 +211,8 @@ export class NvLink {
       .getRoot()
       .getContent()
       .appendChild(nvLink.tooltip)
+
+    console.log('move')
   }
 
   public static mouseExit (event: MouseEvent, nvLink: NvLink) {
@@ -210,7 +223,9 @@ export class NvLink {
         .getDom()
         .removeChild(nvLink.tooltip.getDom())
       nvLink.tooltip = undefined
+      nvLink.root.onScaleChanged().removeListener(nvLink)
     }
+    console.log('exit')
   }
 
   public setSocketIn (socket: NvSocket): void {

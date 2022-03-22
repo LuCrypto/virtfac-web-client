@@ -5,6 +5,7 @@ import { NvTheme } from './nv_theme'
 import { NvSocket } from './nv_socket'
 import { V } from './v'
 import { DelayedCallback } from '../graph/delayedCallback'
+import { LocalEvent } from '../graph/localEvent'
 
 export class NvContainer {
   private nodes: Map<number, NvNode> = new Map<number, NvNode>()
@@ -20,6 +21,11 @@ export class NvContainer {
   private size = 1
   public getScale () {
     return this.size
+  }
+
+  private scaleChanged = new LocalEvent<number>()
+  public onScaleChanged () {
+    return this.scaleChanged
   }
 
   private parent: Node
@@ -66,6 +72,7 @@ export class NvContainer {
 
     // create content dom for all nodes
     this.content = new NvEl('div', 'content', 'no-select')
+    this.content.setStyle({ 'pointer-events': 'none' })
 
     // create main container
     this.container = new NvEl('div', 'container')
@@ -135,6 +142,8 @@ export class NvContainer {
     )
 
     this.updateTransform()
+
+    this.scaleChanged.notify(this.size)
   }
 
   /*
@@ -202,6 +211,7 @@ export class NvContainer {
     )
 
     this.updateTransform()
+    this.scaleChanged.notify(this.size)
   }
 
   public clientPosToLocalPos (clientX: number, clientY: number): V {

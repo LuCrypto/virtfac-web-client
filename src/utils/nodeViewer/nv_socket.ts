@@ -5,6 +5,7 @@ import { NvLink } from './nv_link'
 // import { nextTick } from "vue";
 import { NvTheme } from './nv_theme'
 import { Link } from '@/utils/graph/link'
+import { NvContainer } from './nv_container'
 
 export class NvSocket {
   public type: string
@@ -13,6 +14,7 @@ export class NvSocket {
   public container: NvEl
   public point: NvEl
   public color: string
+  private root: NvContainer
 
   private id: number
   private static nextID = 0
@@ -66,8 +68,10 @@ export class NvSocket {
     type: string,
     text: string,
     color: string | null,
-    tangent: V
+    tangent: V,
+    root: NvContainer
   ) {
+    this.root = root
     this.id = NvSocket.nextID++
     this.type = type
     this.parentNode = parentNode
@@ -117,9 +121,31 @@ export class NvSocket {
     } else {
       const theme: NvTheme = socket.parentNode.getRoot().theme
       socket.tooltip = new NvEl('div', 'node')
+      let xo = 0
+      let yo = 0
+      if (socket.tangent.x < 0) {
+        xo = 100
+      } else if (socket.tangent.x === 0) {
+        xo = 50
+      } else xo = 0
+
+      if (socket.tangent.y < 0) {
+        yo = 100
+      } else if (socket.tangent.y === 0) {
+        yo = 50
+      } else yo = 0
+      const rect = socket.point.getDom().getBoundingClientRect()
       socket.tooltip.setStyle({
-        'background-color': theme.nodeContentBackgroundColor
+        'background-color': theme.nodeContentBackgroundColor,
+        transform: `scale(${Math.max(0.725 / socket.root.getScale(), 1)})`,
+        'transform-origin': '0 0 0',
+        'z-index': '1',
+        'pointer-events': 'none'
       })
+      socket.root.onScaleChanged().addListener(arg => {
+        (socket.tooltip as NvEl).setStyle({ transform: `scale(${Math.max(0.725 / socket.root.getScale(), 1)})` })
+        NvSocket.refreshTooltipPos(socket)
+      }, socket)
       socket.links.forEach(l => {
         const p = new NvEl('p')
         const s: NvSocket =
@@ -172,24 +198,41 @@ export class NvSocket {
         .getRoot()
         .getContent()
         .appendChild(socket.tooltip)
-      const rect = socket.container.getDom().getBoundingClientRect()
-      const trect = socket.tooltip.getDom().getBoundingClientRect()
-      const pos = socket.parentNode
-        .getRoot()
-        .clientPosToLocalPos(e.clientX, e.clientY)
-      let delta = new V(0, 0)
-      const distance = 10 * socket.parentNode.getRoot().getScale()
-      if (socket.tangent.x < 0) delta.x = rect.x - trect.width - distance
-      else if (socket.tangent.x === 0) {
-        delta.x = rect.x - trect.width / 2 + rect.width / 2
-      } else delta.x = rect.x + rect.width + distance
-      if (socket.tangent.y < 0) delta.y = rect.y - trect.height - distance
-      else if (socket.tangent.y === 0) {
-        delta.y = rect.y - trect.height / 2 + rect.height / 2
-      } else delta.y = rect.y + rect.height + distance
-      delta = socket.parentNode.getRoot().clientPosToLocalPos(delta.x, delta.y)
-      socket.tooltip.setStyle({ left: delta.x + 'px', top: delta.y + 'px' })
+      NvSocket.refreshTooltipPos(socket)
     }
+  }
+
+  static refreshTooltipPos (socket: NvSocket) {
+    if (socket.tooltip === undefined) return
+    const rect = socket.container.getDom().getBoundingClientRect()
+    const trect = socket.tooltip.getDom().getBoundingClientRect()
+    //*
+    let delta = new V(0, 0)
+    const distance = 10
+    if (socket.tangent.x < 0) {
+      delta.x = rect.x - trect.width - distance
+    } else if (socket.tangent.x === 0) {
+      delta.x = rect.x - trect.width / 2 + rect.width / 2
+    } else delta.x = rect.x + rect.width + distance
+
+    if (socket.tangent.y < 0) {
+      delta.y = rect.y - trect.height - distance
+    } else if (socket.tangent.y === 0) {
+      delta.y = rect.y - trect.height / 2 + rect.height / 2
+    } else delta.y = rect.y + rect.height + distance
+    delta = socket.parentNode.getRoot().clientPosToLocalPos(delta.x, delta.y)
+    socket.tooltip.setStyle({ left: delta.x + 'px', top: delta.y + 'px' })
+    /**/
+    /*
+    if (socket.tangent.x < 0) {
+      socket.tooltip.setStyle({
+        right: `${rect.x + 10 * socket.root.getScale()}px`
+      })
+    } else if (socket.tangent.x === 0) {
+      //
+    }
+    // console.log(trect)
+    */
   }
 
   static mouseExit (e: MouseEvent, socket: NvSocket) {
@@ -201,6 +244,7 @@ export class NvSocket {
         .getDom()
         .removeChild(socket.tooltip.getDom())
       socket.tooltip = undefined
+      socket.root.onScaleChanged().removeListener(socket)
       /**/
     }
   }
