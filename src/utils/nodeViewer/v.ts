@@ -27,6 +27,10 @@ export class V {
     return new V(this.x - v.x, this.y - v.y)
   }
 
+  abs (): V {
+    return new V(Math.abs(this.x), Math.abs(this.y))
+  }
+
   lerp (v: V, f: number): V {
     return this.mult(1 - f).add(v.mult(f))
   }

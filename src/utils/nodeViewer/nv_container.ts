@@ -5,6 +5,7 @@ import { NvTheme } from './nv_theme'
 import { NvSocket } from './nv_socket'
 import { V } from './v'
 import { DelayedCallback } from '../graph/delayedCallback'
+import { LocalEvent } from '../graph/localEvent'
 
 export class NvContainer {
   private nodes: Map<number, NvNode> = new Map<number, NvNode>()
@@ -20,6 +21,11 @@ export class NvContainer {
   private size = 1
   public getScale () {
     return this.size
+  }
+
+  private scaleChanged = new LocalEvent<number>()
+  public onScaleChanged () {
+    return this.scaleChanged
   }
 
   private parent: Node
@@ -66,6 +72,7 @@ export class NvContainer {
 
     // create content dom for all nodes
     this.content = new NvEl('div', 'content', 'no-select')
+    this.content.setStyle({ 'pointer-events': 'none' })
 
     // create main container
     this.container = new NvEl('div', 'container')
@@ -135,6 +142,8 @@ export class NvContainer {
     )
 
     this.updateTransform()
+
+    this.scaleChanged.notify(this.size)
   }
 
   /*
@@ -151,6 +160,7 @@ export class NvContainer {
 
 /**/
 
+  /*
   static validZoom: Array<number> = new Array<number>(
     1.5,
     1.25,
@@ -165,6 +175,7 @@ export class NvContainer {
   )
 
   public zoomLevel = 2
+*/
 
   public zoom (event: WheelEvent) {
     event.preventDefault()
@@ -178,9 +189,9 @@ export class NvContainer {
       (offset.y + this.position.y) * this.size
     )
 
-    // this.size += event.deltaY * -0.0001;
-    // this.size = Math.min(Math.max(.125, this.size), 4);
-
+    this.size += event.deltaY * -0.001
+    this.size = Math.min(Math.max(0.125, this.size), 4)
+    /*
     if (event.deltaY < 0) this.zoomLevel--
     else this.zoomLevel++
     this.zoomLevel = Math.max(
@@ -188,6 +199,7 @@ export class NvContainer {
       Math.min(NvContainer.validZoom.length - 1, this.zoomLevel)
     )
     this.size = NvContainer.validZoom[this.zoomLevel]
+    */
     this.position = new V(
       (center.x - rect.width * (offset.x / rect.width) * this.size) / this.size,
       (center.y - rect.height * (offset.y / rect.height) * this.size) /
@@ -199,6 +211,7 @@ export class NvContainer {
     )
 
     this.updateTransform()
+    this.scaleChanged.notify(this.size)
   }
 
   public clientPosToLocalPos (clientX: number, clientY: number): V {

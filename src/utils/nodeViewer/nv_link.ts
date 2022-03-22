@@ -25,6 +25,8 @@ export class NvLink {
 
   private cpath: Array<V> | undefined = undefined
 
+  private pointerEventPath: NvEl
+
   private path: NvEl
   public getPath () {
     return this.path
@@ -78,16 +80,24 @@ export class NvLink {
           .style.getPropertyValue('background-color') as string
       )
     // this.path.getDom().onmouseover = (e) => {NV_Link.mouseOver(e, this)};
-    this.path.getDom().onmouseenter = e => {
-      this.path.getDom().onmousemove = e => {
+    this.pointerEventPath = new NvEl('path')
+
+    this.pointerEventPath.setStyle({ 'pointer-events': 'visiblestroke' })
+
+    this.path.setStyle({ 'pointer-events': 'none' })
+    this.pointerEventPath.getDom().onmouseenter = e => {
+      this.pointerEventPath.getDom().onmousemove = e => {
         NvLink.mouseMove(e, this)
       }
     }
-    this.path.getDom().onmouseleave = e => {
-      this.path.getDom().onmousemove = null
+    this.pointerEventPath.getDom().setAttribute('stroke', '#FF000000')
+    this.pointerEventPath.getDom().setAttribute('stroke-width', '10')
+    this.pointerEventPath.getDom().onmouseleave = e => {
+      this.pointerEventPath.getDom().onmousemove = null
       NvLink.mouseExit(e, this)
     }
     // this.path.getDom().setAttribute('stroke', 'red');
+    this.root.getBackground().appendChild(this.pointerEventPath)
   }
 
   private tooltip: NvEl | undefined = undefined
@@ -97,8 +107,18 @@ export class NvLink {
       const theme = nvLink.nodeIn.getRoot().theme
       nvLink.tooltip = new NvEl('div', 'node')
       nvLink.tooltip.setStyle({
-        'background-color': theme.nodeContentBackgroundColor
+        'background-color': theme.nodeContentBackgroundColor,
+        'z-index': '1',
+        'pointer-events': 'none',
+        'transform-origin': '0 0 0',
+        transform: `scale(${Math.max(0.725 / nvLink.root.getScale(), 1)})`
       })
+
+      nvLink.root.onScaleChanged().addListener(arg => {
+        (nvLink.tooltip as NvEl).setStyle({
+          transform: `scale(${Math.max(0.725 / nvLink.root.getScale(), 1)})`
+        })
+      }, nvLink)
 
       {
         const p = new NvEl('p')
@@ -200,6 +220,7 @@ export class NvLink {
         .getDom()
         .removeChild(nvLink.tooltip.getDom())
       nvLink.tooltip = undefined
+      nvLink.root.onScaleChanged().removeListener(nvLink)
     }
   }
 
@@ -236,6 +257,7 @@ export class NvLink {
       const pp2 = p2.add(this.socketOut.tangent.mult(tangentSize))
       const path = `M${p1.str()} C${pp1.str()} ${pp2.str()} ${p2.str()}`
       this.path.getDom().setAttribute('d', path)
+      this.pointerEventPath.getDom().setAttribute('d', path)
     }
     // this.delta = delta;
   }
@@ -319,6 +341,7 @@ export class NvLink {
       const p2 = this.root.unscale(this.socketIn.getMiddle().sub(this.delta()))
       path += ` L${p2.str()}`
       this.path.getDom().setAttribute('d', path)
+      this.pointerEventPath.getDom().setAttribute('d', path)
       // this.nodeIn.updateLinks();
       // this.nodeOut.updateLinks();
     }

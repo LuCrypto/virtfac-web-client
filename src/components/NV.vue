@@ -302,7 +302,6 @@ export default class NV extends Vue {
     if (l.getData<Vec2[] | undefined>('path') !== undefined) {
       link.updatePath(l.getData<Vec2[]>('path').map(v => new V(v.x, v.y)))
     }
-    // coucou
   }
 
   mounted () {
@@ -497,6 +496,7 @@ export default class NV extends Vue {
   font-smooth: never;
   -webkit-font-smoothing: none;
   white-space: break-spaces;
+  image-rendering: pixelated;
 }
 .nv-node-socket {
   display: flex;

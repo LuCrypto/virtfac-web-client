@@ -39,23 +39,7 @@
       </v-list>
     </v-navigation-drawer>
     <v-container style="width: auto; margin: 0; flex-grow: 1;">
-      <action-container
-        ref="actionContainer"
-        @action-left-mouse-click="() => true"
-        @action-middle-mouse-click="() => true"
-        @action-right-mouse-click="() => true"
-        @action-left-mouse-drag="() => true"
-        @action-middle-mouse-drag="() => true"
-        @action-right-mouse-drag="onRightMouseDrag"
-        @action-mouse-wheel="onMouseWheel"
-        @action-mouse-hover="() => true"
-        @action-touch-click="() => true"
-        @action-touch-drag="() => true"
-        @action-touch-pinch="() => true"
-        @action-update="onUpdate"
-      >
-        <node-viewer ref="nodeViewer"></node-viewer>
-      </action-container>
+      <blueprint-editor ref="nodeViewer"></blueprint-editor>
     </v-container>
     <open-file-pop-up
       ref="filePopUp"
@@ -74,8 +58,10 @@ import NodeViewer from '@/components/NodeViewer.vue'
 import OpenFilePopUp from '@/components/popup/OpenFilePopUp.vue'
 import XLSX from 'xlsx'
 import Mapper from '@/utils/mapper'
+import BlueprintEditor from '@/components/BlueprintEditor.vue'
 
 import CAEExampleFormat1 from '@/exemples/CAEExampleFormat1'
+import { BlueprintContainer } from '@/utils/routingAnalysis/blueprintContainer'
 
 class MenuItem {
   text: string
@@ -90,21 +76,20 @@ class MenuItem {
 
 @Component({
   components: {
-    ActionContainer,
-    NodeViewer,
+    BlueprintEditor,
     OpenFilePopUp
   }
 })
 export default class DrawingShopComponent extends Vue {
   selectedMenuItem = -1
-  nodeViewer: NodeViewer | null = null
+  nodeViewer: BlueprintEditor | null = null
   actionContainer: ActionContainer | null = null
   menuCollapse = false
   filePopUp: OpenFilePopUp | null = null
   menuItemList: MenuItem[] = []
 
   mounted (): void {
-    this.nodeViewer = this.$refs.nodeViewer as NodeViewer
+    this.nodeViewer = this.$refs.nodeViewer as BlueprintEditor
     this.actionContainer = this.$refs.actionContainer as ActionContainer
     this.filePopUp = this.$refs.filePopUp as OpenFilePopUp
 
@@ -121,10 +106,19 @@ export default class DrawingShopComponent extends Vue {
       new MenuItem('Download file', 'mdi-download', () => true)
     )
     this.menuItemList.push(new MenuItem('Save image', 'mdi-camera', () => true))
+    this.menuItemList.push(
+      new MenuItem('Set grid', 'mdi-grid', () => {
+        if ((this.nodeViewer as BlueprintEditor).getBpContainer() != null) {
+          ((this
+            .nodeViewer as BlueprintEditor).getBpContainer() as BlueprintContainer).resetGrid()
+        }
+      })
+    )
 
     // const mapper = new Mapper(CAEExampleFormat1)
   }
 
+  /*
   onRightMouseDrag (): void {
     if (this.actionContainer != null) {
       this.actionContainer.drag()
@@ -142,7 +136,7 @@ export default class DrawingShopComponent extends Vue {
       this.nodeViewer.update(data)
     }
   }
-
+*/
   inputFile (): void {
     const input = this.$refs.inputFile as HTMLInputElement
     input.value = ''

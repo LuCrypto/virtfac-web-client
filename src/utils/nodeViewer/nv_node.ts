@@ -5,6 +5,7 @@ import { NvSocket } from './nv_socket'
 import { V } from './v'
 
 export class NvNode {
+  private appliedScale = 1
   private root: NvContainer
   public getRoot () {
     return this.root
@@ -81,6 +82,8 @@ export class NvNode {
     }
 
     this.content = new NvEl('div', 'node-content')
+    this.container.setStyle({ 'pointer-events': 'visible' })
+
     middle.appendChild(
       this.socketContainer.left,
       this.content,
@@ -92,6 +95,13 @@ export class NvNode {
       this.socketContainer.bottom
     )
 
+    this.container.getDom().onmouseenter = e => {
+      if (this.currentButton === -1) this.activateZoom()
+    }
+    this.container.getDom().onmouseleave = e => {
+      if (this.currentButton === -1) this.deactivateZoom()
+    }
+
     this.position = position
     this.setPosition(position)
     this.content.getDom().onmousedown = e => this.dragMouseDown(e)
@@ -101,13 +111,15 @@ export class NvNode {
     this.position = position.step(10)
     this.container.setStyle({
       left: `${this.position.x -
-        this.container.getDom().getBoundingClientRect().width /
+        (this.container.getDom().getBoundingClientRect().width /
           2 /
-          this.root.getScale()}px`,
+          this.root.getScale()) *
+          this.appliedScale}px`,
       top: `${this.position.y -
-        this.container.getDom().getBoundingClientRect().height /
+        (this.container.getDom().getBoundingClientRect().height /
           2 /
-          this.root.getScale()}px`
+          this.root.getScale()) *
+          this.appliedScale}px`
     })
   }
 
@@ -134,6 +146,7 @@ export class NvNode {
       document.onmousemove = e => this.dragMouseMove(e)
 
       this.currentButton = event.button
+      this.deactivateZoom()
     } else {
       this.translationActive = true
       this.translationButton = event.button
@@ -150,6 +163,7 @@ export class NvNode {
       document.onmousemove = null
       this.translationActive = false
       this.translationButton = -1
+      this.activateZoom()
     } else if (event.button === this.translationButton) {
       this.translationActive = false
       this.translationButton = -1
@@ -194,6 +208,35 @@ export class NvNode {
   private textEl: NvEl = new NvEl('p', 'node-content')
   private textActif = false
 
+  private zoomActive = false
+  public activateZoom () {
+    if (this.zoomActive) return
+    else this.zoomActive = true
+    this.container.setStyle({
+      transform: `scale(${Math.max(0.725 / this.root.getScale(), 1)})`,
+      'z-index': '1'
+    })
+    this.appliedScale = Math.max(0.725 / this.root.getScale(), 1)
+    this.updateLinks()
+
+    this.root.onScaleChanged().addListener(arg => {
+      this.container.setStyle({
+        transform: `scale(${Math.max(0.725 / this.root.getScale(), 1)})`
+      })
+      this.appliedScale = Math.max(0.725 / this.root.getScale(), 1)
+      this.updateLinks()
+    }, this)
+  }
+
+  public deactivateZoom () {
+    if (!this.zoomActive) return
+    else this.zoomActive = false
+    this.root.onScaleChanged().removeListener(this)
+    this.container.setStyle({ transform: '', 'z-index': '0' })
+    this.appliedScale = 1
+    this.updateLinks()
+  }
+
   public setText (text: string, controleSize = false) {
     this.text = text
     this.textEl.getDom().innerHTML = text
@@ -221,7 +264,7 @@ export class NvNode {
       side === 'left' ? -1 : side === 'right' ? 1 : 0,
       side === 'top' ? -1 : side === 'bottom' ? 1 : 0
     )
-    const socket = new NvSocket(this, type, text, color, tangent)
+    const socket = new NvSocket(this, type, text, color, tangent, this.root)
     if (!socket.getHideWhenNotLinked()) {
       this.socketContainer[side].appendChild(socket.container)
     }
