@@ -83,7 +83,7 @@ export class NvNode {
 
     this.content = new NvEl('div', 'node-content')
     this.container.setStyle({ 'pointer-events': 'visible' })
-    //
+
     middle.appendChild(
       this.socketContainer.left,
       this.content,

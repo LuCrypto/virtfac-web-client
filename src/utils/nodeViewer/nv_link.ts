@@ -86,7 +86,6 @@ export class NvLink {
 
     this.path.setStyle({ 'pointer-events': 'none' })
     this.pointerEventPath.getDom().onmouseenter = e => {
-      console.log('enter')
       this.pointerEventPath.getDom().onmousemove = e => {
         NvLink.mouseMove(e, this)
       }
@@ -211,8 +210,6 @@ export class NvLink {
       .getRoot()
       .getContent()
       .appendChild(nvLink.tooltip)
-
-    console.log('move')
   }
 
   public static mouseExit (event: MouseEvent, nvLink: NvLink) {
@@ -225,7 +222,6 @@ export class NvLink {
       nvLink.tooltip = undefined
       nvLink.root.onScaleChanged().removeListener(nvLink)
     }
-    console.log('exit')
   }
 
   public setSocketIn (socket: NvSocket): void {
