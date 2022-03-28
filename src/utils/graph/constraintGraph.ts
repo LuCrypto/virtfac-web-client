@@ -1183,9 +1183,28 @@ export class ConstraintGraph {
         new Vector2(
           n.getData<number>('moyDepth') * dist,
           -Math.abs(n.getData<number>('depth')) * dist
+          // -n.getData<number>('hierarchy') * dist
         )
       )
       n.setData<Vec2>('position', sourcePosition.get(n) as Vec2)
+    })
+
+    GraphUtils.hierarchization(this.localGraph, 'hierarchy')
+
+    this.localGraph.foreachNode(n => {
+      n.setData<Vec2>(
+        'position',
+        new Vector2(
+          n.getData<Vec2>('position').x,
+          -n.getData<number>('hierarchy') * dist
+        )
+      )
+      n.setData<string>(
+        'name',
+        n.getData<string>('name') +
+          ' herarchy:' +
+          n.getData<number>('hierarchy')
+      )
     })
 
     /*
@@ -1269,6 +1288,8 @@ export class ConstraintGraph {
     this.refreshPosition()
     // this.refreshDisplayGraph(this.displayGraph);
     this.refreshDisplayGraphReverse(this.displayGraph)
-    if (!this.localGraph.getData<boolean>('autoRefreshBus')) { this.localGraph.getData<{(): void }>('Auto Refresh Bus')() }
+    if (!this.localGraph.getData<boolean>('autoRefreshBus')) {
+      this.localGraph.getData<{(): void }>('Auto Refresh Bus')()
+    }
   }
 }
