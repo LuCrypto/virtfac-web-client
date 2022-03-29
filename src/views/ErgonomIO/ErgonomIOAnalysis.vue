@@ -18,7 +18,7 @@ import { Component, Vue } from 'vue-property-decorator'
 })
 export default class ErgonomIOAnalysis extends Vue {
   mounted (): void {
-    console.log('Hello Ergonom.io')
+    console.log('Ergonom.io Analysis view.')
   }
 }
 </script>

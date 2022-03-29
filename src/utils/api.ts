@@ -14,7 +14,6 @@ export default class API {
   ): Promise<Response> {
     const apiIP = process.env.VUE_APP_API_SERVER_IP
     const apiPort = process.env.VUE_APP_API_SERVER_PORT
-    console.log('API HOST =', process.env)
     return new Promise((resolve, reject) => {
       const token = Session.getToken()
       const url =
