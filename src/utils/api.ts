@@ -35,7 +35,7 @@ export default class API {
         request.body = body
       }
       // console.log(`%c Fetch ${url}`, 'color: #bada55', request)
-      console.log(`%c Fetch ${url}`, 'color: #bada55')
+      console.log(`%c${method} ${url}`, 'color: #bada55')
       fetch(url, request)
         .then(response => {
           if (!response.ok) {
