@@ -478,6 +478,7 @@ export default class OpenFilePopUp extends Vue {
         application: this.application
       })
     ).then((response: Response) => {
+      console.log('TODO /files-by-application')
       const fileList = (response as unknown) as APIFileItem[]
       this.myfileList = []
       fileList.forEach((fileInfo: Partial<APIFileItem>) => {
