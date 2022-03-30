@@ -98,7 +98,7 @@ export default class LoginPopUp extends Vue {
       })
     )
       .then((json: any) => {
-        const user = new User(json.user)
+        const user = new User(json)
         Session.setUser(user)
         this.$root.$emit('bottom-message', `Welcome back ${user.pseudo}.`)
         this.$root.$emit('user-connection', user)

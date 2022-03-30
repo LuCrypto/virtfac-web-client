@@ -456,13 +456,13 @@ export default class OpenFilePopUp extends Vue {
   getAllFormats (): void {
     API.get(
       this,
-      '/application-format',
+      '/application/formats/ERGONOM_IO_ANALYSIS',
       new URLSearchParams({
         application: this.application
       })
-    ).then((reponse: Response) => {
+    ).then((response: Response) => {
       this.myFormatList = []
-      const formatList = (reponse as unknown) as string[]
+      const formatList = (response as unknown) as string[]
       this.myFormatList = formatList.map(MIME =>
         APIFileMIME.parseFromString(MIME)
       )
@@ -478,6 +478,7 @@ export default class OpenFilePopUp extends Vue {
         application: this.application
       })
     ).then((response: Response) => {
+      console.log('TODO /files-by-application')
       const fileList = (response as unknown) as APIFileItem[]
       this.myfileList = []
       fileList.forEach((fileInfo: Partial<APIFileItem>) => {

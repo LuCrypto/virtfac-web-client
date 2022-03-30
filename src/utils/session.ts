@@ -1,11 +1,13 @@
 export class User {
+  id = 0
+  access = 0
   firstname = ''
   lastname = ''
+  login = ''
   mail = ''
   phone = ''
-  login = ''
-  pseudo = ''
   picture = ''
+  pseudo = ''
   token = ''
   constructor (attributes?: Partial<User>) {
     Object.assign(this, attributes)
