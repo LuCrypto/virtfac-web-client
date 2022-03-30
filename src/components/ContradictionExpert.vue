@@ -243,6 +243,7 @@ export default class ContradictionExpert extends Vue {
     API.get(
       this,
       '/application-settings',
+      null,
       new URLSearchParams({ application: 'CONTRADICTION_ANALYSIS' })
     ).then(response => {
       const headers = new Array<{

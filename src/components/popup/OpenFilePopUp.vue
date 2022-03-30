@@ -439,11 +439,10 @@ export default class OpenFilePopUp extends Vue {
     this.fileSettingsIsSaving = false
     this.getAllGroups()
     this.getAllFormats()
-    this.getAllFiles()
   }
 
   getAllGroups (): void {
-    API.get(this, '/get-all-groups', null).then((reponse: Response) => {
+    API.get(this, '/get-all-groups', null, null).then((reponse: Response) => {
       const groupList = (reponse as unknown) as APIGroupItem[]
       this.myGroupList = [new APIGroupItem({ id: 0, name: 'All' })]
       groupList.forEach((groupInfo: Partial<APIGroupItem>) => {
@@ -457,12 +456,34 @@ export default class OpenFilePopUp extends Vue {
     API.get(
       this,
       '/application/formats/ERGONOM_IO_ANALYSIS',
+      null,
       new URLSearchParams({
         application: this.application
       })
     ).then((response: Response) => {
       this.myFormatList = []
       const formatList = (response as unknown) as string[]
+      const fileParams = JSON.stringify({
+        select: [
+          'id',
+          'idUserOwner',
+          'idProject',
+          'creationDate',
+          'modificationDate',
+          'name',
+          'color',
+          'tags',
+          'mime'
+        ],
+        where: formatList.map(format => {
+          return {
+            mime: format
+          }
+        })
+      })
+      console.log(fileParams)
+      this.getAllFiles(fileParams)
+
       this.myFormatList = formatList.map(MIME =>
         APIFileMIME.parseFromString(MIME)
       )
@@ -470,29 +491,25 @@ export default class OpenFilePopUp extends Vue {
     })
   }
 
-  getAllFiles (): void {
-    API.get(
-      this,
-      '/files-by-application',
-      new URLSearchParams({
-        application: this.application
-      })
-    ).then((response: Response) => {
-      console.log('TODO /files-by-application')
-      const fileList = (response as unknown) as APIFileItem[]
-      this.myfileList = []
-      fileList.forEach((fileInfo: Partial<APIFileItem>) => {
-        if (fileInfo.name && fileInfo.creationDate) {
-          const fileItem = new APIFileItem(fileInfo)
-          this.myfileList.push(fileItem)
-          if (this.selectedFileAfterLoad !== 0) {
-            this.selectedFile = [fileItem]
+  getAllFiles (fileParams: string): void {
+    API.post(this, '/resources/files', fileParams).then(
+      (response: Response) => {
+        console.log('TODO /resources/files')
+        const fileList = (response as unknown) as APIFileItem[]
+        this.myfileList = []
+        fileList.forEach((fileInfo: Partial<APIFileItem>) => {
+          if (fileInfo.name && fileInfo.creationDate) {
+            const fileItem = new APIFileItem(fileInfo)
+            this.myfileList.push(fileItem)
+            if (this.selectedFileAfterLoad !== 0) {
+              this.selectedFile = [fileItem]
+            }
           }
-        }
-      })
-      this.getAllTags()
-      this.waitingTasks -= 1
-    })
+        })
+        this.getAllTags()
+        this.waitingTasks -= 1
+      }
+    )
   }
 
   getAllTags (): void {
@@ -640,6 +657,7 @@ export default class OpenFilePopUp extends Vue {
       API.get(
         this,
         '/file-by-id',
+        null,
         new URLSearchParams({
           id: `${file.id}`
         })
