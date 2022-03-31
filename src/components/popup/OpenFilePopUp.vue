@@ -442,7 +442,7 @@ export default class OpenFilePopUp extends Vue {
   }
 
   getAllGroups (): void {
-    API.get(this, '/get-all-groups', null, null).then((reponse: Response) => {
+    API.get(this, '/user/groups', null).then((reponse: Response) => {
       const groupList = (reponse as unknown) as APIGroupItem[]
       this.myGroupList = [new APIGroupItem({ id: 0, name: 'All' })]
       groupList.forEach((groupInfo: Partial<APIGroupItem>) => {
@@ -456,14 +456,13 @@ export default class OpenFilePopUp extends Vue {
     API.get(
       this,
       '/application/formats/ERGONOM_IO_ANALYSIS',
-      null,
       new URLSearchParams({
         application: this.application
       })
     ).then((response: Response) => {
       this.myFormatList = []
       const formatList = (response as unknown) as string[]
-      const fileParams = JSON.stringify({
+      this.getAllFiles({
         select: [
           'id',
           'idUserOwner',
@@ -481,8 +480,6 @@ export default class OpenFilePopUp extends Vue {
           }
         })
       })
-      console.log(fileParams)
-      this.getAllFiles(fileParams)
 
       this.myFormatList = formatList.map(MIME =>
         APIFileMIME.parseFromString(MIME)
@@ -491,7 +488,10 @@ export default class OpenFilePopUp extends Vue {
     })
   }
 
-  getAllFiles (fileParams: string): void {
+  getAllFiles (params: { select: string[]; where: any[] }): void {
+    const fileParams = JSON.stringify(params)
+    console.log('GET RESOURCE FILES', fileParams)
+
     API.post(this, '/resources/files', fileParams).then(
       (response: Response) => {
         console.log('TODO /resources/files')
@@ -559,7 +559,7 @@ export default class OpenFilePopUp extends Vue {
   uploadFile (file: APIFile): void {
     console.log('UPPLOAD', file)
 
-    API.post(this, '/file', JSON.stringify(file))
+    API.put(this, '/file', JSON.stringify(file))
       .then((response: Response) => {
         const id = ((response as unknown) as { id: number }).id
         this.selectedFileAfterLoad = id
@@ -657,7 +657,6 @@ export default class OpenFilePopUp extends Vue {
       API.get(
         this,
         '/file-by-id',
-        null,
         new URLSearchParams({
           id: `${file.id}`
         })

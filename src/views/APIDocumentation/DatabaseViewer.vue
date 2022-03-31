@@ -44,26 +44,24 @@ export default class DatabaseViewer extends Vue {
   }
 
   showDatabase (): void {
-    API.get(this, '/database-structure', null, null).then(
-      (response: Response) => {
-        const items = (response as unknown) as APIDatabaseStructureItem[]
-        items.forEach(item => {
-          const table = this.tables.get(item.tableName)
-          const field = {
-            name: item.name,
-            type: item.type,
-            isReference: /id.{1}/i.test(item.name)
-          }
-          if (table) {
-            table.fields.push(field)
-          } else {
-            this.tables.set(item.tableName, { fields: [field] })
-          }
-        })
-        console.log(this.tables)
-        this.updateTables++
-      }
-    )
+    API.get(this, '/database-structure', null).then((response: Response) => {
+      const items = (response as unknown) as APIDatabaseStructureItem[]
+      items.forEach(item => {
+        const table = this.tables.get(item.tableName)
+        const field = {
+          name: item.name,
+          type: item.type,
+          isReference: /id.{1}/i.test(item.name)
+        }
+        if (table) {
+          table.fields.push(field)
+        } else {
+          this.tables.set(item.tableName, { fields: [field] })
+        }
+      })
+      console.log(this.tables)
+      this.updateTables++
+    })
   }
 }
 </script>

@@ -135,28 +135,26 @@ export default class NavBar extends Vue {
   }
 
   getMainMenu (): void {
-    API.get(this, '/odoo/web-main-menu', null, null).then(
-      (response: Response) => {
-        const mainMenu = (response as unknown) as APIOdooMenuItem[]
+    API.get(this, '/odoo/web-main-menu', null).then((response: Response) => {
+      const mainMenu = (response as unknown) as APIOdooMenuItem[]
 
-        console.log('MAIN', mainMenu)
-        const category = this.categories.get('About us')
-        if (!mainMenu || !category) return
-        mainMenu.forEach(item => {
-          console.log('ITEM', item)
-          category.push(
-            new Route({
-              icon: 'mdi-information-outline',
-              name: item.name,
-              subname: '',
-              category: 'About us',
-              replace: true,
-              component: Home
-            })
-          )
-        })
-      }
-    )
+      console.log('MAIN', mainMenu)
+      const category = this.categories.get('About us')
+      if (!mainMenu || !category) return
+      mainMenu.forEach(item => {
+        console.log('ITEM', item)
+        category.push(
+          new Route({
+            icon: 'mdi-information-outline',
+            name: item.name,
+            subname: '',
+            category: 'About us',
+            replace: true,
+            component: Home
+          })
+        )
+      })
+    })
   }
 
   setUser (user: User | null): void {
