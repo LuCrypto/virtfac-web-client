@@ -4,10 +4,16 @@
 
 import { FORMAT_TYPE, FORMAT_INFO, FormatInfo } from '@/utils/format'
 
-export interface APIDatabaseStructureItem {
+export interface APIDatabaseField {
   name: string
   type: string
-  tableName: string
+  subtype: string
+}
+
+export interface APIDatabaseTable {
+  name: string
+  type: string
+  fields: APIDatabaseField[]
 }
 
 export interface APIOdooMenuItem {
