@@ -153,7 +153,6 @@ export default class AvatarAnimationComponent extends Vue {
             viewer.scene.add(helper)
           }
         })
-        console.log('Avatar is loaded. Structure :', gltf.scene.children[0])
       })
       .catch(e => console.error('Cannot load GLTF', e))
   }
@@ -175,7 +174,6 @@ export default class AvatarAnimationComponent extends Vue {
     boneContainer.add(bvh.skeleton.bones[0])
     boneContainer.scale.set(0.005, 0.005, 0.005)
     scene.add(boneContainer)
-    console.log('SKELETON', scene.children[8])
 
     this.mixer = new THREE.AnimationMixer(this.bvhSkeletonHelper)
     this.animationDuration = bvh.clip.duration
@@ -212,10 +210,15 @@ export default class AvatarAnimationComponent extends Vue {
   }
 
   onFileInput (files: APIFile[]): void {
-    const file = files[0].uri
-    const fileContent = file.split('base64,')[1]
-    const content = atob(fileContent)
-    this.loadBVHAndAnimate(content)
+    const file = files.pop()
+    if (file != null) {
+      const fileContent = file.uri.split('base64,')[1]
+      const content = atob(fileContent)
+      this.loadBVHAndAnimate(content)
+    } else {
+      console.error('Unable to open selected file.')
+      this.$root.$emit('bottom-message', 'Unable to open selected file.')
+    }
   }
 }
 </script>

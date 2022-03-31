@@ -78,11 +78,6 @@ export default class LoginPopUp extends Vue {
   waiting = false
   showPassword = false
 
-  mounted (): void {
-    console.log('Data Format Selector Popup is open.')
-    this.$emit('message', 'Hello World !')
-  }
-
   public open (): void {
     this.show = true
   }

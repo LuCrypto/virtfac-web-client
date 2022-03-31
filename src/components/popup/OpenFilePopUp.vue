@@ -490,11 +490,8 @@ export default class OpenFilePopUp extends Vue {
 
   getAllFiles (params: { select: string[]; where: any[] }): void {
     const fileParams = JSON.stringify(params)
-    console.log('GET RESOURCE FILES', fileParams)
-
     API.post(this, '/resources/files', fileParams).then(
       (response: Response) => {
-        console.log('TODO /resources/files')
         const fileList = (response as unknown) as APIFileItem[]
         this.myfileList = []
         fileList.forEach((fileInfo: Partial<APIFileItem>) => {
@@ -557,9 +554,7 @@ export default class OpenFilePopUp extends Vue {
   }
 
   uploadFile (file: APIFile): void {
-    console.log('UPPLOAD', file)
-
-    API.put(this, '/file', JSON.stringify(file))
+    API.put(this, '/resources/files', JSON.stringify(file))
       .then((response: Response) => {
         const id = ((response as unknown) as { id: number }).id
         this.selectedFileAfterLoad = id
@@ -619,7 +614,7 @@ export default class OpenFilePopUp extends Vue {
 
   saveFileSettings (): void {
     this.fileSettingsIsSaving = true
-    API.patch(this, '/file', JSON.stringify(this.fileSettings)).then(
+    API.patch(this, '/resources/files', JSON.stringify(this.fileSettings)).then(
       (response: Response) => {
         const fileUpdate = (response as unknown) as APIFileUpdate
         if (fileUpdate.response !== 1) return
@@ -652,23 +647,24 @@ export default class OpenFilePopUp extends Vue {
   validated (): void {
     this.loadFileTasks = this.selectedFile.length
     this.loadFileTasksNumber = this.loadFileTasks
-    const fileResult: APIFile[] = []
-    this.selectedFile.forEach(file => {
-      API.get(
-        this,
-        '/file-by-id',
-        new URLSearchParams({
-          id: `${file.id}`
-        })
-      ).then((response: Response) => {
-        const file = (response as unknown) as APIFile
-        fileResult.push(file)
-        this.loadFileTasks -= 1
-        if (this.loadFileTasks === 0) {
-          this.$emit('fileInput', fileResult)
-          this.show = false
-        }
+    const fileIdList = this.selectedFile.map(file => {
+      return {
+        id: file.id
+      }
+    })
+    API.post(
+      this,
+      '/resources/files',
+      JSON.stringify({
+        where: fileIdList
       })
+    ).then((response: Response) => {
+      const fileResult = (response as unknown) as APIFile[]
+      this.loadFileTasks -= 1
+      if (this.loadFileTasks === 0) {
+        this.$emit('fileInput', fileResult)
+        this.show = false
+      }
     })
   }
 }
