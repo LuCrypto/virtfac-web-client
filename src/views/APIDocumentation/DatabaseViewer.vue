@@ -59,14 +59,11 @@ export default class DatabaseViewer extends Vue {
   updateTables = 0
 
   mounted (): void {
-    console.log('Database Viewer.')
     this.showDatabase()
   }
 
   showDatabase (): void {
     API.get(this, '/database-structure', null).then((response: Response) => {
-      console.log('response : ', response)
-
       const tables = (response as unknown) as APIDatabaseTable[]
       tables.forEach(table => {
         const tableType = this.tablesTypes.get(table.type)
@@ -76,7 +73,6 @@ export default class DatabaseViewer extends Vue {
           tableType.push(table)
         }
       })
-      console.log(this.tablesTypes)
       this.updateTables++
     })
   }
