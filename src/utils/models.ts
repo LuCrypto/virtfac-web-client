@@ -94,7 +94,7 @@ export class APIFileItem {
 
   name = ''
   color = 0x000000
-  tags = '[]'
+  tags = ''
   fileMIME = new APIFileMIME()
   // formatInfo: FormatInfo
 
@@ -108,13 +108,9 @@ export class APIFileItem {
 
   constructor (attributes?: Partial<APIFileItem>) {
     Object.assign(this, attributes)
-
-    // const formatKey = Object.keys(FORMAT_TYPE)[Math.floor(Math.random() * 4)]
-    // const formatType = formatKey as FORMAT_TYPE
-    // this.formatInfo = FORMAT_INFO[formatType]
   }
 
-  // toJOSON is automaticaly call by JSON.stringify
+  // toJSON is automaticaly call by JSON.stringify
   // We need this to add getter mime to JSON
   toJSON (): any {
     const { mime, fileMIME, ...file } = this

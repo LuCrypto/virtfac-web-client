@@ -608,6 +608,7 @@ export default class OpenFilePopUp extends Vue {
 
   saveFileSettings (): void {
     this.fileSettingsIsSaving = true
+    console.log(this.fileSettings)
     API.patch(
       this,
       `/resources/files/${this.fileSettings.id}`,
