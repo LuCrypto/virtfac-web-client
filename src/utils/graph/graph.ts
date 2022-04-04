@@ -120,6 +120,10 @@ export class Graph extends MetaData {
     this.nodeRemoved.notify({ graph: this, node: node })
   }
 
+  public nodeCount () : number {
+    return this.nodes.size
+  }
+
   /**
    * unreference all nodes from this instance of graph.
    */

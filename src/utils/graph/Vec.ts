@@ -61,4 +61,10 @@ export class Vector2 implements Vec2 {
   public static rotate90 (vec: Vec2): Vec2 {
     return new Vector2(vec.y, -vec.x)
   }
+
+  public static rotate (vec: Vec2, radAngle: number): Vec2 {
+    const s = Math.sin(radAngle)
+    const c = Math.cos(radAngle)
+    return new Vector2(c * vec.x - s * vec.y, s * vec.x + c * vec.y)
+  }
 }

@@ -24,6 +24,7 @@ import Component from 'vue-class-component'
 
 import domtoimage from 'dom-to-image'
 import { Session } from '@/utils/session'
+import * as XLSX from 'ts-xlsx'
 
 @Component({
   props: {
@@ -309,8 +310,6 @@ export default class NV extends Vue {
       this.setTheme(Session.getTheme())
     })
 
-    console.log("i'm mounted")
-
     const colors = {
       main: '#d77d00',
       second: '#ffc107'
@@ -384,16 +383,31 @@ export default class NV extends Vue {
       ev.preventDefault()
     }
     this.container.getContainer().getDom().ondrop = (ev: DragEvent) => {
-      console.log(ev)
       if (ev.dataTransfer != null && ev.dataTransfer.files.length > 0) {
         const f: File | null = ev.dataTransfer.files.item(0)
         try {
           if (f != null) {
-            const fr = new FileReader()
-            fr.onload = event => {
-              this.graph.applyJson(JSON.parse(fr.result as string))
+            if (f.name.split('.').pop() === 'json') {
+              const fr = new FileReader()
+              fr.onload = event => {
+                this.graph.applyJson(JSON.parse(fr.result as string))
+              }
+              fr.readAsText(f, 'utf8')
+            } else if (f.name.split('.').pop() === 'xlsx' || f.name.split('.').pop() === 'xls') {
+              let array: any
+              const fileReader = new FileReader()
+              fileReader.onload = e => {
+                array = fileReader.result
+                const data = new Uint8Array(array)
+                var arr = []
+                for (let i = 0; i !== data.length; ++i) {
+                  arr[i] = String.fromCharCode(data[i])
+                }
+                const workbook = XLSX.read(arr.join(''), { type: 'binary' })
+                this.graph.getData<ConstraintGraph>('constraintGraph').loadXLSX(workbook)
+              }
+              fileReader.readAsArrayBuffer(f)
             }
-            fr.readAsText(f, 'utf8')
           }
         } catch (error) {
           console.error(error)
@@ -489,7 +503,7 @@ export default class NV extends Vue {
 .nv-node-content {
   flex-grow: 1;
   min-width: 12px;
-  max-width: 400px;
+  max-width: 300px;
   width: 100%;
   padding: var(--space);
   cursor: move;
