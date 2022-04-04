@@ -35,17 +35,44 @@ export default class API {
         request.body = body
       }
       console.log(`%c${method} ${url}`, 'color: #bada55')
+
+      // Try to fetch
       fetch(url, request)
         .then(response => {
+          // Handle error in response
           if (!response.ok) {
-            console.error(response.statusText)
-            component.$root.$emit(
-              'bottom-message',
-              'Sorry, your request could not be executed'
-            )
-            reject(response.statusText)
+            if (response.body) {
+              // Get JSON error message from API if exist
+              response
+                .json()
+                .then(json => {
+                  console.error(`API error response : ${json.message}.`)
+                  component.$root.$emit(
+                    'bottom-message',
+                    'Sorry, your request could not be executed'
+                  )
+                  reject(response)
+                })
+                .catch(_ => {
+                  console.error(response)
+                  component.$root.$emit(
+                    'bottom-message',
+                    'Sorry, your request could not be executed'
+                  )
+                })
+            } else {
+              // Show other API error type
+              console.error(response)
+              component.$root.$emit(
+                'bottom-message',
+                'Sorry, your request could not be executed'
+              )
+              reject(response)
+            }
             return
           }
+
+          // Request response is 200 ok !
           response
             .json()
             .then(json => {
@@ -59,6 +86,8 @@ export default class API {
               )
             })
         })
+
+        // Cannot fetch API
         .catch(error => {
           console.error(url, request, error)
           component.$root.$emit(
@@ -157,7 +186,7 @@ export default class API {
   }
 
   static put (component: Vue, path: string, body: string): Promise<Response> {
-    return API.fetch(component, 'POST', path, body, null)
+    return API.fetch(component, 'PUT', path, body, null)
   }
 
   static post (component: Vue, path: string, body: string): Promise<Response> {

@@ -86,11 +86,14 @@ export class APIFileMIME {
 }
 
 export class APIFileItem {
-  name = ''
-  creationDate = 0
   id = 0
-  idGroup = 0
+  idUserOwner = 0
+  idProject = 0
+  creationDate = 0
   modificationDate = 0
+
+  name = ''
+  color = 0x000000
   tags = '[]'
   fileMIME = new APIFileMIME()
   // formatInfo: FormatInfo
@@ -114,7 +117,7 @@ export class APIFileItem {
   // toJOSON is automaticaly call by JSON.stringify
   // We need this to add getter mime to JSON
   toJSON (): any {
-    const { mime, ...file } = this
+    const { mime, fileMIME, ...file } = this
     return {
       mime,
       ...file
@@ -173,5 +176,12 @@ export class APIFile extends APIFileItem {
   constructor (attributes?: Partial<APIFile>) {
     super(attributes)
     Object.assign(this, attributes)
+    this.mime = this.extractMIMEFromBase64URI()
+  }
+
+  extractMIMEFromBase64URI (): string {
+    const regexp = /data:(.*);base64,/g
+    const result = regexp.exec(this.uri) || [null, null]
+    return result[1] || ''
   }
 }

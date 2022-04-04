@@ -32,7 +32,7 @@
 
               <!-- Group selector-->
               <v-select
-                :items="myGroupList"
+                :items="groupList"
                 v-model="selectedGroupId"
                 style="min-width: 0;"
                 label="Group"
@@ -41,7 +41,7 @@
                 dense
                 hide-details
                 item-text="name"
-                item-value="idGroup"
+                item-value="id"
                 @change="refreshTableKey++"
               ></v-select>
             </v-layout>
@@ -332,7 +332,7 @@ export default class OpenFilePopUp extends Vue {
 
   /* Group bar */
   groupSettingsPopUp = false
-  myGroupList: APIGroupItem[] = []
+  groupList: APIGroupItem[] = []
   selectedGroupId = 0
 
   /* Search bar */
@@ -443,10 +443,10 @@ export default class OpenFilePopUp extends Vue {
 
   getAllGroups (): void {
     API.get(this, '/user/groups', null).then((reponse: Response) => {
-      const groupList = (reponse as unknown) as APIGroupItem[]
-      this.myGroupList = [new APIGroupItem({ id: 0, name: 'All' })]
-      groupList.forEach((groupInfo: Partial<APIGroupItem>) => {
-        this.myGroupList.push(new APIGroupItem(groupInfo))
+      const groupListData = (reponse as unknown) as APIGroupItem[]
+      this.groupList = [new APIGroupItem({ id: 0, name: 'All' })]
+      groupListData.forEach((groupInfo: Partial<APIGroupItem>) => {
+        this.groupList.push(new APIGroupItem(groupInfo))
       })
       this.waitingTasks -= 1
     })
@@ -462,24 +462,26 @@ export default class OpenFilePopUp extends Vue {
     ).then((response: Response) => {
       this.myFormatList = []
       const formatList = (response as unknown) as string[]
-      this.getAllFiles({
-        select: [
-          'id',
-          'idUserOwner',
-          'idProject',
-          'creationDate',
-          'modificationDate',
-          'name',
-          'color',
-          'tags',
-          'mime'
-        ],
-        where: formatList.map(format => {
-          return {
-            mime: format
-          }
+      this.getAllFiles(
+        JSON.stringify({
+          select: [
+            'id',
+            'idUserOwner',
+            'idProject',
+            'creationDate',
+            'modificationDate',
+            'name',
+            'color',
+            'tags',
+            'mime'
+          ],
+          where: formatList.map(format => {
+            return {
+              mime: format
+            }
+          })
         })
-      })
+      )
 
       this.myFormatList = formatList.map(MIME =>
         APIFileMIME.parseFromString(MIME)
@@ -488,8 +490,7 @@ export default class OpenFilePopUp extends Vue {
     })
   }
 
-  getAllFiles (params: { select: string[]; where: any[] }): void {
-    const fileParams = JSON.stringify(params)
+  getAllFiles (fileParams: string): void {
     API.post(this, '/resources/files', fileParams).then(
       (response: Response) => {
         const fileList = (response as unknown) as APIFileItem[]
@@ -536,8 +537,7 @@ export default class OpenFilePopUp extends Vue {
     item: APIFileItem
   ): boolean {
     const itemTags = item.getTags()
-    const groupFilter =
-      this.selectedGroupId === 0 || item.idGroup === this.selectedGroupId
+    const groupFilter = this.selectedGroupId === 0 // TODO : Update filter
     const searchFilter =
       this.search == null ||
       item.name.toLocaleUpperCase().indexOf(this.search.toLocaleUpperCase()) !==
@@ -554,13 +554,16 @@ export default class OpenFilePopUp extends Vue {
   }
 
   uploadFile (file: APIFile): void {
-    API.put(this, '/resources/files', JSON.stringify(file))
+    const json = file.toJSON()
+    API.put(this, '/resources/files', JSON.stringify(json))
       .then((response: Response) => {
         const id = ((response as unknown) as { id: number }).id
         this.selectedFileAfterLoad = id
         this.load()
       })
-      .catch(e => console.warn(e))
+      .catch(_ => {
+        console.error('Fail posted resource :', file)
+      })
   }
 
   updateUploadFile (e: Event): void {
@@ -570,15 +573,13 @@ export default class OpenFilePopUp extends Vue {
       // TODO : Upload file and select format before validation
 
       [...target.files].forEach(file => {
-        console.log(file)
-
         const reader = new FileReader()
         reader.onload = () => {
+          const fileString = reader.result as string
           this.uploadFile(
             new APIFile({
               name: file.name,
-              idGroup: this.selectedGroupId,
-              uri: reader.result as string
+              uri: fileString
             })
           )
         }
