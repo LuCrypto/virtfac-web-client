@@ -1,65 +1,78 @@
 <template>
   <v-container fluid :key="updateTables" class="d-flex flex-wrap pt-6 pl-6">
-    <v-card
-      v-for="[tableName, fields] in tables"
-      :key="tableName"
-      class="mb-6 mr-6"
-    >
-      <v-card-title class="text-h6 primary black--text py-0 px-2"
-        >{{ tableName }}
-      </v-card-title>
-      <v-card-text class="pa-6">
-        <div v-for="(field, index) in fields.fields" :key="index">
-          <span class="primary--text">{{ field.type }} </span>
-          <span :class="field.isReference ? 'blue--text' : 'text--primary'"
-            >{{ field.name }}
-          </span>
-        </div>
-      </v-card-text>
-    </v-card>
+    <div v-for="[type, tables] in tablesTypes" :key="type">
+      <h1 class="mb-6">
+        {{ type.charAt(0).toUpperCase() + type.slice(1) }}s tables
+      </h1>
+      <v-card v-for="table in tables" :key="table.name" class="mb-6 mr-6">
+        <v-card-title class="text-h6 primary black--text py-0 px-2"
+          >{{ table.name }}
+        </v-card-title>
+        <v-card-text class="px-0 py-2">
+          <v-simple-table dense>
+            <template v-slot:default>
+              <thead>
+                <tr>
+                  <th class="text-left">
+                    Type
+                  </th>
+                  <th class="text-left">
+                    Name
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(field, index) in table.fields" :key="index">
+                  <td class="primary--text">
+                    <b>{{ field.type }}</b> ({{ field.subtype }})
+                  </td>
+                  <td
+                    :class="
+                      field.name === 'id'
+                        ? 'green--text'
+                        : /id.{1}/i.test(field.name)
+                        ? 'blue--text'
+                        : 'text--primary'
+                    "
+                  >
+                    {{ field.name }}
+                  </td>
+                </tr>
+              </tbody>
+            </template>
+          </v-simple-table>
+        </v-card-text>
+      </v-card>
+    </div>
   </v-container>
 </template>
 
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator'
 import API from '@/utils/api'
-import { APIDatabaseStructureItem } from '@/utils/models'
-
-interface DatabaseTable {
-  fields: {
-    name: string
-    type: string
-    isReference: boolean
-  }[]
-}
+import { APIDatabaseTable } from '@/utils/models'
 
 @Component
 export default class DatabaseViewer extends Vue {
-  tables: Map<string, DatabaseTable> = new Map<string, DatabaseTable>()
+  tablesTypes = new Map<string, APIDatabaseTable[]>()
+  tables: APIDatabaseTable[] = []
   updateTables = 0
 
   mounted (): void {
-    console.log('Database Viewer.')
     this.showDatabase()
   }
 
   showDatabase (): void {
     API.get(this, '/database-structure', null).then((response: Response) => {
-      const items = (response as unknown) as APIDatabaseStructureItem[]
-      items.forEach(item => {
-        const table = this.tables.get(item.tableName)
-        const field = {
-          name: item.name,
-          type: item.type,
-          isReference: /id.{1}/i.test(item.name)
-        }
-        if (table) {
-          table.fields.push(field)
+      const tables = (response as unknown) as APIDatabaseTable[]
+      tables.forEach(table => {
+        const tableType = this.tablesTypes.get(table.type)
+        if (tableType == null) {
+          this.tablesTypes.set(table.type, [table])
         } else {
-          this.tables.set(item.tableName, { fields: [field] })
+          tableType.push(table)
         }
       })
-      console.log(this.tables)
       this.updateTables++
     })
   }

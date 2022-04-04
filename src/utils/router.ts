@@ -18,6 +18,7 @@ import ErgonomIOAssets from '@/views/ErgonomIO/ErgonomIOAssets.vue'
 import ErgonomIOAvatars from '@/views/ErgonomIO/ErgonomIOAvatars.vue'
 import ErgonomioMainMenu from '@/components/ergonomio_ui/ErgonomioMainMenu.vue'
 import DatabaseViewer from '@/views/APIDocumentation/DatabaseViewer.vue'
+import APIDocumentation from '@/views/APIDocumentation/APIDocumentation.vue'
 
 Vue.use(VueRouter)
 
@@ -157,6 +158,15 @@ export const routes: Array<Route> = [
     path: '/documentation-database',
     category: 'Documentation',
     component: DatabaseViewer
+  }),
+
+  new Route({
+    icon: 'mdi-database',
+    name: 'API',
+    subname: 'API documentation',
+    path: '/documentation-api',
+    category: 'Documentation',
+    component: APIDocumentation
   }),
 
   // Hidded menus

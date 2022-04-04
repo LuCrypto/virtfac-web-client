@@ -439,11 +439,10 @@ export default class OpenFilePopUp extends Vue {
     this.fileSettingsIsSaving = false
     this.getAllGroups()
     this.getAllFormats()
-    this.getAllFiles()
   }
 
   getAllGroups (): void {
-    API.get(this, '/get-all-groups', null).then((reponse: Response) => {
+    API.get(this, '/user/groups', null).then((reponse: Response) => {
       const groupList = (reponse as unknown) as APIGroupItem[]
       this.myGroupList = [new APIGroupItem({ id: 0, name: 'All' })]
       groupList.forEach((groupInfo: Partial<APIGroupItem>) => {
@@ -463,6 +462,25 @@ export default class OpenFilePopUp extends Vue {
     ).then((response: Response) => {
       this.myFormatList = []
       const formatList = (response as unknown) as string[]
+      this.getAllFiles({
+        select: [
+          'id',
+          'idUserOwner',
+          'idProject',
+          'creationDate',
+          'modificationDate',
+          'name',
+          'color',
+          'tags',
+          'mime'
+        ],
+        where: formatList.map(format => {
+          return {
+            mime: format
+          }
+        })
+      })
+
       this.myFormatList = formatList.map(MIME =>
         APIFileMIME.parseFromString(MIME)
       )
@@ -470,29 +488,25 @@ export default class OpenFilePopUp extends Vue {
     })
   }
 
-  getAllFiles (): void {
-    API.get(
-      this,
-      '/files-by-application',
-      new URLSearchParams({
-        application: this.application
-      })
-    ).then((response: Response) => {
-      console.log('TODO /files-by-application')
-      const fileList = (response as unknown) as APIFileItem[]
-      this.myfileList = []
-      fileList.forEach((fileInfo: Partial<APIFileItem>) => {
-        if (fileInfo.name && fileInfo.creationDate) {
-          const fileItem = new APIFileItem(fileInfo)
-          this.myfileList.push(fileItem)
-          if (this.selectedFileAfterLoad !== 0) {
-            this.selectedFile = [fileItem]
+  getAllFiles (params: { select: string[]; where: any[] }): void {
+    const fileParams = JSON.stringify(params)
+    API.post(this, '/resources/files', fileParams).then(
+      (response: Response) => {
+        const fileList = (response as unknown) as APIFileItem[]
+        this.myfileList = []
+        fileList.forEach((fileInfo: Partial<APIFileItem>) => {
+          if (fileInfo.name && fileInfo.creationDate) {
+            const fileItem = new APIFileItem(fileInfo)
+            this.myfileList.push(fileItem)
+            if (this.selectedFileAfterLoad !== 0) {
+              this.selectedFile = [fileItem]
+            }
           }
-        }
-      })
-      this.getAllTags()
-      this.waitingTasks -= 1
-    })
+        })
+        this.getAllTags()
+        this.waitingTasks -= 1
+      }
+    )
   }
 
   getAllTags (): void {
@@ -540,9 +554,7 @@ export default class OpenFilePopUp extends Vue {
   }
 
   uploadFile (file: APIFile): void {
-    console.log('UPPLOAD', file)
-
-    API.post(this, '/file', JSON.stringify(file))
+    API.put(this, '/resources/files', JSON.stringify(file))
       .then((response: Response) => {
         const id = ((response as unknown) as { id: number }).id
         this.selectedFileAfterLoad = id
@@ -602,7 +614,7 @@ export default class OpenFilePopUp extends Vue {
 
   saveFileSettings (): void {
     this.fileSettingsIsSaving = true
-    API.patch(this, '/file', JSON.stringify(this.fileSettings)).then(
+    API.patch(this, '/resources/files', JSON.stringify(this.fileSettings)).then(
       (response: Response) => {
         const fileUpdate = (response as unknown) as APIFileUpdate
         if (fileUpdate.response !== 1) return
@@ -635,23 +647,24 @@ export default class OpenFilePopUp extends Vue {
   validated (): void {
     this.loadFileTasks = this.selectedFile.length
     this.loadFileTasksNumber = this.loadFileTasks
-    const fileResult: APIFile[] = []
-    this.selectedFile.forEach(file => {
-      API.get(
-        this,
-        '/file-by-id',
-        new URLSearchParams({
-          id: `${file.id}`
-        })
-      ).then((response: Response) => {
-        const file = (response as unknown) as APIFile
-        fileResult.push(file)
-        this.loadFileTasks -= 1
-        if (this.loadFileTasks === 0) {
-          this.$emit('fileInput', fileResult)
-          this.show = false
-        }
+    const fileIdList = this.selectedFile.map(file => {
+      return {
+        id: file.id
+      }
+    })
+    API.post(
+      this,
+      '/resources/files',
+      JSON.stringify({
+        where: fileIdList
       })
+    ).then((response: Response) => {
+      const fileResult = (response as unknown) as APIFile[]
+      this.loadFileTasks -= 1
+      if (this.loadFileTasks === 0) {
+        this.$emit('fileInput', fileResult)
+        this.show = false
+      }
     })
   }
 }

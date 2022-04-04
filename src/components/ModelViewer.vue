@@ -119,7 +119,6 @@ export default class ModelViewer extends Vue {
   }
 
   loadGLTFFromPath (path: string): Promise<GLTF> {
-    console.log(`Load <${path}>`)
     const loader = new GLTFLoader()
     return new Promise((resolve, reject) =>
       loader.load(

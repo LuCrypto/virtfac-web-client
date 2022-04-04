@@ -2,12 +2,34 @@
  * Models.ts lists all the structures resulting from the API requests
  */
 
-import { FORMAT_TYPE, FORMAT_INFO, FormatInfo } from '@/utils/format'
-
-export interface APIDatabaseStructureItem {
+export interface APIDatabaseField {
   name: string
   type: string
-  tableName: string
+  subtype: string
+}
+
+export interface APIDatabaseTable {
+  name: string
+  type: string
+  fields: APIDatabaseField[]
+}
+
+export interface APIRequestDocumentation {
+  body: APIDatabaseField[]
+  inputInfo: string
+  outputInfo: string
+  params: {
+    name: string
+    info: string
+  }[]
+  result: APIDatabaseField[]
+}
+
+export interface APIRequest {
+  type: string
+  path: string
+  access: number
+  documentation: APIRequestDocumentation
 }
 
 export interface APIOdooMenuItem {
