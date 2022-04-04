@@ -153,11 +153,6 @@ export class APIFileItem {
   }
 }
 
-export interface APIFileUpdate {
-  response: number
-  file: APIFileItem
-}
-
 export class APIGroupItem {
   id = 0
   idUserOwner = 0

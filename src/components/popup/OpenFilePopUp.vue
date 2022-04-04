@@ -554,8 +554,7 @@ export default class OpenFilePopUp extends Vue {
   }
 
   uploadFile (file: APIFile): void {
-    const json = file.toJSON()
-    API.put(this, '/resources/files', JSON.stringify(json))
+    API.put(this, '/resources/files', JSON.stringify(file.toJSON()))
       .then((response: Response) => {
         const id = ((response as unknown) as { id: number }).id
         this.selectedFileAfterLoad = id
@@ -615,19 +614,20 @@ export default class OpenFilePopUp extends Vue {
 
   saveFileSettings (): void {
     this.fileSettingsIsSaving = true
-    API.patch(this, '/resources/files', JSON.stringify(this.fileSettings)).then(
-      (response: Response) => {
-        const fileUpdate = (response as unknown) as APIFileUpdate
-        if (fileUpdate.response !== 1) return
-        this.fileSettingsIsSaving = false
-        this.fileSettingsPopUp = false
-        this.myfileList.forEach(file => {
-          if (file.id === this.fileSettings.id) {
-            Object.assign(file, fileUpdate.file)
-          }
-        })
-      }
-    )
+    API.patch(
+      this,
+      `/resources/files/${this.fileSettings.id}`,
+      JSON.stringify(this.fileSettings.toJSON())
+    ).then((response: Response) => {
+      const fileUpdate = (response as unknown) as APIFileItem
+      this.fileSettingsIsSaving = false
+      this.fileSettingsPopUp = false
+      this.myfileList.forEach(file => {
+        if (file.id === this.fileSettings.id) {
+          Object.assign(file, fileUpdate)
+        }
+      })
+    })
   }
 
   /* Popup actions */
