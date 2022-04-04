@@ -304,13 +304,7 @@
 import { Component, Prop, Vue } from 'vue-property-decorator'
 import { DataTableHeader } from 'vuetify/types'
 import API from '@/utils/api'
-import {
-  APIFileItem,
-  APIGroupItem,
-  APIFile,
-  APIFileMIME,
-  APIFileUpdate
-} from '@/utils/models'
+import { APIFileItem, APIGroupItem, APIFile, APIFileMIME } from '@/utils/models'
 
 class DataTableHeaderSelector {
   active = true
