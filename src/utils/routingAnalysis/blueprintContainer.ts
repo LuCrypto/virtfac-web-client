@@ -96,6 +96,10 @@ export class BlueprintContainer {
   private parentNode: HTMLElement
   private grid: Grid | null = null
   private size = 1
+  public scale () {
+    return this.size
+  }
+
   private position: V = new V(0, 0)
 
   private container: NvEl
