@@ -177,6 +177,12 @@ export default class NV extends Vue {
       )
     )
 
+    if (+this.themes[this.themeID].gridPointPercent > 50) {
+      container.setStyle({
+        'background-color': this.themes[this.themeID].gridColor
+      })
+    }
+
     console.log(this.container.getBoundingNodeRect())
     domtoimage
       .toPng(this.$refs.container as Element, {
@@ -393,7 +399,10 @@ export default class NV extends Vue {
                 this.graph.applyJson(JSON.parse(fr.result as string))
               }
               fr.readAsText(f, 'utf8')
-            } else if (f.name.split('.').pop() === 'xlsx' || f.name.split('.').pop() === 'xls') {
+            } else if (
+              f.name.split('.').pop() === 'xlsx' ||
+              f.name.split('.').pop() === 'xls'
+            ) {
               let array: any
               const fileReader = new FileReader()
               fileReader.onload = e => {
@@ -404,7 +413,9 @@ export default class NV extends Vue {
                   arr[i] = String.fromCharCode(data[i])
                 }
                 const workbook = XLSX.read(arr.join(''), { type: 'binary' })
-                this.graph.getData<ConstraintGraph>('constraintGraph').loadXLSX(workbook)
+                this.graph
+                  .getData<ConstraintGraph>('constraintGraph')
+                  .loadXLSX(workbook)
               }
               fileReader.readAsArrayBuffer(f)
             }

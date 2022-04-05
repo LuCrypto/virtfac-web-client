@@ -145,7 +145,14 @@ export class GraphLayout {
             : (childPositionning = 'MIDDLE')
         node.setData<Vec2>(
           positionField,
-          new Vector2(middleX, node.getData<Vec2>(positionField).y)
+          new Vector2(
+            middleX -
+              (Math.abs(Math.abs(middleX % stepSize) - stepSize / 2) <
+              stepSize / 4
+                ? middleX % stepSize
+                : 0),
+            node.getData<Vec2>(positionField).y
+          )
         )
       } else {
         if (Math.abs(leftBorder) < Math.abs(rightBorder)) {
