@@ -40,7 +40,9 @@ export class BpWallNode {
     }
 
     this.point.getDom().onmousedown = e => {
-      this.container.onMouseDown(e)
+      e.preventDefault()
+      if (e.button === 2) this.container.moveNodeMode(this.getNode())
+      else this.container.onMouseDown(e)
     }
     this.point.getDom().onmouseup = e => {
       this.container.onMouseUp(e)
@@ -49,6 +51,8 @@ export class BpWallNode {
       this.container.onMouseMove(e)
     }
     this.point.getDom().onwheel = e => this.container.zoom(e)
+
+    this.point.getDom().oncontextmenu = e => e.preventDefault()
   }
 
   public setPos (x: number, y: number) {
@@ -65,5 +69,12 @@ export class BpWallNode {
 
   public disableMoving () {
     this.point.setStyle({ 'pointer-events': 'visiblefill' })
+  }
+
+  public destroy () {
+    this.container
+      .getNodeLayer()
+      .getDom()
+      .removeChild(this.point.getDom())
   }
 }

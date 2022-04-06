@@ -10,12 +10,20 @@ export class Blueprint {
     return this.wallGraph.onNodeAdded()
   }
 
+  public onWallNodeRemoved () {
+    return this.wallGraph.onNodeRemoved()
+  }
+
   public onWallNodeDataChanged () {
     return this.wallGraph.onNodeDataChanged()
   }
 
   public onWallLinkAdded () {
     return this.wallGraph.onLinkAdded()
+  }
+
+  public onWallLinkRemoved () {
+    return this.wallGraph.onLinkRemoved()
   }
 
   public onWallLinkDataChanged () {
@@ -29,6 +37,19 @@ export class Blueprint {
     n.setData<number>('id', this.nextId++)
     n.setData<Vec2>('position', pos)
     return n
+  }
+
+  public removeWallNode (node: Node) {
+    node.foreachLink(l => {
+      l.getNode()
+        .getData<Set<Node>>('targetBy')
+        .delete(node)
+      node.removeLink(l.getNode())
+    })
+    node.getData<Set<Node>>('targetBy').forEach(n => {
+      n.removeLink(node)
+    })
+    this.wallGraph.removeNode(node)
   }
 
   public addWall (n1: Node, n2: Node) {

@@ -70,4 +70,15 @@ export class BpWallLink {
       )
     this.line.setStyle({ 'pointer-events': 'none' })
   }
+
+  destroy () {
+    this.container
+      .getLinkLayer()
+      .getDom()
+      .removeChild(this.line.getDom())
+    this.container
+      .getLinkLayer()
+      .getDom()
+      .removeChild(this.length.getDom())
+  }
 }

@@ -230,6 +230,16 @@ export class BlueprintContainer {
       (this.wallLinkMap.get(arg.link) as BpWallLink).refreshPos()
     })
 
+    this.bp.onWallNodeRemoved().addListener(arg => {
+      (this.wallNodeMap.get(arg.node) as BpWallNode).destroy()
+      this.wallNodeMap.delete(arg.node)
+    }, this)
+
+    this.bp.onWallLinkRemoved().addListener(arg => {
+      (this.wallLinkMap.get(arg.link) as BpWallLink).destroy()
+      this.wallLinkMap.delete(arg.link)
+    })
+
     this.snapXLine = new NvEl('path')
     this.snapYLine = new NvEl('path')
 
@@ -328,7 +338,7 @@ export class BlueprintContainer {
     this.container.getDom().onmousemove = null
     const c = this.container as NvEl
     c.getDom().onmousedown = e => {
-      if (e.button === 2) {
+      if (e.button === 1) {
         this.positionStart = this.unscale(new V(e.clientX, e.clientY)).sub(
           this.position
         )
@@ -401,10 +411,63 @@ export class BlueprintContainer {
             document.onmouseup = null
             document.onmousemove = null
             this.hideSnap()
+            this.wallNodeMap.forEach(value => {
+              if (
+                Vector2.norm(
+                  Vector2.minus(
+                    value.getNode().getData<Vec2>('position'),
+                    n2.getData<Vec2>('position')
+                  )
+                ) < 2 &&
+                value.getNode() !== n2
+              ) {
+                this.bp.addWall(n as Node, value.getNode())
+                this.bp.removeWallNode(n2)
+              }
+            })
           }
         }
       }
       e.preventDefault()
+    }
+  }
+
+  public moveNodeMode (node: Node) {
+    this.container.getDom().onmousedown = null
+    this.container.getDom().onmouseup = null
+    this.container.getDom().onmousemove = null
+
+    this.container.getDom().onmousemove = e => {
+      // const pos = this.clientPosToContainerPos(e.clientX, e.clientY)
+      // this.bp.addWall(n, n2)
+      this.container.getDom().onmousemove = e1 => {
+        this.hideSnap()
+        const p2 = this.clientPosToContainerPos(e1.clientX, e1.clientY)
+        let snapX: Node | null = null
+        let snapY: Node | null = null
+        this.wallNodeMap.forEach((value: BpWallNode, key: Node) => {
+          if (key === node) return
+          const p = key.getData<Vec2>('position')
+          if (Math.abs(p2.x - p.x) < this.optAlignSnapDist) {
+            p2.x = p.x
+            snapX = key
+          }
+          if (Math.abs(p2.y - p.y) < this.optAlignSnapDist) {
+            p2.y = p.y
+            snapY = key
+          }
+        })
+
+        if (snapX !== null) this.displayXsnap(snapX, new V(p2.x, p2.y))
+        if (snapY !== null) this.displayYsnap(snapY, new V(p2.x, p2.y))
+
+        node.setData<Vec2>('position', p2)
+      }
+    }
+    document.onmouseup = e => {
+      if (e.button === 2) {
+        this.defaultMode()
+      }
     }
   }
 
