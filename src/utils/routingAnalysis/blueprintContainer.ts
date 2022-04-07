@@ -254,6 +254,11 @@ export class BlueprintContainer {
     this.snapYLine.setStyle(snapLineStyle)
 
     this.svgLinkLayer.appendChild(this.snapXLine, this.snapYLine)
+
+    this.testPoint.getDom().setAttribute('width', `${5}`)
+    this.testPoint.getDom().setAttribute('height', `${5}`)
+    this.testPoint.setStyle({ 'pointer-events': 'none' })
+    this.getNodeLayer().appendChild(this.testPoint)
   }
 
   public clientPosToContainerPos (x: number, y: number): V {
@@ -332,10 +337,24 @@ export class BlueprintContainer {
 
   private positionStart: V = new V(0, 0)
 
+  private testPoint = new NvEl('rect')
+
   public defaultMode () {
     this.container.getDom().onmousedown = null
     this.container.getDom().onmouseup = null
     this.container.getDom().onmousemove = null
+
+    this.container.getDom().onmousemove = e => {
+      const clientPos = this.clientPosToContainerPos(e.clientX, e.clientY)
+      if (this.bp.isInside(new Vector2(clientPos.x, clientPos.y))) {
+        this.testPoint.setStyle({ fill: '#2ECC71' })
+      } else {
+        this.testPoint.setStyle({ fill: '#E74C3C' })
+      }
+      this.testPoint.setStyle({
+        transform: `translate(${clientPos.x}px, ${clientPos.y}px)`
+      })
+    }
     const c = this.container as NvEl
     c.getDom().onmousedown = e => {
       if (e.button === 1) {
@@ -349,9 +368,10 @@ export class BlueprintContainer {
           )
           this.updateTransform()
         }
-        c.getDom().onmouseup = event => {
+        document.onmouseup = event => {
           event.preventDefault()
-          c.getDom().onmousemove = null
+          if (event.button === 1) c.getDom().onmousemove = null
+          this.defaultMode()
         }
       } else if (e.button === 0) {
         let pos = this.clientPosToContainerPos(e.clientX, e.clientY)
@@ -467,6 +487,7 @@ export class BlueprintContainer {
     document.onmouseup = e => {
       if (e.button === 2) {
         this.defaultMode()
+        this.hideSnap()
       }
     }
   }

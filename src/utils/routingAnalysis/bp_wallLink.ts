@@ -18,6 +18,7 @@ export class BpWallLink {
     this.length = new NvEl('text')
     this.container = bpContainer
     this.container.getLinkLayer().appendChild(this.line, this.length)
+    this.length.setStyle({ 'pointer-events': 'none' })
   }
 
   public updateTheme () {
@@ -38,11 +39,13 @@ export class BpWallLink {
 
       this.length.setStyle({ transform: '' })
 
+      const scale = this.container.scale()
+
       this.length.setStyle({
         'transform-origin': `${this.length.getDom().getBoundingClientRect()
-          .width / 2}px 0px`,
+          .width / 2 / scale}px 0px`,
         transform: `translate(${textPos.x -
-          this.length.getDom().getBoundingClientRect().width / 2}px, ${
+          this.length.getDom().getBoundingClientRect().width / 2 / scale}px, ${
           textPos.y
         }px) rotate(${-Vector2.angle(
           p1.x < p2.x ? Vector2.minus(p2, p1) : Vector2.minus(p1, p2)

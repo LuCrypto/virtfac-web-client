@@ -66,6 +66,37 @@ export class Blueprint {
     )
   }
 
+  public isInside (pos: Vec2) {
+    let leftCount = 0
+    let rightCount = 0
+    let topCount = 0
+    let bottomCount = 0
+    this.wallGraph.foreachNode(n => {
+      const p1 = n.getData<Vec2>('position')
+      n.foreachLink(l => {
+        const p2 = l.getNode().getData<Vec2>('position')
+        if ((p1.y < pos.y) !== (p2.y < pos.y)) {
+          if (p1.x + (p2.x - p1.x) * ((pos.y - p1.y) / (p2.y - p1.y)) < pos.x) {
+            leftCount++
+          } else rightCount++
+        }
+
+        if ((p1.x < pos.x) !== (p2.x < pos.x)) {
+          if (p1.y + (p2.y - p1.y) * ((pos.x - p1.x) / (p2.x - p1.x)) < pos.y) {
+            topCount++
+          } else bottomCount++
+        }
+      })
+    })
+
+    return (
+      leftCount % 2 === 1 &&
+      rightCount % 2 === 1 &&
+      topCount % 2 === 1 &&
+      bottomCount % 2 === 1
+    )
+  }
+
   public constructor () {
     this.wallGraph = new Graph()
 
