@@ -114,6 +114,14 @@ export default class DrawingShopComponent extends Vue {
         }
       })
     )
+    this.menuItemList.push(
+      new MenuItem('Define Scale', 'mdi-pencil-ruler', () => {
+        if ((this.nodeViewer as BlueprintEditor).getBpContainer() != null) {
+          ((this
+            .nodeViewer as BlueprintEditor).getBpContainer() as BlueprintContainer).defineScaleMode()
+        }
+      })
+    )
 
     // const mapper = new Mapper(CAEExampleFormat1)
   }

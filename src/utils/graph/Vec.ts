@@ -1,6 +1,7 @@
 export interface Vec2 {
   x: number
   y: number
+  str (): string
 }
 
 export class Vector2 implements Vec2 {
@@ -68,10 +69,7 @@ export class Vector2 implements Vec2 {
     return new Vector2(c * vec.x - s * vec.y, s * vec.x + c * vec.y)
   }
 
-  public static existsIntersection (
-    s1: { p1: Vec2; p2: Vec2 },
-    s2: { p1: Vec2; p2: Vec2 }
-  ) {
-    return false
+  public str (): string {
+    return `${this.x} ${this.y}`
   }
 }

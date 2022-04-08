@@ -2,8 +2,9 @@ import { Graph } from '@/utils/graph/graph'
 import { Node } from '../graph/node'
 import { Vec2, Vector2 } from '@/utils/graph/Vec'
 import { Link } from '../graph/link'
+import { MetaData } from '../graph/metadata'
 
-export class Blueprint {
+export class Blueprint extends MetaData {
   private wallGraph: Graph
 
   public onWallNodeAdded () {
@@ -74,17 +75,25 @@ export class Blueprint {
     this.wallGraph.foreachNode(n => {
       const p1 = n.getData<Vec2>('position')
       n.foreachLink(l => {
-        const p2 = l.getNode().getData<Vec2>('position')
-        if ((p1.y < pos.y) !== (p2.y < pos.y)) {
-          if (p1.x + (p2.x - p1.x) * ((pos.y - p1.y) / (p2.y - p1.y)) < pos.x) {
-            leftCount++
-          } else rightCount++
-        }
+        if (!l.getData<boolean>('double')) {
+          const p2 = l.getNode().getData<Vec2>('position')
+          if ((p1.y < pos.y) !== (p2.y < pos.y)) {
+            if (
+              p1.x + (p2.x - p1.x) * ((pos.y - p1.y) / (p2.y - p1.y)) <
+              pos.x
+            ) {
+              leftCount++
+            } else rightCount++
+          }
 
-        if ((p1.x < pos.x) !== (p2.x < pos.x)) {
-          if (p1.y + (p2.y - p1.y) * ((pos.x - p1.x) / (p2.x - p1.x)) < pos.y) {
-            topCount++
-          } else bottomCount++
+          if ((p1.x < pos.x) !== (p2.x < pos.x)) {
+            if (
+              p1.y + (p2.y - p1.y) * ((pos.x - p1.x) / (p2.x - p1.x)) <
+              pos.y
+            ) {
+              topCount++
+            } else bottomCount++
+          }
         }
       })
     })
@@ -98,6 +107,7 @@ export class Blueprint {
   }
 
   public constructor () {
+    super()
     this.wallGraph = new Graph()
 
     this.wallGraph.onLinkRemoved().addListener(arg => {
@@ -118,7 +128,7 @@ export class Blueprint {
                 arg.node.getData<Vec2>('position'),
                 l.getNode().getData<Vec2>('position')
               )
-            )
+            ) / this.getData<number>('scale')
           )
         })
         arg.node
@@ -131,11 +141,26 @@ export class Blueprint {
                   arg.node.getData<Vec2>('position'),
                   n.getData<Vec2>('position')
                 )
-              )
+              ) / this.getData<number>('scale')
             )
           })
       },
       this
     )
+    this.onDataChanged().addMappedListener('scale', arg => {
+      this.wallGraph.foreachNode(n => {
+        n.foreachLink(l => {
+          l.setData<number>(
+            'length',
+            Vector2.norm(
+              Vector2.minus(
+                l.getNode().getData<Vec2>('position'),
+                n.getData<Vec2>('position')
+              )
+            ) / this.getData<number>('scale')
+          )
+        })
+      })
+    }, this)
   }
 }

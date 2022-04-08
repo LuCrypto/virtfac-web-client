@@ -94,7 +94,7 @@ export class APIFileItem {
 
   name = ''
   color = 0x000000
-  tags = ''
+  tags = '[]'
   fileMIME = new APIFileMIME()
   // formatInfo: FormatInfo
 

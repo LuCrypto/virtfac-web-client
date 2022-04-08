@@ -108,6 +108,13 @@ export class BlueprintContainer {
   private svgNodeLayer: NvEl
   private svgLinkLayer: NvEl
 
+  private scaleDisplayer = {
+    leftPoint: new NvEl('rect'),
+    lineCol1: new NvEl('path'),
+    lineCol2: new NvEl('path'),
+    rightPoint: new NvEl('rect')
+  }
+
   private bp: Blueprint
 
   private wallNodeMap: Map<Node, BpWallNode> = new Map<Node, BpWallNode>()
@@ -206,6 +213,7 @@ export class BlueprintContainer {
       }
       e.preventDefault()
     }
+    this.bp.setData<number>('scale', 1)
 
     this.bp.onWallNodeAdded().addListener(arg => {
       this.wallNodeMap.set(arg.node, new BpWallNode(arg.node, this))
@@ -255,10 +263,70 @@ export class BlueprintContainer {
 
     this.svgLinkLayer.appendChild(this.snapXLine, this.snapYLine)
 
-    this.testPoint.getDom().setAttribute('width', `${5}`)
-    this.testPoint.getDom().setAttribute('height', `${5}`)
+    this.testPoint.getDom().setAttribute('width', `${6}`)
+    this.testPoint.getDom().setAttribute('height', `${6}`)
     this.testPoint.setStyle({ 'pointer-events': 'none' })
     this.getNodeLayer().appendChild(this.testPoint)
+
+    this.scaleDisplayer.leftPoint.setStyle({
+      fill: this.theme.WallNodeColor,
+      width: `${this.theme.WallNodeSize / 2}px`,
+      height: `${this.theme.WallNodeSize}px`,
+      transform: `translate(${-this.theme.WallNodeSize / 4}px, ${-this.theme
+        .WallNodeSize / 2}px)`,
+      'z-index': 1
+    })
+    this.scaleDisplayer.rightPoint.setStyle({
+      fill: this.theme.WallNodeColor,
+      width: `${this.theme.WallNodeSize / 2}px`,
+      height: `${this.theme.WallNodeSize}px`,
+      transform: `translate(${100 - this.theme.WallNodeSize / 4}px, ${-this
+        .theme.WallNodeSize / 2}px)`,
+      'z-index': 1
+    })
+
+    const scaleSvgContainer = new NvEl('svg')
+    scaleSvgContainer.setStyle({
+      position: 'absolute',
+      bottom: `${20}px`,
+      left: `${20}px`,
+      width: '1px',
+      height: '1px',
+      overflow: 'visible'
+    })
+
+    this.scaleDisplayer.lineCol1.setStyle({
+      'stroke-dashoffset': 10,
+      'stroke-dasharray': 10,
+      stroke: this.theme.WallLinkColor
+    })
+    this.scaleDisplayer.lineCol2.setStyle({
+      'stroke-dasharray': 10,
+      stroke: this.theme.WallSnapLineColor
+    })
+
+    const path = `M${new V(0, 0).str()} L${new V(100, 0).str()}`
+    this.scaleDisplayer.lineCol1.getDom().setAttribute('d', path)
+    this.scaleDisplayer.lineCol2.getDom().setAttribute('d', path)
+
+    scaleSvgContainer.appendChild(
+      this.scaleDisplayer.lineCol1,
+      this.scaleDisplayer.lineCol2,
+      this.scaleDisplayer.leftPoint,
+      this.scaleDisplayer.rightPoint
+    )
+    this.container.appendChild(scaleSvgContainer)
+  }
+
+  public refreshScaleViewer () {
+    const right = 100 * this.bp.getData<number>('scale') * this.size
+    const path = `M${new V(0, 0).str()} L${new V(right, 0).str()}`
+    this.scaleDisplayer.lineCol1.getDom().setAttribute('d', path)
+    this.scaleDisplayer.lineCol2.getDom().setAttribute('d', path)
+    this.scaleDisplayer.rightPoint.setStyle({
+      transform: `translate(${right - this.theme.WallNodeSize / 4}px, ${-this
+        .theme.WallNodeSize / 2}px)`
+    })
   }
 
   public clientPosToContainerPos (x: number, y: number): V {
@@ -352,16 +420,18 @@ export class BlueprintContainer {
         this.testPoint.setStyle({ fill: '#E74C3C' })
       }
       this.testPoint.setStyle({
-        transform: `translate(${clientPos.x}px, ${clientPos.y}px)`
+        transform: `translate(${clientPos.x - 3}px, ${clientPos.y - 3}px)`
       })
     }
     const c = this.container as NvEl
     c.getDom().onmousedown = e => {
+      console.log('default onmousedown')
       if (e.button === 1) {
         this.positionStart = this.unscale(new V(e.clientX, e.clientY)).sub(
           this.position
         )
         c.getDom().onmousemove = event => {
+          console.log('default onmousemove')
           event.preventDefault()
           this.position = this.unscale(new V(event.clientX, event.clientY)).sub(
             this.positionStart
@@ -488,6 +558,20 @@ export class BlueprintContainer {
       if (e.button === 2) {
         this.defaultMode()
         this.hideSnap()
+
+        this.wallNodeMap.forEach(value => {
+          if (
+            Vector2.norm(
+              Vector2.minus(
+                value.getNode().getData<Vec2>('position'),
+                node.getData<Vec2>('position')
+              )
+            ) < 2 &&
+            value.getNode() !== node
+          ) {
+            // todo : merge nodes
+          }
+        })
       }
     }
   }
@@ -575,6 +659,7 @@ export class BlueprintContainer {
       transform: `translate(${this.position.x * this.size}px, ${this.position
         .y * this.size}px) scale(${this.size})`
     })
+    this.refreshScaleViewer()
     if (this.grid === null) return
     this.container.setStyle({
       'background-size': `${this.size * this.grid.getOffset().x}px ${this.size *
@@ -589,5 +674,59 @@ export class BlueprintContainer {
       'background-image': `url('data:image/svg+xml,${this.grid.getStyle()}')`,
       'background-repeat': 'repeat'
     })
+  }
+
+  defineScaleMode () {
+    this.container.getDom().onmousedown = null
+    this.container.getDom().onmouseup = null
+    this.container.getDom().onmousemove = null
+
+    this.container.setStyle({ cursor: 'crosshair' })
+
+    this.container.getDom().onmousedown = e => {
+      console.log('ruler onmousedown')
+      if (e.button === 0) {
+        const n1 = new Node()
+        const p1 = this.clientPosToContainerPos(e.x, e.y)
+        n1.setData<Vec2>('position', new Vector2(p1.x, p1.y))
+        const n2 = new Node()
+        n2.setData<Vec2>('position', new Vector2(p1.x, p1.y))
+        const l = n1.addLink(n2)
+        l.setData<number>('length', 0)
+
+        const n1Display = new BpWallNode(n1, this)
+        const n2Display = new BpWallNode(n2, this)
+        const lDisplay = new BpWallLink(l, this)
+
+        const oldScale = this.bp.getData<number>('scale')
+
+        this.container.getDom().onmousemove = e2 => {
+          console.log('ruler onmousemove')
+          const p2 = this.clientPosToContainerPos(e2.x, e2.y)
+          n2.setData<Vec2>('position', new Vector2(p2.x, p2.y))
+          l.setData<number>('length', p1.sub(p2).norm() / oldScale)
+          if (p1.sub(p2).norm() > 1) {
+            this.bp.setData<number>('scale', (p1.sub(p2).norm() / 100))
+          }
+          n2Display.setPos(p2.x, p2.y)
+          lDisplay.refreshPos()
+          this.refreshScaleViewer()
+          e2.preventDefault()
+        }
+        document.onmouseup = e3 => {
+          console.log('ruler onmouseup')
+          if (e.button === 0) {
+            n1Display.destroy()
+            n2Display.destroy()
+            lDisplay.destroy()
+            document.onmouseup = null
+            this.defaultMode()
+            this.container.setStyle({ cursor: 'auto' })
+          }
+          e3.preventDefault()
+        }
+      }
+      e.preventDefault()
+    }
   }
 }
