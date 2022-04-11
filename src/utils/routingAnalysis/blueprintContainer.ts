@@ -569,10 +569,24 @@ export class BlueprintContainer {
             ) < 2 &&
             value.getNode() !== node
           ) {
-            // todo : merge nodes
+            node.foreachLink(l => {
+              if (l.getNode() !== value.getNode()) {
+                value.getNode().addLink(l.getNode())
+                this.bp.addWall(value.getNode(), l.getNode())
+              }
+            })
+            node
+              .getDataOrDefault<Set<Node>>('targetBy', new Set<Node>())
+              .forEach(item => {
+                if (item !== value.getNode()) {
+                  this.bp.addWall(item, value.getNode())
+                }
+              })
+            this.bp.removeWallNode(node)
           }
         })
       }
+      e.preventDefault()
     }
   }
 
@@ -684,7 +698,6 @@ export class BlueprintContainer {
     this.container.setStyle({ cursor: 'crosshair' })
 
     this.container.getDom().onmousedown = e => {
-      console.log('ruler onmousedown')
       if (e.button === 0) {
         const n1 = new Node()
         const p1 = this.clientPosToContainerPos(e.x, e.y)
@@ -701,12 +714,11 @@ export class BlueprintContainer {
         const oldScale = this.bp.getData<number>('scale')
 
         this.container.getDom().onmousemove = e2 => {
-          console.log('ruler onmousemove')
           const p2 = this.clientPosToContainerPos(e2.x, e2.y)
           n2.setData<Vec2>('position', new Vector2(p2.x, p2.y))
           l.setData<number>('length', p1.sub(p2).norm() / oldScale)
           if (p1.sub(p2).norm() > 1) {
-            this.bp.setData<number>('scale', (p1.sub(p2).norm() / 100))
+            this.bp.setData<number>('scale', p1.sub(p2).norm() / 100)
           }
           n2Display.setPos(p2.x, p2.y)
           lDisplay.refreshPos()
@@ -714,7 +726,6 @@ export class BlueprintContainer {
           e2.preventDefault()
         }
         document.onmouseup = e3 => {
-          console.log('ruler onmouseup')
           if (e.button === 0) {
             n1Display.destroy()
             n2Display.destroy()
