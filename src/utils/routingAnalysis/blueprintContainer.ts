@@ -480,7 +480,7 @@ export class BlueprintContainer {
     this.snapYLine.getDom().setAttribute('d', '')
   }
 
-  private snapedWallNode: BpWallNode | null = null
+  private hoveredNode: BpWallNode | null = null
 
   private positionStart: V = new V(0, 0)
 
@@ -525,11 +525,11 @@ export class BlueprintContainer {
         // new wall
         let pos = this.clientPosToContainerPos(e.clientX, e.clientY)
         let n: Node | null = null
-        if (this.snapedWallNode != null) {
+        if (this.hoveredNode != null) {
           // create wall from snapedWallNode
-          const p = this.snapedWallNode.getNode().getData<Vec2>('position')
+          const p = this.hoveredNode.getNode().getData<Vec2>('position')
           pos = new V(p.x, p.y)
-          n = this.snapedWallNode.getNode()
+          n = this.hoveredNode.getNode()
         } else {
           // create wall from new node
           n = this.bp.addWallNode(new Vector2(pos.x, pos.y))
@@ -602,7 +602,12 @@ export class BlueprintContainer {
                 ) < 2 &&
                 value.getNode() !== n2
               ) {
-                this.bp.addWall(n as Node, value.getNode())
+                if (
+                  (n as Node).getLink(value.getNode()) === undefined &&
+                  value.getNode().getLink(n as Node) === undefined
+                ) {
+                  this.bp.addWall(n as Node, value.getNode())
+                }
                 this.bp.removeWallNode(n2)
               }
             })
@@ -667,15 +672,25 @@ export class BlueprintContainer {
           ) {
             node.foreachLink(l => {
               if (l.getNode() !== value.getNode()) {
-                value.getNode().addLink(l.getNode())
-                this.bp.addWall(value.getNode(), l.getNode())
+                // value.getNode().addLink(l.getNode())
+                if (
+                  l.getNode().getLink(value.getNode()) === undefined &&
+                  value.getNode().getLink(l.getNode()) === undefined
+                ) {
+                  this.bp.addWall(value.getNode(), l.getNode())
+                }
               }
             })
             node
               .getDataOrDefault<Set<Node>>('targetBy', new Set<Node>())
               .forEach(item => {
                 if (item !== value.getNode()) {
-                  this.bp.addWall(item, value.getNode())
+                  if (
+                    item.getLink(value.getNode()) === undefined &&
+                    value.getNode().getLink(item) === undefined
+                  ) {
+                    this.bp.addWall(item, value.getNode())
+                  }
                 }
               })
             this.bp.removeWallNode(node)
@@ -686,11 +701,11 @@ export class BlueprintContainer {
   }
 
   public wallNodeEnter (node: BpWallNode) {
-    this.snapedWallNode = node
+    this.hoveredNode = node
   }
 
   public wallNodeExit (node: BpWallNode) {
-    if (this.snapedWallNode === node) this.snapedWallNode = null
+    if (this.hoveredNode === node) this.hoveredNode = null
   }
 
   public unscale (v: V): V {
