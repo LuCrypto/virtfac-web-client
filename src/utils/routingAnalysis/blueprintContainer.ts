@@ -86,26 +86,62 @@ class Grid {
 }
 
 export class BlueprintContainer {
+  // #region SETTINGS
+  /**
+   * enable/disable aligning snapping
+   */
   public optAlignSnap = true
+
+  /**
+   * snapping distance from aligning line.
+   */
   public optAlignSnapDist = 10
 
+  /**
+   * enable/disable snapping from angles when adding new wall
+   */
   public optAngleSnap = true
-  public optAngleSnapStep: number = Math.PI / 4
 
+  /**
+   * step size for available angles when adding new wall
+   */
+  public optAngleSnapStep: number = Math.PI / 4
+  // #endregion
+
+  /**
+   * display theme
+   */
   private theme: BpTheme
   private parentNode: HTMLElement
   private grid: Grid | null = null
+
+  /**
+   * view zoom level
+   */
   private size = 1
+  /**
+   *
+   * @returns view zoom level
+   */
   public scale () {
     return this.size
   }
 
+  /**
+   * view position
+   */
   private position: V = new V(0, 0)
 
   private container: NvEl
   private content: NvEl
   private img: NvEl
+  /**
+   * container for wall nodes
+   */
   private svgNodeLayer: NvEl
+  /**
+   * container for wall link
+   */
   private svgLinkLayer: NvEl
 
   private scaleDisplayer = {
@@ -115,15 +151,32 @@ export class BlueprintContainer {
     rightPoint: new NvEl('rect')
   }
 
+  /**
+   * kernel object
+   */
   private bp: Blueprint
 
+  /**
+   * references to displayer objects of WallNodes
+   */
   private wallNodeMap: Map<Node, BpWallNode> = new Map<Node, BpWallNode>()
+
+  /**
+   * references to displayer objects of WallLink
+   */
   private wallLinkMap: Map<Link, BpWallLink> = new Map<Link, BpWallLink>()
 
+  /**
+   *
+   * @returns container for wall nodes
+   */
   public getNodeLayer () {
     return this.svgNodeLayer
   }
 
+  /**
+   * container for wall link
+   */
   public getLinkLayer () {
     return this.svgLinkLayer
   }
@@ -146,10 +199,7 @@ export class BlueprintContainer {
     parentNode.appendChild(this.container.getDom())
     parentNode.appendChild(this.svgLinkLayer.getDom())
     parentNode.appendChild(this.svgNodeLayer.getDom())
-    // this.grid = new Grid(new V(0, 0), new V(100, 100))
     this.updateTransform()
-    // this.container.getDom().onmousemove = e => this.mouseMove(e)
-    // this.container.getDom().onmouseup = e => this.mouseUp(e)
     this.defaultMode()
     this.container.getDom().onwheel = e => this.zoom(e)
     this.container.setStyle({
@@ -197,6 +247,7 @@ export class BlueprintContainer {
       }
     }
     this.container.getDom().ondrop = e => {
+      // enable import of blueprint image from drag and drop
       if (e.dataTransfer != null && e.dataTransfer.files.length > 0) {
         const f: File | null = e.dataTransfer.files.item(0)
         try {
@@ -215,10 +266,12 @@ export class BlueprintContainer {
     }
     this.bp.setData<number>('scale', 1)
 
+    // add a new wall node displayer when a wall node is created in the blueprint
     this.bp.onWallNodeAdded().addListener(arg => {
       this.wallNodeMap.set(arg.node, new BpWallNode(arg.node, this))
     })
 
+    // refresh node displayer position when wall node is moved in blueprint
     this.bp.onWallNodeDataChanged().addMappedListener(
       'position',
       arg => {
@@ -230,24 +283,29 @@ export class BlueprintContainer {
       this
     )
 
+    // add a new wall link displayer when a wall is created in the blueprint
     this.bp.onWallLinkAdded().addListener(arg => {
       this.wallLinkMap.set(arg.link, new BpWallLink(arg.link, this))
     })
 
+    // refresh wall link display when a wall node is moved in the blueprint
     this.bp.onWallLinkDataChanged().addMappedListener('length', arg => {
       (this.wallLinkMap.get(arg.link) as BpWallLink).refreshPos()
     })
 
+    // remove wall node display when a node is removed in the blueprint
     this.bp.onWallNodeRemoved().addListener(arg => {
       (this.wallNodeMap.get(arg.node) as BpWallNode).destroy()
       this.wallNodeMap.delete(arg.node)
     }, this)
 
+    // remove wall link when a wall is removed in the blueprint
     this.bp.onWallLinkRemoved().addListener(arg => {
       (this.wallLinkMap.get(arg.link) as BpWallLink).destroy()
       this.wallLinkMap.delete(arg.link)
     })
 
+    // alignement snapping display
     this.snapXLine = new NvEl('path')
     this.snapYLine = new NvEl('path')
 
@@ -263,11 +321,13 @@ export class BlueprintContainer {
 
     this.svgLinkLayer.appendChild(this.snapXLine, this.snapYLine)
 
+    // debug point display
     this.testPoint.getDom().setAttribute('width', `${6}`)
     this.testPoint.getDom().setAttribute('height', `${6}`)
     this.testPoint.setStyle({ 'pointer-events': 'none' })
     this.getNodeLayer().appendChild(this.testPoint)
 
+    // add scale diplayer
     this.scaleDisplayer.leftPoint.setStyle({
       fill: this.theme.WallNodeColor,
       width: `${this.theme.WallNodeSize / 2}px`,
@@ -329,6 +389,12 @@ export class BlueprintContainer {
     })
   }
 
+  /**
+   * convert mouse position to blueprint position
+   * @param x MouseEvent.ClientX
+   * @param y MouseEvent.ClientY
+   * @returns the blueprint scope position
+   */
   public clientPosToContainerPos (x: number, y: number): V {
     const rect = this.container.getDom().getBoundingClientRect()
     return new V(
@@ -382,6 +448,11 @@ export class BlueprintContainer {
   private snapXLine: NvEl
   private snapYLine: NvEl
 
+  /**
+   * display line of snap for horizontal snapping
+   * @param node origin of snap line
+   * @param snappedPos snapped position
+   */
   private displayXsnap (node: Node, snappedPos: V) {
     const p = node.getData<Vec2>('position')
     this.snapXLine
@@ -389,6 +460,11 @@ export class BlueprintContainer {
       .setAttribute('d', `M${new V(p.x, p.y).str()} L${snappedPos.str()}`)
   }
 
+  /**
+   * display line of snap for vertical snapping
+   * @param node origin of snap line
+   * @param snappedPos snapped position
+   */
   private displayYsnap (node: Node, snappedPos: V) {
     const p = node.getData<Vec2>('position')
     this.snapYLine
@@ -396,6 +472,9 @@ export class BlueprintContainer {
       .setAttribute('d', `M${new V(p.x, p.y).str()} L${snappedPos.str()}`)
   }
 
+  /**
+   * disable display of snap lines
+   */
   private hideSnap () {
     this.snapXLine.getDom().setAttribute('d', '')
     this.snapYLine.getDom().setAttribute('d', '')
@@ -425,13 +504,12 @@ export class BlueprintContainer {
     }
     const c = this.container as NvEl
     c.getDom().onmousedown = e => {
-      console.log('default onmousedown')
       if (e.button === 1) {
+        // movement
         this.positionStart = this.unscale(new V(e.clientX, e.clientY)).sub(
           this.position
         )
         c.getDom().onmousemove = event => {
-          console.log('default onmousemove')
           event.preventDefault()
           this.position = this.unscale(new V(event.clientX, event.clientY)).sub(
             this.positionStart
@@ -444,20 +522,28 @@ export class BlueprintContainer {
           this.defaultMode()
         }
       } else if (e.button === 0) {
+        // new wall
         let pos = this.clientPosToContainerPos(e.clientX, e.clientY)
         let n: Node | null = null
         if (this.snapedWallNode != null) {
+          // create wall from snapedWallNode
           const p = this.snapedWallNode.getNode().getData<Vec2>('position')
           pos = new V(p.x, p.y)
           n = this.snapedWallNode.getNode()
         } else {
+          // create wall from new node
           n = this.bp.addWallNode(new Vector2(pos.x, pos.y))
         }
+        // end point wall node
         const n2 = this.bp.addWallNode(new Vector2(pos.x, pos.y))
         this.bp.addWall(n, n2)
         document.onmousemove = e1 => {
+          // positioning end point of the wall
+          e1.preventDefault()
           this.hideSnap()
           const p2 = this.clientPosToContainerPos(e1.clientX, e1.clientY)
+
+          // check for snapping lines
           let snapX: Node | null = null
           let snapY: Node | null = null
           this.wallNodeMap.forEach((value: BpWallNode, key: Node) => {
@@ -473,6 +559,7 @@ export class BlueprintContainer {
             }
           })
           if (Vector2.norm(Vector2.minus(p2, pos)) > 0.1) {
+            // snapping angle
             let angle = Vector2.angle(Vector2.minus(p2, pos))
             if (angle < 0) angle = Math.PI + (Math.PI + angle)
             let tmpTargetAngle = angle - (angle % this.optAngleSnapStep)
@@ -487,6 +574,8 @@ export class BlueprintContainer {
               ),
               pos
             )
+
+            // apply snap lines
             if (snapX !== null) newP.x = p2.x
             if (snapY !== null) newP.y = p2.y
             if (snapX !== null) this.displayXsnap(snapX, new V(newP.x, newP.y))
@@ -497,10 +586,12 @@ export class BlueprintContainer {
         }
         document.onmouseup = e1 => {
           if (e1.button === 0) {
+            // end positioning of the end point wall node
             this.defaultMode()
             document.onmouseup = null
             document.onmousemove = null
             this.hideSnap()
+            // check for merging end point node to an existing node
             this.wallNodeMap.forEach(value => {
               if (
                 Vector2.norm(
@@ -516,6 +607,7 @@ export class BlueprintContainer {
               }
             })
           }
+          e1.preventDefault()
         }
       }
       e.preventDefault()
@@ -535,6 +627,7 @@ export class BlueprintContainer {
         const p2 = this.clientPosToContainerPos(e1.clientX, e1.clientY)
         let snapX: Node | null = null
         let snapY: Node | null = null
+        // check for snapping line when moving node
         this.wallNodeMap.forEach((value: BpWallNode, key: Node) => {
           if (key === node) return
           const p = key.getData<Vec2>('position')
@@ -555,10 +648,13 @@ export class BlueprintContainer {
       }
     }
     document.onmouseup = e => {
+      e.preventDefault()
       if (e.button === 2) {
+        // end moving point
+        document.onmouseup = null
         this.defaultMode()
         this.hideSnap()
-
+        // check for merge on existing node
         this.wallNodeMap.forEach(value => {
           if (
             Vector2.norm(
@@ -586,7 +682,6 @@ export class BlueprintContainer {
           }
         })
       }
-      e.preventDefault()
     }
   }
 

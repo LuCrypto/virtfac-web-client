@@ -165,10 +165,17 @@ export class BpWallLink {
   }
 
   destroy () {
+    this.link.onDataChanged().removeMappedListener('double', this)
     this.container
       .getLinkLayer()
       .getDom()
       .removeChild(this.line.getDom())
+    if (this.doubleAdded) {
+      this.container
+        .getLinkLayer()
+        .getDom()
+        .removeChild(this.doubleLine.getDom())
+    }
     this.container
       .getLinkLayer()
       .getDom()
