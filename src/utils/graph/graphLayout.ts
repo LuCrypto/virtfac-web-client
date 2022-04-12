@@ -47,11 +47,6 @@ export class GraphLayout {
     stepSize: number,
     positionField = 'position'
   ) {
-    // 2 pi r
-    // 2 pi r * 360/nbNodes = stepSize
-    // 2 pi * 360/nbNodes = stepSize/r
-    // (2 pi * 360/nbNodes)/stepSize = 1/r
-    // stepSize/(2 pi * 360/nbNodes) = r
     const angle = (2 * Math.PI) / graph.nodeCount()
     const r = stepSize / ((2 * Math.PI) / graph.nodeCount())
 

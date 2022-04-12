@@ -45,6 +45,7 @@
       ref="filePopUp"
       @handleFile="handleFile"
     ></open-file-pop-up>
+    <input-field-pop-up ref="inputFieldPopUp"></input-field-pop-up>
   </v-card>
 </template>
 
@@ -56,6 +57,7 @@ import ActionContainer, {
 } from '@/components/ActionContainer.vue'
 import NodeViewer from '@/components/NodeViewer.vue'
 import OpenFilePopUp from '@/components/popup/OpenFilePopUp.vue'
+import InputFieldPopUp from '@/components/popup/InputFieldPopUp.vue'
 import XLSX from 'xlsx'
 import Mapper from '@/utils/mapper'
 import BlueprintEditor from '@/components/BlueprintEditor.vue'
@@ -77,7 +79,8 @@ class MenuItem {
 @Component({
   components: {
     BlueprintEditor,
-    OpenFilePopUp
+    OpenFilePopUp,
+    InputFieldPopUp
   }
 })
 export default class DrawingShopComponent extends Vue {
@@ -88,10 +91,13 @@ export default class DrawingShopComponent extends Vue {
   filePopUp: OpenFilePopUp | null = null
   menuItemList: MenuItem[] = []
 
+  inputField: InputFieldPopUp | null = null
+
   mounted (): void {
     this.nodeViewer = this.$refs.nodeViewer as BlueprintEditor
     this.actionContainer = this.$refs.actionContainer as ActionContainer
     this.filePopUp = this.$refs.filePopUp as OpenFilePopUp
+    this.inputField = this.$refs.inputFieldPopUp as InputFieldPopUp
 
     this.menuItemList.push(
       new MenuItem('Open File', 'mdi-file-document', () => {
@@ -116,9 +122,27 @@ export default class DrawingShopComponent extends Vue {
     )
     this.menuItemList.push(
       new MenuItem('Define Scale', 'mdi-pencil-ruler', () => {
-        if ((this.nodeViewer as BlueprintEditor).getBpContainer() != null) {
-          ((this
-            .nodeViewer as BlueprintEditor).getBpContainer() as BlueprintContainer).defineScaleMode()
+        let dist = 1
+        if (this.inputField != null) {
+          this.inputField.open(
+            'enter reference distance (in meters):',
+            '1',
+            '1',
+            input => {
+              if (input != null) {
+                dist = +input
+                  .replaceAll(',', '.')
+                  .replaceAll(' ', '')
+                  .replaceAll('m', '')
+                if (
+                  (this.nodeViewer as BlueprintEditor).getBpContainer() != null
+                ) {
+                  ((this
+                    .nodeViewer as BlueprintEditor).getBpContainer() as BlueprintContainer).defineScaleMode(dist)
+                }
+              }
+            }
+          )
         }
       })
     )

@@ -800,7 +800,7 @@ export class BlueprintContainer {
     })
   }
 
-  defineScaleMode () {
+  defineScaleMode (refDist = 1) {
     this.container.getDom().onmousedown = null
     this.container.getDom().onmouseup = null
     this.container.getDom().onmousemove = null
@@ -828,7 +828,10 @@ export class BlueprintContainer {
           n2.setData<Vec2>('position', new Vector2(p2.x, p2.y))
           l.setData<number>('length', p1.sub(p2).norm() / oldScale)
           if (p1.sub(p2).norm() > 1) {
-            this.bp.setData<number>('scale', p1.sub(p2).norm() / 100)
+            this.bp.setData<number>(
+              'scale',
+              (p1.sub(p2).norm() / refDist) / 100
+            )
           }
           n2Display.setPos(p2.x, p2.y)
           lDisplay.refreshPos()

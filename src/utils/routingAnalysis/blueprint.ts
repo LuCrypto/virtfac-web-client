@@ -31,6 +31,10 @@ export class Blueprint extends MetaData {
     return this.wallGraph.onLinkDataChanged()
   }
 
+  public foreachWallNode (func : { (node : Node):void }) {
+    this.wallGraph.foreachNode(func)
+  }
+
   private nextId = 0
 
   public addWallNode (pos: Vec2): Node {
