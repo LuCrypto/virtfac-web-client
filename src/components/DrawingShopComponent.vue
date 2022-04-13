@@ -64,6 +64,7 @@ import BlueprintEditor from '@/components/BlueprintEditor.vue'
 
 import CAEExampleFormat1 from '@/exemples/CAEExampleFormat1'
 import { BlueprintContainer } from '@/utils/routingAnalysis/blueprintContainer'
+import { BlueprintScene } from '@/utils/routingAnalysis/blueprintScene'
 
 class MenuItem {
   text: string
@@ -138,12 +139,22 @@ export default class DrawingShopComponent extends Vue {
                   (this.nodeViewer as BlueprintEditor).getBpContainer() != null
                 ) {
                   ((this
-                    .nodeViewer as BlueprintEditor).getBpContainer() as BlueprintContainer).defineScaleMode(dist)
+                    .nodeViewer as BlueprintEditor).getBpContainer() as BlueprintContainer).defineScaleMode(
+                    dist
+                  )
                 }
               }
             }
           )
         }
+      })
+    )
+    this.menuItemList.push(
+      new MenuItem('export GLTF', 'mdi-cube-scan', () => {
+        BlueprintScene.exportGeometry(
+          ((this
+            .nodeViewer as BlueprintEditor).getBpContainer() as BlueprintContainer).getBlueprint()
+        )
       })
     )
 

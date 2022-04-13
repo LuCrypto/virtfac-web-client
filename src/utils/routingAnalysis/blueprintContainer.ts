@@ -156,6 +156,10 @@ export class BlueprintContainer {
    */
   private bp: Blueprint
 
+  public getBlueprint () {
+    return this.bp
+  }
+
   /**
    * references to displayer objects of WallNodes
    */
@@ -828,10 +832,7 @@ export class BlueprintContainer {
           n2.setData<Vec2>('position', new Vector2(p2.x, p2.y))
           l.setData<number>('length', p1.sub(p2).norm() / oldScale)
           if (p1.sub(p2).norm() > 1) {
-            this.bp.setData<number>(
-              'scale',
-              (p1.sub(p2).norm() / refDist) / 100
-            )
+            this.bp.setData<number>('scale', p1.sub(p2).norm() / refDist / 100)
           }
           n2Display.setPos(p2.x, p2.y)
           lDisplay.refreshPos()
