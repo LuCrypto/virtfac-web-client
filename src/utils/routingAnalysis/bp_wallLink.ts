@@ -11,6 +11,7 @@ export class BpWallLink {
   private line: NvEl
   private doubleLine: NvEl
   private doubleAdded = false
+  private collider: NvEl
   private length: NvEl
   private container: BlueprintContainer
 
@@ -18,11 +19,13 @@ export class BpWallLink {
     this.link = link
     this.line = new NvEl('path')
     this.doubleLine = new NvEl('path')
+    this.collider = new NvEl('path')
     this.length = new NvEl('text')
     this.container = bpContainer
-    this.container.getLinkLayer().appendChild(this.line, this.length)
+    this.container.getLinkLayer().appendChild(this.line, this.length, this.collider)
     this.length.setStyle({ 'pointer-events': 'none' })
-    // this.line.setStyle({ 'pointer-events': 'none' })
+    this.line.setStyle({ 'pointer-events': 'none' })
+    this.doubleLine.setStyle({ 'pointer-events': 'none' })
 
     const switchDouble = (e: MouseEvent) => {
       if (e.button === 2) {
@@ -33,8 +36,8 @@ export class BpWallLink {
       }
     }
 
-    this.line.getDom().onmouseup = switchDouble
-    this.doubleLine.getDom().onmouseup = switchDouble
+    this.collider.getDom().onmouseup = switchDouble
+    this.collider.getDom().oncontextmenu = e => { e.preventDefault() }
 
     this.link.onDataChanged().addMappedListener(
       'double',
@@ -78,6 +81,19 @@ export class BpWallLink {
       .setAttribute(
         'stroke-width',
         '' + this.container.getTheme().WallLinkStrokeWidth
+      )
+
+    this.collider
+      .getDom()
+      .setAttribute(
+        'stroke-width',
+        '' + this.container.getTheme().WallLinkColliderWidth
+      )
+    this.collider
+      .getDom()
+      .setAttribute(
+        'stroke',
+        '#00000000'
       )
   }
 
@@ -162,6 +178,12 @@ export class BpWallLink {
           `M${new V(p1.x, p1.y).str()} L${new V(p2.x, p2.y).str()}`
         )
     }
+    this.collider
+      .getDom()
+      .setAttribute(
+        'd',
+        `M${new V(p1.x, p1.y).str()} L${new V(p2.x, p2.y).str()}`
+      )
   }
 
   destroy () {

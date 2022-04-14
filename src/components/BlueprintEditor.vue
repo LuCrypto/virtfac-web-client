@@ -13,13 +13,32 @@
       class="d-flex flex-column justify-start;"
     >
       <v-btn medium @click.stop="" style="margin-bottom:5px;"
-        ><v-icon style="position:absolute; left:0; margin-right:10px">mdi-door-closed</v-icon><p style="width:30px"></p>Place doors
+        ><v-icon style="position:absolute; left:0; margin-right:10px"
+          >mdi-door-closed</v-icon
+        >
+        <p style="width:30px"></p>
+        Place doors
       </v-btn>
       <v-btn medium @click.stop="" style="margin-bottom:5px;"
-        ><v-icon style="position:absolute; left:0; margin-right:10px">mdi-wall</v-icon><p style="width:30px"></p>Place walls
+        ><v-icon style="position:absolute; left:0; margin-right:10px"
+          >mdi-wall</v-icon
+        >
+        <p style="width:30px"></p>
+        Place walls
       </v-btn>
       <v-btn medium @click.stop="" style="margin-bottom:5px;"
-        ><v-icon style="position:absolute; left:0; margin-right:10px">mdi-wall-fire</v-icon><p style="width:30px"></p>remove walls
+        ><v-icon style="position:absolute; left:0; margin-right:10px"
+          >mdi-wall-fire</v-icon
+        >
+        <p style="width:30px"></p>
+        remove walls
+      </v-btn>
+      <v-btn medium @click.stop="" style="margin-bottom:5px;"
+        ><v-icon style="position:absolute; left:0; margin-right:10px"
+          >mdi-window-closed-variant</v-icon
+        >
+        <p style="width:30px"></p>
+        Place windows
       </v-btn>
     </div>
   </div>

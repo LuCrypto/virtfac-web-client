@@ -5,4 +5,5 @@ export class BpTheme {
   public readonly WallLinkStrokeWidth: number = 2
   public readonly WallLinkColor: string = '#D7DBDD'
   public readonly WallSnapLineColor: string = '#3498DB'
+  public readonly WallLinkColliderWidth: number = 10
 }
