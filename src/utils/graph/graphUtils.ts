@@ -84,6 +84,7 @@ export class GraphUtils {
     linkWeight: { (l: Link): number },
     nodeWeight: { (n: Node): number }
   ) {
+    throw new Error('not implemented')
     const _tmp = '__hierarchization_path'
 
     const arr = new Array<{ node: Node; h: number }>()

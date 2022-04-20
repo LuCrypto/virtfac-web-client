@@ -5,6 +5,7 @@ import { Node } from '@/utils/graph/node'
 import { Link } from '@/utils/graph/link'
 import { BlueprintContainer } from './blueprintContainer'
 import { Vec2, Vector2 } from '@/utils/graph/Vec'
+import { BpWindow } from '@/utils/routingAnalysis/bp_window'
 
 export class BpWallLink {
   private link: Link
@@ -15,6 +16,8 @@ export class BpWallLink {
   private length: NvEl
   private container: BlueprintContainer
 
+  private hoveringPosition: Vec2 = new Vector2(0, 0)
+
   constructor (link: Link, bpContainer: BlueprintContainer) {
     this.link = link
     this.line = new NvEl('path')
@@ -22,7 +25,9 @@ export class BpWallLink {
     this.collider = new NvEl('path')
     this.length = new NvEl('text')
     this.container = bpContainer
-    this.container.getLinkLayer().appendChild(this.line, this.length, this.collider)
+    this.container
+      .getLinkLayer()
+      .appendChild(this.line, this.length, this.collider)
     this.length.setStyle({ 'pointer-events': 'none' })
     this.line.setStyle({ 'pointer-events': 'none' })
     this.doubleLine.setStyle({ 'pointer-events': 'none' })
@@ -33,11 +38,69 @@ export class BpWallLink {
           'double',
           !this.link.getData<boolean | undefined>('double')
         )
+      } else if (e.button === 0) {
+        const w = new BpWindow(this.container)
+
+        const anchor =
+          Vector2.norm(
+            Vector2.minus(
+              this.link.getNode().getData<Vec2>('position'),
+              this.hoveringPosition
+            )
+          ) <
+          Vector2.norm(
+            Vector2.minus(
+              this.link.getOriginNode().getData<Vec2>('position'),
+              this.hoveringPosition
+            )
+          )
+            ? this.link.getNode()
+            : this.link.getOriginNode()
+
+        w.setPosition(
+          anchor,
+          this.link,
+          Vector2.norm(
+            Vector2.minus(
+              anchor.getData<Vec2>('position'),
+              this.hoveringPosition
+            )
+          ) - 25,
+          50
+        )
+      } else {
+        this.container.onMouseUp(e)
       }
     }
 
     this.collider.getDom().onmouseup = switchDouble
-    this.collider.getDom().oncontextmenu = e => { e.preventDefault() }
+    this.collider.getDom().oncontextmenu = e => {
+      e.preventDefault()
+    }
+
+    this.collider.getDom().onmousedown = e => { if (e.button === 1) this.container.onMouseDown(e) }
+    this.collider.getDom().onmousemove = e => {
+      const clientPos = this.container.clientPosToContainerPos(
+        e.clientX,
+        e.clientY
+      )
+      const origPos = new Vector2(clientPos.x, clientPos.y)
+      const p1 = this.link.getNode().getData<Vec2>('position')
+      const p2 = this.link.getOriginNode().getData<Vec2>('position')
+      const intersectionpos = Vector2.intersection(
+        origPos,
+        Vector2.normalize(Vector2.rotate90(Vector2.minus(p2, p1))),
+        p1,
+        p2
+      )
+      this.container.testPoint.setStyle({
+        transform: `translate(${intersectionpos.x - 3}px, ${intersectionpos.y -
+          3}px)`
+      })
+      this.hoveringPosition = intersectionpos
+      this.container.onMouseMove(e)
+    }
+    this.collider.getDom().onwheel = e => this.container.zoom(e)
 
     this.link.onDataChanged().addMappedListener(
       'double',
@@ -60,6 +123,7 @@ export class BpWallLink {
       },
       this
     )
+    this.updateTheme()
   }
 
   public updateTheme () {
@@ -89,16 +153,11 @@ export class BpWallLink {
         'stroke-width',
         '' + this.container.getTheme().WallLinkColliderWidth
       )
-    this.collider
-      .getDom()
-      .setAttribute(
-        'stroke',
-        '#00000000'
-      )
+    this.collider.getDom().setAttribute('stroke', '#00000000')
+    this.refreshPos()
   }
 
   public refreshPos () {
-    this.updateTheme()
     const p1 = this.link.getOriginNode().getData<Vec2>('position')
     const p2 = this.link.getNode().getData<Vec2>('position')
     const l = this.link.getData<number>('length')
@@ -142,13 +201,13 @@ export class BpWallLink {
             p1,
             Vector2.multiply(
               offsetDir,
-              this.container.getTheme().WallLinkStrokeWidth * 1
+              this.container.getTheme().DoubleWallWidth
             )
           ).str()} L${Vector2.plus(
             p2,
             Vector2.multiply(
               offsetDir,
-              this.container.getTheme().WallLinkStrokeWidth * 1
+              this.container.getTheme().DoubleWallWidth
             )
           ).str()}`
         )
@@ -160,13 +219,13 @@ export class BpWallLink {
             p1,
             Vector2.multiply(
               offsetDir,
-              this.container.getTheme().WallLinkStrokeWidth * 1
+              this.container.getTheme().DoubleWallWidth
             )
           ).str()} L${Vector2.minus(
             p2,
             Vector2.multiply(
               offsetDir,
-              this.container.getTheme().WallLinkStrokeWidth * 1
+              this.container.getTheme().DoubleWallWidth
             )
           ).str()}`
         )

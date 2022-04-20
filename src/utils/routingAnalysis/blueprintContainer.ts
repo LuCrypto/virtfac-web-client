@@ -86,6 +86,29 @@ class Grid {
 }
 
 export class BlueprintContainer {
+  private mode: 'WALL' | 'DOOR' | 'WINDOW' | 'SUPP_WALL' | 'SUPP_FURNITURE' =
+    'WALL'
+
+  public getMode () {
+    return this.mode
+  }
+
+  public setMode (
+    mode: 'WALL' | 'DOOR' | 'WINDOW' | 'SUPP_WALL' | 'SUPP_FURNITURE'
+  ) {
+    this.mode = mode
+    switch (this.mode) {
+      case 'WALL':
+        this.defaultMode()
+        break
+      default:
+        break
+    }
+    this.updateTheme()
+    this.updateTransform()
+    console.log(this.mode)
+  }
+
   // #region SETTINGS
   /**
    * enable/disable aligning snapping
@@ -143,6 +166,10 @@ export class BlueprintContainer {
    * container for wall link
    */
   private svgLinkLayer: NvEl
+  /**
+   * container for wall link
+   */
+  private svgFurnitureLayer: NvEl
 
   private scaleDisplayer = {
     leftPoint: new NvEl('rect'),
@@ -185,6 +212,10 @@ export class BlueprintContainer {
     return this.svgLinkLayer
   }
 
+  public getFurnitureLayer () {
+    return this.svgFurnitureLayer
+  }
+
   public getTheme () {
     return this.theme
   }
@@ -197,12 +228,14 @@ export class BlueprintContainer {
     this.content = new NvEl('div')
     this.svgNodeLayer = new NvEl('svg')
     this.svgLinkLayer = new NvEl('svg')
+    this.svgFurnitureLayer = new NvEl('svg')
     this.img = new NvEl('img')
     this.content.appendChild(this.img)
     parentNode.appendChild(this.content.getDom())
     parentNode.appendChild(this.container.getDom())
     parentNode.appendChild(this.svgLinkLayer.getDom())
     parentNode.appendChild(this.svgNodeLayer.getDom())
+    parentNode.appendChild(this.svgFurnitureLayer.getDom())
     this.updateTransform()
     this.defaultMode()
     this.container.getDom().onwheel = e => this.zoom(e)
@@ -219,7 +252,8 @@ export class BlueprintContainer {
       bottom: '0px',
       'image-rendering': 'pixelated'
     })
-    this.svgLinkLayer.setStyle({
+
+    const layerStyle = {
       position: 'absolute',
       top: '0px',
       bottom: '0px',
@@ -227,16 +261,10 @@ export class BlueprintContainer {
       height: '1px',
       'transform-origin': '0px 0px',
       overflow: 'visible'
-    })
-    this.svgNodeLayer.setStyle({
-      position: 'absolute',
-      top: '0px',
-      bottom: '0px',
-      width: '1px',
-      height: '1px',
-      'transform-origin': '0px 0px',
-      overflow: 'visible'
-    })
+    }
+    this.svgLinkLayer.setStyle(layerStyle)
+    this.svgNodeLayer.setStyle(layerStyle)
+    this.svgFurnitureLayer.setStyle(layerStyle)
 
     this.container.getDom().oncontextmenu = e => {
       e.preventDefault()
@@ -316,8 +344,7 @@ export class BlueprintContainer {
     const snapLineStyle = {
       'pointer-events': 'none',
       'stroke-dasharray': '2,3',
-      'stroke-width': '1',
-      stroke: `${this.theme.WallSnapLineColor}`
+      'stroke-width': '1'
     }
 
     this.snapXLine.setStyle(snapLineStyle)
@@ -330,24 +357,6 @@ export class BlueprintContainer {
     this.testPoint.getDom().setAttribute('height', `${6}`)
     this.testPoint.setStyle({ 'pointer-events': 'none' })
     this.getNodeLayer().appendChild(this.testPoint)
-
-    // add scale diplayer
-    this.scaleDisplayer.leftPoint.setStyle({
-      fill: this.theme.WallNodeColor,
-      width: `${this.theme.WallNodeSize / 2}px`,
-      height: `${this.theme.WallNodeSize}px`,
-      transform: `translate(${-this.theme.WallNodeSize / 4}px, ${-this.theme
-        .WallNodeSize / 2}px)`,
-      'z-index': 1
-    })
-    this.scaleDisplayer.rightPoint.setStyle({
-      fill: this.theme.WallNodeColor,
-      width: `${this.theme.WallNodeSize / 2}px`,
-      height: `${this.theme.WallNodeSize}px`,
-      transform: `translate(${100 - this.theme.WallNodeSize / 4}px, ${-this
-        .theme.WallNodeSize / 2}px)`,
-      'z-index': 1
-    })
 
     const scaleSvgContainer = new NvEl('svg')
     scaleSvgContainer.setStyle({
@@ -380,6 +389,41 @@ export class BlueprintContainer {
       this.scaleDisplayer.rightPoint
     )
     this.container.appendChild(scaleSvgContainer)
+
+    this.updateTheme()
+  }
+
+  public updateTheme () {
+    this.snapXLine.setStyle({ stroke: `${this.theme.WallSnapLineColor}` })
+    this.snapYLine.setStyle({ stroke: `${this.theme.WallSnapLineColor}` })
+
+    // scale diplayer
+    this.scaleDisplayer.leftPoint.setStyle({
+      fill: this.theme.WallNodeColor,
+      width: `${this.theme.WallNodeSize / 2}px`,
+      height: `${this.theme.WallNodeSize}px`,
+      transform: `translate(${-this.theme.WallNodeSize / 4}px, ${-this.theme
+        .WallNodeSize / 2}px)`,
+      'z-index': 1
+    })
+    this.scaleDisplayer.rightPoint.setStyle({
+      fill: this.theme.WallNodeColor,
+      width: `${this.theme.WallNodeSize / 2}px`,
+      height: `${this.theme.WallNodeSize}px`,
+      transform: `translate(${100 - this.theme.WallNodeSize / 4}px, ${-this
+        .theme.WallNodeSize / 2}px)`,
+      'z-index': 1
+    })
+
+    this.refreshScaleViewer()
+
+    this.wallNodeMap.forEach(value => {
+      value.updateTheme()
+    })
+
+    this.wallLinkMap.forEach(value => {
+      value.updateTheme()
+    })
   }
 
   public refreshScaleViewer () {
@@ -488,7 +532,7 @@ export class BlueprintContainer {
 
   private positionStart: V = new V(0, 0)
 
-  private testPoint = new NvEl('rect')
+  public testPoint = new NvEl('rect')
 
   public defaultMode () {
     this.container.getDom().onmousedown = null
@@ -496,16 +540,33 @@ export class BlueprintContainer {
     this.container.getDom().onmousemove = null
 
     this.container.getDom().onmousemove = e => {
+      /*
       const clientPos = this.clientPosToContainerPos(e.clientX, e.clientY)
+      this.bp.foreachWallNode(n => {
+        n.foreachLink(l => {
+          const origPos = new Vector2(clientPos.x, clientPos.y)
+          const p1 = l.getNode().getData<Vec2>('position')
+          const p2 = l.getOriginNode().getData<Vec2>('position')
+          const intersectionpos = Vector2.intersection(
+            origPos,
+            Vector2.normalize(Vector2.rotate90(Vector2.minus(p2, p1))),
+            p1,
+            p2
+          )
+          this.testPoint.setStyle({
+            transform: `translate(${intersectionpos.x -
+              3}px, ${intersectionpos.y - 3}px)`
+          })
+        })
+      })
       if (this.bp.isInside(new Vector2(clientPos.x, clientPos.y))) {
         this.testPoint.setStyle({ fill: '#2ECC71' })
       } else {
         this.testPoint.setStyle({ fill: '#E74C3C' })
       }
-      this.testPoint.setStyle({
-        transform: `translate(${clientPos.x - 3}px, ${clientPos.y - 3}px)`
-      })
+      */
     }
+
     const c = this.container as NvEl
     c.getDom().onmousedown = e => {
       if (e.button === 1) {
@@ -621,6 +682,12 @@ export class BlueprintContainer {
       }
       e.preventDefault()
     }
+  }
+
+  public hoveredWall: BpWallLink | null = null
+
+  public placeWindowMode () {
+    //
   }
 
   public moveNodeMode (node: Node) {
@@ -784,6 +851,10 @@ export class BlueprintContainer {
         .y * this.size}px) scale(${this.size})`
     })
     this.svgNodeLayer.setStyle({
+      transform: `translate(${this.position.x * this.size}px, ${this.position
+        .y * this.size}px) scale(${this.size})`
+    })
+    this.svgFurnitureLayer.setStyle({
       transform: `translate(${this.position.x * this.size}px, ${this.position
         .y * this.size}px) scale(${this.size})`
     })

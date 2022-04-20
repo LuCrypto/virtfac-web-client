@@ -20,8 +20,16 @@ import THREE, {
 import { DelayedCallback } from '../graph/delayedCallback'
 import { GLTFExporter } from 'three/examples/jsm/exporters/GLTFExporter'
 import { OBJExporter } from 'three/examples/jsm/exporters/OBJExporter'
+import Delaunator from 'delaunator'
 
 export class BlueprintScene {
+  /**
+   * using blueprint metadata :
+   * - roof_height : number
+   * - wall_width : number
+   * - scale : number
+   * @param blueprint
+   */
   public static exportGeometry (blueprint: Blueprint) {
     const geometry = new BufferGeometry()
 

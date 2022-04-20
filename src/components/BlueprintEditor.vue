@@ -33,7 +33,7 @@
         <p style="width:30px"></p>
         remove walls
       </v-btn>
-      <v-btn medium @click.stop="" style="margin-bottom:5px;"
+      <v-btn medium @click.stop="setMode('WINDOW')" style="margin-bottom:5px;"
         ><v-icon style="position:absolute; left:0; margin-right:10px"
           >mdi-window-closed-variant</v-icon
         >
@@ -74,6 +74,16 @@ export default class BlueprintEditor extends Vue {
   mounted () {
     this.container = this.$refs.container as Element
     this.bpContainer = new BlueprintContainer(this.container as HTMLElement)
+  }
+
+  setMode (mode: 'WALL' | 'DOOR' | 'WINDOW' | 'SUPP_WALL' | 'SUPP_FURNITURE') {
+    console.log('hello', this.bpContainer)
+    if (this.bpContainer === null) return
+    if (this.bpContainer.getMode() === mode) {
+      this.bpContainer.setMode('WALL')
+    } else {
+      this.bpContainer.setMode(mode)
+    }
   }
 }
 </script>
