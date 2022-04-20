@@ -135,9 +135,17 @@ export const routes: Array<Route> = [
   }),
   new Route({
     icon: 'mdi-package-variant-closed',
-    name: 'Assets',
+    name: 'Scènes',
     subname: 'Asset management',
     path: '/ergonom-io-assets',
+    category: 'Ergonom.io',
+    component: ErgonomIOAssets
+  }),
+  new Route({
+    icon: 'mdi-package-variant-closed',
+    name: 'Assets',
+    subname: 'Asset management',
+    path: '/ergonom-io-assets-2',
     category: 'Ergonom.io',
     component: ErgonomIOAssets
   }),
