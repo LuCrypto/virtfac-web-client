@@ -5,13 +5,13 @@
       fluid
       class="text-h3 font-weight-regular text-center black--text py-8"
     >
-      Gestionnaire de scène
+      Gestionnaire d'assets
     </v-container>
     <v-divider></v-divider>
     <!-- Milieu de page : les différentes cartes de scènes -->
     <template>
-      <v-row dense>
-        Les différentes scènes :
+      <v-row dense class="pa-2">
+        Les différents assets :
       </v-row>
       <v-card
         class="overflow-y-auto d-flex flex-row flex-wrap"
@@ -39,52 +39,15 @@
             </v-chip>
           </v-card-subtitle>
           <v-card-text>
-            {{ card.dateCreation }}, nombre assets : {{ card.assetsNumber }}
+            {{ card.dateCreation }}
           </v-card-text>
 
           <v-card-actions>
             <v-spacer></v-spacer>
-
-            <v-btn v-on:click="supprimerObjet(card.id)" icon>
-              <v-icon x-large>{{ icons.mdiDelete }}</v-icon>
-            </v-btn>
           </v-card-actions>
         </v-card>
       </v-card>
     </template>
-    <!-- Les différents boutons -->
-    <v-layout justify-center class="py-4">
-      <v-flex class="flex-grow-0 mx-5">
-        <v-btn
-          v-on:click="creerSceneVide"
-          class="yellow darken-3 font-weight-black"
-          large
-          elevation="2"
-        >
-          Créer une scène vide
-        </v-btn>
-      </v-flex>
-      <v-flex class="flex-grow-0 mx-5">
-        <v-btn
-          v-on:click="chargerScene"
-          class="yellow darken-3 font-weight-black"
-          large
-          elevation="2"
-        >
-          Charger une scène
-        </v-btn>
-      </v-flex>
-      <v-flex class="flex-grow-0 mx-5">
-        <v-btn
-          v-on:click="ajouterObjetScene"
-          class="grey font-weight-black"
-          large
-          elevation="2"
-        >
-          Ajouter une objet dans la scène
-        </v-btn>
-      </v-flex>
-    </v-layout>
   </v-container>
 </template>
 
@@ -92,10 +55,9 @@
 import { Component, Vue } from 'vue-property-decorator'
 import { mdiDelete } from '@mdi/js'
 import API from '@/utils/api'
-import { ArrayPropsDefinition } from 'vue/types/options'
 
 class CardModel {
-  name = 'Scene1.json'
+  name = 'Asset1.json'
   picture = 'https://cdn.vuetifyjs.com/images/cards/house.jpg'
   tags = '[]'
   dateCreation = '04/22/2022'
@@ -115,7 +77,6 @@ class CardModel {
     try {
       this.data = JSON.parse(data || '[]')
       this.tags = JSON.parse(tags || '[]')
-      // this.color = atob(color || '000000')
     } catch (e) {
       console.error(e)
     }
@@ -129,6 +90,7 @@ export default class ErgonomIOAssets extends Vue {
   }
 
   cards: CardModel[] = []
+  cards2: CardModel[] = []
 
   mounted (): void {
     this.cards.push(new CardModel({ id: this.cards.length }))
@@ -146,32 +108,15 @@ export default class ErgonomIOAssets extends Vue {
       })
     ).then((response: Response) => {
       console.log('response ', response)
-      this.cards = ((response as unknown) as Array<Partial<CardModel>>).map(
+      this.cards2 = ((response as unknown) as Array<Partial<CardModel>>).map(
         (scene: Partial<CardModel>) => new CardModel(scene)
       )
+
+      for (let i = 0; i < this.cards2.length; i++) {
+        this.cards.push(this.cards2[i])
+      }
+      this.cards2 = []
     })
-  }
-
-  creerSceneVide (): void {
-    console.log('creerSceneVide')
-    this.cards.push(new CardModel({ id: this.cards.length }))
-  }
-
-  chargerScene (): void {
-    console.log('Charger scene')
-  }
-
-  ajouterObjetScene (): void {
-    console.log('ajouterObjetScene')
-  }
-
-  supprimerObjet (index: number): void {
-    console.log('Supprimer objet ', index - 1)
-    delete this.cards[index - 1]
-    this.cards = this.cards.filter(card => card.id !== index - 1)
-
-    console.log('length : ', this.cards.length)
-    console.log('length : ', this.cards)
   }
 }
 </script>
