@@ -5,18 +5,21 @@
       fluid
       class="text-h3 font-weight-regular text-center black--text py-8"
     >
-      Gestionnaire d'assets
+      Lobbys des rooms
     </v-container>
     <v-divider></v-divider>
     <!-- Milieu de page : les différentes cartes de scènes -->
     <template>
       <v-row dense class="pa-2">
-        Les différents assets :
+        Ma room actuelle : None
+      </v-row>
+      <v-row dense class="pa-2">
+        Les différentes rooms :
       </v-row>
       <v-card
         class="overflow-y-auto d-flex flex-row flex-wrap"
         width="100%"
-        height="775"
+        height="675"
       >
         <v-card
           :key="indexCard"
@@ -39,7 +42,7 @@
             </v-chip>
           </v-card-subtitle>
           <v-card-text>
-            {{ card.dateCreation }}
+            {{ card.dateCreation }}, nombre de joueurs : {{ card.playerNumber }}
           </v-card-text>
 
           <v-card-actions>
@@ -48,6 +51,39 @@
         </v-card>
       </v-card>
     </template>
+    <!-- Les différents boutons -->
+    <v-layout justify-center class="py-4">
+      <v-flex class="flex-grow-0 mx-5">
+        <v-btn
+          v-on:click="creerRoom"
+          class="yellow darken-3 font-weight-black"
+          large
+          elevation="2"
+        >
+          Créer une room
+        </v-btn>
+      </v-flex>
+      <v-flex class="flex-grow-0 mx-5">
+        <v-btn
+          v-on:click="rejoindreRoom"
+          class="yellow darken-3 font-weight-black"
+          large
+          elevation="2"
+        >
+          Rejoindre une room
+        </v-btn>
+      </v-flex>
+      <v-flex class="flex-grow-0 mx-5">
+        <v-btn
+          v-on:click="quitterRoom"
+          class="yellow darken-3 font-weight-black"
+          large
+          elevation="2"
+        >
+          Quitter la room
+        </v-btn>
+      </v-flex>
+    </v-layout>
   </v-container>
 </template>
 
@@ -57,13 +93,13 @@ import { mdiDelete } from '@mdi/js'
 import API from '@/utils/api'
 
 class CardModel {
-  name = 'Asset1.json'
+  name = 'Room1.json'
   picture = 'https://cdn.vuetifyjs.com/images/cards/house.jpg'
   tags = '[]'
   dateCreation = '04/22/2022'
   id = 0
   color = ''
-  assetsNumber = 0
+  playerNumber = 0
   creationDate = 0
   data = ''
   idProject = 0
@@ -77,6 +113,7 @@ class CardModel {
     try {
       this.data = JSON.parse(data || '[]')
       this.tags = JSON.parse(tags || '[]')
+      // this.color = atob(color || '000000')
     } catch (e) {
       console.error(e)
     }
@@ -117,6 +154,18 @@ export default class ErgonomIOAssets extends Vue {
       }
       this.cards2 = []
     })
+  }
+
+  creerRoom (): void {
+    console.log('Creer room')
+  }
+
+  rejoindreRoom (): void {
+    console.log('Rejoindre room')
+  }
+
+  quitterRoom (): void {
+    console.log('Rejoindre room')
   }
 }
 </script>

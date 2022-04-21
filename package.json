@@ -9,6 +9,8 @@
     "serve": "node server/server.js"
   },
   "dependencies": {
+    "@mdi/font": "^6.6.96",
+    "@mdi/js": "^6.6.96",
     "@types/dom-to-image": "^2.6.4",
     "@types/three": "^0.135.0",
     "@types/xlsx": "^0.0.36",
