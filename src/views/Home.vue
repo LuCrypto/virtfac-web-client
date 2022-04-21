@@ -16,7 +16,6 @@ export default class Home extends Vue {
 
   mounted (): void {
     const router: VueRouter = this.$router
-    const query = router.currentRoute.query
     this.page = `${this.base}`
     console.log('hello home', router.currentRoute.query)
   }

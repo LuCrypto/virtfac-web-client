@@ -46,7 +46,7 @@
             <v-spacer></v-spacer>
 
             <v-btn v-on:click="supprimerObjet(card.id)" icon>
-              <v-icon x-large>{{ icons.mdiDelete }}</v-icon>
+              <v-icon left v-text="'mdi-delete'"></v-icon>
             </v-btn>
           </v-card-actions>
         </v-card>
@@ -90,7 +90,6 @@
 
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator'
-import { mdiDelete } from '@mdi/js'
 import API from '@/utils/api'
 
 class CardModel {
@@ -123,10 +122,6 @@ class CardModel {
 
 @Component
 export default class ErgonomIOAssets extends Vue {
-  icons = {
-    mdiDelete
-  }
-
   cards: CardModel[] = []
   cards2: CardModel[] = []
 

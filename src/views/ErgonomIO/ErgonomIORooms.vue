@@ -89,7 +89,6 @@
 
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator'
-import { mdiDelete } from '@mdi/js'
 import API from '@/utils/api'
 
 class CardModel {
@@ -122,10 +121,6 @@ class CardModel {
 
 @Component
 export default class ErgonomIOAssets extends Vue {
-  icons = {
-    mdiDelete
-  }
-
   cards: CardModel[] = []
   cards2: CardModel[] = []
 
