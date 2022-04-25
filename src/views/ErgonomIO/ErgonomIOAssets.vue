@@ -13,6 +13,27 @@
       <v-row dense class="pa-2">
         Les différents assets :
       </v-row>
+
+      <!-- Popup permettant de voir l'URI d'un asset -->
+      <v-row justify="center">
+        <v-dialog v-model="popup" max-width="780">
+          <v-card>
+            <v-card-title> {{ titrePopup }} </v-card-title>
+            <v-card-text>
+              {{ textePopup }}
+            </v-card-text>
+
+            <v-card-actions>
+              <v-spacer></v-spacer>
+              <v-btn color="green darken-1" text @click="popup = false">
+                OK
+              </v-btn>
+            </v-card-actions>
+          </v-card>
+        </v-dialog>
+      </v-row>
+
+      <!-- Les différents assets avec informations -->
       <v-card
         class="overflow-y-auto d-flex flex-row flex-wrap"
         width="100%"
@@ -24,7 +45,11 @@
           height="455"
           width="30%"
           class="ma-3"
+          :style="{
+            backgroundcolor: card.colorBackground
+          }"
           elevation="5"
+          v-on:click="clickCard(card)"
         >
           <v-img height="270" :src="card.picture"> </v-img>
           <v-sheet height="4" :color="`#${card.color.toString(16)}`"> </v-sheet>
@@ -39,11 +64,15 @@
             </v-chip>
           </v-card-subtitle>
           <v-card-text>
-            {{ card.dateCreation }}
+            {{ card.dateCreation }}, id : {{ card.id }}
           </v-card-text>
 
           <v-card-actions>
             <v-spacer></v-spacer>
+
+            <v-btn v-on:click="clickCard(card)" icon>
+              <v-icon left v-text="'mdi-information'"></v-icon>
+            </v-btn>
           </v-card-actions>
         </v-card>
       </v-card>
@@ -55,7 +84,9 @@
 import { Component, Vue } from 'vue-property-decorator'
 import API from '@/utils/api'
 
+// Classe pour les assets
 class CardModel {
+  // Initialisation
   name = 'Asset1.json'
   picture = 'https://cdn.vuetifyjs.com/images/cards/house.jpg'
   tags = '[]'
@@ -68,7 +99,10 @@ class CardModel {
   idProject = 0
   idUserOwner = 0
   modificationDate = 0
+  colorBackground = 'red'
+  uri = ''
 
+  // Permet de créer une carte asset
   constructor (params: Partial<CardModel>) {
     const { data, tags, ...others } = params
     Object.assign(this, others)
@@ -84,19 +118,39 @@ class CardModel {
 
 @Component
 export default class ErgonomIOAssets extends Vue {
+  // Initialisation
   cards: CardModel[] = []
   cards2: CardModel[] = []
+  dialog = false
+  popup = false
+  textePopup = 'texte popup'
+  titrePopup = 'titre popup'
 
+  // Begin
   mounted (): void {
     this.cards.push(new CardModel({ id: this.cards.length }))
     this.requeteAPI()
   }
 
+  // Permet d'ouvrir la popup avec les bonnes informations
+  clickCard (card: CardModel): void {
+    console.log('clickCard : ', card.id)
+    this.popup = true
+    this.titrePopup = card.name
+
+    if (card.uri.length > 10000) {
+      this.textePopup = card.uri.substring(0, 10000) + '........'
+    } else {
+      this.textePopup = card.uri
+    }
+  }
+
+  // Requête API pour récupérer les différents assets
   requeteAPI (): void {
     console.log('api ')
     API.post(
       this,
-      '/resources/ergonomio-scenes',
+      '/resources/files',
       JSON.stringify({
         select: [],
         where: []

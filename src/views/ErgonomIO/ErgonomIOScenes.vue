@@ -13,6 +13,27 @@
       <v-row dense class="pa-2">
         Les différentes scènes :
       </v-row>
+
+      <!-- Popup permettant d'afficher des informations sur une scène -->
+      <v-row justify="center">
+        <v-dialog v-model="popup" max-width="780">
+          <v-card>
+            <v-card-title> {{ titrePopup }} </v-card-title>
+            <v-card-text>
+              {{ textePopup }}
+            </v-card-text>
+
+            <v-card-actions>
+              <v-spacer></v-spacer>
+              <v-btn color="green darken-1" text @click="popup = false">
+                OK
+              </v-btn>
+            </v-card-actions>
+          </v-card>
+        </v-dialog>
+      </v-row>
+
+      <!-- Les différentes scènes -->
       <v-card
         class="overflow-y-auto d-flex flex-row flex-wrap"
         width="100%"
@@ -32,19 +53,41 @@
           <v-card-subtitle>
             <v-chip
               :key="indexTag"
-              v-for="(tag, indexTag) in card.tags"
+              v-for="(tag, indexTag) in card.parsedTags"
               class="mr-2 overflow-y-auto"
             >
               {{ tag }}
             </v-chip>
           </v-card-subtitle>
           <v-card-text>
-            {{ card.dateCreation }}, nombre assets : {{ card.assetsNumber }}
+            {{ card.formatedCreationDate }}, nombre assets :
+            {{ card.assetsNumber }}
           </v-card-text>
 
           <v-card-actions>
+            <v-btn
+              x-small
+              depressed
+              color="primary"
+              v-on:click="ergonomioLayout()"
+            >
+              Ergonomio Layout
+            </v-btn>
+            <v-btn
+              x-small
+              depressed
+              color="primary"
+              v-on:click="ergonomioVirtualTwin()"
+            >
+              Ergonomio Virtual Twin
+            </v-btn>
+
             <v-spacer></v-spacer>
 
+            <!-- Boutons permettant de supprimer la scène en question -->
+            <v-btn v-on:click="clickScene(card)" icon>
+              <v-icon left v-text="'mdi-information'"></v-icon>
+            </v-btn>
             <v-btn v-on:click="supprimerObjet(card.id)" icon>
               <v-icon left v-text="'mdi-delete'"></v-icon>
             </v-btn>
@@ -55,6 +98,7 @@
     <!-- Les différents boutons -->
     <v-layout justify-center class="py-4">
       <v-flex class="flex-grow-0 mx-5">
+        <!-- Bouton permettant de créer une scène vide -->
         <v-btn
           v-on:click="creerSceneVide"
           class="yellow darken-3 font-weight-black"
@@ -65,6 +109,7 @@
         </v-btn>
       </v-flex>
       <v-flex class="flex-grow-0 mx-5">
+        <!-- Bouton permettant de charger une scène -->
         <v-btn
           v-on:click="chargerScene"
           class="yellow darken-3 font-weight-black"
@@ -75,6 +120,7 @@
         </v-btn>
       </v-flex>
       <v-flex class="flex-grow-0 mx-5">
+        <!-- Bouton permettant de rajouter un objet dans une scène -->
         <v-btn
           v-on:click="ajouterObjetScene"
           class="yellow darken-3 font-weight-black"
@@ -92,28 +138,35 @@
 import { Component, Vue } from 'vue-property-decorator'
 import API from '@/utils/api'
 
+// Modèle d'une scène
 class CardModel {
+  // Initialisation
   name = 'Scene1.json'
   picture = 'https://cdn.vuetifyjs.com/images/cards/house.jpg'
   tags = '[]'
-  dateCreation = '04/22/2022'
   id = 0
-  color = ''
+  color = '000000'
   assetsNumber = 0
   creationDate = 0
-  data = ''
+  data = '{}'
   idProject = 0
   idUserOwner = 0
   modificationDate = 0
 
-  constructor (params: Partial<CardModel>) {
-    const { data, tags, ...others } = params
-    Object.assign(this, others)
+  parsedData: any = null
+  parsedTags: string[] = []
 
+  get formatedCreationDate (): string {
+    return new Date(this.creationDate).toLocaleString()
+  }
+
+  constructor (params: Partial<CardModel>) {
+    Object.assign(this, params)
     try {
-      this.data = JSON.parse(data || '[]')
-      this.tags = JSON.parse(tags || '[]')
-      // this.color = atob(color || '000000')
+      console.log(params.tags)
+      this.parsedData = JSON.parse(this.data || '[]')
+      this.parsedTags = JSON.parse(this.tags || '[]')
+      console.log(this.parsedTags)
     } catch (e) {
       console.error(e)
     }
@@ -122,14 +175,20 @@ class CardModel {
 
 @Component
 export default class ErgonomIOAssets extends Vue {
+  // Initialisation
   cards: CardModel[] = []
   cards2: CardModel[] = []
+  titrePopup = ''
+  textePopup = ''
+  popup = false
 
+  // Begin
   mounted (): void {
     this.cards.push(new CardModel({ id: this.cards.length }))
     this.requeteAPI()
   }
 
+  // Requête API permettant de récupérer toutes les scènes
   requeteAPI (): void {
     console.log('api ')
     API.post(
@@ -152,6 +211,16 @@ export default class ErgonomIOAssets extends Vue {
     })
   }
 
+  // Boutons scènes cards
+  ergonomioLayout (): void {
+    console.log('ergonomioLayout !')
+  }
+
+  ergonomioVirtualTwin (): void {
+    console.log('ergonomioVirtualTwin !')
+  }
+
+  // Permet de créer une scène vide
   creerSceneVide (): void {
     console.log('creerSceneVide')
     this.cards.push(new CardModel({ id: this.cards.length }))
@@ -165,6 +234,7 @@ export default class ErgonomIOAssets extends Vue {
     console.log('ajouterObjetScene')
   }
 
+  // Permet de supprimer la scène en question
   supprimerObjet (index: number): void {
     console.log('Supprimer objet ', index - 1)
     delete this.cards[index - 1]
@@ -172,6 +242,15 @@ export default class ErgonomIOAssets extends Vue {
 
     console.log('length : ', this.cards.length)
     console.log('length : ', this.cards)
+  }
+
+  // Permet d'afficher dans une popup des informations sur la scene
+  clickScene (scene: CardModel): void {
+    console.log('clickScene : ', scene.id)
+    this.popup = true
+    this.titrePopup = scene.name
+
+    this.textePopup = scene.data
   }
 }
 </script>

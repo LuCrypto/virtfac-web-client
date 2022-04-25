@@ -16,6 +16,8 @@
       <v-row dense class="pa-2">
         Les différentes rooms :
       </v-row>
+
+      <!-- Les différentes rooms -->
       <v-card
         class="overflow-y-auto d-flex flex-row flex-wrap"
         width="100%"
@@ -54,6 +56,7 @@
     <!-- Les différents boutons -->
     <v-layout justify-center class="py-4">
       <v-flex class="flex-grow-0 mx-5">
+        <!-- Permet de créer une room -->
         <v-btn
           v-on:click="creerRoom"
           class="yellow darken-3 font-weight-black"
@@ -64,6 +67,7 @@
         </v-btn>
       </v-flex>
       <v-flex class="flex-grow-0 mx-5">
+        <!-- Permet de rejoindre une room -->
         <v-btn
           v-on:click="rejoindreRoom"
           class="yellow darken-3 font-weight-black"
@@ -74,6 +78,7 @@
         </v-btn>
       </v-flex>
       <v-flex class="flex-grow-0 mx-5">
+        <!-- Permet de quitter une room -->
         <v-btn
           v-on:click="quitterRoom"
           class="yellow darken-3 font-weight-black"
