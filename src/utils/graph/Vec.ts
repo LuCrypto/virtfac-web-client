@@ -37,6 +37,12 @@ export class Vector2 implements Vec2 {
     return Math.sqrt(vec.x * vec.x + vec.y * vec.y)
   }
 
+  public static distanceBetween (p1: Vec2, p2: Vec2): number {
+    return Math.sqrt(
+      (p1.x - p2.x) * (p1.x - p2.x) + (p1.y - p2.y) * (p1.y - p2.y)
+    )
+  }
+
   public static normalize (vec: Vec2): Vec2 {
     return this.divide(vec, this.norm(vec))
   }

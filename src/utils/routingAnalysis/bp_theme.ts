@@ -10,4 +10,8 @@ export class BpTheme {
   public readonly WallLinkColliderWidth: number = 50
   public readonly WallNodeColliderRange: number = 20
   public readonly WindowWidth: number = 1
+
+  constructor (attributes?: Partial<BpTheme>) {
+    Object.assign(this, attributes)
+  }
 }

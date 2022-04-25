@@ -7,6 +7,7 @@ import { BpWallNode } from '@/utils/routingAnalysis/bp_wallNode'
 import { BpWallLink } from '@/utils/routingAnalysis/bp_wallLink'
 import { BpTheme } from '@/utils/routingAnalysis/bp_theme'
 import { Vec2, Vector2 } from '../graph/Vec'
+import { Destroyable } from './bp_window'
 
 class Grid {
   private center: V
@@ -334,6 +335,12 @@ export class BlueprintContainer {
     // remove wall link when a wall is removed in the blueprint
     this.bp.onWallLinkRemoved().addListener(arg => {
       (this.wallLinkMap.get(arg.link) as BpWallLink).destroy()
+      arg.link
+        .getDataOrDefault<Set<Destroyable>>(
+          'wallFurniture',
+          new Set<Destroyable>()
+        )
+        .forEach(item => item.destroy())
       this.wallLinkMap.delete(arg.link)
     })
 

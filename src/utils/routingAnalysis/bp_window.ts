@@ -6,7 +6,11 @@ import { Link } from '@/utils/graph/link'
 import { BlueprintContainer } from './blueprintContainer'
 import { Vec2, Vector2 } from '@/utils/graph/Vec'
 
-export class BpWindow {
+export interface Destroyable {
+  destroy(): void
+}
+
+export class BpWindow implements Destroyable {
   private collider: NvEl
   private container: BlueprintContainer
   private placement: {
@@ -18,7 +22,7 @@ export class BpWindow {
 
   private displayer = new NvEl('svg')
   private back = new NvEl('path')
-  private front = new NvEl('path')
+  // private front = new NvEl('path')
   private border = new NvEl('path')
 
   constructor (bpContainer: BlueprintContainer) {
@@ -30,13 +34,15 @@ export class BpWindow {
       e.preventDefault()
     }
 
-    this.collider.getDom().onmousedown = e => { this.container.onMouseDown(e) }
+    this.collider.getDom().onmousedown = e => {
+      this.container.onMouseDown(e)
+    }
     this.collider.getDom().onmousemove = e => {
       this.container.onMouseMove(e)
     }
     this.collider.getDom().onwheel = e => this.container.zoom(e)
     this.back.setStyle({ 'pointer-events': 'none' })
-    this.front.setStyle({ 'pointer-events': 'none' })
+    // this.front.setStyle({ 'pointer-events': 'none' })
     this.border.setStyle({ 'pointer-events': 'none' })
 
     this.displayer.setStyle({
@@ -45,6 +51,7 @@ export class BpWindow {
       'transform-origin': '0px 0px',
       overflow: 'visible'
     })
+    this.container.getFurnitureLayer().appendChild(this.displayer)
   }
 
   public setPosition (
@@ -55,6 +62,9 @@ export class BpWindow {
   ) {
     if (this.placement !== null) {
       this.placement.wall.onDataChanged().removeMappedListener('length', this)
+      this.placement.wall
+        .getData<Set<Destroyable>>('wallFurniture')
+        .delete(this)
     }
     this.placement = {
       anchor: anchor,
@@ -69,6 +79,9 @@ export class BpWindow {
       },
       this
     )
+    this.placement.wall
+      .getOrAddData<Set<Destroyable>>('wallFurniture', new Set<Destroyable>())
+      .add(this)
     this.updateTheme()
     this.updateTransform()
   }
@@ -85,17 +98,18 @@ export class BpWindow {
       'stroke-width': this.container.getTheme().WallLinkStrokeWidth + 1,
       stroke: this.container.getTheme().BackgroundColor
     })
+    /*
     this.front.setStyle({
       'stroke-width': this.container.getTheme().WindowWidth,
       'stroke-dasharray': '2,3',
       stroke: this.container.getTheme().WallLinkColor
     })
+    */
     this.border.setStyle({
       'stroke-width': this.container.getTheme().WallLinkStrokeWidth + 3,
       stroke: this.container.getTheme().WallLinkColor
     })
     this.displayer.appendChild(this.border, this.back)
-    this.container.getFurnitureLayer().appendChild(this.displayer)
   }
 
   public updateTransform () {
@@ -127,7 +141,7 @@ export class BpWindow {
         this.placement.anchorDistance + this.placement.windowWidth
       )
     ).str()}`
-    this.front.getDom().setAttribute('d', d)
+    // this.front.getDom().setAttribute('d', d)
     this.back.getDom().setAttribute('d', d)
     this.border
       .getDom()
@@ -152,6 +166,12 @@ export class BpWindow {
   }
 
   destroy () {
+    if (this.placement !== null) {
+      this.placement.wall.onDataChanged().removeMappedListener('length', this)
+      this.placement.wall
+        .getData<Set<Destroyable>>('wallFurniture')
+        .delete(this)
+    }
     this.container
       .getFurnitureLayer()
       .getDom()
