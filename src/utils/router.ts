@@ -50,6 +50,7 @@ export const routes: Array<Route> = [
     icon: 'mdi-home',
     name: 'Home',
     path: '/home',
+    alias: '/',
     category: 'About us',
     restricted: false,
     component: Home

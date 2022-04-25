@@ -1,15 +1,17 @@
 <template>
-  <v-app :style="this.transparency ? 'background-color: transparent;' : ''">
+  <v-app
+    ref="app"
+    :style="{
+      width: `${this.size.x / this.zoom}px`,
+      height: `${this.size.y / this.zoom}px`,
+      background: this.transparency ? 'background-color: transparent;' : ''
+    }"
+  >
     <!-- Display of not vue in fullpage -->
-    <div v-if="!this.fullpage" class="page">
-      <nav-bar></nav-bar>
-      <v-main class="page">
-        <router-view class="ma-0 pa-0 page fluid"></router-view>
-      </v-main>
-    </div>
-    <div v-else>
-      <router-view class="ma-0 pa-0 page fluid"></router-view>
-    </div>
+    <nav-bar v-if="!this.fullpage"></nav-bar>
+    <v-main>
+      <router-view></router-view>
+    </v-main>
 
     <!-- Global bottom message -->
     <v-snackbar v-model="snackbarShow" :timeout="snackbarTime">
@@ -33,6 +35,7 @@
 import { Component, Vue } from 'vue-property-decorator'
 import VueRouter from 'vue-router'
 import NavBar from '@/components/NavBar.vue'
+import Unreal from '@/utils/unreal'
 
 @Component({
   components: {
@@ -47,15 +50,41 @@ export default class App extends Vue {
   snackbarShow = false
   snackbarTime = 4000
   snackbarText = ''
+  zoom = 1
+  size = {
+    x: 0,
+    y: 0
+  }
 
   mounted () {
+    // Unreal Engine handler
+    window.addEventListener('resize', () => this.resize())
+    this.resize()
+
+    Unreal.getResolution().then((resolution: number) => {
+      console.log('Resolution from unreal : ', resolution)
+      const body = document.querySelector('body')
+      if (body) {
+        body.setAttribute('style', `zoom: ${resolution};`)
+      }
+      this.zoom = resolution
+    })
+
+    // Global botom message handler
     this.$root.$on('bottom-message', (message: string) => {
       this.snackbarShow = true
       this.snackbarText = message
     })
+
+    // User disconnection handler
     this.$root.$on('user-disconnection', () => {
       Vue.prototype.$globals.set('user', undefined)
     })
+  }
+
+  resize (): void {
+    this.size.x = window.innerWidth
+    this.size.y = window.innerHeight
   }
 }
 </script>
