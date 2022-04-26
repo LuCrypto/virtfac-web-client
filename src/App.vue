@@ -61,15 +61,6 @@ export default class App extends Vue {
     window.addEventListener('resize', () => this.resize())
     this.resize()
 
-    Unreal.getResolution().then((resolution: number) => {
-      console.log('Resolution from unreal : ', resolution)
-      const body = document.querySelector('body')
-      if (body) {
-        body.setAttribute('style', `zoom: ${resolution};`)
-      }
-      this.zoom = resolution
-    })
-
     // Global botom message handler
     this.$root.$on('bottom-message', (message: string) => {
       this.snackbarShow = true
@@ -80,6 +71,28 @@ export default class App extends Vue {
     this.$root.$on('user-disconnection', () => {
       Vue.prototype.$globals.set('user', undefined)
     })
+
+    // Init Unreal
+    Unreal.getResolution().then((resolution: number) => {
+      // this.$root.$emit(
+      //   'bottom-message',
+      //   'Resolution from unreal : ' + resolution
+      // )
+      const body = document.querySelector('body')
+      if (body) {
+        body.setAttribute('style', `zoom: ${resolution};`)
+      }
+      this.zoom = resolution
+    })
+
+    this.$root.$emit(
+      'bottom-message',
+      `Unreal context is ${Unreal.check() ? '' : 'not'} detected.`
+    )
+
+    if (Unreal.check()) {
+      Unreal.send('Virtfac web is connected')
+    }
   }
 
   resize (): void {
