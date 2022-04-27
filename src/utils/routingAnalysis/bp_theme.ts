@@ -7,7 +7,7 @@ export class BpTheme {
   public readonly DoubleWallWidth: number = 2
   public readonly WallLinkColor: string = '#D7DBDD'
   public readonly WallSnapLineColor: string = '#3498DB'
-  public readonly WallLinkColliderWidth: number = 50
+  public readonly WallLinkColliderWidth: number = 15
   public readonly WallNodeColliderRange: number = 20
   public readonly WindowWidth: number = 2
   public readonly WallFurnitureColor: string = '#F5A506'

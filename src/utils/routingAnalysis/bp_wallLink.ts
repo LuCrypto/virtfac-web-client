@@ -93,7 +93,11 @@ export class BpWallLink {
               link.getOriginNode().getData<Vec2>('position'),
               this.hoveringPosition
             )
-          ) / link.getData<number>('length')
+          ) /
+          Vector2.distanceBetween(
+            link.getOriginNode().getData<Vec2>('position'),
+            link.getNode().getData<Vec2>('position')
+          )
         w.setPosition(
           link.getOriginNode(),
           this.link,
@@ -440,5 +444,9 @@ export class BpWallLink {
       .getLinkLayer()
       .getDom()
       .removeChild(this.length.getDom())
+    this.container
+      .getLinkLayer()
+      .getDom()
+      .removeChild(this.collider.getDom())
   }
 }

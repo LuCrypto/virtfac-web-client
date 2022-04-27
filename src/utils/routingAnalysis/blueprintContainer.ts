@@ -561,6 +561,7 @@ export class BlueprintContainer {
 
     const c = this.container as NvEl
     c.getDom().onmousedown = e => {
+      console.log('defaultMode onmousedown: ' + e.button)
       if (e.button === 1) {
         // movement
         this.positionStart = this.unscale(new V(e.clientX, e.clientY)).sub(
@@ -574,6 +575,7 @@ export class BlueprintContainer {
           this.updateTransform()
         }
         document.onmouseup = event => {
+          console.log('defaultMode onmouseup: ' + event.button)
           event.preventDefault()
           if (event.button === 1) c.getDom().onmousemove = null
           this.defaultMode()
@@ -595,6 +597,7 @@ export class BlueprintContainer {
         const n2 = this.bp.addWallNode(new Vector2(pos.x, pos.y))
         this.bp.addWall(n, n2)
         document.onmousemove = e1 => {
+          console.log('defaultMode onmousemove')
           // positioning end point of the wall
           e1.preventDefault()
           this.hideSnap()
@@ -642,6 +645,7 @@ export class BlueprintContainer {
           }
         }
         document.onmouseup = e1 => {
+          console.log('defaultMode onmouseup: ' + e1.button)
           if (e1.button === 0) {
             // end positioning of the end point wall node
             this.defaultMode()
@@ -875,6 +879,7 @@ export class BlueprintContainer {
     this.container.setStyle({ cursor: 'crosshair' })
 
     this.container.getDom().onmousedown = e => {
+      console.log('defineScaleMode onmousedown: ' + e.button)
       if (e.button === 0) {
         const n1 = new Node()
         const p1 = this.clientPosToContainerPos(e.x, e.y)
@@ -891,6 +896,7 @@ export class BlueprintContainer {
         const oldScale = this.bp.getData<number>('scale')
 
         this.container.getDom().onmousemove = e2 => {
+          console.log('defineScaleMode onmousemove')
           const p2 = this.clientPosToContainerPos(e2.x, e2.y)
           n2.setData<Vec2>('position', new Vector2(p2.x, p2.y))
           l.setData<number>('length', p1.sub(p2).norm() / oldScale)
@@ -903,11 +909,13 @@ export class BlueprintContainer {
           e2.preventDefault()
         }
         document.onmouseup = e3 => {
+          console.log('defineScaleMode onmouseup: ' + e3.button)
           if (e.button === 0) {
             n1Display.destroy()
             n2Display.destroy()
             lDisplay.destroy()
             document.onmouseup = null
+            this.hoveredNode = null
             this.defaultMode()
             this.container.setStyle({ cursor: 'auto' })
           }

@@ -42,6 +42,8 @@ export class BlueprintScene {
         b1: number
         t2: number
         b2: number
+        bb1: number
+        bb2: number
         t1pos: { x: number; y: number; z: number }
         t2pos: { x: number; y: number; z: number }
       }
@@ -291,8 +293,20 @@ export class BlueprintScene {
 
             const p1 = Vector2.plus(pos, Vector2.multiply(dir, c.x))
             const hb1 = addVertex(p1.x, p1.y, 0, normal, length - c.x)
-            const hmb1 = addVertex(p1.x, p1.y, c.by, normal, length - c.x)
-            const hmt1 = addVertex(p1.x, p1.y, c.ty, normal, length - c.x)
+            const hmb1 = addVertex(
+              p1.x,
+              p1.y,
+              c.by || h / 3,
+              normal,
+              length - c.x
+            )
+            const hmt1 = addVertex(
+              p1.x,
+              p1.y,
+              c.ty || (h / 3) * 2,
+              normal,
+              length - c.x
+            )
             const ht1 = addVertex(p1.x, p1.y, h, normal, length - c.x)
 
             const p2 = Vector2.plus(pos, Vector2.multiply(dir, c.x + c.dx))
@@ -300,14 +314,14 @@ export class BlueprintScene {
             const hmb2 = addVertex(
               p2.x,
               p2.y,
-              c.by,
+              c.by || h / 3,
               normal,
               length - (c.x + c.dx)
             )
             const hmt2 = addVertex(
               p2.x,
               p2.y,
-              c.ty,
+              c.ty || (h / 3) * 2,
               normal,
               length - (c.x + c.dx)
             )
@@ -316,7 +330,7 @@ export class BlueprintScene {
             addQuad(mt1, hmt1, ht1, t1, reverse)
             addQuad(mb1, hmb1, hmt1, mt1, reverse)
             addQuad(b1, hb1, hmb1, mb1, reverse)
-            addQuad(hb1, hb2, hmb2, hmb1, reverse)
+            if (c.by > 0) addQuad(hb1, hb2, hmb2, hmb1, reverse)
             addQuad(hmt1, hmt2, ht2, ht1, reverse)
 
             b1 = hb2
@@ -335,22 +349,42 @@ export class BlueprintScene {
                     addCopyQuad(hmb1, hmt1, otherHole.t1, otherHole.b1)
                     addCopyQuad(hmt1, hmt2, otherHole.t2, otherHole.t1)
                     addCopyQuad(hmb2, hmt2, otherHole.t2, otherHole.b2)
-                    addCopyQuad(hmb1, hmb2, otherHole.b2, otherHole.b1)
+                    if (c.by > 0) {
+                      addCopyQuad(hmb1, hmb2, otherHole.b2, otherHole.b1)
+                    }
 
                     addCopyQuad(hmb1, hmt1, otherHole.t1, otherHole.b1, true)
                     addCopyQuad(hmt1, hmt2, otherHole.t2, otherHole.t1, true)
                     addCopyQuad(hmb2, hmt2, otherHole.t2, otherHole.b2, true)
-                    addCopyQuad(hmb1, hmb2, otherHole.b2, otherHole.b1, true)
+                    if (c.by > 0) {
+                      addCopyQuad(hmb1, hmb2, otherHole.b2, otherHole.b1, true)
+                    } else {
+                      addCopyQuad(hb1, hmb1, otherHole.b1, otherHole.bb1)
+                      addCopyQuad(hb1, hmb1, otherHole.b1, otherHole.bb1, true)
+
+                      addCopyQuad(hb2, hmb2, otherHole.b2, otherHole.bb2)
+                      addCopyQuad(hb2, hmb2, otherHole.b2, otherHole.bb2, true)
+                    }
                   } else {
                     addCopyQuad(hmb1, hmt1, otherHole.t2, otherHole.b2)
                     addCopyQuad(hmt1, hmt2, otherHole.t1, otherHole.t2)
                     addCopyQuad(hmb2, hmt2, otherHole.t1, otherHole.b1)
-                    addCopyQuad(hmb1, hmb2, otherHole.b1, otherHole.b2)
+                    if (c.by > 0) {
+                      addCopyQuad(hmb1, hmb2, otherHole.b1, otherHole.b2)
+                    }
 
                     addCopyQuad(hmb1, hmt1, otherHole.t2, otherHole.b2, true)
                     addCopyQuad(hmt1, hmt2, otherHole.t1, otherHole.t2, true)
                     addCopyQuad(hmb2, hmt2, otherHole.t1, otherHole.b1, true)
-                    addCopyQuad(hmb1, hmb2, otherHole.b1, otherHole.b2, true)
+                    if (c.by > 0) {
+                      addCopyQuad(hmb1, hmb2, otherHole.b1, otherHole.b2, true)
+                    } else {
+                      addCopyQuad(hb1, hmb1, otherHole.b2, otherHole.bb2)
+                      addCopyQuad(hb1, hmb1, otherHole.b2, otherHole.bb2, true)
+
+                      addCopyQuad(hb2, hmb2, otherHole.b1, otherHole.bb1)
+                      addCopyQuad(hb2, hmb2, otherHole.b1, otherHole.bb1, true)
+                    }
                   }
                 }
               } else {
@@ -365,6 +399,8 @@ export class BlueprintScene {
                     hmb2,
                     (normal = Vector2.multiply(Vector2.normalize(dir), -1))
                   ),
+                  bb1: hb1,
+                  bb2: hb2,
                   t1pos: { x: p1.x, y: p1.y, z: c.ty },
                   t2pos: { x: p2.x, y: p2.y, z: c.ty }
                 })

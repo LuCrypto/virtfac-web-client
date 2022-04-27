@@ -74,7 +74,8 @@ export class BpWindow implements Destroyable {
     this.placement = {
       anchor: anchor,
       wall: wall,
-      originDistance: originDistance,
+      originDistance:
+        originDistance,
       windowWidth: windowWidth,
       isDoor: isDoor
     }
@@ -90,6 +91,8 @@ export class BpWindow implements Destroyable {
       .add(this)
     this.updateTheme()
     this.updateTransform()
+
+    console.log(this.placement)
   }
 
   public updateTheme () {
@@ -123,6 +126,7 @@ export class BpWindow implements Destroyable {
 
   public updateTransform () {
     if (this.placement === null) return
+    const scale = this.container.getBlueprint().getData<number>('scale')
     const p1 = this.placement.wall.getNode().getData<Vec2>('position')
     const p2 = this.placement.wall.getOriginNode().getData<Vec2>('position')
     // const anchor = this.placement.anchor.getData<Vec2>('position')
@@ -140,10 +144,16 @@ export class BpWindow implements Destroyable {
     })
     const d = `M${Vector2.minus(
       pos,
-      Vector2.multiply(Vector2.normalize(dir), this.placement.windowWidth / 2)
+      Vector2.multiply(
+        Vector2.normalize(dir),
+        (this.placement.windowWidth / 2) * scale
+      )
     ).str()} L${Vector2.plus(
       pos,
-      Vector2.multiply(Vector2.normalize(dir), this.placement.windowWidth / 2)
+      Vector2.multiply(
+        Vector2.normalize(dir),
+        (this.placement.windowWidth / 2) * scale
+      )
     ).str()}`
     // this.front.getDom().setAttribute('d', d)
     this.back.getDom().setAttribute('d', d)
@@ -155,14 +165,14 @@ export class BpWindow implements Destroyable {
           pos,
           Vector2.multiply(
             Vector2.normalize(dir),
-            this.placement.windowWidth / 2 +
+            (this.placement.windowWidth / 2) * scale +
               this.container.getTheme().WindowWidth
           )
         ).str()} L${Vector2.plus(
           pos,
           Vector2.multiply(
             Vector2.normalize(dir),
-            this.placement.windowWidth / 2 +
+            (this.placement.windowWidth / 2) * scale +
               this.container.getTheme().WindowWidth
           )
         ).str()}`
