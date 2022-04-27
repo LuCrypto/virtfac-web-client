@@ -547,31 +547,16 @@ export class BlueprintContainer {
     this.container.getDom().onmousemove = null
 
     this.container.getDom().onmousemove = e => {
-      /*
       const clientPos = this.clientPosToContainerPos(e.clientX, e.clientY)
-      this.bp.foreachWallNode(n => {
-        n.foreachLink(l => {
-          const origPos = new Vector2(clientPos.x, clientPos.y)
-          const p1 = l.getNode().getData<Vec2>('position')
-          const p2 = l.getOriginNode().getData<Vec2>('position')
-          const intersectionpos = Vector2.intersection(
-            origPos,
-            Vector2.normalize(Vector2.rotate90(Vector2.minus(p2, p1))),
-            p1,
-            p2
-          )
-          this.testPoint.setStyle({
-            transform: `translate(${intersectionpos.x -
-              3}px, ${intersectionpos.y - 3}px)`
-          })
-        })
+
+      this.testPoint.setStyle({
+        transform: `translate(${clientPos.x - 3}px, ${clientPos.y - 3}px)`
       })
       if (this.bp.isInside(new Vector2(clientPos.x, clientPos.y))) {
         this.testPoint.setStyle({ fill: '#2ECC71' })
       } else {
         this.testPoint.setStyle({ fill: '#E74C3C' })
       }
-      */
     }
 
     const c = this.container as NvEl

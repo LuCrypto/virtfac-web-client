@@ -16,9 +16,12 @@ export class BpWindow implements Destroyable {
   private placement: {
     anchor: Node
     wall: Link
-    anchorDistance: number
+    originDistance: number
     windowWidth: number
+    isDoor: boolean
   } | null = null
+
+  private linkedWall: Link | undefined = undefined
 
   private displayer = new NvEl('svg')
   private back = new NvEl('path')
@@ -57,8 +60,10 @@ export class BpWindow implements Destroyable {
   public setPosition (
     anchor: Node,
     wall: Link,
-    anchorDistance: number,
-    windowWidth: number
+    originDistance: number,
+    windowWidth: number,
+    isDoor: boolean,
+    linkedWall: Link | undefined = undefined
   ) {
     if (this.placement !== null) {
       this.placement.wall.onDataChanged().removeMappedListener('length', this)
@@ -69,8 +74,9 @@ export class BpWindow implements Destroyable {
     this.placement = {
       anchor: anchor,
       wall: wall,
-      anchorDistance: anchorDistance,
-      windowWidth: windowWidth
+      originDistance: originDistance,
+      windowWidth: windowWidth,
+      isDoor: isDoor
     }
     this.placement.wall.onDataChanged().addMappedListener(
       'length',
@@ -106,8 +112,11 @@ export class BpWindow implements Destroyable {
     })
     */
     this.border.setStyle({
-      'stroke-width': this.container.getTheme().WallLinkStrokeWidth + 3,
-      stroke: this.container.getTheme().WallLinkColor
+      'stroke-width':
+        this.container.getTheme().WallLinkStrokeWidth +
+        1 +
+        this.container.getTheme().WindowWidth * 2,
+      stroke: this.container.getTheme().WallFurnitureColor
     })
     this.displayer.appendChild(this.border, this.back)
   }
@@ -116,13 +125,11 @@ export class BpWindow implements Destroyable {
     if (this.placement === null) return
     const p1 = this.placement.wall.getNode().getData<Vec2>('position')
     const p2 = this.placement.wall.getOriginNode().getData<Vec2>('position')
-    const anchor = this.placement.anchor.getData<Vec2>('position')
-    const dir = Vector2.normalize(
-      anchor === p1 ? Vector2.minus(p2, p1) : Vector2.minus(p1, p2)
-    )
+    // const anchor = this.placement.anchor.getData<Vec2>('position')
+    const dir = Vector2.minus(p1, p2)
     const pos = Vector2.plus(
-      anchor,
-      Vector2.multiply(dir, this.placement.anchorDistance)
+      p2,
+      Vector2.multiply(dir, this.placement.originDistance)
     )
     this.displayer.setStyle({
       'transform-origin': `${pos.x}px, ${pos.y}px`,
@@ -131,15 +138,12 @@ export class BpWindow implements Destroyable {
       ) +
         Math.PI / 2}rad)`
     })
-    const d = `M${Vector2.plus(
-      anchor,
-      Vector2.multiply(dir, this.placement.anchorDistance)
+    const d = `M${Vector2.minus(
+      pos,
+      Vector2.multiply(Vector2.normalize(dir), this.placement.windowWidth / 2)
     ).str()} L${Vector2.plus(
-      anchor,
-      Vector2.multiply(
-        dir,
-        this.placement.anchorDistance + this.placement.windowWidth
-      )
+      pos,
+      Vector2.multiply(Vector2.normalize(dir), this.placement.windowWidth / 2)
     ).str()}`
     // this.front.getDom().setAttribute('d', d)
     this.back.getDom().setAttribute('d', d)
@@ -147,23 +151,35 @@ export class BpWindow implements Destroyable {
       .getDom()
       .setAttribute(
         'd',
-        `M${Vector2.plus(
-          anchor,
-          Vector2.multiply(dir, this.placement.anchorDistance - 1)
-        ).str()} L${Vector2.plus(
-          anchor,
+        `M${Vector2.minus(
+          pos,
           Vector2.multiply(
-            dir,
-            this.placement.anchorDistance + this.placement.windowWidth + 1
+            Vector2.normalize(dir),
+            this.placement.windowWidth / 2 +
+              this.container.getTheme().WindowWidth
+          )
+        ).str()} L${Vector2.plus(
+          pos,
+          Vector2.multiply(
+            Vector2.normalize(dir),
+            this.placement.windowWidth / 2 +
+              this.container.getTheme().WindowWidth
           )
         ).str()}`
       )
+    if (this.placement.isDoor) {
+      this.border.setStyle({ 'stroke-dasharray': '2,3' })
+    } else {
+      this.border.setStyle({ 'stroke-dasharray': 'none' })
+    }
   }
 
+  /*
   public refreshPos () {
     this.updateTheme()
     const scale = this.container.scale()
   }
+  */
 
   destroy () {
     if (this.placement !== null) {

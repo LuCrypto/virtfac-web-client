@@ -103,10 +103,11 @@ export class Blueprint extends MetaData {
     })
 
     return (
-      leftCount % 2 === 1 &&
-      rightCount % 2 === 1 &&
-      topCount % 2 === 1 &&
-      bottomCount % 2 === 1
+      leftCount % 2 === 0 &&
+      rightCount % 2 === 0 &&
+      topCount % 2 === 0 &&
+      bottomCount % 2 === 0 // &&
+      // Math.min(leftCount, rightCount, topCount, bottomCount) > 0
     )
   }
 

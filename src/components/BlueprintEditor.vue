@@ -12,7 +12,7 @@
       z-index="100"
       class="d-flex flex-column justify-start;"
     >
-      <v-btn medium @click.stop="" style="margin-bottom:5px;"
+      <v-btn medium @click.stop="setMode('DOOR')" style="margin-bottom:5px;"
         ><v-icon style="position:absolute; left:0; margin-right:10px"
           >mdi-door-closed</v-icon
         >

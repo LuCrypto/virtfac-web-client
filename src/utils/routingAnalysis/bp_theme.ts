@@ -9,7 +9,8 @@ export class BpTheme {
   public readonly WallSnapLineColor: string = '#3498DB'
   public readonly WallLinkColliderWidth: number = 50
   public readonly WallNodeColliderRange: number = 20
-  public readonly WindowWidth: number = 1
+  public readonly WindowWidth: number = 2
+  public readonly WallFurnitureColor: string = '#F5A506'
 
   constructor (attributes?: Partial<BpTheme>) {
     Object.assign(this, attributes)

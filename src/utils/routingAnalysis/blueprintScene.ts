@@ -16,7 +16,8 @@ import THREE, {
   MeshNormalMaterial,
   DoubleSide,
   MeshLambertMaterial,
-  MeshToonMaterial
+  MeshToonMaterial,
+  Vector3
 } from 'three'
 import { DelayedCallback } from '../graph/delayedCallback'
 import { GLTFExporter } from 'three/examples/jsm/exporters/GLTFExporter'
@@ -50,11 +51,14 @@ export class BlueprintScene {
     const vertices = new Array<number>()
     const normals = new Array<number>()
     const uv = new Array<number>()
-    const colors = new Array<number>()
     const triangles = new Array<number>()
     const h = blueprint.getDataOrDefault<number>('roof_height', 2.5)
     const w = blueprint.getDataOrDefault<number>('wall_width', 0.01)
     let nextIndex = 0
+
+    const x = 0
+    const y = 2
+    const z = 1
 
     const addTriangle = (i1: number, i2: number, i3: number) => {
       triangles.push(i1)
@@ -88,6 +92,16 @@ export class BlueprintScene {
       nextIndex++
       return res
     }
+    const v3Dist = (
+      a: { x: number; y: number; z: number },
+      b: { x: number; y: number; z: number }
+    ) => {
+      return Math.sqrt(
+        (a.x - b.x) * (a.x - b.x) +
+          (a.y - b.y) * (a.y - b.y) +
+          (a.z - b.z) * (a.z - b.z)
+      )
+    }
     const copyVertex = (
       vertexId: number,
       normal: Vec2 | undefined = undefined,
@@ -100,9 +114,9 @@ export class BlueprintScene {
         vertices[vertexId * 3 + 2],
         vertices[vertexId * 3 + 1],
         normal || new Vector2(normals[vertexId * 3], normals[vertexId * 3 + 2]),
-        u || uv[vertexId * 2],
-        v || uv[vertexId * 2 + 1],
-        normalZ || normals[vertexId * 3 + 1]
+        u === undefined ? uv[vertexId * 2] : u,
+        v === undefined ? uv[vertexId * 2 + 1] : v,
+        normalZ === undefined ? normals[vertexId * 3 + 1] : normalZ
       )
     }
     const addQuad = (
@@ -120,6 +134,74 @@ export class BlueprintScene {
         addTriangle(v1, v3, v4)
       }
     }
+    const addCopyQuad = (
+      v1: number,
+      v2: number,
+      v3: number,
+      v4: number,
+      reverse = false
+    ) => {
+      const v1Data = getVertexData(v1)
+      const v2Data = getVertexData(v2)
+      const v4Data = getVertexData(v4)
+      const normal = new Vector3(
+        v2Data.x - v1Data.x,
+        v2Data.y - v1Data.y,
+        v2Data.z - v1Data.z
+      )
+        .cross(
+          new Vector3(
+            v4Data.x - v1Data.x,
+            v4Data.y - v1Data.y,
+            v4Data.z - v1Data.z
+          )
+        )
+        .normalize()
+        .multiplyScalar(reverse ? 1 : -1)
+      const v = v3Dist(
+        { x: v1Data.x, y: v1Data.y, z: v1Data.z },
+        { x: v2Data.x, y: v2Data.y, z: v2Data.z }
+      )
+      const u = v3Dist(
+        { x: v1Data.x, y: v1Data.y, z: v1Data.z },
+        { x: v4Data.x, y: v4Data.y, z: v4Data.z }
+      )
+      const _v1 = copyVertex(
+        v1,
+        new Vector2(normal.x, normal.y),
+        0,
+        0,
+        normal.z
+      )
+      const _v2 = copyVertex(
+        v2,
+        new Vector2(normal.x, normal.y),
+        0,
+        v,
+        normal.z
+      )
+      const _v3 = copyVertex(
+        v3,
+        new Vector2(normal.x, normal.y),
+        u,
+        v,
+        normal.z
+      )
+      const _v4 = copyVertex(
+        v4,
+        new Vector2(normal.x, normal.y),
+        u,
+        0,
+        normal.z
+      )
+      if (reverse) {
+        addTriangle(_v1, _v3, _v2)
+        addTriangle(_v1, _v4, _v3)
+      } else {
+        addTriangle(_v1, _v2, _v3)
+        addTriangle(_v1, _v3, _v4)
+      }
+    }
     const getVertexData = (vertexId: number) => {
       return {
         x: vertices[vertexId * 3],
@@ -130,10 +212,6 @@ export class BlueprintScene {
         v: uv[vertexId * 2 + 1],
         normalZ: normals[vertexId * 3 + 1]
       }
-    }
-
-    const unscale = (x: number) => {
-      return (x * blueprint.getData<number>('scale')) / 100
     }
 
     blueprint.foreachWallNode(node => {
@@ -154,37 +232,7 @@ export class BlueprintScene {
           -1
         )
         if (l.getData<boolean>('double')) {
-          /*
-          console.log('double')
-          ;[w, -w].forEach(value => {
-            const posOffset = Vector2.plus(pos, Vector2.multiply(normal, value))
-            const pos2Offset = Vector2.plus(
-              pos2,
-              Vector2.multiply(normal, value)
-            )
-            const n = Vector2.normalize(Vector2.multiply(normal, value))
-            console.log(n)
-            const v1Bottom = addVertex(posOffset.x, posOffset.y, 0)
-            addUv(0, 0)
-            const v1Top = addVertex(posOffset.x, posOffset.y, h)
-            addUv(0, h)
-            const v2Bottom = addVertex(pos2Offset.x, pos2Offset.y, 0)
-            addUv(length, 0)
-            const v2Top = addVertex(pos2Offset.x, pos2Offset.y, h)
-            addUv(length, h)
-            addNormal(n)
-            addNormal(n)
-            addNormal(n)
-            addNormal(n)
-            if (value < 0) {
-              addTriangle(v2Top, v1Top, v1Bottom)
-              addTriangle(v2Bottom, v2Top, v1Bottom)
-            } else {
-              addTriangle(v1Bottom, v1Top, v2Top)
-              addTriangle(v1Bottom, v2Top, v2Bottom)
-            }
-          })
-          */
+          // todo
         } else {
           let reverse = false
           if (
@@ -277,101 +325,32 @@ export class BlueprintScene {
             t1 = ht2
 
             if (c.tunnelId !== -1) {
-              console.log('tunnel : ' + c.tunnelId)
               if (tunnel.has(c.tunnelId)) {
                 const otherHole = tunnel.get(c.tunnelId)
-                console.log(otherHole)
                 if (otherHole !== undefined) {
-                  const v3Dist = (
-                    a: { x: number; y: number; z: number },
-                    b: { x: number; y: number; z: number }
-                  ) => {
-                    return (
-                      (a.x - b.x) * (a.x - b.x) +
-                      (a.y - b.y) * (a.y - b.y) +
-                      (a.z - b.z) * (a.z - b.z)
-                    )
-                  }
-
                   if (
                     v3Dist(otherHole.t1pos, { x: p1.x, y: p1.y, z: c.ty }) <
                     v3Dist(otherHole.t2pos, { x: p1.x, y: p1.y, z: c.ty })
                   ) {
-                    const dist =
-                      v3Dist(otherHole.t1pos, { x: p1.x, y: p1.y, z: c.ty })
-                    const _hmb1 = copyVertex(
-                      hmb1,
-                      undefined,
-                      getVertexData(otherHole.b1).u,
-                      getVertexData(otherHole.b1).v + dist
-                    )
-                    const _hmt1 = copyVertex(
-                      hmt1,
-                      undefined,
-                      getVertexData(otherHole.t1).u,
-                      getVertexData(otherHole.t1).v + dist
-                    )
-                    const _hmb2 = copyVertex(
-                      hmb2,
-                      undefined,
-                      getVertexData(otherHole.b2).u,
-                      getVertexData(otherHole.b2).v + dist
-                    )
-                    const _hmt2 = copyVertex(
-                      hmt2,
-                      undefined,
-                      getVertexData(otherHole.t2).u,
-                      getVertexData(otherHole.t2).v + dist
-                    )
-                    addQuad(_hmb1, _hmt1, otherHole.t1, otherHole.b1)
-                    addQuad(_hmt1, _hmt2, otherHole.t2, otherHole.t1)
-                    addQuad(_hmb2, _hmt2, otherHole.t2, otherHole.b2)
-                    addQuad(_hmb1, _hmb2, otherHole.b2, otherHole.b1)
+                    addCopyQuad(hmb1, hmt1, otherHole.t1, otherHole.b1)
+                    addCopyQuad(hmt1, hmt2, otherHole.t2, otherHole.t1)
+                    addCopyQuad(hmb2, hmt2, otherHole.t2, otherHole.b2)
+                    addCopyQuad(hmb1, hmb2, otherHole.b2, otherHole.b1)
 
-                    addQuad(_hmb1, _hmt1, otherHole.t1, otherHole.b1, true)
-                    addQuad(_hmt1, _hmt2, otherHole.t2, otherHole.t1, true)
-                    addQuad(_hmb2, _hmt2, otherHole.t2, otherHole.b2, true)
-                    addQuad(_hmb1, _hmb2, otherHole.b2, otherHole.b1, true)
+                    addCopyQuad(hmb1, hmt1, otherHole.t1, otherHole.b1, true)
+                    addCopyQuad(hmt1, hmt2, otherHole.t2, otherHole.t1, true)
+                    addCopyQuad(hmb2, hmt2, otherHole.t2, otherHole.b2, true)
+                    addCopyQuad(hmb1, hmb2, otherHole.b2, otherHole.b1, true)
                   } else {
-                    const dist =
-                      v3Dist(otherHole.t2pos, {
-                        x: p1.x,
-                        y: p1.y,
-                        z: c.ty
-                      })
-                    const _hmb1 = copyVertex(
-                      hmb1,
-                      undefined,
-                      getVertexData(otherHole.b2).u,
-                      getVertexData(otherHole.b2).v + dist
-                    )
-                    const _hmt1 = copyVertex(
-                      hmt1,
-                      undefined,
-                      getVertexData(otherHole.t2).u,
-                      getVertexData(otherHole.t2).v + dist
-                    )
-                    const _hmb2 = copyVertex(
-                      hmb2,
-                      undefined,
-                      getVertexData(otherHole.b1).u,
-                      getVertexData(otherHole.b1).v + dist
-                    )
-                    const _hmt2 = copyVertex(
-                      hmt2,
-                      undefined,
-                      getVertexData(otherHole.t1).u,
-                      getVertexData(otherHole.t1).v + dist
-                    )
-                    addQuad(_hmb1, _hmt1, otherHole.t2, otherHole.b2)
-                    addQuad(_hmt1, _hmt2, otherHole.t1, otherHole.t2)
-                    addQuad(_hmb2, _hmt2, otherHole.t1, otherHole.b1)
-                    addQuad(_hmb1, _hmb2, otherHole.b1, otherHole.b2)
+                    addCopyQuad(hmb1, hmt1, otherHole.t2, otherHole.b2)
+                    addCopyQuad(hmt1, hmt2, otherHole.t1, otherHole.t2)
+                    addCopyQuad(hmb2, hmt2, otherHole.t1, otherHole.b1)
+                    addCopyQuad(hmb1, hmb2, otherHole.b1, otherHole.b2)
 
-                    addQuad(_hmb1, _hmt1, otherHole.t2, otherHole.b2, true)
-                    addQuad(_hmt1, _hmt2, otherHole.t1, otherHole.t2, true)
-                    addQuad(_hmb2, _hmt2, otherHole.t1, otherHole.b1, true)
-                    addQuad(_hmb1, _hmb2, otherHole.b1, otherHole.b2, true)
+                    addCopyQuad(hmb1, hmt1, otherHole.t2, otherHole.b2, true)
+                    addCopyQuad(hmt1, hmt2, otherHole.t1, otherHole.t2, true)
+                    addCopyQuad(hmb2, hmt2, otherHole.t1, otherHole.b1, true)
+                    addCopyQuad(hmb1, hmb2, otherHole.b1, otherHole.b2, true)
                   }
                 }
               } else {
@@ -402,8 +381,69 @@ export class BlueprintScene {
     //
     // ceiling and floor
     //
+    // const ceilingMap = new Map<number,number>()
+    const ceilingCoords = new Array<number[]>()
 
+    // const floorMap = new Map<number,number>()
+    const floorCoords = new Array<number[]>()
+
+    for (let i = 0; i < vertices.length; i += 3) {
+      if (vertices[i + z] === 0) {
+        // ceilingMap.set(ceilingCoords.length/2, i/3)
+        ceilingCoords.push([vertices[i + x], vertices[i + y]])
+      } else if (vertices[i + z] === h) {
+        // floorMap.set(floorCoords.length/2, i/3)
+        floorCoords.push([vertices[i + x], vertices[i + y]])
+      }
+    }
+
+    const ceilDelaunay = Delaunator.from(ceilingCoords).triangles
+    const ceilingOffset = vertices.length / 3
+
+    for (let i = 0; i < ceilingCoords.length; i++) {
+      addVertex(
+        ceilingCoords[i][0],
+        ceilingCoords[i][1],
+        h,
+        new Vector2(0, 0),
+        ceilingCoords[i][0],
+        ceilingCoords[i][1],
+        -1
+      )
+    }
+
+    for (let i = 0; i < ceilDelaunay.length; i += 3) {
+      addTriangle(
+        ceilDelaunay[i] + ceilingOffset,
+        ceilDelaunay[i + 2] + ceilingOffset,
+        ceilDelaunay[i + 1] + ceilingOffset
+      )
+    }
+
+    const floorDelaunay = Delaunator.from(floorCoords).triangles
+    const floorOffset = vertices.length / 3
+
+    for (let i = 0; i < floorCoords.length; i++) {
+      addVertex(
+        floorCoords[i][0],
+        floorCoords[i][1],
+        0,
+        new Vector2(0, 0),
+        floorCoords[i][0],
+        floorCoords[i][1],
+        -1
+      )
+    }
+
+    for (let i = 0; i < floorDelaunay.length; i += 3) {
+      addTriangle(
+        floorDelaunay[i] + floorOffset,
+        floorDelaunay[i + 1] + floorOffset,
+        floorDelaunay[i + 2] + floorOffset
+      )
+    }
     //
+
     geometry.setAttribute(
       'position',
       new BufferAttribute(Float32Array.from(vertices), 3)
@@ -414,6 +454,7 @@ export class BlueprintScene {
     )
     geometry.setAttribute('uv', new BufferAttribute(Float32Array.from(uv), 2))
     geometry.setIndex(new BufferAttribute(Uint16Array.from(triangles), 1))
+    geometry.computeVertexNormals()
 
     const mat = new MeshLambertMaterial({
       /* side: DoubleSide, */ color: 0xffffff

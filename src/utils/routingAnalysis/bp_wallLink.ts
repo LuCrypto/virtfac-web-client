@@ -80,24 +80,12 @@ export class BpWallLink {
           'double',
           !this.link.getData<boolean | undefined>('double')
         )
-      } else if (e.button === 0 && this.container.getMode() === 'WINDOW') {
+      } else if (
+        e.button === 0 &&
+        (this.container.getMode() === 'WINDOW' ||
+          this.container.getMode() === 'DOOR')
+      ) {
         const w = new BpWindow(this.container)
-
-        const anchor =
-          Vector2.norm(
-            Vector2.minus(
-              this.link.getNode().getData<Vec2>('position'),
-              this.hoveringPosition
-            )
-          ) <
-          Vector2.norm(
-            Vector2.minus(
-              this.link.getOriginNode().getData<Vec2>('position'),
-              this.hoveringPosition
-            )
-          )
-            ? this.link.getNode()
-            : this.link.getOriginNode()
 
         const dist =
           Vector2.norm(
@@ -106,18 +94,12 @@ export class BpWallLink {
               this.hoveringPosition
             )
           ) / link.getData<number>('length')
-        const hdist =
-          Vector2.norm(
-            Vector2.minus(
-              link.getNode().getData<Vec2>('position'),
-              this.hoveringPosition
-            )
-          ) - 75
         w.setPosition(
           link.getOriginNode(),
           this.link,
-          dist * link.getData<number>('length') - 75,
-          150
+          dist,
+          150,
+          this.container.getMode() === 'DOOR'
         )
 
         // searching for tunnel
@@ -152,9 +134,8 @@ export class BpWallLink {
                 )
               }
               if (
-                intersection !== null &&
-                Vector2.distanceBetween(intersection, this.hoveringPosition) <
-                  50
+                intersection !== null
+                // && Vector2.distanceBetween(intersection, this.hoveringPosition) < 50
               ) {
                 if (
                   pos === null ||
@@ -170,6 +151,7 @@ export class BpWallLink {
         })
 
         let tunnelId = -1
+        const bottom = this.container.getMode() === 'WINDOW' ? 0.5 : 0
         if (otherLink !== null && pos != null) {
           tunnelId =
             this.container.getBlueprint().getOrAddData<number>('tunnelId', 0) +
@@ -182,7 +164,9 @@ export class BpWallLink {
                 (otherLink as Link).getOriginNode().getData<Vec2>('position'),
                 pos as Vec2
               )
-            ) / (otherLink as Link).getData<number>('length') / this.container.getBlueprint().getData<number>('scale')
+            ) /
+            (otherLink as Link).getData<number>('length') /
+            this.container.getBlueprint().getData<number>('scale')
           ;(otherLink as Link)
             .getOrAddData<Map<Destroyable, BpWallHole>>(
               'holes',
@@ -205,25 +189,17 @@ export class BpWallLink {
                       dist
                     )
                   )
-                  let intersection = Vector2.intersectionOrNull(
-                    p,
-                    dir,
-                    p1,
-                    p2
-                  )
+                  let intersection = Vector2.intersectionOrNull(p, dir, p1, p2)
                   if (intersection === null) {
-                    intersection = Vector2.intersectionOrNull(
-                      p,
-                      dir2,
-                      p1,
-                      p2
-                    )
+                    intersection = Vector2.intersectionOrNull(p, dir2, p1, p2)
                   }
                   if (intersection !== null) {
-                    return Vector2.distanceBetween(
-                      intersection as Vec2,
-                      l.getOriginNode().getData<Vec2>('position')
-                    ) / this.container.getBlueprint().getData<number>('scale')
+                    return (
+                      Vector2.distanceBetween(
+                        intersection as Vec2,
+                        l.getOriginNode().getData<Vec2>('position')
+                      ) / this.container.getBlueprint().getData<number>('scale')
+                    )
                   } else throw new Error('invalid window')
                 },
                 l => {
@@ -232,7 +208,7 @@ export class BpWallLink {
                 },
                 l => {
                   // ybottom
-                  return 0.5
+                  return bottom
                 },
                 l => {
                   // ytop
@@ -252,7 +228,7 @@ export class BpWallLink {
             new BpWallHole(
               l => {
                 // xpos
-                return l.getData<number>('length') * dist / this.container.getBlueprint().getData<number>('scale')
+                return l.getData<number>('length') * dist
               },
               l => {
                 // xsize
@@ -260,7 +236,7 @@ export class BpWallLink {
               },
               l => {
                 // ybottom
-                return 0.5
+                return bottom
               },
               l => {
                 // ytop
