@@ -4,13 +4,13 @@
     :style="{
       width: `${this.size.x / this.zoom}px`,
       height: `${this.size.y / this.zoom}px`,
-      background: this.transparency ? 'background-color: transparent;' : ''
+      background: this.transparency ? 'transparent' : ''
     }"
   >
     <!-- Display of not vue in fullpage -->
     <nav-bar v-if="!this.fullpage"></nav-bar>
-    <v-main>
-      <router-view></router-view>
+    <v-main style="background-color: transparent;">
+      <router-view style="background-color: transparent;"></router-view>
     </v-main>
 
     <!-- Global bottom message -->

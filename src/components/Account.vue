@@ -1,17 +1,50 @@
 <template>
   <v-card>
-    <v-toolbar color="primary" flat>
-      <v-toolbar-title style="color: black">
-        <v-icon
-          left
-          style="color: black"
-          v-text="'mdi-account-circle'"
-        ></v-icon>
-        Connexion
-      </v-toolbar-title>
-    </v-toolbar>
-    <v-card-text class="mt-5">
-      <div>Todo : Account Settings</div>
+    <v-img height="300px" src="../assets/ergonom_io.png"></v-img>
+    <v-col class="px-5" style="transform: translateY(-50px);">
+      <v-avatar size="150">
+        <v-img :src="user.picture"></v-img>
+      </v-avatar>
+      <v-list-item color="rgba(0, 0, 0, .4)">
+        <v-list-item-content>
+          <v-list-item-title class="title"
+            >{{ user.firstname }} {{ user.lastname }}</v-list-item-title
+          >
+          <v-list-item-subtitle>Alias {{ user.pseudo }}</v-list-item-subtitle>
+        </v-list-item-content>
+      </v-list-item>
+    </v-col>
+    <v-card-text>
+      <v-simple-table>
+        <template v-slot:default>
+          <tbody>
+            <tr>
+              <td class="text-right primary--text">Firstname</td>
+              <td class="text-left">{{ user.firstname }}</td>
+            </tr>
+            <tr>
+              <td class="text-right primary--text">Lastname</td>
+              <td class="text-left">{{ user.lastname }}</td>
+            </tr>
+            <tr>
+              <td class="text-right primary--text">Login</td>
+              <td class="text-left">{{ user.login }}</td>
+            </tr>
+            <tr>
+              <td class="text-right primary--text">Mail</td>
+              <td class="text-left">{{ user.mail }}</td>
+            </tr>
+            <tr>
+              <td class="text-right primary--text">Phone</td>
+              <td class="text-left">{{ user.phone }}</td>
+            </tr>
+            <tr>
+              <td class="text-right primary--text">Pseudo</td>
+              <td class="text-left">{{ user.pseudo }}</td>
+            </tr>
+          </tbody>
+        </template>
+      </v-simple-table>
     </v-card-text>
     <v-card-actions class="pb-5">
       <v-spacer></v-spacer>
@@ -24,16 +57,17 @@
 
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator'
-import { Session } from '@/utils/session'
+import { Session, User } from '@/utils/session'
 
 @Component({
   components: {}
 })
 export default class AccountPopUp extends Vue {
-  login = ''
-  password = ''
-  waiting = false
-  showPassword = false
+  user: User | null = null
+
+  created (): void {
+    this.user = Session.getUser()
+  }
 
   logout (): void {
     Session.deleteUser()
