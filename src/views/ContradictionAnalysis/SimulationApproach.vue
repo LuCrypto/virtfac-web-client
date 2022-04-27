@@ -8,7 +8,7 @@
     </v-card>
     Feature under development, based on the work of Mohamed.
     <v-spacer class="mt-6"></v-spacer>
-    <v-btn color="primary" @click="openFilePopUp">
+    <v-btn color="primary" @click="$refs.openFilePopUp.open()">
       <v-icon left v-text="'mdi-file-document'"></v-icon>
       Open file
       <input ref="uploadFileInput" style="display: none" type="file" />
@@ -23,10 +23,15 @@
       :rangeBarChartData="chartData"
       :defaultRange="[20, 80]"
     ></range-bar>
-    <open-file-pop-up
-      ref="openFilePopUp"
-      @validated="handleFile"
-    ></open-file-pop-up>
+    <pop-up ref="openFilePopUp">
+      <open-file
+        @close="$refs.openFilePopUp.close()"
+        application="ALL"
+        :singleSelect="true"
+        :openFile="true"
+        @fileInput="handleFile"
+      ></open-file>
+    </pop-up>
     <format-selector-pop-up
       ref="formatSelectorPopUp"
       @selectedFormat="selectedFormat"
@@ -37,7 +42,7 @@
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator'
 import DrawingShopComponent from '@/components/DrawingShopComponent.vue'
-import OpenFilePopUp from '@/components/popup/OpenFilePopUp.vue'
+import OpenFilePopUp from '@/components/OpenFile.vue'
 import FormatSelectorPopUp from '@/components/popup/FormatSelectorPopUp.vue'
 import RangeBar, { RangeBarData } from '@/components/charts/RangeBar.vue'
 // import Mapper from '@/utils/mapper'
@@ -52,7 +57,6 @@ import RangeBar, { RangeBarData } from '@/components/charts/RangeBar.vue'
   }
 })
 export default class ContradictionAnalysisExpert extends Vue {
-  filePopUp: OpenFilePopUp | null = null
   formatSelectorPopUp: FormatSelectorPopUp | null = null
   chartTextStyle = '#ffffff'
   chartData = [
@@ -65,7 +69,6 @@ export default class ContradictionAnalysisExpert extends Vue {
   ]
 
   mounted (): void {
-    this.filePopUp = this.$refs.openFilePopUp as OpenFilePopUp
     this.formatSelectorPopUp = this.$refs
       .formatSelectorPopUp as FormatSelectorPopUp
     // this.formatSelectorPopUp.open('ORIGINAL_FORMAT')
@@ -80,14 +83,6 @@ export default class ContradictionAnalysisExpert extends Vue {
       this.formatSelectorPopUp.open('ORIGINAL_FORMAT')
     } else {
       console.log('this.formatSelectorPopUp is null')
-    }
-  }
-
-  openFilePopUp (): void {
-    if (this.filePopUp != null) {
-      this.filePopUp.open()
-    } else {
-      console.log('this.filePopUp is null')
     }
   }
 

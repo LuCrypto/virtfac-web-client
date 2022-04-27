@@ -5,13 +5,15 @@
     style="width: 100%"
     class="d-flex flex-row"
   >
-    <open-file-pop-up
-      ref="openFilePopUp"
-      application="ERGONOM_IO_ANALYSIS"
-      :singleSelect="true"
-      :openFile="true"
-      @fileInput="onFileInput"
-    ></open-file-pop-up>
+    <pop-up ref="openFilePopUp">
+      <open-file
+        @close="$refs.openFilePopUp.close()"
+        application="ERGONOM_IO_ANALYSIS"
+        :singleSelect="true"
+        :openFile="true"
+        @fileInput="onFileInput"
+      ></open-file>
+    </pop-up>
     <v-navigation-drawer stateless permanent :mini-variant="menuCollapse">
       <v-list
         nav
@@ -76,10 +78,11 @@
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import ModelViewer from '@/components/ModelViewer.vue'
-import OpenFilePopUp from '@/components/popup/OpenFilePopUp.vue'
+import OpenFile from '@/components/OpenFile.vue'
 import { APIFile } from '@/utils/models'
 import * as THREE from 'three'
 import RULA from '@/utils/rula'
+import PopUp from './PopUp.vue'
 
 class SkeletonHelper extends THREE.SkeletonHelper {
   skeleton: THREE.Skeleton | null = null
@@ -99,7 +102,8 @@ class MenuItem {
 @Component({
   components: {
     ModelViewer,
-    OpenFilePopUp
+    OpenFile,
+    PopUp
   }
 })
 export default class AvatarAnimationComponent extends Vue {
@@ -107,7 +111,6 @@ export default class AvatarAnimationComponent extends Vue {
   menuCollapse = false
   menuItemList: MenuItem[] = []
   viewer: ModelViewer | null = null
-  openFilePopUp: OpenFilePopUp | null = null
   animationValue = 0
   rula: RULA | null = null
   bvhSkeletonHelper: SkeletonHelper | null = null
@@ -117,7 +120,6 @@ export default class AvatarAnimationComponent extends Vue {
   clock = new THREE.Clock()
 
   mounted (): void {
-    this.openFilePopUp = this.$refs.openFilePopUp as OpenFilePopUp
     this.viewer = this.$refs.viewer as ModelViewer
     this.createMenu()
     this.createAvatar()
@@ -127,9 +129,7 @@ export default class AvatarAnimationComponent extends Vue {
   createMenu (): void {
     this.menuItemList.push(
       new MenuItem('Open BVH File', 'mdi-file-document', () => {
-        if (this.openFilePopUp != null) {
-          this.openFilePopUp.open()
-        }
+        (this.$refs.openFilePopUp as PopUp).open()
       })
     )
     this.menuItemList.push(
