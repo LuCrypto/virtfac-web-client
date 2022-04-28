@@ -18,6 +18,7 @@ import ErgonomIOAssets from '@/views/ErgonomIO/ErgonomIOAssets.vue'
 import ErgonomIOScenes from '@/views/ErgonomIO/ErgonomIOScenes.vue'
 import ErgonomIORooms from '@/views/ErgonomIO/ErgonomIORooms.vue'
 import ErgonomIOAvatars from '@/views/ErgonomIO/ErgonomIOAvatars.vue'
+import ErgonomIOLogin from '@/views/ErgonomIO/ErgonomIOLogin.vue'
 import ErgonomioMainMenu from '@/components/ergonomio_ui/ErgonomioMainMenu.vue'
 import DatabaseViewer from '@/views/APIDocumentation/DatabaseViewer.vue'
 import APIDocumentation from '@/views/APIDocumentation/APIDocumentation.vue'
@@ -189,6 +190,16 @@ export const routes: Array<Route> = [
   }),
 
   // Hidded menus
+  new Route({
+    icon: 'mdi-human',
+    name: 'ErgonomioLogin',
+    subname: 'Ergonomics login',
+    path: '/ergonom-io-login',
+    category: 'Ergonom.io',
+    component: ErgonomIOLogin,
+    visibility: false
+  }),
+
   new Route({
     icon: 'mdi-human',
     name: 'ErgonomioMainMenu',

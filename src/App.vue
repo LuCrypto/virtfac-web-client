@@ -4,13 +4,13 @@
     :style="{
       width: `${this.size.x / this.zoom}px`,
       height: `${this.size.y / this.zoom}px`,
-      background: this.transparency ? 'background-color: transparent;' : ''
+      background: this.transparency ? 'transparent' : ''
     }"
   >
     <!-- Display of not vue in fullpage -->
     <nav-bar v-if="!this.fullpage"></nav-bar>
-    <v-main>
-      <router-view></router-view>
+    <v-main style="background-color: transparent;">
+      <router-view style="background-color: transparent;"></router-view>
     </v-main>
 
     <!-- Global bottom message -->
@@ -61,15 +61,6 @@ export default class App extends Vue {
     window.addEventListener('resize', () => this.resize())
     this.resize()
 
-    Unreal.getResolution().then((resolution: number) => {
-      console.log('Resolution from unreal : ', resolution)
-      const body = document.querySelector('body')
-      if (body) {
-        body.setAttribute('style', `zoom: ${resolution};`)
-      }
-      this.zoom = resolution
-    })
-
     // Global botom message handler
     this.$root.$on('bottom-message', (message: string) => {
       this.snackbarShow = true
@@ -80,6 +71,28 @@ export default class App extends Vue {
     this.$root.$on('user-disconnection', () => {
       Vue.prototype.$globals.set('user', undefined)
     })
+
+    // Init Unreal
+    Unreal.getResolution().then((resolution: number) => {
+      // this.$root.$emit(
+      //   'bottom-message',
+      //   'Resolution from unreal : ' + resolution
+      // )
+      const body = document.querySelector('body')
+      if (body) {
+        body.setAttribute('style', `zoom: ${resolution};`)
+      }
+      this.zoom = resolution
+    })
+
+    this.$root.$emit(
+      'bottom-message',
+      `Unreal context is ${Unreal.check() ? '' : 'not'} detected.`
+    )
+
+    if (Unreal.check()) {
+      Unreal.send('Virtfac web is connected')
+    }
   }
 
   resize (): void {

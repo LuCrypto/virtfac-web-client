@@ -15,7 +15,7 @@
         icon
         color="grey darken-4"
         class="mr-2 d-sm-none"
-        @click="() => $refs.connexionPopUp.open()"
+        @click="() => $refs.loginPopUp.open()"
       >
         <v-icon>mdi-account-circle</v-icon>
       </v-btn>
@@ -79,26 +79,33 @@
       </v-list>
     </v-navigation-drawer>
 
-    <!-- Popup -->
-    <login-pop-up ref="loginPopUp"></login-pop-up>
-    <account-pop-up ref="accountPopUp"></account-pop-up>
+    <!-- Popups -->
+    <pop-up ref="loginPopUp">
+      <login @close="$refs.loginPopUp.close()"></login>
+    </pop-up>
+
+    <pop-up ref="accountPopUp">
+      <account @close="$refs.accountPopUp.close()"></account>
+    </pop-up>
   </nav>
 </template>
 
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator'
 import { routes, Route } from '@/utils/router'
-import LoginPopUp from '@/components/popup/LoginPopUp.vue'
-import AccountPopUp from '@/components/popup/AccountPopUp.vue'
 import { Session, User } from '@/utils/session'
-import API from '@/utils/api'
 import { APIOdooMenuItem } from '@/utils/models'
+import API from '@/utils/api'
+import Account from '@/components/Account.vue'
+import Login from '@/components/Login.vue'
+import PopUp from '@/components/PopUp.vue'
 import Home from '../views/Home.vue'
 
 @Component({
   components: {
-    LoginPopUp,
-    AccountPopUp
+    PopUp,
+    Login,
+    Account
   }
 })
 export default class NavBar extends Vue {
@@ -134,6 +141,7 @@ export default class NavBar extends Vue {
       })
   }
 
+  // TODO : Create menu from Odoo menu
   getMainMenu (): void {
     API.get(this, '/odoo/web-main-menu', null).then((response: Response) => {
       const mainMenu = (response as unknown) as APIOdooMenuItem[]

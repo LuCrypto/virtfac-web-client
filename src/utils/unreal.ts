@@ -1,8 +1,9 @@
 declare global {
   interface Window {
+    receive: (json: string) => void
     ue: {
       interface: {
-        receivejson: (json: string) => Promise<unknown>
+        receivejson: (json: string) => Promise<unknown> // Send data to unreal
         getzoom: () => Promise<number>
       }
     }
@@ -10,9 +11,6 @@ declare global {
 }
 
 export default class Unreal {
-  // Method name definition
-  static sendMethodName: string = 'ReceiveJson'.toLowerCase()
-
   static callback: (data: unknown) => void | null = (data: unknown) => {
     console.log('[unreal] received data :', data)
   }
@@ -64,3 +62,5 @@ export default class Unreal {
     }
   }
 }
+
+window.receive = Unreal.receive
