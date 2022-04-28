@@ -41,13 +41,15 @@
     <v-container style="width: auto; margin: 0; flex-grow: 1;">
       <NV ref="nodeViewer" :graph="getGraph()" />
     </v-container>
-    <open-file-pop-up
-      ref="filePopUp"
-      application="ALL"
-      :singleselect="true"
-      :openFile="true"
-      @fileInput="handleFile"
-    ></open-file-pop-up>
+    <pop-up ref="filePopUp">
+      <open-file
+        @close="$refs.filePopUp.close()"
+        application="ALL"
+        :singleSelect="true"
+        :openFile="true"
+        @fileInput="handleFile"
+      ></open-file>
+    </pop-up>
     <select-pop-up ref="selectPopUp"></select-pop-up>
     <input-field-pop-up ref="inputFieldPopUp"></input-field-pop-up>
   </v-card>
@@ -60,7 +62,7 @@ import ActionContainer, {
   ActionCallbackData
 } from '@/components/ActionContainer.vue'
 import NodeViewer from '@/components/NodeViewer.vue'
-import OpenFilePopUp from '@/components/popup/OpenFilePopUp.vue'
+import OpenFile from '@/components/OpenFile.vue'
 import XLSX from 'xlsx'
 import Mapper from '@/utils/mapper'
 import NV from '@/components/NV.vue'
@@ -74,6 +76,7 @@ import API from '@/utils/api'
 import SelectPopUp from '@/components/popup/SelectPopUp.vue'
 import InputFieldPopUp from '@/components/popup/InputFieldPopUp.vue'
 import { GraphLayout } from '@/utils/graph/graphLayout'
+import PopUp from '@/components/PopUp.vue'
 
 class MenuItem {
   text: string
@@ -96,7 +99,8 @@ interface SettingItem {
 @Component({
   components: {
     ActionContainer,
-    OpenFilePopUp,
+    OpenFile,
+    PopUp,
     NV,
     SelectPopUp,
     InputFieldPopUp
@@ -109,7 +113,6 @@ export default class ContradictionExpert extends Vue {
   inputFieldPopUp: InputFieldPopUp | null = null
   actionContainer: ActionContainer | null = null
   menuCollapse = false
-  filePopUp: OpenFilePopUp | null = null
   menuItemList: MenuItem[] = []
   constraintGraph: ConstraintGraph = new ConstraintGraph()
   fileName = ''
@@ -122,13 +125,12 @@ export default class ContradictionExpert extends Vue {
     // this.constraintGraph = new ConstraintGraph()
     this.nodeViewer = this.$refs.nodeViewer as NV
     this.actionContainer = this.$refs.actionContainer as ActionContainer
-    this.filePopUp = this.$refs.filePopUp as OpenFilePopUp
     this.selectPopUp = this.$refs.selectPopUp as SelectPopUp
     this.inputFieldPopUp = this.$refs.inputFieldPopUp as InputFieldPopUp
 
     this.menuItemList.push(
       new MenuItem('Open File', 'mdi-file-document', () => {
-        this.openFilePopUp()
+        (this.$refs.openFilePopUp as PopUp).open()
       })
     )
     this.menuItemList.push(
@@ -422,14 +424,6 @@ export default class ContradictionExpert extends Vue {
         )
       }
     })
-  }
-
-  openFilePopUp (): void {
-    if (this.filePopUp != null) {
-      this.filePopUp.open()
-    } else {
-      console.log('this.filePopUp is null')
-    }
   }
 
   selectSheetPopUp (workbook: any): void {

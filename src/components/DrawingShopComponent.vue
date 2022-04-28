@@ -41,11 +41,16 @@
     <v-container style="width: auto; margin: 0; flex-grow: 1;">
       <blueprint-editor ref="nodeViewer"></blueprint-editor>
     </v-container>
-    <open-file-pop-up
-      ref="filePopUp"
-      @handleFile="handleFile"
-    ></open-file-pop-up>
     <input-field-pop-up ref="inputFieldPopUp"></input-field-pop-up>
+    <pop-up ref="filePopUp">
+      <open-file
+        @close="$refs.filePopUp.close()"
+        application="ALL"
+        :singleSelect="true"
+        :openFile="true"
+        @fileInput="handleFile"
+      ></open-file>
+    </pop-up>
   </v-card>
 </template>
 
@@ -56,11 +61,12 @@ import ActionContainer, {
   ActionCallbackData
 } from '@/components/ActionContainer.vue'
 import NodeViewer from '@/components/NodeViewer.vue'
-import OpenFilePopUp from '@/components/popup/OpenFilePopUp.vue'
 import InputFieldPopUp from '@/components/popup/InputFieldPopUp.vue'
+import OpenFile from '@/components/OpenFile.vue'
 import XLSX from 'xlsx'
 import Mapper from '@/utils/mapper'
 import BlueprintEditor from '@/components/BlueprintEditor.vue'
+import PopUp from '@/components/PopUp.vue'
 
 import CAEExampleFormat1 from '@/exemples/CAEExampleFormat1'
 import { BlueprintContainer } from '@/utils/routingAnalysis/blueprintContainer'
@@ -80,8 +86,9 @@ class MenuItem {
 @Component({
   components: {
     BlueprintEditor,
-    OpenFilePopUp,
-    InputFieldPopUp
+    InputFieldPopUp,
+    OpenFile,
+    PopUp
   }
 })
 export default class DrawingShopComponent extends Vue {
@@ -89,7 +96,6 @@ export default class DrawingShopComponent extends Vue {
   nodeViewer: BlueprintEditor | null = null
   actionContainer: ActionContainer | null = null
   menuCollapse = false
-  filePopUp: OpenFilePopUp | null = null
   menuItemList: MenuItem[] = []
 
   inputField: InputFieldPopUp | null = null
@@ -97,12 +103,11 @@ export default class DrawingShopComponent extends Vue {
   mounted (): void {
     this.nodeViewer = this.$refs.nodeViewer as BlueprintEditor
     this.actionContainer = this.$refs.actionContainer as ActionContainer
-    this.filePopUp = this.$refs.filePopUp as OpenFilePopUp
     this.inputField = this.$refs.inputFieldPopUp as InputFieldPopUp
 
     this.menuItemList.push(
       new MenuItem('Open File', 'mdi-file-document', () => {
-        this.openFilePopUp()
+        (this.$refs.filePopUp as PopUp).open()
       })
     )
     this.menuItemList.push(
@@ -208,14 +213,6 @@ export default class DrawingShopComponent extends Vue {
         const mapper = new Mapper(workbook.Sheets[workbook.SheetNames[0]])
       }
       reader.readAsBinaryString(file)
-    }
-  }
-
-  openFilePopUp (): void {
-    if (this.filePopUp != null) {
-      this.filePopUp.open()
-    } else {
-      console.log('this.filePopUp is null')
     }
   }
 

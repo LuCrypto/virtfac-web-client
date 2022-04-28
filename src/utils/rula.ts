@@ -7,16 +7,6 @@ interface RULABonesSettings {
   computeScore: (angles: THREE.Vector3, scores: Map<string, number>) => void
 }
 
-class RULALocalScores {
-  epaule = 1
-  coude = 1
-  poignetEtTorsionDuPoignet = 1
-  postureDutronc = 1
-  jambes = 1
-  nuqueTroncEtJambes = 1
-  brasEtPoignet = 1
-}
-
 const RULA_TABLE_A = [
   [1, 2, 2, 2, 2, 3, 3, 3],
   [2, 2, 2, 2, 3, 3, 3, 3],
@@ -66,7 +56,10 @@ export default class RULA {
         new THREE.Euler(Math.PI / 2, Math.PI / 2, 0)
       ),
       marker: null,
-      computeScore: (angles, scores) => {
+      computeScore: (
+        angles: THREE.Vector3,
+        scores: Map<string, number>
+      ): void => {
         let score = 0
         // Baissage de tronc
         if (angles.x <= 5) score += 1
@@ -89,7 +82,10 @@ export default class RULA {
         new THREE.Euler(0, 0, Math.PI / 2)
       ),
       marker: null,
-      computeScore: (angles, scores) => {
+      computeScore: (
+        angles: THREE.Vector3,
+        scores: Map<string, number>
+      ): void => {
         let score = 0
         // Inclinaison de la tête
         if (angles.x < -5) score += 4
@@ -108,7 +104,10 @@ export default class RULA {
       name: 'RightArm',
       transform: null,
       marker: null,
-      computeScore: (angles, scores) => {
+      computeScore: (
+        angles: THREE.Vector3,
+        scores: Map<string, number>
+      ): void => {
         let score = 0
 
         // Position vers l'arrière de l'épaule
@@ -130,7 +129,10 @@ export default class RULA {
       name: 'RightForeArm',
       transform: null,
       marker: null,
-      computeScore: (angles, scores) => {
+      computeScore: (
+        angles: THREE.Vector3,
+        scores: Map<string, number>
+      ): void => {
         let score = 0
 
         if (angles.y < 60) score += 2
@@ -144,7 +146,10 @@ export default class RULA {
       name: 'RightHand',
       transform: null,
       marker: null,
-      computeScore: (angles, scores) => {
+      computeScore: (
+        angles: THREE.Vector3,
+        scores: Map<string, number>
+      ): void => {
         let score = 0
 
         // Lever la main vers le haut
@@ -173,7 +178,10 @@ export default class RULA {
       name: 'LeftArm',
       transform: new THREE.Matrix4().makeScale(-1, 1, 1),
       marker: null,
-      computeScore: (angles, scores) => {
+      computeScore: (
+        angles: THREE.Vector3,
+        scores: Map<string, number>
+      ): void => {
         let score = 0
 
         // Position vers l'arrière de l'épaule
@@ -195,7 +203,10 @@ export default class RULA {
       name: 'LeftForeArm',
       transform: new THREE.Matrix4().makeScale(-1, 1, 1),
       marker: null,
-      computeScore: (angles, scores) => {
+      computeScore: (
+        angles: THREE.Vector3,
+        scores: Map<string, number>
+      ): void => {
         let score = 0
 
         if (angles.y > -60) score += 2
@@ -209,7 +220,10 @@ export default class RULA {
       name: 'LeftHand',
       transform: new THREE.Matrix4().makeScale(-1, 1, 1),
       marker: null,
-      computeScore: (angles, scores) => {
+      computeScore: (
+        angles: THREE.Vector3,
+        scores: Map<string, number>
+      ): void => {
         let score = 0
 
         // Lever la main vers le haut
@@ -401,7 +415,7 @@ export default class RULA {
       setting.computeScore(angles, scores)
 
       // Debug angle and local score
-      const f = (n: number) => Math.floor(n * 100) / 100
+      // const f = (n: number) => Math.floor(n * 100) / 100
       // console.log(
       //   setting.name,
       //   f(angles.x),
@@ -413,7 +427,7 @@ export default class RULA {
     this.computeGlobalScore(scores)
   }
 
-  download (filename: string, text: string) {
+  download (filename: string, text: string): void {
     const element = document.createElement('a')
     element.setAttribute(
       'href',

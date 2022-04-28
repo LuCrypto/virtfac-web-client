@@ -15,7 +15,10 @@ import AboutErgonomIO from '@/views/ErgonomIO/AboutErgonomIO.vue'
 import ErgonomIO from '@/views/ErgonomIO/ErgonomIO.vue'
 import ErgonomIOAnalysis from '@/views/ErgonomIO/ErgonomIOAnalysis.vue'
 import ErgonomIOAssets from '@/views/ErgonomIO/ErgonomIOAssets.vue'
+import ErgonomIOScenes from '@/views/ErgonomIO/ErgonomIOScenes.vue'
+import ErgonomIORooms from '@/views/ErgonomIO/ErgonomIORooms.vue'
 import ErgonomIOAvatars from '@/views/ErgonomIO/ErgonomIOAvatars.vue'
+import ErgonomIOLogin from '@/views/ErgonomIO/ErgonomIOLogin.vue'
 import ErgonomioMainMenu from '@/components/ergonomio_ui/ErgonomioMainMenu.vue'
 import DatabaseViewer from '@/views/APIDocumentation/DatabaseViewer.vue'
 import APIDocumentation from '@/views/APIDocumentation/APIDocumentation.vue'
@@ -48,6 +51,7 @@ export const routes: Array<Route> = [
     icon: 'mdi-home',
     name: 'Home',
     path: '/home',
+    alias: '/',
     category: 'About us',
     restricted: false,
     component: Home
@@ -135,11 +139,27 @@ export const routes: Array<Route> = [
   }),
   new Route({
     icon: 'mdi-package-variant-closed',
+    name: 'Scènes',
+    subname: 'Scène management',
+    path: '/ergonom-io-scene',
+    category: 'Ergonom.io',
+    component: ErgonomIOScenes
+  }),
+  new Route({
+    icon: 'mdi-package-variant-closed',
     name: 'Assets',
     subname: 'Asset management',
     path: '/ergonom-io-assets',
     category: 'Ergonom.io',
     component: ErgonomIOAssets
+  }),
+  new Route({
+    icon: 'mdi-package-variant-closed',
+    name: 'Rooms',
+    subname: 'Room lobby',
+    path: '/ergonom-io-rooms',
+    category: 'Ergonom.io',
+    component: ErgonomIORooms
   }),
   new Route({
     icon: 'mdi-human',
@@ -170,6 +190,16 @@ export const routes: Array<Route> = [
   }),
 
   // Hidded menus
+  new Route({
+    icon: 'mdi-human',
+    name: 'ErgonomioLogin',
+    subname: 'Ergonomics login',
+    path: '/ergonom-io-login',
+    category: 'Ergonom.io',
+    component: ErgonomIOLogin,
+    visibility: false
+  }),
+
   new Route({
     icon: 'mdi-human',
     name: 'ErgonomioMainMenu',
