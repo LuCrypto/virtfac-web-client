@@ -9,10 +9,12 @@
     "serve": "node server/server.js"
   },
   "dependencies": {
+    "@types/delaunator": "^5.0.0",
     "@types/dom-to-image": "^2.6.4",
     "@types/three": "^0.135.0",
     "@types/xlsx": "^0.0.36",
     "core-js": "^3.6.5",
+    "delaunator": "^5.0.0",
     "dom-to-image": "^2.6.0",
     "dotenv": "^8.2.0",
     "fetch": "^1.1.0",
