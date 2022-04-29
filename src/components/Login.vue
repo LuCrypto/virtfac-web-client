@@ -1,5 +1,5 @@
 <template>
-  <v-card>
+  <v-card :rounded="unreal.check() ? 'xl' : 'md'">
     <v-toolbar color="primary" flat>
       <v-toolbar-title style="color: black">
         <v-icon
@@ -64,6 +64,7 @@ import { Component, Vue } from 'vue-property-decorator'
 import { Session, User } from '@/utils/session'
 import API from '@/utils/api'
 import PopUp from './PopUp.vue'
+import Unreal from '@/utils/unreal'
 
 @Component({
   components: {}
@@ -73,6 +74,7 @@ export default class Login extends Vue {
   password = ''
   waiting = false
   showPassword = false
+  unreal = Unreal
 
   loginRequest (): void {
     this.waiting = true

@@ -1,3 +1,5 @@
+import { Vue } from 'vue-property-decorator'
+
 declare global {
   interface Window {
     receive: (json: string) => void
@@ -10,10 +12,20 @@ declare global {
   }
 }
 
+/**
+ * To set callback in your Vue component :
+ *
+ * import Unreal from '@/utils/unreal'
+ *
+ * Unreal.callback.$on('unreal-message', (data: unknown) => {
+ *     this.$root.$emit('bottom-message', `Unreal : ${JSON.stringify(data)}`)
+ * })
+ *
+ */
+
 export default class Unreal {
-  static callback: (data: unknown) => void | null = (data: unknown) => {
-    console.log('[unreal] received data :', data)
-  }
+  // Global vue event emitter for Unreal callback
+  static callback = new Vue()
 
   // Check if unreal context is detected
   static check (): boolean {
@@ -54,13 +66,12 @@ export default class Unreal {
     if (!Unreal.check()) return
     try {
       const data = JSON.parse(json)
-      if (Unreal.callback != null) {
-        Unreal.callback(data)
-      }
+      Unreal.callback.$emit('unreal-message', data)
     } catch (error) {
       console.error('[unreal] Json parse fail.', error)
     }
   }
 }
 
+// Make the static "receive" function accessible from "window.receive" in Unreal Engine.
 window.receive = Unreal.receive
