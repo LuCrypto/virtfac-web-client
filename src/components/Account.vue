@@ -72,6 +72,9 @@ export default class Account extends Vue {
 
   created (): void {
     this.user = Session.getUser()
+    Unreal.callback.$on('unreal-message', (data: unknown) => {
+      this.$root.$emit('bottom-message', `Unreal : ${JSON.stringify(data)}`)
+    })
   }
 
   logout (): void {
