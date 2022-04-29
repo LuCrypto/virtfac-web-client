@@ -500,7 +500,6 @@ export class BlueprintScene {
     exporter.parse(
       new Mesh(geometry, mat),
       gltf => {
-        console.log(gltf)
         const a = document.createElement('a')
         const file = new Blob([JSON.stringify(gltf)], {
           type: 'text/plain'

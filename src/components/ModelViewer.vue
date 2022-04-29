@@ -10,6 +10,9 @@ import V from '@/utils/vector'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 import { GLTFLoader, GLTF } from 'three/examples/jsm/loaders/GLTFLoader'
 import { BVHLoader, BVH } from 'three/examples/jsm/loaders/BVHLoader'
+import { GridHelper, Group, Object3D } from 'three'
+import { TransformControls } from 'three/examples/jsm/controls/TransformControls'
+import { Session } from '@/utils/session'
 
 // import AVATAR from '@/utils/avatar'
 
@@ -41,6 +44,87 @@ export default class ModelViewer extends Vue {
     this.controls = new OrbitControls(this.camera, this.renderer.domElement)
   }
 
+  public setFogActive (active: boolean, color = 0xa0a0a0) {
+    if (active) {
+      const fogColor = new THREE.Color(color)
+      this.scene.background = fogColor
+      this.scene.fog = new THREE.Fog(fogColor, 0.0025, 20)
+    } else {
+      const fogColor = new THREE.Color(color)
+      this.scene.background = fogColor
+      this.scene.fog = null
+    }
+  }
+
+  private gridHelper: GridHelper | null = null
+  private floor: THREE.Mesh | null = null
+
+  private gizmo: TransformControls | null = null
+  private controledObject: Object3D | null = null
+
+  public controlMesh (obj: Object3D | null) {
+    this.controledObject = obj
+    if (obj === null) {
+      if (this.gizmo !== null) {
+        this.gizmo.detach()
+      }
+    } else {
+      if (this.gizmo === null) {
+        this.gizmo = new TransformControls(
+          this.camera,
+          this.renderer.domElement
+        )
+        this.scene.add(this.gizmo)
+        this.gizmo.addEventListener('change', this.draw)
+        this.gizmo.addEventListener('dragging-changed', e => {
+          this.controls.enabled = !e.value
+        })
+      }
+      this.gizmo.attach(obj)
+    }
+  }
+
+  public setMeshControlMode (mode: 'translate' | 'rotate' | 'scale') {
+    if (this.gizmo === null) {
+      this.gizmo = new TransformControls(this.camera, this.renderer.domElement)
+    }
+    this.gizmo.setMode(mode)
+  }
+
+  public setGrid (
+    size: number,
+    division: number,
+    lineColor: number,
+    backgroundColor: number,
+    centerLineColor?: number | undefined
+  ) {
+    if (this.gridHelper !== null) this.scene.remove(this.gridHelper)
+    if (this.floor !== null) this.scene.remove(this.floor)
+
+    // Create grid visualizer
+    this.gridHelper = new THREE.GridHelper(
+      size,
+      division,
+      centerLineColor === undefined ? lineColor : centerLineColor,
+      lineColor
+    )
+    this.gridHelper.position.set(0, 0.01, 0)
+    this.scene.add(this.gridHelper)
+    // Create axis visualizer
+    // const axesHelper = new THREE.AxesHelper(50)
+    // axesHelper.position.set(0, 0.002, 0)
+    // this.scene.add(axesHelper)
+    // Create floor
+    this.floor = new THREE.Mesh(
+      new THREE.PlaneGeometry(size, size),
+      new THREE.MeshPhongMaterial({ color: backgroundColor })
+    )
+    this.floor.rotation.x = -Math.PI / 2
+    this.floor.receiveShadow = true
+    this.floor.position.set(0, -0.01, 0)
+    this.scene.add(this.floor)
+  }
+
   mounted (): void {
     // Create scene
     const fogColor = new THREE.Color(0xa0a0a0)
@@ -54,41 +138,20 @@ export default class ModelViewer extends Vue {
     container.appendChild(this.renderer.domElement)
 
     this.renderer.setClearColor(0x000000, 0)
-    // this.renderer.shadowMap.enabled = true
-    // this.renderer.shadowMap.type = THREE.PCFSoftShadowMap
+    this.renderer.shadowMap.enabled = true
+    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap
     // Create ambiant light
-    const ambiant = new THREE.AmbientLight(0xffffff)
+    // const ambiant = new THREE.HemisphereLight(0x444444, 0x222244)
+    const ambiant = new THREE.AmbientLight(0x555555)
     this.scene.add(ambiant)
     // Create sun
-    const sun = new THREE.DirectionalLight(0xffffff, 1)
-    sun.position.set(10, 10, 10)
-    sun.castShadow = true
-    sun.lookAt(0, 0, 0)
-    this.scene.add(sun)
-    sun.shadow.mapSize.width = 1024
-    sun.shadow.mapSize.height = 1024
-    sun.shadow.camera.near = 0.1
-    sun.shadow.camera.far = 100
-    // sun.shadow.bias = 0.00000001
+    this.addShadowLight(9, 10, 10, 0xffffff, 2)
+    this.addShadowLight(-9, -10, -10, 0xffffff, 0.5, false)
+
     // Create sun visualizer
     // const sunHelper = new THREE.DirectionalLightHelper(sun, 4, 0xffb000)
     // this.scene.add(sunHelper)
-    // Create grid visualizer
-    const gridHelper = new THREE.GridHelper(100, 100, 0x898989, 0x898989)
-    gridHelper.position.set(0, 0.001, 0)
-    this.scene.add(gridHelper)
-    // Create axis visualizer
-    // const axesHelper = new THREE.AxesHelper(50)
-    // axesHelper.position.set(0, 0.002, 0)
-    // this.scene.add(axesHelper)
-    // Create floor
-    const floor = new THREE.Mesh(
-      new THREE.PlaneGeometry(2000, 2000),
-      new THREE.MeshPhongMaterial({ color: 0x999999 })
-    )
-    floor.rotation.x = -Math.PI / 2
-    floor.receiveShadow = true
-    this.scene.add(floor)
+    this.setGrid(100, 100, 0xaaaaaa, 0xfefefe)
 
     // Update scene
     this.updateSize()
@@ -139,9 +202,39 @@ export default class ModelViewer extends Vue {
     )
   }
 
+  addObjectToScene (object: Group): void {
+    this.scene.add(object)
+  }
+
   loadBVHFromContent (content: string): BVH {
     console.log('Load BVH')
     return new BVHLoader().parse(content)
+  }
+
+  addShadowLight (
+    x: number,
+    y: number,
+    z: number,
+    color: number,
+    intensity: number,
+    castShadow = true
+  ) {
+    const sun = new THREE.DirectionalLight(color, intensity)
+    sun.position.set(x, y, z)
+    sun.castShadow = castShadow
+    // sun.lookAt(0, 0, 0)
+    const d = 20
+    this.scene.add(sun)
+    sun.shadow.mapSize.width = 8192
+    sun.shadow.mapSize.height = 8192
+    sun.shadow.camera.near = 0.1
+    sun.shadow.camera.far = 100
+    sun.shadow.camera.left = -d
+    sun.shadow.camera.right = d
+    sun.shadow.camera.top = d
+    sun.shadow.camera.bottom = -d
+    sun.shadow.bias = -0.0002
+    sun.shadow.blurSamples = 0
   }
 
   /*
