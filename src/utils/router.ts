@@ -14,6 +14,7 @@ import ContradictionAnalysisGraph from '@/views/ContradictionAnalysis/ExpertAppr
 import AboutErgonomIO from '@/views/ErgonomIO/AboutErgonomIO.vue'
 import ErgonomIO from '@/views/ErgonomIO/ErgonomIO.vue'
 import ErgonomIOAnalysis from '@/views/ErgonomIO/ErgonomIOAnalysis.vue'
+import ErgonomIOAsset from '@/views/ErgonomIO/ErgonomIOAsset.vue'
 import ErgonomIOAssets from '@/views/ErgonomIO/ErgonomIOAssets.vue'
 import ErgonomIOScenes from '@/views/ErgonomIO/ErgonomIOScenes.vue'
 import ErgonomIORooms from '@/views/ErgonomIO/ErgonomIORooms.vue'
@@ -152,6 +153,14 @@ export const routes: Array<Route> = [
     path: '/ergonom-io-assets',
     category: 'Ergonom.io',
     component: ErgonomIOAssets
+  }),
+  new Route({
+    icon: 'mdi-package-variant-closed',
+    name: 'Asset',
+    subname: 'Asset management',
+    path: '/ergonom-io-asset',
+    category: 'Ergonom.io',
+    component: ErgonomIOAsset
   }),
   new Route({
     icon: 'mdi-package-variant-closed',

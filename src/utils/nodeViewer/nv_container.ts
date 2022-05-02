@@ -146,37 +146,6 @@ export class NvContainer {
     this.scaleChanged.notify(this.size)
   }
 
-  /*
-1.5
-1.16
-1
-0.9099999
-0.8099999
-0.7099999
-0.6899999
-0.5
-0.25
-0.15
-
-/**/
-
-  /*
-  static validZoom: Array<number> = new Array<number>(
-    1.5,
-    1.25,
-    1,
-    0.9099999999,
-    0.80999999,
-    0.709999999,
-    0.69,
-    0.5,
-    0.25,
-    0.15
-  )
-
-  public zoomLevel = 2
-*/
-
   public zoom (event: WheelEvent) {
     event.preventDefault()
     const rect = this.container.getDom().getBoundingClientRect()
@@ -191,15 +160,7 @@ export class NvContainer {
 
     this.size += event.deltaY * -0.001
     this.size = Math.min(Math.max(0.125, this.size), 4)
-    /*
-    if (event.deltaY < 0) this.zoomLevel--
-    else this.zoomLevel++
-    this.zoomLevel = Math.max(
-      0,
-      Math.min(NvContainer.validZoom.length - 1, this.zoomLevel)
-    )
-    this.size = NvContainer.validZoom[this.zoomLevel]
-    */
+
     this.position = new V(
       (center.x - rect.width * (offset.x / rect.width) * this.size) / this.size,
       (center.y - rect.height * (offset.y / rect.height) * this.size) /

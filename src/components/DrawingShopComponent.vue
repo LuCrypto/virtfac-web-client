@@ -41,6 +41,7 @@
     <v-container style="width: auto; margin: 0; flex-grow: 1;">
       <blueprint-editor ref="nodeViewer"></blueprint-editor>
     </v-container>
+    <input-field-pop-up ref="inputFieldPopUp"></input-field-pop-up>
     <pop-up ref="filePopUp">
       <open-file
         @close="$refs.filePopUp.close()"
@@ -60,6 +61,7 @@ import ActionContainer, {
   ActionCallbackData
 } from '@/components/ActionContainer.vue'
 import NodeViewer from '@/components/NodeViewer.vue'
+import InputFieldPopUp from '@/components/popup/InputFieldPopUp.vue'
 import OpenFile from '@/components/OpenFile.vue'
 import XLSX from 'xlsx'
 import Mapper from '@/utils/mapper'
@@ -68,6 +70,7 @@ import PopUp from '@/components/PopUp.vue'
 
 import CAEExampleFormat1 from '@/exemples/CAEExampleFormat1'
 import { BlueprintContainer } from '@/utils/routingAnalysis/blueprintContainer'
+import { BlueprintScene } from '@/utils/routingAnalysis/blueprintScene'
 
 class MenuItem {
   text: string
@@ -83,6 +86,7 @@ class MenuItem {
 @Component({
   components: {
     BlueprintEditor,
+    InputFieldPopUp,
     OpenFile,
     PopUp
   }
@@ -94,9 +98,12 @@ export default class DrawingShopComponent extends Vue {
   menuCollapse = false
   menuItemList: MenuItem[] = []
 
+  inputField: InputFieldPopUp | null = null
+
   mounted (): void {
     this.nodeViewer = this.$refs.nodeViewer as BlueprintEditor
     this.actionContainer = this.$refs.actionContainer as ActionContainer
+    this.inputField = this.$refs.inputFieldPopUp as InputFieldPopUp
 
     this.menuItemList.push(
       new MenuItem('Open File', 'mdi-file-document', () => {
@@ -117,6 +124,42 @@ export default class DrawingShopComponent extends Vue {
           ((this
             .nodeViewer as BlueprintEditor).getBpContainer() as BlueprintContainer).resetGrid()
         }
+      })
+    )
+    this.menuItemList.push(
+      new MenuItem('Define Scale', 'mdi-pencil-ruler', () => {
+        let dist = 1
+        if (this.inputField != null) {
+          this.inputField.open(
+            'enter reference distance (in meters):',
+            '1',
+            '1',
+            input => {
+              if (input != null) {
+                dist = +input
+                  .replaceAll(',', '.')
+                  .replaceAll(' ', '')
+                  .replaceAll('m', '')
+                if (
+                  (this.nodeViewer as BlueprintEditor).getBpContainer() != null
+                ) {
+                  ((this
+                    .nodeViewer as BlueprintEditor).getBpContainer() as BlueprintContainer).defineScaleMode(
+                    dist
+                  )
+                }
+              }
+            }
+          )
+        }
+      })
+    )
+    this.menuItemList.push(
+      new MenuItem('export GLTF', 'mdi-cube-scan', () => {
+        BlueprintScene.exportGeometry(
+          ((this
+            .nodeViewer as BlueprintEditor).getBpContainer() as BlueprintContainer).getBlueprint()
+        )
       })
     )
 
