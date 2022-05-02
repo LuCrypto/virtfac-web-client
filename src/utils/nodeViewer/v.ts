@@ -65,4 +65,8 @@ export class V {
     }
     return tmp
   }
+
+  norm () {
+    return Math.sqrt(this.x * this.x + this.y * this.y)
+  }
 }

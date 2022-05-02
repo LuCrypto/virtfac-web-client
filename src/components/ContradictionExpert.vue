@@ -75,6 +75,7 @@ import { IWorkBook } from 'ts-xlsx'
 import API from '@/utils/api'
 import SelectPopUp from '@/components/popup/SelectPopUp.vue'
 import InputFieldPopUp from '@/components/popup/InputFieldPopUp.vue'
+import { GraphLayout } from '@/utils/graph/graphLayout'
 import PopUp from '@/components/PopUp.vue'
 
 class MenuItem {
@@ -143,6 +144,11 @@ export default class ContradictionExpert extends Vue {
       })
     )
     this.menuItemList.push(new MenuItem('Settings', 'mdi-cog', () => true))
+    this.menuItemList.push(
+      new MenuItem('Layouts', 'mdi-graphql', () => {
+        this.selectLayout()
+      })
+    )
     this.menuItemList.push(
       new MenuItem('Download file', 'mdi-download', () => true)
     )
@@ -236,6 +242,63 @@ export default class ContradictionExpert extends Vue {
               })
             )
           }
+        }
+      )
+    }
+  }
+
+  selectLayout () {
+    const headers = new Array<{
+      text: string
+      value: string
+      align: string
+      sortable: boolean
+      sort: {(a: unknown, b: unknown): number }
+        }>({
+          text: 'Name',
+          value: 'name',
+          align: 'start',
+          sortable: false,
+          sort: (a, b) => 0
+        })
+    if (this.selectPopUp !== null) {
+      this.selectPopUp.open(
+        headers,
+        [
+          {
+            name: 'Default Layout',
+            exec: () => {
+              this.constraintGraph.refreshPosition()
+            }
+          },
+          {
+            name: 'Vertical Hierarchy',
+            exec: () => {
+              GraphLayout.verticalHierarchyLayout(this.getGraph(), 500)
+            }
+          },
+          {
+            name: 'Horizontal Hierarchy',
+            exec: () => {
+              GraphLayout.horizontalHierarchyLayout(this.getGraph(), 500)
+            }
+          },
+          {
+            name: 'Circle',
+            exec: () => {
+              GraphLayout.circleLayout(this.getGraph(), 500)
+            }
+          },
+          {
+            name: 'Horizontal Ordering',
+            exec: () => {
+              GraphLayout.horizontalOrdering(this.getGraph(), 400)
+            }
+          }
+        ],
+        item => {
+          if (item === null) return
+          ((item as Record<string, unknown>).exec as { (): void })()
         }
       )
     }

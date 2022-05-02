@@ -4,7 +4,7 @@ export class NvEl {
   private dom: SVGElement | HTMLElement | null = null
 
   constructor (type: string, ...classList: string[]) {
-    this.dom = ['linearGradient', 'path', 'stop', 'svg', 'defs', 'rect'].includes(type)
+    this.dom = ['linearGradient', 'path', 'stop', 'svg', 'defs', 'rect', 'text', 'circle'].includes(type)
       ? (this.dom = document.createElementNS(NVSVGNS, type))
       : (this.dom = document.createElement(type))
     this.dom.setAttribute('style', '')

@@ -89,6 +89,7 @@ export class ConstraintGraph {
     this.displayGraph = new Graph()
     this.displayGraph.setData<Graph>('source', this.localGraph)
     this.displayGraph.setData<ConstraintGraph>('sourcec', this)
+    this.localGraph.setData<ConstraintGraph>('constraintGraph', this)
     this.contrainte = new Map<string, Constraint>()
     this.source = new Map<string, Source>()
     this.displayGraph.setData(
@@ -555,7 +556,7 @@ export class ConstraintGraph {
             })
 
             let index = 0
-            while (index < path.length && path[index].links.length > 1) {
+            while (index < path.length && path[index].links.length > 0) {
               const item = path[index]
               let dir = new Vector2(0, 0)
               item.links.forEach(l => {
@@ -679,14 +680,18 @@ export class ConstraintGraph {
                     ) < 0
                   ) {
                     fromLeft.push(path[i].linkOut as Node)
+                    /*
                     if (path[i].links.length === 1) {
                       fromRight.push(path[i].links[0])
                     }
+                    */
                   } else {
                     fromRight.push(path[i].linkOut as Node)
+                    /*
                     if (path[i].links.length === 1) {
                       fromLeft.push(path[i].links[0])
                     }
+                    */
                   }
                 }
               }
@@ -827,11 +832,7 @@ export class ConstraintGraph {
                 >('visible', false)
               }
             }
-            if (path[path.length - 1].links[0] === undefined) {
-              console.log(
-                'last link undefined : ' + path[path.length - 1].links.length
-              )
-            } else {
+            if (path[path.length - 1].links[0] !== undefined) {
               // lastNode.addLink(path[path.length-1].links[0]).copyData("color", path[path.length-1].links[0]).setData<boolean>("in", true);
               ((path[path.length - 1].links[0] as Node).getLink(
                 node
@@ -1183,9 +1184,30 @@ export class ConstraintGraph {
         new Vector2(
           n.getData<number>('moyDepth') * dist,
           -Math.abs(n.getData<number>('depth')) * dist
+          // -n.getData<number>('hierarchy') * dist
         )
       )
       n.setData<Vec2>('position', sourcePosition.get(n) as Vec2)
+    })
+
+    GraphUtils.hierarchization(this.localGraph, 'hierarchy')
+
+    this.localGraph.foreachNode(n => {
+      n.setData<Vec2>(
+        'position',
+        new Vector2(
+          n.getData<Vec2>('position').x,
+          -n.getData<number>('hierarchy') * dist
+        )
+      )
+      /*
+      n.setData<string>(
+        'name',
+        n.getData<string>('name') +
+          ' herarchy:' +
+          n.getData<number>('hierarchy')
+      )
+      */
     })
 
     /*
@@ -1269,6 +1291,8 @@ export class ConstraintGraph {
     this.refreshPosition()
     // this.refreshDisplayGraph(this.displayGraph);
     this.refreshDisplayGraphReverse(this.displayGraph)
-    if (!this.localGraph.getData<boolean>('autoRefreshBus')) { this.localGraph.getData<{(): void }>('Auto Refresh Bus')() }
+    if (!this.localGraph.getData<boolean>('autoRefreshBus')) {
+      this.localGraph.getData<{(): void }>('Auto Refresh Bus')()
+    }
   }
 }

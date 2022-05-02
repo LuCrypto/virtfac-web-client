@@ -7,6 +7,7 @@ import { BpWallNode } from '@/utils/routingAnalysis/bp_wallNode'
 import { BpWallLink } from '@/utils/routingAnalysis/bp_wallLink'
 import { BpTheme } from '@/utils/routingAnalysis/bp_theme'
 import { Vec2, Vector2 } from '../graph/Vec'
+import { Destroyable } from './bp_window'
 
 class Grid {
   private center: V
@@ -86,35 +87,134 @@ class Grid {
 }
 
 export class BlueprintContainer {
+  private mode: 'WALL' | 'DOOR' | 'WINDOW' | 'SUPP_WALL' | 'SUPP_FURNITURE' =
+    'WALL'
+
+  public getMode () {
+    return this.mode
+  }
+
+  public setMode (
+    mode: 'WALL' | 'DOOR' | 'WINDOW' | 'SUPP_WALL' | 'SUPP_FURNITURE'
+  ) {
+    this.mode = mode
+    switch (this.mode) {
+      case 'WALL':
+        this.defaultMode()
+        break
+      default:
+        break
+    }
+    this.updateTheme()
+    this.updateTransform()
+    console.log(this.mode)
+  }
+
+  // #region SETTINGS
+  /**
+   * enable/disable aligning snapping
+   */
   public optAlignSnap = true
+
+  /**
+   * snapping distance from aligning line.
+   */
   public optAlignSnapDist = 10
 
+  /**
+   * enable/disable snapping from angles when adding new wall
+   */
   public optAngleSnap = true
-  public optAngleSnapStep: number = Math.PI / 4
 
+  /**
+   * step size for available angles when adding new wall
+   */
+  public optAngleSnapStep: number = Math.PI / 4
+  // #endregion
+
+  /**
+   * display theme
+   */
   private theme: BpTheme
   private parentNode: HTMLElement
   private grid: Grid | null = null
+
+  /**
+   * view zoom level
+   */
   private size = 1
+  /**
+   *
+   * @returns view zoom level
+   */
+  public scale () {
+    return this.size
+  }
+
+  /**
+   * view position
+   */
   private position: V = new V(0, 0)
 
   private container: NvEl
   private content: NvEl
   private img: NvEl
+  /**
+   * container for wall nodes
+   */
   private svgNodeLayer: NvEl
+  /**
+   * container for wall link
+   */
   private svgLinkLayer: NvEl
+  /**
+   * container for wall link
+   */
+  private svgFurnitureLayer: NvEl
 
+  private scaleDisplayer = {
+    leftPoint: new NvEl('rect'),
+    lineCol1: new NvEl('path'),
+    lineCol2: new NvEl('path'),
+    rightPoint: new NvEl('rect')
+  }
+
+  /**
+   * kernel object
+   */
   private bp: Blueprint
 
+  public getBlueprint () {
+    return this.bp
+  }
+
+  /**
+   * references to displayer objects of WallNodes
+   */
   private wallNodeMap: Map<Node, BpWallNode> = new Map<Node, BpWallNode>()
+
+  /**
+   * references to displayer objects of WallLink
+   */
   private wallLinkMap: Map<Link, BpWallLink> = new Map<Link, BpWallLink>()
 
+  /**
+   *
+   * @returns container for wall nodes
+   */
   public getNodeLayer () {
     return this.svgNodeLayer
   }
 
+  /**
+   * container for wall link
+   */
   public getLinkLayer () {
     return this.svgLinkLayer
+  }
+
+  public getFurnitureLayer () {
+    return this.svgFurnitureLayer
   }
 
   public getTheme () {
@@ -129,16 +229,15 @@ export class BlueprintContainer {
     this.content = new NvEl('div')
     this.svgNodeLayer = new NvEl('svg')
     this.svgLinkLayer = new NvEl('svg')
+    this.svgFurnitureLayer = new NvEl('svg')
     this.img = new NvEl('img')
     this.content.appendChild(this.img)
     parentNode.appendChild(this.content.getDom())
     parentNode.appendChild(this.container.getDom())
     parentNode.appendChild(this.svgLinkLayer.getDom())
     parentNode.appendChild(this.svgNodeLayer.getDom())
-    // this.grid = new Grid(new V(0, 0), new V(100, 100))
+    parentNode.appendChild(this.svgFurnitureLayer.getDom())
     this.updateTransform()
-    // this.container.getDom().onmousemove = e => this.mouseMove(e)
-    // this.container.getDom().onmouseup = e => this.mouseUp(e)
     this.defaultMode()
     this.container.getDom().onwheel = e => this.zoom(e)
     this.container.setStyle({
@@ -154,7 +253,8 @@ export class BlueprintContainer {
       bottom: '0px',
       'image-rendering': 'pixelated'
     })
-    this.svgLinkLayer.setStyle({
+
+    const layerStyle = {
       position: 'absolute',
       top: '0px',
       bottom: '0px',
@@ -162,16 +262,10 @@ export class BlueprintContainer {
       height: '1px',
       'transform-origin': '0px 0px',
       overflow: 'visible'
-    })
-    this.svgNodeLayer.setStyle({
-      position: 'absolute',
-      top: '0px',
-      bottom: '0px',
-      width: '1px',
-      height: '1px',
-      'transform-origin': '0px 0px',
-      overflow: 'visible'
-    })
+    }
+    this.svgLinkLayer.setStyle(layerStyle)
+    this.svgNodeLayer.setStyle(layerStyle)
+    this.svgFurnitureLayer.setStyle(layerStyle)
 
     this.container.getDom().oncontextmenu = e => {
       e.preventDefault()
@@ -186,6 +280,7 @@ export class BlueprintContainer {
       }
     }
     this.container.getDom().ondrop = e => {
+      // enable import of blueprint image from drag and drop
       if (e.dataTransfer != null && e.dataTransfer.files.length > 0) {
         const f: File | null = e.dataTransfer.files.item(0)
         try {
@@ -202,11 +297,14 @@ export class BlueprintContainer {
       }
       e.preventDefault()
     }
+    this.bp.setData<number>('scale', 1)
 
+    // add a new wall node displayer when a wall node is created in the blueprint
     this.bp.onWallNodeAdded().addListener(arg => {
       this.wallNodeMap.set(arg.node, new BpWallNode(arg.node, this))
     })
 
+    // refresh node displayer position when wall node is moved in blueprint
     this.bp.onWallNodeDataChanged().addMappedListener(
       'position',
       arg => {
@@ -218,30 +316,140 @@ export class BlueprintContainer {
       this
     )
 
+    // add a new wall link displayer when a wall is created in the blueprint
     this.bp.onWallLinkAdded().addListener(arg => {
       this.wallLinkMap.set(arg.link, new BpWallLink(arg.link, this))
     })
 
+    // refresh wall link display when a wall node is moved in the blueprint
     this.bp.onWallLinkDataChanged().addMappedListener('length', arg => {
       (this.wallLinkMap.get(arg.link) as BpWallLink).refreshPos()
     })
 
+    // remove wall node display when a node is removed in the blueprint
+    this.bp.onWallNodeRemoved().addListener(arg => {
+      (this.wallNodeMap.get(arg.node) as BpWallNode).destroy()
+      this.wallNodeMap.delete(arg.node)
+    }, this)
+
+    // remove wall link when a wall is removed in the blueprint
+    this.bp.onWallLinkRemoved().addListener(arg => {
+      (this.wallLinkMap.get(arg.link) as BpWallLink).destroy()
+      arg.link
+        .getDataOrDefault<Set<Destroyable>>(
+          'wallFurniture',
+          new Set<Destroyable>()
+        )
+        .forEach(item => item.destroy())
+      this.wallLinkMap.delete(arg.link)
+    })
+
+    // alignement snapping display
     this.snapXLine = new NvEl('path')
     this.snapYLine = new NvEl('path')
 
     const snapLineStyle = {
       'pointer-events': 'none',
       'stroke-dasharray': '2,3',
-      'stroke-width': '1',
-      stroke: `${this.theme.WallSnapLineColor}`
+      'stroke-width': '1'
     }
 
     this.snapXLine.setStyle(snapLineStyle)
     this.snapYLine.setStyle(snapLineStyle)
 
     this.svgLinkLayer.appendChild(this.snapXLine, this.snapYLine)
+
+    // debug point display
+    this.testPoint.getDom().setAttribute('width', `${6}`)
+    this.testPoint.getDom().setAttribute('height', `${6}`)
+    this.testPoint.setStyle({ 'pointer-events': 'none' })
+    this.getNodeLayer().appendChild(this.testPoint)
+
+    const scaleSvgContainer = new NvEl('svg')
+    scaleSvgContainer.setStyle({
+      position: 'absolute',
+      bottom: `${20}px`,
+      left: `${20}px`,
+      width: '1px',
+      height: '1px',
+      overflow: 'visible'
+    })
+
+    this.scaleDisplayer.lineCol1.setStyle({
+      'stroke-dashoffset': 10,
+      'stroke-dasharray': 10,
+      stroke: this.theme.WallLinkColor
+    })
+    this.scaleDisplayer.lineCol2.setStyle({
+      'stroke-dasharray': 10,
+      stroke: this.theme.WallSnapLineColor
+    })
+
+    const path = `M${new V(0, 0).str()} L${new V(100, 0).str()}`
+    this.scaleDisplayer.lineCol1.getDom().setAttribute('d', path)
+    this.scaleDisplayer.lineCol2.getDom().setAttribute('d', path)
+
+    scaleSvgContainer.appendChild(
+      this.scaleDisplayer.lineCol1,
+      this.scaleDisplayer.lineCol2,
+      this.scaleDisplayer.leftPoint,
+      this.scaleDisplayer.rightPoint
+    )
+    this.container.appendChild(scaleSvgContainer)
+
+    this.updateTheme()
   }
 
+  public updateTheme () {
+    this.snapXLine.setStyle({ stroke: `${this.theme.WallSnapLineColor}` })
+    this.snapYLine.setStyle({ stroke: `${this.theme.WallSnapLineColor}` })
+
+    // scale diplayer
+    this.scaleDisplayer.leftPoint.setStyle({
+      fill: this.theme.WallNodeColor,
+      width: `${this.theme.WallNodeSize / 2}px`,
+      height: `${this.theme.WallNodeSize}px`,
+      transform: `translate(${-this.theme.WallNodeSize / 4}px, ${-this.theme
+        .WallNodeSize / 2}px)`,
+      'z-index': 1
+    })
+    this.scaleDisplayer.rightPoint.setStyle({
+      fill: this.theme.WallNodeColor,
+      width: `${this.theme.WallNodeSize / 2}px`,
+      height: `${this.theme.WallNodeSize}px`,
+      transform: `translate(${100 - this.theme.WallNodeSize / 4}px, ${-this
+        .theme.WallNodeSize / 2}px)`,
+      'z-index': 1
+    })
+
+    this.refreshScaleViewer()
+
+    this.wallNodeMap.forEach(value => {
+      value.updateTheme()
+    })
+
+    this.wallLinkMap.forEach(value => {
+      value.updateTheme()
+    })
+  }
+
+  public refreshScaleViewer () {
+    const right = 100 * this.bp.getData<number>('scale') * this.size
+    const path = `M${new V(0, 0).str()} L${new V(right, 0).str()}`
+    this.scaleDisplayer.lineCol1.getDom().setAttribute('d', path)
+    this.scaleDisplayer.lineCol2.getDom().setAttribute('d', path)
+    this.scaleDisplayer.rightPoint.setStyle({
+      transform: `translate(${right - this.theme.WallNodeSize / 4}px, ${-this
+        .theme.WallNodeSize / 2}px)`
+    })
+  }
+
+  /**
+   * convert mouse position to blueprint position
+   * @param x MouseEvent.ClientX
+   * @param y MouseEvent.ClientY
+   * @returns the blueprint scope position
+   */
   public clientPosToContainerPos (x: number, y: number): V {
     const rect = this.container.getDom().getBoundingClientRect()
     return new V(
@@ -295,6 +503,11 @@ export class BlueprintContainer {
   private snapXLine: NvEl
   private snapYLine: NvEl
 
+  /**
+   * display line of snap for horizontal snapping
+   * @param node origin of snap line
+   * @param snappedPos snapped position
+   */
   private displayXsnap (node: Node, snappedPos: V) {
     const p = node.getData<Vec2>('position')
     this.snapXLine
@@ -302,6 +515,11 @@ export class BlueprintContainer {
       .setAttribute('d', `M${new V(p.x, p.y).str()} L${snappedPos.str()}`)
   }
 
+  /**
+   * display line of snap for vertical snapping
+   * @param node origin of snap line
+   * @param snappedPos snapped position
+   */
   private displayYsnap (node: Node, snappedPos: V) {
     const p = node.getData<Vec2>('position')
     this.snapYLine
@@ -309,22 +527,43 @@ export class BlueprintContainer {
       .setAttribute('d', `M${new V(p.x, p.y).str()} L${snappedPos.str()}`)
   }
 
+  /**
+   * disable display of snap lines
+   */
   private hideSnap () {
     this.snapXLine.getDom().setAttribute('d', '')
     this.snapYLine.getDom().setAttribute('d', '')
   }
 
-  private snapedWallNode: BpWallNode | null = null
+  private hoveredNode: BpWallNode | null = null
 
   private positionStart: V = new V(0, 0)
+
+  public testPoint = new NvEl('rect')
 
   public defaultMode () {
     this.container.getDom().onmousedown = null
     this.container.getDom().onmouseup = null
     this.container.getDom().onmousemove = null
+
+    this.container.getDom().onmousemove = e => {
+      const clientPos = this.clientPosToContainerPos(e.clientX, e.clientY)
+
+      this.testPoint.setStyle({
+        transform: `translate(${clientPos.x - 3}px, ${clientPos.y - 3}px)`
+      })
+      if (this.bp.isInside(new Vector2(clientPos.x, clientPos.y))) {
+        this.testPoint.setStyle({ fill: '#2ECC71' })
+      } else {
+        this.testPoint.setStyle({ fill: '#E74C3C' })
+      }
+    }
+
     const c = this.container as NvEl
     c.getDom().onmousedown = e => {
-      if (e.button === 2) {
+      console.log('defaultMode onmousedown: ' + e.button)
+      if (e.button === 1) {
+        // movement
         this.positionStart = this.unscale(new V(e.clientX, e.clientY)).sub(
           this.position
         )
@@ -335,25 +574,36 @@ export class BlueprintContainer {
           )
           this.updateTransform()
         }
-        c.getDom().onmouseup = event => {
+        document.onmouseup = event => {
+          console.log('defaultMode onmouseup: ' + event.button)
           event.preventDefault()
-          c.getDom().onmousemove = null
+          if (event.button === 1) c.getDom().onmousemove = null
+          this.defaultMode()
         }
       } else if (e.button === 0) {
+        // new wall
         let pos = this.clientPosToContainerPos(e.clientX, e.clientY)
         let n: Node | null = null
-        if (this.snapedWallNode != null) {
-          const p = this.snapedWallNode.getNode().getData<Vec2>('position')
+        if (this.hoveredNode != null) {
+          // create wall from snapedWallNode
+          const p = this.hoveredNode.getNode().getData<Vec2>('position')
           pos = new V(p.x, p.y)
-          n = this.snapedWallNode.getNode()
+          n = this.hoveredNode.getNode()
         } else {
+          // create wall from new node
           n = this.bp.addWallNode(new Vector2(pos.x, pos.y))
         }
+        // end point wall node
         const n2 = this.bp.addWallNode(new Vector2(pos.x, pos.y))
         this.bp.addWall(n, n2)
         document.onmousemove = e1 => {
+          console.log('defaultMode onmousemove')
+          // positioning end point of the wall
+          e1.preventDefault()
           this.hideSnap()
           const p2 = this.clientPosToContainerPos(e1.clientX, e1.clientY)
+
+          // check for snapping lines
           let snapX: Node | null = null
           let snapY: Node | null = null
           this.wallNodeMap.forEach((value: BpWallNode, key: Node) => {
@@ -369,6 +619,7 @@ export class BlueprintContainer {
             }
           })
           if (Vector2.norm(Vector2.minus(p2, pos)) > 0.1) {
+            // snapping angle
             let angle = Vector2.angle(Vector2.minus(p2, pos))
             if (angle < 0) angle = Math.PI + (Math.PI + angle)
             let tmpTargetAngle = angle - (angle % this.optAngleSnapStep)
@@ -383,6 +634,8 @@ export class BlueprintContainer {
               ),
               pos
             )
+
+            // apply snap lines
             if (snapX !== null) newP.x = p2.x
             if (snapY !== null) newP.y = p2.y
             if (snapX !== null) this.displayXsnap(snapX, new V(newP.x, newP.y))
@@ -392,24 +645,134 @@ export class BlueprintContainer {
           }
         }
         document.onmouseup = e1 => {
+          console.log('defaultMode onmouseup: ' + e1.button)
           if (e1.button === 0) {
+            // end positioning of the end point wall node
             this.defaultMode()
             document.onmouseup = null
             document.onmousemove = null
             this.hideSnap()
+            // check for merging end point node to an existing node
+            this.wallNodeMap.forEach(value => {
+              if (
+                Vector2.norm(
+                  Vector2.minus(
+                    value.getNode().getData<Vec2>('position'),
+                    n2.getData<Vec2>('position')
+                  )
+                ) < 2 &&
+                value.getNode() !== n2
+              ) {
+                if (
+                  (n as Node).getLink(value.getNode()) === undefined &&
+                  value.getNode().getLink(n as Node) === undefined
+                ) {
+                  this.bp.addWall(n as Node, value.getNode())
+                }
+                this.bp.removeWallNode(n2)
+              }
+            })
           }
+          e1.preventDefault()
         }
       }
       e.preventDefault()
     }
   }
 
+  public hoveredWall: BpWallLink | null = null
+
+  public placeWindowMode () {
+    //
+  }
+
+  public moveNodeMode (node: Node) {
+    this.container.getDom().onmousedown = null
+    this.container.getDom().onmouseup = null
+    this.container.getDom().onmousemove = null
+
+    this.container.getDom().onmousemove = e => {
+      // const pos = this.clientPosToContainerPos(e.clientX, e.clientY)
+      // this.bp.addWall(n, n2)
+      this.container.getDom().onmousemove = e1 => {
+        this.hideSnap()
+        const p2 = this.clientPosToContainerPos(e1.clientX, e1.clientY)
+        let snapX: Node | null = null
+        let snapY: Node | null = null
+        // check for snapping line when moving node
+        this.wallNodeMap.forEach((value: BpWallNode, key: Node) => {
+          if (key === node) return
+          const p = key.getData<Vec2>('position')
+          if (Math.abs(p2.x - p.x) < this.optAlignSnapDist) {
+            p2.x = p.x
+            snapX = key
+          }
+          if (Math.abs(p2.y - p.y) < this.optAlignSnapDist) {
+            p2.y = p.y
+            snapY = key
+          }
+        })
+
+        if (snapX !== null) this.displayXsnap(snapX, new V(p2.x, p2.y))
+        if (snapY !== null) this.displayYsnap(snapY, new V(p2.x, p2.y))
+
+        node.setData<Vec2>('position', p2)
+      }
+    }
+    document.onmouseup = e => {
+      e.preventDefault()
+      if (e.button === 2) {
+        // end moving point
+        document.onmouseup = null
+        this.defaultMode()
+        this.hideSnap()
+        // check for merge on existing node
+        this.wallNodeMap.forEach(value => {
+          if (
+            Vector2.norm(
+              Vector2.minus(
+                value.getNode().getData<Vec2>('position'),
+                node.getData<Vec2>('position')
+              )
+            ) < 2 &&
+            value.getNode() !== node
+          ) {
+            node.foreachLink(l => {
+              if (l.getNode() !== value.getNode()) {
+                // value.getNode().addLink(l.getNode())
+                if (
+                  l.getNode().getLink(value.getNode()) === undefined &&
+                  value.getNode().getLink(l.getNode()) === undefined
+                ) {
+                  this.bp.addWall(value.getNode(), l.getNode())
+                }
+              }
+            })
+            node
+              .getDataOrDefault<Set<Node>>('targetBy', new Set<Node>())
+              .forEach(item => {
+                if (item !== value.getNode()) {
+                  if (
+                    item.getLink(value.getNode()) === undefined &&
+                    value.getNode().getLink(item) === undefined
+                  ) {
+                    this.bp.addWall(item, value.getNode())
+                  }
+                }
+              })
+            this.bp.removeWallNode(node)
+          }
+        })
+      }
+    }
+  }
+
   public wallNodeEnter (node: BpWallNode) {
-    this.snapedWallNode = node
+    this.hoveredNode = node
   }
 
   public wallNodeExit (node: BpWallNode) {
-    if (this.snapedWallNode === node) this.snapedWallNode = null
+    if (this.hoveredNode === node) this.hoveredNode = null
   }
 
   public unscale (v: V): V {
@@ -487,6 +850,11 @@ export class BlueprintContainer {
       transform: `translate(${this.position.x * this.size}px, ${this.position
         .y * this.size}px) scale(${this.size})`
     })
+    this.svgFurnitureLayer.setStyle({
+      transform: `translate(${this.position.x * this.size}px, ${this.position
+        .y * this.size}px) scale(${this.size})`
+    })
+    this.refreshScaleViewer()
     if (this.grid === null) return
     this.container.setStyle({
       'background-size': `${this.size * this.grid.getOffset().x}px ${this.size *
@@ -501,5 +869,60 @@ export class BlueprintContainer {
       'background-image': `url('data:image/svg+xml,${this.grid.getStyle()}')`,
       'background-repeat': 'repeat'
     })
+  }
+
+  defineScaleMode (refDist = 1) {
+    this.container.getDom().onmousedown = null
+    this.container.getDom().onmouseup = null
+    this.container.getDom().onmousemove = null
+
+    this.container.setStyle({ cursor: 'crosshair' })
+
+    this.container.getDom().onmousedown = e => {
+      console.log('defineScaleMode onmousedown: ' + e.button)
+      if (e.button === 0) {
+        const n1 = new Node()
+        const p1 = this.clientPosToContainerPos(e.x, e.y)
+        n1.setData<Vec2>('position', new Vector2(p1.x, p1.y))
+        const n2 = new Node()
+        n2.setData<Vec2>('position', new Vector2(p1.x, p1.y))
+        const l = n1.addLink(n2)
+        l.setData<number>('length', 0)
+
+        const n1Display = new BpWallNode(n1, this)
+        const n2Display = new BpWallNode(n2, this)
+        const lDisplay = new BpWallLink(l, this)
+
+        const oldScale = this.bp.getData<number>('scale')
+
+        this.container.getDom().onmousemove = e2 => {
+          console.log('defineScaleMode onmousemove')
+          const p2 = this.clientPosToContainerPos(e2.x, e2.y)
+          n2.setData<Vec2>('position', new Vector2(p2.x, p2.y))
+          l.setData<number>('length', p1.sub(p2).norm() / oldScale)
+          if (p1.sub(p2).norm() > 1) {
+            this.bp.setData<number>('scale', p1.sub(p2).norm() / refDist / 100)
+          }
+          n2Display.setPos(p2.x, p2.y)
+          lDisplay.refreshPos()
+          this.refreshScaleViewer()
+          e2.preventDefault()
+        }
+        document.onmouseup = e3 => {
+          console.log('defineScaleMode onmouseup: ' + e3.button)
+          if (e.button === 0) {
+            n1Display.destroy()
+            n2Display.destroy()
+            lDisplay.destroy()
+            document.onmouseup = null
+            this.hoveredNode = null
+            this.defaultMode()
+            this.container.setStyle({ cursor: 'auto' })
+          }
+          e3.preventDefault()
+        }
+      }
+      e.preventDefault()
+    }
   }
 }
