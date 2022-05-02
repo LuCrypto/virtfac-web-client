@@ -91,13 +91,48 @@ export default class ModelViewer extends Vue {
     this.gizmo.setMode(mode)
   }
 
+  public getMeshControlMode (): 'translate' | 'rotate' | 'scale' {
+    if (this.gizmo === null) return 'translate'
+    return this.gizmo.mode
+  }
+
+  public switchMeshControlSnap (forceActiveValue?: boolean): void {
+    if (this.gizmo === null) return
+    let activeValue = this.gizmo.rotationSnap !== null
+    if (forceActiveValue !== undefined) {
+      activeValue = !forceActiveValue
+    }
+    if (activeValue) {
+      this.gizmo.setRotationSnap(null)
+      this.gizmo.setTranslationSnap(null)
+      this.gizmo.setScaleSnap(null)
+    } else {
+      this.gizmo.setRotationSnap(Math.PI / 32)
+      this.gizmo.setTranslationSnap(0.1)
+      this.gizmo.setScaleSnap(0.1)
+    }
+  }
+
+  public setControlerSnap (
+    translation?: number,
+    rotation?: number,
+    scaling?: number
+  ): void {
+    if (this.gizmo === null) return
+    this.gizmo.setTranslationSnap(
+      translation === undefined ? null : translation
+    )
+    this.gizmo.setRotationSnap(rotation === undefined ? null : rotation)
+    this.gizmo.setScaleSnap(scaling === undefined ? null : scaling)
+  }
+
   public setGrid (
     size: number,
     division: number,
     lineColor: number,
     backgroundColor: number,
     centerLineColor?: number | undefined
-  ) {
+  ): void {
     if (this.gridHelper !== null) this.scene.remove(this.gridHelper)
     if (this.floor !== null) this.scene.remove(this.floor)
 
@@ -204,6 +239,10 @@ export default class ModelViewer extends Vue {
 
   addObjectToScene (object: Group): void {
     this.scene.add(object)
+  }
+
+  removeObjectToScene (object: Group): void {
+    this.scene.remove(object)
   }
 
   loadBVHFromContent (content: string): BVH {
