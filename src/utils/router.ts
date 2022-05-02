@@ -139,33 +139,33 @@ export const routes: Array<Route> = [
     component: ErgonomIOAnalysis
   }),
   new Route({
-    icon: 'mdi-package-variant-closed',
-    name: 'Scènes',
-    subname: 'Scène management',
+    icon: 'mdi-nature-people',
+    name: 'Scenes',
+    subname: 'Scene management',
     path: '/ergonom-io-scene',
     category: 'Ergonom.io',
     component: ErgonomIOScenes
   }),
   new Route({
     icon: 'mdi-package-variant-closed',
-    name: 'Assets',
-    subname: 'Asset management',
+    name: 'Assets library',
+    subname: 'List of all assets',
     path: '/ergonom-io-assets',
     category: 'Ergonom.io',
     component: ErgonomIOAssets
   }),
   new Route({
-    icon: 'mdi-package-variant-closed',
-    name: 'Asset',
-    subname: 'Asset management',
+    icon: 'mdi-cube-send',
+    name: 'Asset manager',
+    subname: 'Upload & edit assets',
     path: '/ergonom-io-asset',
     category: 'Ergonom.io',
     component: ErgonomIOAsset
   }),
   new Route({
-    icon: 'mdi-package-variant-closed',
-    name: 'Rooms',
-    subname: 'Room lobby',
+    icon: 'mdi-account-supervisor-circle',
+    name: 'Collaborative sessions',
+    subname: 'For virtual meetings',
     path: '/ergonom-io-rooms',
     category: 'Ergonom.io',
     component: ErgonomIORooms
@@ -190,9 +190,9 @@ export const routes: Array<Route> = [
   }),
 
   new Route({
-    icon: 'mdi-database',
+    icon: 'mdi-xml',
     name: 'API',
-    subname: 'API documentation',
+    subname: 'Interface documentation',
     path: '/documentation-api',
     category: 'Documentation',
     component: APIDocumentation
