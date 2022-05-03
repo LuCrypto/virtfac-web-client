@@ -156,7 +156,7 @@ export const routes: Array<Route> = [
   }),
   new Route({
     icon: 'mdi-cube-send',
-    name: 'Asset manager',
+    name: 'Asset editor',
     subname: 'Upload & edit assets',
     path: '/ergonom-io-asset',
     category: 'Ergonom.io',
