@@ -129,7 +129,7 @@
                     <v-list-item-title>Output informations :</v-list-item-title>
                     <v-list-item-subtitle>
                       <div class="text-wrap">
-                        {{ item.documentation.inputInfo }}
+                        {{ item.documentation.outputInfo }}
                       </div>
                     </v-list-item-subtitle>
                   </v-list-item-content>
