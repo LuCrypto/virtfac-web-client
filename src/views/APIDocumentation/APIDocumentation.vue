@@ -81,7 +81,10 @@
                   : 'rgba(0,0,0,0.1)'
               "
             >
-              <v-card-title class="py-0 px-2" :class="getTypeColor(item.type)">
+              <v-card-title
+                class="black--text py-0 px-2"
+                :class="getTypeColor(item.type)"
+              >
                 <div>
                   <span style="text-transform: capitalize;">
                     {{ item.type }}
