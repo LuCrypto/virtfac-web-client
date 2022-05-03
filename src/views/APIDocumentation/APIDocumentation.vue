@@ -317,13 +317,8 @@ export default class APIDocumentation extends Vue {
 
   showDocumentation (): void {
     API.get(this, '/', null).then((response: Response) => {
-      // console.log('hello doc ', response)
       this.requests = (response as unknown) as APIRequest[]
-
-      console.log(this.requests)
-
       let id = 0
-
       this.requests.forEach((request, requestReference) => {
         let itemIterator: TreeItem = this.rootItem
 
