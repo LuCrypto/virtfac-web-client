@@ -1,18 +1,12 @@
 <template>
   <v-container fluid style="max-height: 100%; overflow: auto;">
     <!-- Titre -->
-    <v-container
-      fluid
-      class="text-h3 font-weight-regular text-center black--text py-8"
-    >
-      Gestionnaire d'assets
+    <v-container fluid class="text-h3 text-center py-8">
+      Asset library
     </v-container>
     <v-divider></v-divider>
     <!-- Milieu de page : les différentes cartes de scènes -->
     <template>
-      <v-row dense class="pa-2">
-        Les différents assets :
-      </v-row>
       <v-card
         class="overflow-y-auto d-flex flex-row flex-wrap"
         width="100%"

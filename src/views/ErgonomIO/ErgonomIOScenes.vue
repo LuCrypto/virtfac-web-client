@@ -1,18 +1,12 @@
 <template>
   <v-container fluid style="max-height: 100%; overflow: auto;">
     <!-- Titre -->
-    <v-container
-      fluid
-      class="text-h3 font-weight-regular text-center black--text py-8"
-    >
-      Gestionnaire de scène
+    <v-container fluid class="text-h3 text-center py-8">
+      Scene manager
     </v-container>
     <v-divider></v-divider>
     <!-- Milieu de page : les différentes cartes de scènes -->
     <template>
-      <v-row dense class="pa-2">
-        Les différentes scènes :
-      </v-row>
       <v-card
         class="overflow-y-auto d-flex flex-row flex-wrap"
         width="100%"
@@ -39,7 +33,7 @@
             </v-chip>
           </v-card-subtitle>
           <v-card-text>
-            {{ card.dateCreation }}, nombre assets : {{ card.assetsNumber }}
+            {{ card.dateCreation }}, included assets : {{ card.assetsNumber }}
           </v-card-text>
 
           <v-card-actions>
@@ -56,32 +50,32 @@
     <v-layout justify-center class="py-4">
       <v-flex class="flex-grow-0 mx-5">
         <v-btn
-          v-on:click="creerSceneVide"
-          class="yellow darken-3 font-weight-black"
+          v-on:click="createEmptyScene"
+          class="primary black--text"
           large
           elevation="2"
         >
-          Créer une scène vide
+          Create new empty scene
         </v-btn>
       </v-flex>
       <v-flex class="flex-grow-0 mx-5">
         <v-btn
-          v-on:click="chargerScene"
-          class="yellow darken-3 font-weight-black"
+          v-on:click="loadScene"
+          class="primary black--text"
           large
           elevation="2"
         >
-          Charger une scène
+          Load scene
         </v-btn>
       </v-flex>
       <v-flex class="flex-grow-0 mx-5">
         <v-btn
-          v-on:click="ajouterObjetScene"
-          class="yellow darken-3 font-weight-black"
+          v-on:click="addObjectInScene"
+          class="primary black--text"
           large
           elevation="2"
         >
-          Ajouter une objet dans la scène
+          Add object in scene
         </v-btn>
       </v-flex>
     </v-layout>
@@ -152,17 +146,17 @@ export default class ErgonomIOAssets extends Vue {
     })
   }
 
-  creerSceneVide (): void {
-    console.log('creerSceneVide')
+  createEmptyScene (): void {
+    console.log('createEmptyScene')
     this.cards.push(new CardModel({ id: this.cards.length }))
   }
 
-  chargerScene (): void {
+  loadScene (): void {
     console.log('Charger scene')
   }
 
-  ajouterObjetScene (): void {
-    console.log('ajouterObjetScene')
+  addObjectInScene (): void {
+    console.log('addObjectInScene')
   }
 
   supprimerObjet (index: number): void {
