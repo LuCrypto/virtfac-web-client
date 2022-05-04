@@ -248,7 +248,7 @@
       <v-flex class="flex-grow-0 mx-5">
         <!-- Bouton permettant de charger une scène -->
         <v-btn
-          v-on:click="loadScene"
+          v-on:click="openUploadFile"
           class="primary black--text"
           large
           elevation="2"
@@ -259,7 +259,7 @@
             ref="uploadFileInput"
             hidden
             type="file"
-            @change="updateUploadFileChargerScene"
+            @change="onUploadSceneUpdate"
           />
         </v-btn>
       </v-flex>
@@ -303,7 +303,42 @@
 import { Component, Vue } from 'vue-property-decorator'
 import API from '@/utils/api'
 import Unreal from '@/utils/unreal'
-import CardModel from '@/utils/cardModel'
+
+class CardModel {
+  // Initialisation
+  name = 'nouvelleScene.json'
+  picture = '@/assets/ergonom_io.png'
+  tags = '[]'
+  id = 0
+  color = '000000'
+  assetsNumber = 0
+  creationDate = 0
+  data = '{}'
+  idProject = 0
+  idUserOwner = 0
+  modificationDate = 0
+
+  parsedData: any = null
+  parsedTags: string[] = []
+
+  // Permet de récupérer une date en format string
+  get formatedCreationDate (): string {
+    return new Date(this.creationDate).toLocaleString()
+  }
+
+  // Permet de construire une scène
+  constructor (params: Partial<CardModel>) {
+    Object.assign(this, params)
+    try {
+      console.log(params.tags)
+      this.parsedData = JSON.parse(this.data || '[]')
+      this.parsedTags = JSON.parse(this.tags || '[]')
+      console.log(this.parsedTags)
+    } catch (e) {
+      console.error(e)
+    }
+  }
+}
 
 // Scene recue d'unreal
 class SceneRecue {
@@ -423,8 +458,6 @@ export default class ErgonomIOAssets extends Vue {
       this.cards2 = ((response as unknown) as Array<Partial<CardModel>>).map(
         (scene: Partial<CardModel>) => new CardModel(scene)
       )
-
-      console.log('data : ', this.cards2[0].data)
 
       for (let i = 0; i < this.cards2.length; i++) {
         this.cards.push(this.cards2[i])
@@ -646,7 +679,7 @@ export default class ErgonomIOAssets extends Vue {
   }
 
   // Charger une scène
-  updateUploadFileChargerScene (e: Event): void {
+  onUploadSceneUpdate (e: Event): void {
     if (e.target == null) return
     const target = e.target as HTMLInputElement
     if (target.files != null && target.files.length > 0) {
