@@ -124,8 +124,8 @@ export const routes: Array<Route> = [
   }),
   new Route({
     icon: 'mdi-factory',
-    name: 'Ergonom.io',
-    subname: 'A virtual twin tool',
+    name: 'Virtual Twin',
+    subname: 'Virtual reality tool',
     path: '/ergonom-io',
     category: 'Ergonom.io',
     component: ErgonomIO
