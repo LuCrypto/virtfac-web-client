@@ -1,30 +1,51 @@
 <template>
-  <v-container fluid>
+  <v-container fluid style="max-height: 100%; overflow: auto;">
     <!-- Titre -->
-    <v-container fluid class="text-h3 font-weight-regular text-center py-8">
-      Gestionnaire d'assets
+    <v-container fluid class="text-h3 text-center py-8">
+      Asset library
     </v-container>
     <v-divider></v-divider>
     <!-- Milieu de page : les différentes cartes de scènes -->
     <template>
-      <!-- Popup permettant de voir l'URI d'un asset -->
-      <v-row justify="center">
-        <v-dialog v-model="popup" max-width="780">
-          <v-card>
-            <v-card-title> {{ titrePopup }} </v-card-title>
-            <v-card-text>
-              {{ textePopup }}
-            </v-card-text>
+      <!-- <v-card
+        class="overflow-y-auto d-flex flex-row flex-wrap"
+        width="100%"
+        height="775"
+      >
+        <v-card
+          :key="indexCard"
+          v-for="(card, indexCard) in cards"
+          height="455"
+          width="30%"
+          class="ma-3"
+          elevation="5"
+        >
+          <v-img height="270" :src="card.picture"> </v-img>
+          <v-sheet height="4" :color="`#${card.color.toString(16)}`"> </v-sheet>
+          <v-card-title> {{ card.name }} </v-card-title>
+          <v-card-subtitle>
+            <v-chip
+              :key="indexTag"
+              v-for="(tag, indexTag) in card.parsedTags"
+              class="mr-2 overflow-y-auto"
+            >
+              {{ tag }}
+            </v-chip>
+          </v-card-subtitle>
+          <v-card-text>
+            {{ card.dateCreation }}
+          </v-card-text>
 
-            <v-card-actions>
-              <v-spacer></v-spacer>
-              <v-btn color="green darken-1" text @click="popup = false">
-                OK
-              </v-btn>
-            </v-card-actions>
-          </v-card>
-        </v-dialog>
-      </v-row>
+          <v-card-actions>
+            <v-spacer></v-spacer>
+            <v-btn color="green darken-1" text @click="popup = false">
+              OK
+            </v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-card> -->
+      <!-- </v-dialog> -->
+      <!-- </v-row> -->
 
       <!-- Popup permettant de modifier des données de la scène -->
       <v-row justify="center">

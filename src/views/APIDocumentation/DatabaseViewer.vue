@@ -1,5 +1,10 @@
 <template>
-  <v-container fluid :key="updateTables" class="d-flex flex-wrap pt-6 pl-6">
+  <v-container
+    fluid
+    :key="updateTables"
+    class="d-flex flex-wrap pt-6 pl-6"
+    style="max-height: 100%; overflow: auto;"
+  >
     <div v-for="[type, tables] in tablesTypes" :key="type">
       <h1 class="mb-6">
         {{ type.charAt(0).toUpperCase() + type.slice(1) }}s tables

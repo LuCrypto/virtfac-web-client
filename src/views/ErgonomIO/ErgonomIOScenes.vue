@@ -1,8 +1,8 @@
 <template>
-  <v-container fluid>
+  <v-container fluid style="max-height: 100%; overflow: auto;">
     <!-- Titre -->
-    <v-container fluid class="text-h3 font-weight-regular text-center py-8">
-      Gestionnaire de scène
+    <v-container fluid class="text-h3 text-center py-8">
+      Scene manager
     </v-container>
     <v-divider></v-divider>
     <!-- Milieu de page : les différentes cartes de scènes -->
@@ -226,12 +226,12 @@
       <v-flex class="flex-grow-0 mx-5">
         <!-- Bouton permettant de créer une scène vide -->
         <v-btn
-          v-on:click="creerSceneVide"
-          class="yellow darken-3 font-weight-black"
+          v-on:click="createEmptyScene"
+          class="primary black--text"
           large
           elevation="2"
         >
-          Créer une scène vide
+          Create new empty scene
         </v-btn>
       </v-flex>
       <v-flex class="flex-grow-0 mx-5">
@@ -248,12 +248,12 @@
       <v-flex class="flex-grow-0 mx-5">
         <!-- Bouton permettant de charger une scène -->
         <v-btn
-          v-on:click="chargerScene"
-          class="yellow darken-3 font-weight-black"
+          v-on:click="loadScene"
+          class="primary black--text"
           large
           elevation="2"
         >
-          Charger une scène
+          Load scene
           <input
             accept="application/JSON"
             ref="uploadFileInput"
@@ -266,12 +266,12 @@
       <v-flex class="flex-grow-0 mx-5">
         <!-- Bouton permettant de rajouter un objet dans une scène -->
         <v-btn
-          v-on:click="activerAjoutObjet"
-          class="yellow darken-3 font-weight-black"
+          v-on:click="addObjectInScene"
+          class="primary black--text"
           large
           elevation="2"
         >
-          Ajouter un objet dans la scène
+          Add object in scene
         </v-btn>
       </v-flex>
       <!-- Sélection de la scene choisie -->
@@ -443,7 +443,7 @@ export default class ErgonomIOAssets extends Vue {
   }
 
   // Permet de créer une scène vide
-  creerSceneVide (): void {
+  createEmptyScene (): void {
     console.log('creerSceneVide')
     const scene = new CardModel({ id: this.cards.length })
     scene.parsedTags.push('vide')
@@ -491,8 +491,8 @@ export default class ErgonomIOAssets extends Vue {
   }
 
   // Permet d'activer le fait de pouvoir ajouter un objet
-  activerAjoutObjet (scene: CardModel): void {
-    console.log('activerAjoutObjet')
+  addObjectInScene (scene: CardModel): void {
+    console.log('addObjectInScene')
 
     console.log('variable : ', this.variable)
 

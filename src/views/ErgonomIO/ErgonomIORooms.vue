@@ -1,17 +1,23 @@
 <template>
   <v-container fluid>
     <!-- Titre -->
-    <v-container fluid class="text-h3 font-weight-regular text-center py-8">
-      Lobbys des rooms
+    <v-container fluid class="text-h3 text-center py-8">
+      Collaborative sessions
     </v-container>
-    <v-divider></v-divider>
     <!-- Milieu de page : les différentes cartes de scènes -->
     <template>
       <v-row dense class="pa-2">
-        Ma room actuelle : None
-      </v-row>
-      <v-row dense class="pa-2">
-        Les différentes rooms :
+        <v-alert dense color="primary" class="flex-grow-1">
+          <v-row align="center">
+            <v-col class="grow black--text">
+              <v-icon left color="black">mdi-account-supervisor-circle</v-icon>
+              Current session : None
+            </v-col>
+            <v-col class="shrink">
+              <v-btn @click="leaveSession">Leave session</v-btn>
+            </v-col>
+          </v-row>
+        </v-alert>
       </v-row>
 
       <!-- Les différentes rooms -->
@@ -47,6 +53,14 @@
 
           <v-card-actions>
             <v-spacer></v-spacer>
+            <v-btn
+              v-on:click="() => joinSession(card)"
+              class="primary black--text"
+              large
+              elevation="2"
+            >
+              Join
+            </v-btn>
           </v-card-actions>
         </v-card>
       </v-card>
@@ -56,34 +70,12 @@
       <v-flex class="flex-grow-0 mx-5">
         <!-- Permet de créer une room -->
         <v-btn
-          v-on:click="creerRoom"
-          class="yellow darken-3 font-weight-black"
+          v-on:click="createSession"
+          class="primary black--text"
           large
           elevation="2"
         >
-          Créer une room
-        </v-btn>
-      </v-flex>
-      <v-flex class="flex-grow-0 mx-5">
-        <!-- Permet de rejoindre une room -->
-        <v-btn
-          v-on:click="rejoindreRoom"
-          class="yellow darken-3 font-weight-black"
-          large
-          elevation="2"
-        >
-          Rejoindre une room
-        </v-btn>
-      </v-flex>
-      <v-flex class="flex-grow-0 mx-5">
-        <!-- Permet de quitter une room -->
-        <v-btn
-          v-on:click="quitterRoom"
-          class="yellow darken-3 font-weight-black"
-          large
-          elevation="2"
-        >
-          Quitter la room
+          Create new session
         </v-btn>
       </v-flex>
     </v-layout>
@@ -176,13 +168,13 @@ export default class ErgonomIOAssets extends Vue {
   }
 
   // Permet de créer une room
-  creerRoom (): void {
+  createSession (): void {
     console.log('Creer room')
     this.envoyerUnreal(new Room({ action: 'creerRoom' }))
   }
 
   // Permet de rejoindre une room
-  rejoindreRoom (): void {
+  joinSession (): void {
     console.log('Rejoindre room')
 
     var objectAsset = {
@@ -198,7 +190,7 @@ export default class ErgonomIOAssets extends Vue {
   }
 
   // Permet de quitter une room
-  quitterRoom (): void {
+  leaveSession (): void {
     console.log('Quitter room')
     this.envoyerUnreal(new Room({ action: 'quitterRoom' }))
   }

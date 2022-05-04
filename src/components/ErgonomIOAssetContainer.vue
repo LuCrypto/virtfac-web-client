@@ -3,7 +3,7 @@
     <input
       ref="objUpload"
       type="file"
-      accept=".gltf, .obj, .fbx, .stl"
+      accept=".gltf, .obj, .fbx, .stl, .wrl"
       hidden
       @change="onFileUploaded"
     />
@@ -90,6 +90,7 @@ import {
   Vector3
 } from 'three'
 import { Session } from '@/utils/session'
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
 
 class MenuItem {
   text: string
@@ -132,6 +133,8 @@ export default class ErgonomIOAssetContainer extends Vue {
   fileName = ''
   viewer: ModelViewer | null = null
 
+  currentAsset: Group | null = null
+
   updateTheme (): void {
     if (this.viewer !== null) {
       if (Session.getTheme() === 'dark') {
@@ -170,10 +173,24 @@ export default class ErgonomIOAssetContainer extends Vue {
     )
     this.menuItemList.push(
       new MenuItem('Save File', 'mdi-file-document', () => {
-        this.openFilePopUp()
+        this.exportGltf()
       })
     )
-
+    this.menuItemList.push(
+      new MenuItem('Apply Transform', 'mdi-axis-arrow', () => {
+        this.applyTransform()
+      })
+    )
+    this.menuItemList.push(
+      new MenuItem('Switch Axis Mode', 'mdi-axis-z-arrow', () => {
+        this.switchAxisMode()
+      })
+    )
+    this.menuItemList.push(
+      new MenuItem('Switch Snap Mode', 'mdi-ruler', () => {
+        this.switchSnapMode()
+      })
+    )
     // const mapper = new Mapper(CAEExampleFormat1)
   }
 
@@ -265,76 +282,96 @@ export default class ErgonomIOAssetContainer extends Vue {
     onProgress?: { (event: ProgressEvent<EventTarget>): void }
   ) {
     const loaders = new Map<string, Loader>([
+      ['gltf', new GLTFLoader()],
       ['obj', new OBJLoader()],
       ['fbx', new FBXLoader()],
       ['stl', new STLLoader()],
-      ['vrml', new VRMLLoader()],
+      ['wrl', new VRMLLoader()],
       ['vtk', new VTKLoader()],
       ['3dm', new Rhino3dmLoader()],
       ['ply', new PLYLoader()],
       ['tds', new TDSLoader()]
     ])
-
+    /*
     if (extension === 'gltf') {
       if (this.viewer !== null) {
         this.viewer.loadGLTFFromPath(url)
       }
-    } else {
-      const loader = loaders.get(extension)
-      if (loader !== undefined) {
-        loader.loadAsync(url, onProgress).then(
-          object => {
-            if (extension === 'obj') {
-              if (object instanceof Object3D) {
-                object.traverse(child => {
-                  if (child instanceof Mesh) {
-                    child.material = this.defaultMaterial
-                  }
-                })
-              }
+    }
+    else {
+    */
+    const loader = loaders.get(extension)
+    if (loader !== undefined) {
+      loader.loadAsync(url, onProgress).then(
+        object => {
+          if (extension === 'obj') {
+            if (object instanceof Object3D) {
+              object.traverse(child => {
+                if (child instanceof Mesh) {
+                  child.material = this.defaultMaterial
+                }
+              })
             }
-            if (extension === 'fbx') {
-              if (object instanceof Object3D) {
-                const m = new Matrix4()
-                m.scale(new Vector3(0.01, 0.01, 0.01))
-                object.applyMatrix4(m)
-              }
-            }
+          } else if (extension === 'fbx') {
+            if (object instanceof Object3D) {
+              const m = new Matrix4()
+              m.scale(new Vector3(0.01, 0.01, 0.01))
+              object.applyMatrix4(m)
+              object.updateMatrix()
+              object.traverse(child => {
+                if (child instanceof Mesh) {
+                  child.updateMatrix()
+                  child.geometry.applyMatrix4(child.matrixWorld)
 
-            if (extension === 'stl') {
-              if (object instanceof BufferGeometry) {
-                console.log('rescale')
-                const m = new Matrix4()
-                // m.scale(new Vector3(0.01, 0.01, 0.01))
-                m.makeRotationX(-Math.PI / 2)
-                object.applyMatrix4(m)
-              }
-              const mesh = new Mesh(object, this.defaultMaterial)
+                  child.position.set(0, 0, 0)
+                  child.rotation.set(0, 0, 0)
+                  child.scale.set(1, 1, 1)
+                  child.updateMatrix()
+                }
+              })
+              object.updateMatrix()
+            }
+          } else if (extension === 'stl') {
+            if (object instanceof BufferGeometry) {
+              console.log('rescale')
+              const m = new Matrix4()
+              // m.scale(new Vector3(0.01, 0.01, 0.01))
+              m.makeRotationX(-Math.PI / 2)
+              object.applyMatrix4(m)
+            }
+            object = new Mesh(object, this.defaultMaterial)
+            /*
               mesh.traverse(child => {
                 if (child instanceof Mesh) {
                   child.castShadow = true
                   child.receiveShadow = true
                 }
               })
-              const group = new Group()
-              group.add(mesh)
-              onLoaded(group)
-            } else {
-              if (object instanceof Object3D) {
-                object.traverse(child => {
-                  if (child instanceof Mesh) {
-                    child.castShadow = true
-                    child.receiveShadow = true
-                  }
-                })
+              */
+            const group = new Group()
+            group.add(object)
+            onLoaded(group)
+          } else if (extension === 'gltf') {
+            object = object.scene
+          }
+
+          if (object instanceof Object3D) {
+            object.traverse(child => {
+              if (child instanceof Mesh) {
+                child.castShadow = true
+                child.receiveShadow = true
               }
-              if (object instanceof Mesh) {
-                object.castShadow = true
-                object.receiveShadow = true
-              }
-              onLoaded(object)
-            }
-            /*
+            })
+          } else {
+            console.log(typeof object, object)
+          }
+          if (object instanceof Mesh) {
+            object.castShadow = true
+            object.receiveShadow = true
+          }
+          onLoaded(object)
+
+          /*
             if (this.viewer !== null) {
               // this.viewer.addObjectToScene(object)
               console.log('hello3')
@@ -356,13 +393,32 @@ export default class ErgonomIOAssetContainer extends Vue {
               {}
             )
             */
-          },
-          reason => {
-            console.log(reason)
-          }
-        )
-      }
+        },
+        reason => {
+          console.log(reason)
+        }
+      )
     }
+    // }
+  }
+
+  exportGltf () {
+    if (this.currentAsset === null) return
+    const gltfExporter = new GLTFExporter()
+    gltfExporter.parse(
+      this.currentAsset,
+      gltf => {
+        const file = new Blob([JSON.stringify(gltf)], {
+          type: 'text/plain'
+        })
+        // todo send to API
+        const link = document.createElement('a')
+        link.download = 'export.gltf'
+        link.href = URL.createObjectURL(file)
+        link.click()
+      },
+      {}
+    )
   }
 
   onFileUploaded (event: Event) {
@@ -376,8 +432,13 @@ export default class ErgonomIOAssetContainer extends Vue {
           extension,
           obj => {
             if (this.viewer !== null) {
+              if (this.currentAsset !== null) {
+                this.viewer.controlMesh(null)
+                this.viewer.removeObjectToScene(this.currentAsset)
+              }
               this.viewer.addObjectToScene(obj)
               this.viewer.controlMesh(obj)
+              this.currentAsset = obj
             }
           },
           event => {
@@ -386,6 +447,40 @@ export default class ErgonomIOAssetContainer extends Vue {
         )
       }
     }
+  }
+
+  applyTransform () {
+    if (this.currentAsset === null) return
+    this.currentAsset.updateMatrix()
+    // this.currentAsset.applyMatrix4(this.currentAsset.matrix)
+    this.currentAsset.traverse(child => {
+      if (child instanceof Mesh) {
+        child.geometry.applyMatrix4(child.matrixWorld)
+      }
+    })
+    this.currentAsset.position.set(0, 0, 0)
+    this.currentAsset.rotation.set(0, 0, 0)
+    this.currentAsset.scale.set(1, 1, 1)
+    this.currentAsset.updateMatrix()
+  }
+
+  switchAxisMode () {
+    if (this.viewer === null) return
+    switch (this.viewer.getMeshControlMode()) {
+      case 'translate':
+        this.viewer.setMeshControlMode('rotate')
+        break
+      case 'rotate':
+        this.viewer.setMeshControlMode('scale')
+        break
+      case 'scale':
+        this.viewer.setMeshControlMode('translate')
+        break
+    }
+  }
+
+  switchSnapMode () {
+    if (this.viewer !== null) this.viewer.switchMeshControlSnap()
   }
 }
 
