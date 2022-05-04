@@ -12,34 +12,56 @@
       z-index="100"
       class="d-flex flex-column justify-start;"
     >
-      <v-btn medium @click.stop="setMode('DOOR')" style="margin-bottom:5px;"
-        ><v-icon style="position:absolute; left:0; margin-right:10px"
-          >mdi-door-closed</v-icon
-        >
-        <p style="width:30px"></p>
-        Place doors
-      </v-btn>
-      <v-btn medium @click.stop="" style="margin-bottom:5px;"
-        ><v-icon style="position:absolute; left:0; margin-right:10px"
-          >mdi-wall</v-icon
-        >
-        <p style="width:30px"></p>
-        Place walls
-      </v-btn>
-      <v-btn medium @click.stop="" style="margin-bottom:5px;"
-        ><v-icon style="position:absolute; left:0; margin-right:10px"
-          >mdi-wall-fire</v-icon
-        >
-        <p style="width:30px"></p>
-        remove walls
-      </v-btn>
-      <v-btn medium @click.stop="setMode('WINDOW')" style="margin-bottom:5px;"
-        ><v-icon style="position:absolute; left:0; margin-right:10px"
-          >mdi-window-closed-variant</v-icon
-        >
-        <p style="width:30px"></p>
-        Place windows
-      </v-btn>
+      <v-btn-toggle v-model="mode" class="flex-wrap">
+        <v-btn
+          value="DOOR"
+          medium
+          @click.stop="setMode('DOOR')"
+          class="flex-grow-1"
+          style="margin-bottom:5px;"
+          ><v-icon style="position:absolute; left:0; margin-right:10px"
+            >mdi-door-closed</v-icon
+          >
+          <p style="width:30px"></p>
+          Place doors
+        </v-btn>
+        <v-btn
+          medium
+          @click.stop="setMode('WALL')"
+          style="margin-bottom:5px;"
+          value="WALL"
+          class="flex-grow-1"
+          ><v-icon style="position:absolute; left:0; margin-right:10px"
+            >mdi-wall</v-icon
+          >
+          <p style="width:30px"></p>
+          Place walls
+        </v-btn>
+        <v-btn
+          medium
+          @click.stop="setMode('SUPP_WALL')"
+          class="flex-grow-1"
+          style="margin-bottom:5px;"
+          value="SUPP_WALL"
+          ><v-icon style="position:absolute; left:0; margin-right:10px"
+            >mdi-wall-fire</v-icon
+          >
+          <p style="width:30px"></p>
+          remove walls
+        </v-btn>
+        <v-btn
+          medium
+          @click.stop="setMode('WINDOW')"
+          class="flex-grow-1"
+          style="margin-bottom:5px;"
+          value="WINDOW"
+          ><v-icon style="position:absolute; left:0; margin-right:10px"
+            >mdi-window-closed-variant</v-icon
+          >
+          <p style="width:30px"></p>
+          Place windows
+        </v-btn>
+      </v-btn-toggle>
     </div>
   </div>
 </template>
@@ -65,6 +87,13 @@ import { Session } from '@/utils/session'
 })
 export default class BlueprintEditor extends Vue {
   private container: Element | null = null
+  private mode:
+    | 'WALL'
+    | 'DOOR'
+    | 'WINDOW'
+    | 'SUPP_WALL'
+    | 'SUPP_FURNITURE'
+    | 'SCALE' = 'WALL'
 
   private bpContainer: BlueprintContainer | null = null
   public getBpContainer () {
@@ -74,10 +103,13 @@ export default class BlueprintEditor extends Vue {
   mounted () {
     this.container = this.$refs.container as Element
     this.bpContainer = new BlueprintContainer(this.container as HTMLElement)
+    this.bpContainer.onModeChanged.addListener(mode => {
+      this.mode = mode
+    })
   }
 
   setMode (mode: 'WALL' | 'DOOR' | 'WINDOW' | 'SUPP_WALL' | 'SUPP_FURNITURE') {
-    console.log('hello', this.bpContainer)
+    this.mode = mode
     if (this.bpContainer === null) return
     if (this.bpContainer.getMode() === mode) {
       this.bpContainer.setMode('WALL')
