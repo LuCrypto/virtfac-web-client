@@ -59,6 +59,15 @@ export class BpWallLink {
   private container: BlueprintContainer
 
   private hoveringPosition: Vec2 = new Vector2(0, 0)
+  private hovered = false
+
+  private isHighlighted () {
+    return (
+      this.hovered === true ||
+      this.link.getNode().getDataOrDefault<boolean>('_highlighted', false) ||
+      this.link.getOriginNode().getDataOrDefault<boolean>('_highlighted', false)
+    )
+  }
 
   constructor (link: Link, bpContainer: BlueprintContainer) {
     this.link = link
@@ -74,7 +83,34 @@ export class BpWallLink {
     this.line.setStyle({ 'pointer-events': 'none' })
     this.doubleLine.setStyle({ 'pointer-events': 'none' })
 
-    const switchDouble = (e: MouseEvent) => {
+    link
+      .getNode()
+      .onDataChanged()
+      .addMappedListener(
+        '_highlighted',
+        arg => {
+          this.updateTheme()
+        },
+        this
+      )
+    link
+      .getOriginNode()
+      .onDataChanged()
+      .addMappedListener(
+        '_highlighted',
+        arg => {
+          this.updateTheme()
+        },
+        this
+      )
+
+    const onmouseleave = (e: MouseEvent) => {
+      this.container.removeFurniturePreview()
+      this.hovered = false
+      this.updateTheme()
+    }
+
+    const onmouseup = (e: MouseEvent) => {
       if (e.button === 2) {
         this.link.setData<boolean>(
           'double',
@@ -249,18 +285,25 @@ export class BpWallLink {
               tunnelId
             )
           )
+      } else if (this.container.getMode() === 'SUPP_WALL') {
+        this.container.getBlueprint().removeWall(this.link)
       } else {
         this.container.onMouseUp(e)
       }
     }
 
-    this.collider.getDom().onmouseup = switchDouble
+    this.collider.getDom().onmouseup = onmouseup
+    this.collider.getDom().onmouseleave = onmouseleave
     this.collider.getDom().oncontextmenu = e => {
       e.preventDefault()
     }
 
     this.collider.getDom().onmousedown = e => {
       if (e.button === 1) this.container.onMouseDown(e)
+    }
+    this.collider.getDom().onmouseover = e => {
+      this.hovered = true
+      this.updateTheme()
     }
     this.collider.getDom().onmousemove = e => {
       const clientPos = this.container.clientPosToContainerPos(
@@ -276,11 +319,38 @@ export class BpWallLink {
         p1,
         p2
       )
+      /*
       this.container.testPoint.setStyle({
         transform: `translate(${intersectionpos.x - 3}px, ${intersectionpos.y -
           3}px)`
       })
+      */
       this.hoveringPosition = intersectionpos
+      if (
+        this.container.getMode() === 'WINDOW' ||
+        this.container.getMode() === 'DOOR'
+      ) {
+        const dist =
+          Vector2.norm(
+            Vector2.minus(
+              link.getOriginNode().getData<Vec2>('position'),
+              this.hoveringPosition
+            )
+          ) /
+          Vector2.distanceBetween(
+            link.getOriginNode().getData<Vec2>('position'),
+            link.getNode().getData<Vec2>('position')
+          )
+        this.container.setFurniturePreview(
+          link.getOriginNode(),
+          this.link,
+          dist,
+          150,
+          this.container.getMode() === 'DOOR'
+        )
+
+        console.log('preview : ' + this.container.getMode())
+      }
       this.container.onMouseMove(e)
     }
     this.collider.getDom().onwheel = e => this.container.zoom(e)
@@ -313,7 +383,12 @@ export class BpWallLink {
     this.length.setStyle({ fill: this.container.getTheme().WallLinkColor })
     this.line
       .getDom()
-      .setAttribute('stroke', this.container.getTheme().WallLinkColor)
+      .setAttribute(
+        'stroke',
+        this.isHighlighted() && this.container.getMode() === 'SUPP_WALL'
+          ? this.container.getTheme().EraseColor
+          : this.container.getTheme().WallLinkColor
+      )
     this.line
       .getDom()
       .setAttribute(

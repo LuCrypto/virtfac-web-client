@@ -31,7 +31,7 @@ export class Blueprint extends MetaData {
     return this.wallGraph.onLinkDataChanged()
   }
 
-  public foreachWallNode (func : { (node : Node):void }) {
+  public foreachWallNode (func: { (node: Node): void }) {
     this.wallGraph.foreachNode(func)
   }
 
@@ -69,6 +69,14 @@ export class Blueprint extends MetaData {
         )
       )
     )
+  }
+
+  public removeWall (link: Link) {
+    link.getOriginNode().removeLink(link.getNode())
+    link
+      .getNode()
+      .getData<Set<Node>>('targetBy')
+      .delete(link.getOriginNode())
   }
 
   public isInside (pos: Vec2) {
@@ -152,20 +160,24 @@ export class Blueprint extends MetaData {
       },
       this
     )
-    this.onDataChanged().addMappedListener('scale', arg => {
-      this.wallGraph.foreachNode(n => {
-        n.foreachLink(l => {
-          l.setData<number>(
-            'length',
-            Vector2.norm(
-              Vector2.minus(
-                l.getNode().getData<Vec2>('position'),
-                n.getData<Vec2>('position')
-              )
-            ) / this.getData<number>('scale')
-          )
+    this.onDataChanged().addMappedListener(
+      'scale',
+      arg => {
+        this.wallGraph.foreachNode(n => {
+          n.foreachLink(l => {
+            l.setData<number>(
+              'length',
+              Vector2.norm(
+                Vector2.minus(
+                  l.getNode().getData<Vec2>('position'),
+                  n.getData<Vec2>('position')
+                )
+              ) / this.getData<number>('scale')
+            )
+          })
         })
-      })
-    }, this)
+      },
+      this
+    )
   }
 }
