@@ -1,5 +1,16 @@
 <template>
   <v-card elevation="3" height="700px" class="d-flex flex-row">
+    <pop-up ref="openFilePopUp">
+      <open-file
+        @close="$refs.openFilePopUp.close()"
+        application="ERGONOM_IO"
+        accept=".gltf, .obj, .fbx, .stl, .wrl"
+        :uploadPipeline="onFileUpload"
+        :singleSelect="true"
+        :openFile="true"
+        @fileInput="onFileInput"
+      ></open-file>
+    </pop-up>
     <input
       ref="objUpload"
       type="file"
@@ -91,6 +102,9 @@ import {
 } from 'three'
 import { Session } from '@/utils/session'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
+import PopUp from './PopUp.vue'
+import OpenFile from '@/components/OpenFile.vue'
+import { load } from 'dotenv/types'
 
 class MenuItem {
   text: string
@@ -115,7 +129,9 @@ interface SettingItem {
     ActionContainer,
     SelectPopUp,
     InputFieldPopUp,
-    ModelViewer
+    ModelViewer,
+    PopUp,
+    OpenFile
   }
 })
 export default class ErgonomIOAssetContainer extends Vue {
@@ -168,7 +184,7 @@ export default class ErgonomIOAssetContainer extends Vue {
     )
     this.menuItemList.push(
       new MenuItem('Open File', 'mdi-file-document', () => {
-        this.openFilePopUp()
+        (this.$refs.openFilePopUp as PopUp).open()
       })
     )
     this.menuItemList.push(
@@ -280,7 +296,7 @@ export default class ErgonomIOAssetContainer extends Vue {
     extension: string,
     onLoaded: { (object: Group): void },
     onProgress?: { (event: ProgressEvent<EventTarget>): void }
-  ) {
+  ): void {
     const loaders = new Map<string, Loader>([
       ['gltf', new GLTFLoader()],
       ['obj', new OBJLoader()],
@@ -482,8 +498,63 @@ export default class ErgonomIOAssetContainer extends Vue {
   switchSnapMode () {
     if (this.viewer !== null) this.viewer.switchMeshControlSnap()
   }
-}
 
+  onFileInput (files: APIFile[]): void {
+    const file = files.pop()
+    if (file != null) {
+      const fileContent = file.uri.split('base64,')[1]
+      const content = atob(fileContent)
+      this.loadObjectAsync(file.uri, 'gltf', obj => {
+        console.log(obj)
+        if (this.viewer !== null) {
+          if (this.currentAsset !== null) {
+            this.viewer.controlMesh(null)
+            this.viewer.removeObjectToScene(this.currentAsset)
+          }
+          this.viewer.addObjectToScene(obj)
+          this.viewer.controlMesh(obj)
+          this.currentAsset = obj
+        }
+      })
+    } else {
+      console.error('Unable to open selected file.')
+      this.$root.$emit('bottom-message', 'Unable to open selected file.')
+    }
+  }
+
+  onFileUpload (file: File): Promise<File> {
+    return new Promise<File>((resolve, reject) => {
+      const extension = (file.name.split('.').pop() as string).toLowerCase()
+      this.loadObjectAsync(
+        URL.createObjectURL(file),
+        extension,
+        obj => {
+          const gltfExporter = new GLTFExporter()
+          gltfExporter.parse(
+            obj,
+            gltf => {
+              const blob = new Blob([JSON.stringify(gltf)], {
+                type: 'model/gltf+json'
+              })
+              const f = new File(
+                [blob],
+                file.name.substring(0, file.name.length - extension.length) +
+                  'gltf',
+                { type: 'model/gltf+json' }
+              )
+              resolve(f)
+            },
+            {}
+          )
+        },
+        event => {
+          console.log((event.loaded / event.total) * 100 + '% loaded')
+        }
+      )
+    })
+  }
+}
+// onFile
 /*
 updateUploadFile (e: Event): void {
     if (e.target == null) return

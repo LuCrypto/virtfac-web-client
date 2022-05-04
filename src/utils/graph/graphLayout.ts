@@ -6,6 +6,12 @@ import { Link } from '@/utils/graph/link'
 import { GraphUtils } from './graphUtils'
 
 export class GraphLayout {
+  /**
+   *
+   * @param graph
+   * @param stepSize space between hierarchy level
+   * @param positionField key of metadata containing the Vec2 position in the graph
+   */
   public static verticalHierarchyLayout (
     graph: Graph,
     stepSize: number,
@@ -24,6 +30,12 @@ export class GraphLayout {
     })
   }
 
+  /**
+   *
+   * @param graph
+   * @param stepSize space between hierarchy level
+   * @param positionField key of metadata containing the Vec2 position in the graph
+   */
   public static horizontalHierarchyLayout (
     graph: Graph,
     stepSize: number,
@@ -42,6 +54,12 @@ export class GraphLayout {
     })
   }
 
+  /**
+   * position the nodes arround a circle
+   * @param graph
+   * @param stepSize space (euler distance) between nodes
+   * @param positionField key of metadata containing the Vec2 position in the graph
+   */
   public static circleLayout (
     graph: Graph,
     stepSize: number,
@@ -57,11 +75,18 @@ export class GraphLayout {
     })
   }
 
+  /**
+   * change horizontal ordering of nodes with y position to zero to limit crossing of links
+   * @param graph
+   * @param stepSize horizontal space between root nodes
+   * @param positionField key of metadata containing the Vec2 position in the graph
+   */
   public static horizontalOrdering (
     graph: Graph,
     stepSize: number,
     positionField = 'position'
   ) {
+    // get nodes sorted by y position
     let nodeArray = new Array<{ n: Node; d: number }>()
     graph.foreachNode(n => {
       nodeArray.push({ n: n, d: Math.abs(n.getData<Vec2>(positionField).y) })
@@ -73,6 +98,7 @@ export class GraphLayout {
     let leftBorder = -stepSize / 2
     let rightBorder = stepSize / 2
 
+    // go to the first node with y > 0
     let start = 0
     for (let i = 0; i < nodeArray.length; i++) {
       if (nodeArray[i].d > 0) {
@@ -80,6 +106,19 @@ export class GraphLayout {
         break
       }
     }
+
+    /*
+    first step :
+      get the first node with y>0, set his x position to 0 and arrange linked y=0 nodes of this node with surrounding x position.
+      example of result :
+      with s = stepSize
+
+       ------  x=0, y>0  ---
+       |                   |
+       x=-s/2,y=0      x=s/2, y=0
+    loop :
+      get next node with y>0,
+    */
 
     let childPositionning: 'LEFT' | 'MIDDLE' | 'RIGHT' = 'MIDDLE'
 

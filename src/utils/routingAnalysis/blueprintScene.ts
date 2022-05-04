@@ -17,7 +17,10 @@ import THREE, {
   DoubleSide,
   MeshLambertMaterial,
   MeshToonMaterial,
-  Vector3
+  Vector3,
+  MeshPhongMaterial,
+  MeshPhysicalMaterial,
+  Group
 } from 'three'
 import { DelayedCallback } from '../graph/delayedCallback'
 import { GLTFExporter } from 'three/examples/jsm/exporters/GLTFExporter'
@@ -48,12 +51,11 @@ export class BlueprintScene {
         t2pos: { x: number; y: number; z: number }
       }
     >()
-    const geometry = new BufferGeometry()
 
     const vertices = new Array<number>()
     const normals = new Array<number>()
     const uv = new Array<number>()
-    const triangles = new Array<number>()
+    const triangles = new Array<number[]>()
     const h = blueprint.getDataOrDefault<number>('roof_height', 2.5)
     const w = blueprint.getDataOrDefault<number>('wall_width', 0.01)
     let nextIndex = 0
@@ -62,10 +64,16 @@ export class BlueprintScene {
     const y = 2
     const z = 1
 
-    const addTriangle = (i1: number, i2: number, i3: number) => {
-      triangles.push(i1)
-      triangles.push(i2)
-      triangles.push(i3)
+    triangles.push(new Array<number>()) // 0:wall
+    triangles.push(new Array<number>()) // 1:window
+    triangles.push(new Array<number>()) // 2:door
+    triangles.push(new Array<number>()) // 3:ceiling
+    triangles.push(new Array<number>()) // 4:floor
+
+    const addTriangle = (i1: number, i2: number, i3: number, layer = 0) => {
+      triangles[layer].push(i1)
+      triangles[layer].push(i2)
+      triangles[layer].push(i3)
     }
     const addNormal = (v: Vec2, z = 0) => {
       normals.push(v.x)
@@ -126,14 +134,15 @@ export class BlueprintScene {
       v2: number,
       v3: number,
       v4: number,
-      reverse = false
+      reverse = false,
+      layer = 0
     ) => {
       if (reverse) {
-        addTriangle(v1, v3, v2)
-        addTriangle(v1, v4, v3)
+        addTriangle(v1, v3, v2, layer)
+        addTriangle(v1, v4, v3, layer)
       } else {
-        addTriangle(v1, v2, v3)
-        addTriangle(v1, v3, v4)
+        addTriangle(v1, v2, v3, layer)
+        addTriangle(v1, v3, v4, layer)
       }
     }
     const addCopyQuad = (
@@ -141,7 +150,8 @@ export class BlueprintScene {
       v2: number,
       v3: number,
       v4: number,
-      reverse = false
+      reverse = false,
+      layer = 0
     ) => {
       const v1Data = getVertexData(v1)
       const v2Data = getVertexData(v2)
@@ -197,11 +207,11 @@ export class BlueprintScene {
         normal.z
       )
       if (reverse) {
-        addTriangle(_v1, _v3, _v2)
-        addTriangle(_v1, _v4, _v3)
+        addTriangle(_v1, _v3, _v2, layer)
+        addTriangle(_v1, _v4, _v3, layer)
       } else {
-        addTriangle(_v1, _v2, _v3)
-        addTriangle(_v1, _v3, _v4)
+        addTriangle(_v1, _v2, _v3, layer)
+        addTriangle(_v1, _v3, _v4, layer)
       }
     }
     const getVertexData = (vertexId: number) => {
@@ -342,48 +352,217 @@ export class BlueprintScene {
               if (tunnel.has(c.tunnelId)) {
                 const otherHole = tunnel.get(c.tunnelId)
                 if (otherHole !== undefined) {
+                  const matLayer = c.by > 0 ? 1 : 2
                   if (
                     v3Dist(otherHole.t1pos, { x: p1.x, y: p1.y, z: c.ty }) <
                     v3Dist(otherHole.t2pos, { x: p1.x, y: p1.y, z: c.ty })
                   ) {
-                    addCopyQuad(hmb1, hmt1, otherHole.t1, otherHole.b1)
-                    addCopyQuad(hmt1, hmt2, otherHole.t2, otherHole.t1)
-                    addCopyQuad(hmb2, hmt2, otherHole.t2, otherHole.b2)
+                    addCopyQuad(
+                      hmb1,
+                      hmt1,
+                      otherHole.t1,
+                      otherHole.b1,
+                      false,
+                      matLayer
+                    )
+                    addCopyQuad(
+                      hmt1,
+                      hmt2,
+                      otherHole.t2,
+                      otherHole.t1,
+                      false,
+                      matLayer
+                    )
+                    addCopyQuad(
+                      hmb2,
+                      hmt2,
+                      otherHole.t2,
+                      otherHole.b2,
+                      false,
+                      matLayer
+                    )
                     if (c.by > 0) {
-                      addCopyQuad(hmb1, hmb2, otherHole.b2, otherHole.b1)
+                      addCopyQuad(
+                        hmb1,
+                        hmb2,
+                        otherHole.b2,
+                        otherHole.b1,
+                        false,
+                        matLayer
+                      )
                     }
 
-                    addCopyQuad(hmb1, hmt1, otherHole.t1, otherHole.b1, true)
-                    addCopyQuad(hmt1, hmt2, otherHole.t2, otherHole.t1, true)
-                    addCopyQuad(hmb2, hmt2, otherHole.t2, otherHole.b2, true)
+                    addCopyQuad(
+                      hmb1,
+                      hmt1,
+                      otherHole.t1,
+                      otherHole.b1,
+                      true,
+                      matLayer
+                    )
+                    addCopyQuad(
+                      hmt1,
+                      hmt2,
+                      otherHole.t2,
+                      otherHole.t1,
+                      true,
+                      matLayer
+                    )
+                    addCopyQuad(
+                      hmb2,
+                      hmt2,
+                      otherHole.t2,
+                      otherHole.b2,
+                      true,
+                      matLayer
+                    )
                     if (c.by > 0) {
-                      addCopyQuad(hmb1, hmb2, otherHole.b2, otherHole.b1, true)
+                      addCopyQuad(
+                        hmb1,
+                        hmb2,
+                        otherHole.b2,
+                        otherHole.b1,
+                        true,
+                        matLayer
+                      )
                     } else {
-                      addCopyQuad(hb1, hmb1, otherHole.b1, otherHole.bb1)
-                      addCopyQuad(hb1, hmb1, otherHole.b1, otherHole.bb1, true)
+                      addCopyQuad(
+                        hb1,
+                        hmb1,
+                        otherHole.b1,
+                        otherHole.bb1,
+                        false,
+                        matLayer
+                      )
+                      addCopyQuad(
+                        hb1,
+                        hmb1,
+                        otherHole.b1,
+                        otherHole.bb1,
+                        true,
+                        matLayer
+                      )
 
-                      addCopyQuad(hb2, hmb2, otherHole.b2, otherHole.bb2)
-                      addCopyQuad(hb2, hmb2, otherHole.b2, otherHole.bb2, true)
+                      addCopyQuad(
+                        hb2,
+                        hmb2,
+                        otherHole.b2,
+                        otherHole.bb2,
+                        false,
+                        matLayer
+                      )
+                      addCopyQuad(
+                        hb2,
+                        hmb2,
+                        otherHole.b2,
+                        otherHole.bb2,
+                        true,
+                        matLayer
+                      )
                     }
                   } else {
-                    addCopyQuad(hmb1, hmt1, otherHole.t2, otherHole.b2)
-                    addCopyQuad(hmt1, hmt2, otherHole.t1, otherHole.t2)
-                    addCopyQuad(hmb2, hmt2, otherHole.t1, otherHole.b1)
+                    addCopyQuad(
+                      hmb1,
+                      hmt1,
+                      otherHole.t2,
+                      otherHole.b2,
+                      false,
+                      matLayer
+                    )
+                    addCopyQuad(
+                      hmt1,
+                      hmt2,
+                      otherHole.t1,
+                      otherHole.t2,
+                      false,
+                      matLayer
+                    )
+                    addCopyQuad(
+                      hmb2,
+                      hmt2,
+                      otherHole.t1,
+                      otherHole.b1,
+                      false,
+                      matLayer
+                    )
                     if (c.by > 0) {
-                      addCopyQuad(hmb1, hmb2, otherHole.b1, otherHole.b2)
+                      addCopyQuad(
+                        hmb1,
+                        hmb2,
+                        otherHole.b1,
+                        otherHole.b2,
+                        false,
+                        matLayer
+                      )
                     }
 
-                    addCopyQuad(hmb1, hmt1, otherHole.t2, otherHole.b2, true)
-                    addCopyQuad(hmt1, hmt2, otherHole.t1, otherHole.t2, true)
-                    addCopyQuad(hmb2, hmt2, otherHole.t1, otherHole.b1, true)
+                    addCopyQuad(
+                      hmb1,
+                      hmt1,
+                      otherHole.t2,
+                      otherHole.b2,
+                      true,
+                      matLayer
+                    )
+                    addCopyQuad(
+                      hmt1,
+                      hmt2,
+                      otherHole.t1,
+                      otherHole.t2,
+                      true,
+                      matLayer
+                    )
+                    addCopyQuad(
+                      hmb2,
+                      hmt2,
+                      otherHole.t1,
+                      otherHole.b1,
+                      true,
+                      matLayer
+                    )
                     if (c.by > 0) {
-                      addCopyQuad(hmb1, hmb2, otherHole.b1, otherHole.b2, true)
+                      addCopyQuad(
+                        hmb1,
+                        hmb2,
+                        otherHole.b1,
+                        otherHole.b2,
+                        true,
+                        matLayer
+                      )
                     } else {
-                      addCopyQuad(hb1, hmb1, otherHole.b2, otherHole.bb2)
-                      addCopyQuad(hb1, hmb1, otherHole.b2, otherHole.bb2, true)
+                      addCopyQuad(
+                        hb1,
+                        hmb1,
+                        otherHole.b2,
+                        otherHole.bb2,
+                        false,
+                        matLayer
+                      )
+                      addCopyQuad(
+                        hb1,
+                        hmb1,
+                        otherHole.b2,
+                        otherHole.bb2,
+                        true,
+                        matLayer
+                      )
 
-                      addCopyQuad(hb2, hmb2, otherHole.b1, otherHole.bb1)
-                      addCopyQuad(hb2, hmb2, otherHole.b1, otherHole.bb1, true)
+                      addCopyQuad(
+                        hb2,
+                        hmb2,
+                        otherHole.b1,
+                        otherHole.bb1,
+                        false,
+                        matLayer
+                      )
+                      addCopyQuad(
+                        hb2,
+                        hmb2,
+                        otherHole.b1,
+                        otherHole.bb1,
+                        true,
+                        matLayer
+                      )
                     }
                   }
                 }
@@ -452,7 +631,8 @@ export class BlueprintScene {
       addTriangle(
         ceilDelaunay[i] + ceilingOffset,
         ceilDelaunay[i + 2] + ceilingOffset,
-        ceilDelaunay[i + 1] + ceilingOffset
+        ceilDelaunay[i + 1] + ceilingOffset,
+        3
       )
     }
 
@@ -475,11 +655,12 @@ export class BlueprintScene {
       addTriangle(
         floorDelaunay[i] + floorOffset,
         floorDelaunay[i + 1] + floorOffset,
-        floorDelaunay[i + 2] + floorOffset
+        floorDelaunay[i + 2] + floorOffset,
+        4
       )
     }
     //
-
+    /*
     geometry.setAttribute(
       'position',
       new BufferAttribute(Float32Array.from(vertices), 3)
@@ -489,16 +670,113 @@ export class BlueprintScene {
       new BufferAttribute(Float32Array.from(normals), 3)
     )
     geometry.setAttribute('uv', new BufferAttribute(Float32Array.from(uv), 2))
-    geometry.setIndex(new BufferAttribute(Uint16Array.from(triangles), 1))
+    let tris = new Array<number>()
+    let oldCount = 0
+    for (let i = 0; i < triangles.length; i++) {
+      console.log(triangles[i].length)
+      tris = tris.concat(triangles[i])
+      geometry.addGroup(oldCount, tris.length, i)
+      oldCount = tris.length
+    }
+    console.log(tris.length)
+    geometry.setIndex(new BufferAttribute(Uint16Array.from(tris), 1))
     geometry.computeVertexNormals()
+*/
+    // const mesh = new Array<Mesh>()
+    const group = new Group()
 
-    const mat = new MeshLambertMaterial({
-      /* side: DoubleSide, */ color: 0xffffff
+    for (let i = 0; i < triangles.length; i++) {
+      const indexMap = new Map<number, number>()
+
+      let currentIndex = 0
+      const localVertex = new Array<number>()
+      const localNormal = new Array<number>()
+      const localUv = new Array<number>()
+
+      triangles[i].forEach(vIndex => {
+        if (!indexMap.has(vIndex)) {
+          localVertex.push(vertices[vIndex * 3])
+          localVertex.push(vertices[vIndex * 3 + 1])
+          localVertex.push(vertices[vIndex * 3 + 2])
+          localNormal.push(normals[vIndex * 3])
+          localNormal.push(normals[vIndex * 3 + 1])
+          localNormal.push(normals[vIndex * 3 + 2])
+          localUv.push(uv[vIndex * 2])
+          localUv.push(uv[vIndex * 2 + 1])
+          indexMap.set(vIndex, currentIndex)
+          currentIndex++
+        }
+      })
+      const geometry = new BufferGeometry()
+      geometry.setAttribute(
+        'position',
+        new BufferAttribute(Float32Array.from(localVertex), 3)
+      )
+      geometry.setAttribute(
+        'normal',
+        new BufferAttribute(Float32Array.from(localNormal), 3)
+      )
+      geometry.setAttribute('uv', new BufferAttribute(Float32Array.from(localUv), 2))
+      geometry.setIndex(
+        new BufferAttribute(
+          Uint16Array.from(
+            triangles[i].map(i => {
+              return indexMap.get(i) as number
+            })
+          ),
+          1
+        )
+      )
+      group.add(
+        new Mesh(
+          geometry,
+          new MeshPhysicalMaterial({
+            color: 0xffffff,
+            roughness: 1,
+            metalness: 0
+          })
+        )
+      )
+    }
+
+    /*
+    const mat = [
+      new MeshPhysicalMaterial({
+        color: 0xffffff,
+        roughness: 1,
+        metalness: 0
+      }),
+      new MeshPhysicalMaterial({
+        color: 0x00ffff,
+        roughness: 1,
+        metalness: 0
+      }),
+      new MeshPhysicalMaterial({
+        color: 0xff00ff,
+        roughness: 1,
+        metalness: 0
+      }),
+      new MeshPhysicalMaterial({
+        color: 0xffff00,
+        roughness: 1,
+        metalness: 0
+      }),
+      new MeshPhysicalMaterial({
+         color: 0xff0000,
+        roughness: 1,
+        metalness: 0
+      })
+    ]
+    */
+    const mat = new MeshPhysicalMaterial({
+      color: 0xffffff,
+      roughness: 1,
+      metalness: 0
     })
 
     const exporter = new GLTFExporter()
     exporter.parse(
-      new Mesh(geometry, mat),
+      group,
       gltf => {
         const a = document.createElement('a')
         const file = new Blob([JSON.stringify(gltf)], {

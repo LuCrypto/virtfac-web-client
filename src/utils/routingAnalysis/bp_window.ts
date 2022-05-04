@@ -91,8 +91,6 @@ export class BpWindow implements Destroyable {
       .add(this)
     this.updateTheme()
     this.updateTransform()
-
-    console.log(this.placement)
   }
 
   public updateTheme () {

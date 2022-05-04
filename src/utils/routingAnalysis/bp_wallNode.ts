@@ -35,22 +35,32 @@ export class BpWallNode {
 
     this.collider.getDom().onmouseenter = e => {
       this.container.wallNodeEnter(this)
+      this.node.setData('_highlighted', true)
       this.point.setStyle({
-        fill: `${bpContainer.getTheme().WallNodeHoverColor}`
+        fill: `${
+          this.container.getMode() === 'SUPP_WALL'
+            ? bpContainer.getTheme().EraseColor
+            : bpContainer.getTheme().WallNodeHoverColor
+        }`
       })
     }
     this.collider.getDom().onmouseleave = e => {
+      this.node.setData('_highlighted', undefined)
       this.container.wallNodeExit(this)
       this.point.setStyle({ fill: `${bpContainer.getTheme().WallNodeColor}` })
     }
 
     this.collider.getDom().onmousedown = e => {
       e.preventDefault()
-      if (e.button === 2) this.container.moveNodeMode(this.getNode())
-      else this.container.onMouseDown(e)
+      if (this.container.getMode() === 'WALL') {
+        if (e.button === 2) this.container.moveNodeMode(this.getNode())
+        else this.container.onMouseDown(e)
+      }
     }
     this.collider.getDom().onmouseup = e => {
-      this.container.onMouseUp(e)
+      if (this.container.getMode() === 'SUPP_WALL') {
+        if (e.button === 0) { this.container.getBlueprint().removeWallNode(this.node) } else this.container.onMouseUp(e)
+      } else this.container.onMouseUp(e)
     }
     this.collider.getDom().onmousemove = e => {
       this.container.onMouseMove(e)

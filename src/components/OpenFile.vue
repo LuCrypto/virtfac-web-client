@@ -315,6 +315,10 @@ export default class OpenFilePopUp extends Vue {
   @Prop({ default: () => 'all' }) private application!: string
   @Prop({ default: () => true }) private singleSelect!: boolean
   @Prop({ default: () => false }) private openFile!: boolean
+  @Prop({ default: () => '' }) private accept!: string
+  @Prop({ default: () => null }) private uploadPipeline!: {
+    (file: File): Promise<File>
+  } | null
 
   waitingTasks = 3
 
@@ -441,41 +445,37 @@ export default class OpenFilePopUp extends Vue {
   }
 
   getAllFormats (): void {
-    API.get(
-      this,
-      '/application/formats/ERGONOM_IO_ANALYSIS',
-      new URLSearchParams({
-        application: this.application
-      })
-    ).then((response: Response) => {
-      this.myFormatList = []
-      const formatList = (response as unknown) as string[]
-      this.getAllFiles(
-        JSON.stringify({
-          select: [
-            'id',
-            'idUserOwner',
-            'idProject',
-            'creationDate',
-            'modificationDate',
-            'name',
-            'color',
-            'tags',
-            'mime'
-          ],
-          where: formatList.map(format => {
-            return {
-              mime: format
-            }
+    API.get(this, '/application/formats/' + this.application, null).then(
+      (response: Response) => {
+        this.myFormatList = []
+        const formatList = (response as unknown) as string[]
+        this.getAllFiles(
+          JSON.stringify({
+            select: [
+              'id',
+              'idUserOwner',
+              'idProject',
+              'creationDate',
+              'modificationDate',
+              'name',
+              'color',
+              'tags',
+              'mime'
+            ],
+            where: formatList.map(format => {
+              return {
+                mime: format
+              }
+            })
           })
-        })
-      )
+        )
 
-      this.myFormatList = formatList.map(MIME =>
-        APIFileMIME.parseFromString(MIME)
-      )
-      this.waitingTasks -= 1
-    })
+        this.myFormatList = formatList.map(MIME =>
+          APIFileMIME.parseFromString(MIME)
+        )
+        this.waitingTasks -= 1
+      }
+    )
   }
 
   getAllFiles (fileParams: string): void {
@@ -536,6 +536,7 @@ export default class OpenFilePopUp extends Vue {
 
   openUploadFile (): void {
     const uploadFileInput = this.$refs.uploadFileInput as HTMLInputElement
+    uploadFileInput.accept = this.accept
     if (uploadFileInput == null) return
     uploadFileInput.value = ''
     uploadFileInput.click()
@@ -559,13 +560,14 @@ export default class OpenFilePopUp extends Vue {
     if (target.files != null && target.files.length > 0) {
       // TODO : Upload file and select format before validation
 
-      [...target.files].forEach(file => {
+      const uploadFileFunc = (f: File) => {
+        console.log('uploadToAPI', f)
         const reader = new FileReader()
         reader.onload = () => {
           const fileString = reader.result as string
           this.uploadFile(
             new APIFile({
-              name: file.name,
+              name: f.name,
               uri: fileString
             })
           )
@@ -574,7 +576,14 @@ export default class OpenFilePopUp extends Vue {
           console.error(error)
           this.$root.$emit('bottom-message', 'Sorry, we cannot read this file.')
         }
-        reader.readAsDataURL(file)
+        reader.readAsDataURL(f)
+      }
+      ;[...target.files].forEach(file => {
+        if (this.uploadPipeline !== null) {
+          this.uploadPipeline(file).then(uploadFileFunc)
+        } else {
+          uploadFileFunc(file)
+        }
       })
     }
   }
