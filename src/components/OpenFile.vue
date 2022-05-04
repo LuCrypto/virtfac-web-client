@@ -561,7 +561,6 @@ export default class OpenFilePopUp extends Vue {
       // TODO : Upload file and select format before validation
 
       const uploadFileFunc = (f: File) => {
-        console.log('uploadToAPI', f)
         const reader = new FileReader()
         reader.onload = () => {
           const fileString = reader.result as string

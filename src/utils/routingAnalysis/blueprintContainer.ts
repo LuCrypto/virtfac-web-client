@@ -404,7 +404,7 @@ export class BlueprintContainer {
     this.testPoint.getDom().setAttribute('width', `${6}`)
     this.testPoint.getDom().setAttribute('height', `${6}`)
     this.testPoint.setStyle({ 'pointer-events': 'none' })
-    this.getNodeLayer().appendChild(this.testPoint)
+    // this.getNodeLayer().appendChild(this.testPoint)
 
     const scaleSvgContainer = new NvEl('svg')
     scaleSvgContainer.setStyle({
