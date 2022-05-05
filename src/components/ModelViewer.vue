@@ -1,5 +1,23 @@
 <template>
-  <div class="viewer-3d" ref="canvasContainer"></div>
+  <div
+    class="viewer-3d"
+    ref="canvasContainer"
+    style="overflow:hidden; position:relative"
+  >
+    <div
+      ref="screenshotViewer"
+      style="position:absolute; max-width:100%; max-height: 100%; aspect-ratio:1/1; width:10000px; border: dashed; border-width:thin; left:50%; top: 50%; transform: translate(-50%,-50%); pointer-events: none; box-shadow: 0 0 0 1000px rgb(0,0,0,0.5);"
+    >
+      <v-btn
+        elevation="2"
+        class="ma-2"
+        color="primary"
+        style="pointer-events:visible"
+        @click="screenShotButtonClick"
+        ><v-icon>mdi-camera</v-icon></v-btn
+      >
+    </div>
+  </div>
 </template>
 
 <script lang="ts">
@@ -10,14 +28,18 @@ import V from '@/utils/vector'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 import { GLTFLoader, GLTF } from 'three/examples/jsm/loaders/GLTFLoader'
 import { BVHLoader, BVH } from 'three/examples/jsm/loaders/BVHLoader'
-import { GridHelper, Group, Object3D } from 'three'
+import { Color, DoubleSide, GridHelper, Group, Mesh, Object3D } from 'three'
 import { TransformControls } from 'three/examples/jsm/controls/TransformControls'
 import { Session } from '@/utils/session'
+import { Vector2 } from '@/utils/graph/Vec'
 
 // import AVATAR from '@/utils/avatar'
 
 @Component
 export default class ModelViewer extends Vue {
+  screenshotViewer: HTMLElement | null = null
+  container: HTMLElement | null = null
+
   selectedMenuItem = -1
   menuCollapse = false
   size: V = new V(0, 0)
@@ -39,7 +61,9 @@ export default class ModelViewer extends Vue {
     this.camera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000)
     this.scene = new THREE.Scene()
     this.renderer = new THREE.WebGLRenderer({
-      antialias: true
+      antialias: true,
+      alpha: true,
+      preserveDrawingBuffer: true
     })
     this.controls = new OrbitControls(this.camera, this.renderer.domElement)
   }
@@ -169,8 +193,12 @@ export default class ModelViewer extends Vue {
     this.camera.position.set(1.5, 2.5, 1.5)
     this.camera.lookAt(new THREE.Vector3(0, 5, 0))
 
-    const container = this.$refs.canvasContainer as HTMLElement
-    container.appendChild(this.renderer.domElement)
+    this.screenshotViewer = this.$refs.screenshotViewer as HTMLElement
+
+    this.container = this.$refs.canvasContainer as HTMLElement
+    this.container.appendChild(this.renderer.domElement)
+
+    this.container.removeChild(this.screenshotViewer)
 
     this.renderer.setClearColor(0x000000, 0)
     this.renderer.shadowMap.enabled = true
@@ -180,7 +208,7 @@ export default class ModelViewer extends Vue {
     const ambiant = new THREE.AmbientLight(0x555555)
     this.scene.add(ambiant)
     // Create sun
-    this.addShadowLight(9, 10, 10, 0xffffff, 2)
+    this.addShadowLight(9, 10, 10, 0xffffff, 0.9)
     this.addShadowLight(-9, -10, -10, 0xffffff, 0.5, false)
 
     // Create sun visualizer
@@ -274,6 +302,94 @@ export default class ModelViewer extends Vue {
     sun.shadow.camera.bottom = -d
     sun.shadow.bias = -0.0002
     sun.shadow.blurSamples = 0
+  }
+
+  public screenShot (
+    onCaptureDone: { (uri: string): void },
+    width?: number,
+    height?: number,
+    hideGrid?: boolean,
+    hideTransformControler?: boolean
+  ) {
+    const oldsize = new THREE.Vector2(0, 0)
+    this.renderer.getSize(oldsize)
+    if (hideGrid) {
+      this.scene.remove(this.gridHelper as GridHelper)
+      this.scene.remove(this.floor as Mesh)
+    }
+    if (hideTransformControler && this.controledObject !== null) {
+      this.scene.remove(this.gizmo as TransformControls)
+    }
+    if (width !== undefined && height !== undefined) {
+      this.renderer.setSize(width, height)
+      this.camera.aspect = width / height
+      this.camera.updateProjectionMatrix()
+    }
+
+    const oldColor = this.scene.background
+    this.scene.background = null
+    this.renderer.setClearColor(0xff0000, 0)
+
+    this.draw()
+    var strMime = 'image/png'
+    const imgData = this.renderer.domElement.toDataURL(strMime)
+    if (hideGrid) {
+      this.scene.add(this.gridHelper as GridHelper)
+      this.scene.add(this.floor as Mesh)
+    }
+    if (hideTransformControler && this.controledObject !== null) {
+      this.scene.add(this.gizmo as TransformControls)
+    }
+    if (width !== undefined && height !== undefined) {
+      this.renderer.setSize(oldsize.x, oldsize.y)
+      this.camera.aspect = oldsize.x / oldsize.y
+      this.camera.updateProjectionMatrix()
+    }
+    this.scene.background = oldColor
+    onCaptureDone(imgData)
+  }
+
+  private onScreenShot: { (): void } = () => {
+    /**/
+  }
+
+  private screanShotAlreadyActive = false
+
+  private screenShotButtonClick () {
+    this.onScreenShot()
+    if (this.container !== null && this.screenshotViewer !== null) {
+      this.container.removeChild(this.screenshotViewer)
+      this.screanShotAlreadyActive = false
+    }
+  }
+
+  public beginScreenshotSession (
+    onCaptureDone: { (uri: string): void },
+    width?: number,
+    height?: number,
+    hideGrid?: boolean,
+    hideTransformControler?: boolean
+  ) {
+    if (this.screanShotAlreadyActive) {
+      if (this.container !== null && this.screenshotViewer !== null) {
+        this.container.removeChild(this.screenshotViewer)
+        this.screanShotAlreadyActive = false
+      }
+    } else {
+      this.onScreenShot = () => {
+        this.screenShot(
+          onCaptureDone,
+          width,
+          height,
+          hideGrid,
+          hideTransformControler
+        )
+      }
+      if (this.container !== null && this.screenshotViewer !== null) {
+        this.container.appendChild(this.screenshotViewer)
+        this.screanShotAlreadyActive = true
+      }
+    }
   }
 
   /*
