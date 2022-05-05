@@ -139,14 +139,24 @@
         </v-card>
 
         <v-container class="d-flex flex-wrap">
-          <v-card
+          <v-layout
             :width="sizeCardString"
             :key="indexCard"
             v-for="(asset, indexCard) in useCategory ? cardsSort : assets"
-            v-on:click="sendUnreal(asset)"
           >
             <v-list-item :key="asset.name">
-              <v-img max-width="190" :src="asset.picture" class="mr-2"></v-img>
+              <v-hover>
+                <template v-slot:default="{ hover }">
+                  <v-btn
+                    :elevation="hover ? 24 : 6"
+                    class="mr-2"
+                    v-on:click="sendUnreal(asset)"
+                    style="width:190px; height:190px"
+                  >
+                    <v-img max-width="190" :src="asset.picture"></v-img>
+                  </v-btn>
+                </template>
+              </v-hover>
 
               <v-list-item-content>
                 <v-list-item-title v-html="asset.name"> </v-list-item-title>
@@ -168,7 +178,7 @@
                 </v-list-item-action>
               </v-list-item-content>
             </v-list-item>
-          </v-card>
+          </v-layout>
         </v-container>
       </v-card>
     </template>
@@ -209,6 +219,7 @@
 import { Component, Vue } from 'vue-property-decorator'
 import API from '@/utils/api'
 import Unreal from '@/utils/unreal'
+import { APIAsset } from '@/utils/models'
 
 // Classe pour les assets
 class CardModel {
@@ -295,6 +306,8 @@ export default class ErgonomIOAssets extends Vue {
 
   // Begin
   mounted (): void {
+    // this.assets.push(new CardModel({ id: this.assets.length }))
+    // this.assets.push(new CardModel({ id: this.assets.length }))
     this.requeteAPI()
     this.createCategory()
   }
@@ -342,24 +355,19 @@ export default class ErgonomIOAssets extends Vue {
   // Requête API pour récupérer les différents assets
   requeteAPI (): void {
     console.log('api ')
-    API.post(
-      this,
-      '/resources/assets',
-      JSON.stringify({
-        select: [],
-        where: []
-      })
-    ).then((response: Response) => {
-      console.log('response ', response)
-      this.assets2 = ((response as unknown) as Array<Partial<CardModel>>).map(
-        (asset: Partial<CardModel>) => new CardModel(asset)
-      )
+    API.post(this, '/resources/assets', JSON.stringify({})).then(
+      (response: Response) => {
+        console.log('response ', response)
+        this.assets2 = ((response as unknown) as Array<Partial<CardModel>>).map(
+          (asset: Partial<CardModel>) => new CardModel(asset)
+        )
 
-      for (let i = 0; i < this.assets2.length; i++) {
-        this.assets.push(this.assets2[i])
+        for (let i = 0; i < this.assets2.length; i++) {
+          this.assets.push(this.assets2[i])
+        }
+        this.assets2 = []
       }
-      this.assets2 = []
-    })
+    )
   }
 
   // Permet de modifier le nom d'un asset
@@ -385,26 +393,27 @@ export default class ErgonomIOAssets extends Vue {
     this.newImage = ''
   }
 
+  // JSON.stringify(asset.parsedTags)
   // Permet de mettre à jour une scène
   releaseAsset (asset: CardModel): void {
     // Requête API pour mettre à jour la scène
+    const apiFile = new APIAsset({
+      name: asset.name,
+      uri: asset.uri,
+      picture: asset.picture,
+      tags: JSON.stringify(asset.parsedTags)
+    })
     API.patch(
       this,
-      `/resources/assets/${asset.id}`,
-      JSON.stringify({
-        color: asset.color,
-        creationDate: asset.creationDate,
-        id: asset.id,
-        idProject: asset.idProject,
-        idUserOwner: asset.idUserOwner,
-        modificationDate: asset.modificationDate,
-        name: asset.name,
-        tags: JSON.stringify(asset.parsedTags),
-        uri: asset.uri
+      '/resources/assets/' + asset.id,
+      JSON.stringify(apiFile.toJSON())
+    )
+      .then(res => {
+        console.log(res)
       })
-    ).then((response: Response) => {
-      console.log('api modif asset')
-    })
+      .catch(err => {
+        console.log(err)
+      })
   }
 
   // Permet de récupérer le fichier qu'on veut upload
@@ -528,7 +537,7 @@ export default class ErgonomIOAssets extends Vue {
     API.put(
       this,
       '/resources/assets',
-      JSON.stringify({
+      new APIAsset({
         color: asset.color,
         creationDate: asset.creationDate,
         id: asset.id,
@@ -539,7 +548,7 @@ export default class ErgonomIOAssets extends Vue {
         name: asset.name,
         tags: JSON.stringify(asset.parsedTags),
         uri: asset.uri
-      })
+      }).toJSON()
     ).then((response: Response) => {
       console.log('api modif asset')
     })
