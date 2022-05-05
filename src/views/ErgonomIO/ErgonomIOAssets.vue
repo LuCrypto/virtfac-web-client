@@ -304,8 +304,6 @@ export default class ErgonomIOAssets extends Vue {
 
   // Begin
   mounted (): void {
-    this.assets.push(new CardModel({ id: this.assets.length }))
-    this.assets.push(new CardModel({ id: this.assets.length }))
     this.requeteAPI()
     this.createCategory()
   }
@@ -355,7 +353,7 @@ export default class ErgonomIOAssets extends Vue {
     console.log('api ')
     API.post(
       this,
-      '/resources/files',
+      '/resources/assets',
       JSON.stringify({
         select: [],
         where: []
@@ -401,7 +399,7 @@ export default class ErgonomIOAssets extends Vue {
     // Requête API pour mettre à jour la scène
     API.patch(
       this,
-      `/resources/files/${asset.id}`,
+      `/resources/assets/${asset.id}`,
       JSON.stringify({
         color: asset.color,
         creationDate: asset.creationDate,
@@ -538,7 +536,7 @@ export default class ErgonomIOAssets extends Vue {
   addAssetAPI (asset: CardModel): void {
     API.put(
       this,
-      '/resources/files',
+      '/resources/assets',
       JSON.stringify({
         color: asset.color,
         creationDate: asset.creationDate,
@@ -604,7 +602,9 @@ export default class ErgonomIOAssets extends Vue {
     console.log('asset.name : ', asset.name)
 
     var objectAsset = {
-      name: asset.name
+      name: asset.name,
+      id: asset.id,
+      uri: asset.uri
     }
 
     var object = {
