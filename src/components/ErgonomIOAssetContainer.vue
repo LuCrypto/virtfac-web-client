@@ -1,7 +1,7 @@
 <template>
   <v-card elevation="3" height="700px" class="d-flex flex-row">
     <pop-up ref="openFilePopUp">
-      <open-file
+      <open-asset
         @close="$refs.openFilePopUp.close()"
         application="ERGONOM_IO"
         accept=".gltf, .obj, .fbx, .stl, .wrl, .glb"
@@ -9,7 +9,7 @@
         :singleSelect="true"
         :openFile="true"
         @fileInput="onFileInput"
-      ></open-file>
+      ></open-asset>
     </pop-up>
     <input
       ref="objUpload"
@@ -70,7 +70,7 @@ import Component from 'vue-class-component'
 import ActionContainer, {
   ActionCallbackData
 } from '@/components/ActionContainer.vue'
-import { APIFile } from '@/utils/models'
+import { APIAsset, APIFile } from '@/utils/models'
 
 import SelectPopUp from '@/components/popup/SelectPopUp.vue'
 import InputFieldPopUp from '@/components/popup/InputFieldPopUp.vue'
@@ -105,7 +105,7 @@ import {
 import { Session } from '@/utils/session'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
 import PopUp from './PopUp.vue'
-import OpenFile from '@/components/OpenFile.vue'
+import OpenAsset from '@/components/OpenAsset.vue'
 import { load } from 'dotenv/types'
 import API from '@/utils/api'
 
@@ -134,7 +134,7 @@ interface SettingItem {
     InputFieldPopUp,
     ModelViewer,
     PopUp,
-    OpenFile
+    OpenAsset
   }
 })
 export default class ErgonomIOAssetContainer extends Vue {
@@ -155,6 +155,7 @@ export default class ErgonomIOAssetContainer extends Vue {
   currentAsset: Group | null = null
   currentAssetApiId = -1
   currentAssetName = ''
+  currentAssetPicture = ''
   inputField: InputFieldPopUp | null = null
 
   updateTheme (): void {
@@ -238,10 +239,13 @@ export default class ErgonomIOAssetContainer extends Vue {
         if (this.viewer !== null) {
           this.viewer.beginScreenshotSession(
             uri => {
+              this.currentAssetPicture = uri
+              /*
               const dlLink = document.createElement('a')
               dlLink.download = this.currentAssetName.replace('.gltf', '.png')
               dlLink.href = uri
               dlLink.click()
+              */
             },
             512,
             512,
@@ -492,7 +496,7 @@ export default class ErgonomIOAssetContainer extends Vue {
     if (this.viewer !== null) this.viewer.switchMeshControlSnap()
   }
 
-  onFileInput (files: APIFile[]): void {
+  onFileInput (files: APIAsset[]): void {
     const file = files.pop()
     if (file != null) {
       const fileContent = file.uri.split('base64,')[1]
@@ -509,6 +513,7 @@ export default class ErgonomIOAssetContainer extends Vue {
           this.currentAsset = obj
           this.currentAssetApiId = file.id
           this.currentAssetName = file.name
+          this.currentAssetPicture = file.picture
         }
       })
     } else {
@@ -564,13 +569,14 @@ export default class ErgonomIOAssetContainer extends Vue {
           const reader = new FileReader()
           reader.onload = () => {
             const fileString = reader.result as string
-            const apiFile = new APIFile({
+            const apiFile = new APIAsset({
               name: this.currentAssetName,
-              uri: fileString
+              uri: fileString,
+              picture: this.currentAssetPicture
             })
             API.patch(
               this,
-              '/resources/files/' + this.currentAssetApiId,
+              '/resources/assets/' + this.currentAssetApiId,
               JSON.stringify(apiFile.toJSON())
             )
               .then(res => {

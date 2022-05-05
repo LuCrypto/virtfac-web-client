@@ -8,14 +8,33 @@
       ref="screenshotViewer"
       style="position:absolute; max-width:100%; max-height: 100%; aspect-ratio:1/1; width:10000px; border: dashed; border-width:thin; left:50%; top: 50%; transform: translate(-50%,-50%); pointer-events: none; box-shadow: 0 0 0 1000px rgb(0,0,0,0.5);"
     >
-      <v-btn
-        elevation="2"
-        class="ma-2"
-        color="primary"
-        style="pointer-events:visible"
-        @click="screenShotButtonClick"
-        ><v-icon>mdi-camera</v-icon></v-btn
-      >
+      <v-layout class="d-flex flex-row">
+        <v-btn
+          elevation="2"
+          class="ma-2"
+          color="primary"
+          style="pointer-events:visible"
+          @click="screenShotButtonClick"
+          ><v-icon>mdi-camera</v-icon></v-btn
+        >
+        <v-slider
+          v-model="fov"
+          :max="180"
+          :min="1"
+          @change="onFovChanged"
+          style="pointer-events: visible"
+          class="ma-2"
+          ><template v-slot:append>
+            <v-text-field
+              v-model="fov"
+              class="mt-0 pt-0"
+              hide-details
+              single-line
+              type="number"
+              style="width: 60px; transform: translateY(-30%)"
+            ></v-text-field></template
+        ></v-slider>
+      </v-layout>
     </div>
   </div>
 </template>
@@ -32,11 +51,14 @@ import { Color, DoubleSide, GridHelper, Group, Mesh, Object3D } from 'three'
 import { TransformControls } from 'three/examples/jsm/controls/TransformControls'
 import { Session } from '@/utils/session'
 import { Vector2 } from '@/utils/graph/Vec'
+import { Prop } from 'vue-property-decorator'
 
 // import AVATAR from '@/utils/avatar'
 
 @Component
 export default class ModelViewer extends Vue {
+  // @Prop({ default: () => 75 }) private fov!: number
+  fov = 75
   screenshotViewer: HTMLElement | null = null
   container: HTMLElement | null = null
 
@@ -355,11 +377,19 @@ export default class ModelViewer extends Vue {
 
   private screanShotAlreadyActive = false
 
+  private onFovChanged (value: number) {
+    console.log(value)
+    this.camera.fov = value
+    this.camera.updateProjectionMatrix()
+  }
+
   private screenShotButtonClick () {
     this.onScreenShot()
     if (this.container !== null && this.screenshotViewer !== null) {
       this.container.removeChild(this.screenshotViewer)
       this.screanShotAlreadyActive = false
+      this.camera.fov = 75
+      this.camera.updateProjectionMatrix()
     }
   }
 
@@ -374,6 +404,8 @@ export default class ModelViewer extends Vue {
       if (this.container !== null && this.screenshotViewer !== null) {
         this.container.removeChild(this.screenshotViewer)
         this.screanShotAlreadyActive = false
+        this.camera.fov = 75
+        this.camera.updateProjectionMatrix()
       }
     } else {
       this.onScreenShot = () => {
@@ -387,6 +419,8 @@ export default class ModelViewer extends Vue {
       }
       if (this.container !== null && this.screenshotViewer !== null) {
         this.container.appendChild(this.screenshotViewer)
+        this.camera.fov = this.fov
+        this.camera.updateProjectionMatrix()
         this.screanShotAlreadyActive = true
       }
     }
