@@ -15,9 +15,9 @@
       <v-row justify="center">
         <v-dialog v-model="popup" max-width="780">
           <v-card>
-            <v-card-title> {{ titrePopup }} </v-card-title>
+            <v-card-title> {{ titlePopup }} </v-card-title>
             <v-card-text>
-              {{ textePopup }}
+              {{ textPopup }}
             </v-card-text>
 
             <v-card-actions>
@@ -32,7 +32,7 @@
 
       <!-- Popup permettant d'afficher de créer une scène avec json -->
       <v-row justify="center">
-        <v-dialog v-model="creerSceneJson" max-width="780">
+        <v-dialog v-model="createSceneJson" max-width="780">
           <v-card>
             <v-card-title> Glisser un fichier scene json </v-card-title>
 
@@ -55,7 +55,7 @@
               <v-btn
                 color="green darken-1"
                 text
-                @click="creerSceneJson = false"
+                @click="createSceneJson = false"
               >
                 OK
               </v-btn>
@@ -66,7 +66,7 @@
 
       <!-- Popup permettant de modifier des données de la scène -->
       <v-row justify="center">
-        <v-dialog v-model="modifierScene" max-width="780">
+        <v-dialog v-model="modifyScene" max-width="780">
           <v-card>
             <v-card-title> Modifier des données </v-card-title>
 
@@ -93,11 +93,11 @@
                 </v-col>
 
                 <v-col cols="4">
-                  <v-text-field v-model="nouveauTag"> </v-text-field>
+                  <v-text-field v-model="newTag"> </v-text-field>
                 </v-col>
 
                 <v-col cols="3">
-                  <v-btn v-on:click="ajouterTag(sceneChoisie, nouveauTag)" icon>
+                  <v-btn v-on:click="addTag(sceneChoose, newTag)" icon>
                     <v-icon v-text="'mdi-plus'"></v-icon>
                   </v-btn>
                 </v-col>
@@ -105,7 +105,7 @@
             </v-container>
 
             <v-container fluid>
-              <v-img height="270" :src="nouvelleImage"> </v-img>
+              <v-img height="270" :src="newImage"> </v-img>
               <v-btn
                 class="ml-6 mt-6 flex-grow-1"
                 color="primary"
@@ -125,7 +125,7 @@
             <v-container
               fluid
               :key="indexTag2"
-              v-for="(tag, indexTag2) in sceneChoisie.parsedTags"
+              v-for="(tag, indexTag2) in sceneChoose.parsedTags"
             >
               <v-row>
                 <v-col cols="2">
@@ -135,7 +135,7 @@
                 </v-col>
 
                 <v-col cols="3">
-                  <v-btn v-on:click="supprimerTag(sceneChoisie, tag)" icon>
+                  <v-btn v-on:click="deleteTag(sceneChoose, tag)" icon>
                     <v-icon v-text="'mdi-delete'"></v-icon>
                   </v-btn>
                 </v-col>
@@ -146,12 +146,12 @@
               <v-btn
                 color="green darken-1"
                 text
-                @click="copieScene(sceneChoisie)"
+                @click="copyScene(sceneChoose)"
               >
                 Faire une copie de la scène
               </v-btn>
               <v-spacer></v-spacer>
-              <v-btn color="green darken-1" text @click="save(sceneChoisie)">
+              <v-btn color="green darken-1" text @click="save(sceneChoose)">
                 Save
               </v-btn>
             </v-card-actions>
@@ -166,33 +166,34 @@
         max-height="775"
       >
         <v-card
-          :key="indexCard"
-          v-for="(card, indexCard) in cards"
-          :width="tailleCardString"
+          :key="indexScene"
+          v-for="(scene, indexScene) in scenes"
+          :width="sizeCardString"
           class="ma-3"
           elevation="5"
-          v-on:click="envoyerUnreal(card)"
+          v-on:click="sendUnreal(scene)"
         >
-          <v-img height="270" :src="card.picture"> </v-img>
-          <v-sheet height="4" :color="`#${card.color.toString(16)}`"> </v-sheet>
+          <v-img height="270" :src="scene.picture"> </v-img>
+          <v-sheet height="4" :color="`#${scene.color.toString(16)}`">
+          </v-sheet>
           <v-card-title>
-            {{ card.name }}
-            <v-btn v-on:click="editerNomScene(card)" icon>
+            {{ scene.name }}
+            <v-btn v-on:click="editNameScene(scene)" icon>
               <v-icon v-text="'mdi-pencil'"></v-icon>
             </v-btn>
           </v-card-title>
           <v-card-subtitle>
             <v-chip
               :key="indexTag"
-              v-for="(tag, indexTag) in card.parsedTags"
+              v-for="(tag, indexTag) in scene.parsedTags"
               class="mr-2 overflow-y-auto"
             >
               {{ tag }}
             </v-chip>
           </v-card-subtitle>
           <v-card-text>
-            {{ card.formatedCreationDate }}, nombre assets :
-            {{ card.assetsNumber }}
+            {{ scene.formatedCreationDate }}, nombre assets :
+            {{ scene.assetsNumber }}, id : {{ scene.id }}
           </v-card-text>
 
           <v-card-actions>
@@ -205,16 +206,16 @@
 
             <v-spacer></v-spacer>
 
-            <v-btn v-on:click="downloadScene(card)" icon>
+            <v-btn v-on:click="downloadScene(scene)" icon>
               <v-icon v-text="'mdi-download'"></v-icon>
             </v-btn>
-            <v-btn v-on:click="outline(card)" icon>
+            <v-btn v-on:click="outline(scene)" icon>
               <v-icon v-text="'mdi-eye'"></v-icon>
             </v-btn>
-            <v-btn v-on:click="clickScene(card)" icon>
+            <v-btn v-on:click="clickScene(scene)" icon>
               <v-icon v-text="'mdi-information'"></v-icon>
             </v-btn>
-            <v-btn v-on:click="supprimerObjet(card)" icon>
+            <v-btn v-on:click="deleteObjet(scene)" icon>
               <v-icon v-text="'mdi-delete'"></v-icon>
             </v-btn>
           </v-card-actions>
@@ -236,14 +237,14 @@
       </v-flex>
       <v-flex class="flex-grow-0 mx-5">
         <!-- Bouton permettant de créer une scène vide -->
-        <v-btn
-          v-on:click="creerSceneJson = true"
+        <!-- <v-btn
+          v-on:click="createSceneJson = true"
           class="yellow darken-3 font-weight-black"
           large
           elevation="2"
         >
           Créer une scène avec json
-        </v-btn>
+        </v-btn> -->
       </v-flex>
       <v-flex class="flex-grow-0 mx-5">
         <!-- Bouton permettant de charger une scène -->
@@ -277,17 +278,17 @@
       <!-- Sélection de la scene choisie -->
       <v-flex class="flex-grow-0 mx-5">
         <v-select
-          :items="cards.map(item => item.name)"
-          v-model="variable"
+          :items="scenes.map(item => item.name)"
+          v-model="sceneForModif"
           label="Scène visée"
           dense
         ></v-select>
       </v-flex>
       <v-flex class="flex-grow-0 mx-5">
-        <v-btn v-on:click="baisserTailleCard()" icon>
+        <v-btn v-on:click="decreaseSizeCard()" icon>
           <v-icon v-text="'mdi-minus'"></v-icon>
         </v-btn>
-        <v-btn v-on:click="augmenterTailleCard()" icon>
+        <v-btn v-on:click="increaseSizeCard()" icon>
           <v-icon v-text="'mdi-plus'"></v-icon>
         </v-btn>
       </v-flex>
@@ -303,13 +304,50 @@
 import { Component, Vue } from 'vue-property-decorator'
 import API from '@/utils/api'
 import Unreal from '@/utils/unreal'
-import CardModel from '@/utils/cardModel'
+import { randInt } from 'three/src/math/MathUtils'
+
+// Modèle d'une scène
+class CardModel {
+  // Initialisation
+  name = 'nouvelleScene.json'
+  picture =
+    'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYABgAAD/4QxKRXhpZgAASUkqAAgAAAAGABoBBQABAAAAVgAAABsBBQABAAAAXgAAACgBAwABAAAAAgAAADEBAgANAAAAZgAAADIBAgAUAAAAdAAAAGmHBAABAAAAiAAAAJoAAABgAAAAAQAAAGAAAAABAAAAR0lNUCAyLjEwLjE4AAAyMDIyOjA0OjEzIDE0OjI1OjM1AAEAAaADAAEAAAABAAAAAAAAAAgAAAEEAAEAAAAAAQAAAQEEAAEAAAC3AAAAAgEDAAMAAAAAAQAAAwEDAAEAAAAGAAAABgEDAAEAAAAGAAAAFQEDAAEAAAADAAAAAQIEAAEAAAAGAQAAAgIEAAEAAAA8CwAAAAAAAAgACAAIAP/Y/+AAEEpGSUYAAQEAAAEAAQAA/9sAQwAIBgYHBgUIBwcHCQkICgwUDQwLCwwZEhMPFB0aHx4dGhwcICQuJyAiLCMcHCg3KSwwMTQ0NB8nOT04MjwuMzQy/9sAQwEJCQkMCwwYDQ0YMiEcITIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIy/8AAEQgAtwEAAwEiAAIRAQMRAf/EAB8AAAEFAQEBAQEBAAAAAAAAAAABAgMEBQYHCAkKC//EALUQAAIBAwMCBAMFBQQEAAABfQECAwAEEQUSITFBBhNRYQcicRQygZGhCCNCscEVUtHwJDNicoIJChYXGBkaJSYnKCkqNDU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6g4SFhoeIiYqSk5SVlpeYmZqio6Slpqeoqaqys7S1tre4ubrCw8TFxsfIycrS09TV1tfY2drh4uPk5ebn6Onq8fLz9PX29/j5+v/EAB8BAAMBAQEBAQEBAQEAAAAAAAABAgMEBQYHCAkKC//EALURAAIBAgQEAwQHBQQEAAECdwABAgMRBAUhMQYSQVEHYXETIjKBCBRCkaGxwQkjM1LwFWJy0QoWJDThJfEXGBkaJicoKSo1Njc4OTpDREVGR0hJSlNUVVZXWFlaY2RlZmdoaWpzdHV2d3h5eoKDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uLj5OXm5+jp6vLz9PX29/j5+v/aAAwDAQACEQMRAD8A9jFLTRTqAFpaSloAWlpKWgBaWkpaAFpaSloAWlpuaWgB2aKTNFADs0U3NLmgBaM0maTNAC0UlGaACkopM0AFJQaKAEpKWkoADTTS0lACUlKaSgBKSlpDQA0GnUwU4UAOpaSloAWlpBS0ALS02loAdS02loAWlptLQAtLTaXNAC0ZpM0UALmikozQAtGaTNJQAtJRSUALSUZpKACkopKACkoooASkpaSgBDTSaU00mgBoNPBqIGng0ASClpgNOBoAdS02loAdRTaXNADqWm0uaAFpabRmgB1GaSigB2aKbS5oAWjNJmkzQAuaKTNFAC0lGaTNAC0lGaSgApKKKACkopKACkJoNNJoACaYTSk00mgBgNPBqIGnA0ASg04GowacDQBIDS0wGnA0AOzRSZooAdmlptGaAHUZpKKAHZopKM0ALRmkzRmgBc0UmaM0ALRmkzRQAZopKKAFpKSigAopM0ZoAKQmgmmk0ABNNJoJppNAATTCaUmmE0ANBpwNRg04GgCQGnA1GDTgaAJAacDUQNOBoAlBpc1GDSg0ASZopoNLmgB2aKbmloAWlzTaKAHZozTc0uaAFzRSZpM0AOzSUlFAC0ZpKM0AFFJmkzQAuaQmmk0hNACk00mkJpM0AKTTCaCaaTQAE00mgmmk0AMBpwNRg04GgCQGnA1GDSg0ASg0oNRg04GgCQGnA1EDS5oAlzS5qPNLmgCTNLmo80ZoAkzS5qPNPQb+4HuaAFzRmpUti3/LaIfiamWwDdJ1P0H/ANegCpmjNX105O8jE+3FPFhCOu4/U0AZuaTNa32K3/55/qaabC3PRSPoTQBl5pM1otpsZ6O4+uKjbTfSYf8AfP8A9egCiTSZp80cUJ/eXlqn+/IFqhNqNlD968gb/ccN/KgC2TTc0maaTQA4mmk0hNNJoAXNNJpCaQmgAJpCaQmm5oAYDTgajBpwNAEgNOBqIGnA0ASA07NRA07NAEmaXNRg0uaAJc0uai3UoagCXNGajyaXNAEmalhOQar7qntzkNQBNRRRQA4O69HYfQ08XMw/5aH8aiooApa7rV5p9jHLAyb2kC5Zc8YP+FcxJ4q1mTj7ZtH+yij+la/iz/kGQ/8AXYfyNcfQBek1rVJfv6hc/QSEfyqrJPNKcySu/wDvMTUdFABSqMsKSlU4I+tAHe5pCaTNNJoAcTTSaQmkzQApNNJpCabmgBSaTNJmm5oArDd/eP50o3f3j+dShKcEoAiG/wDvH86cN394/nUoSlCUARDd/eP5075v7zfnUoSnBKANmzsbUW8bujOzKCSWJ/Srqw2q9IYx/wAAqK34toh/sD+VSUATBoh02j8KXzIv7y1VbvUTd6AL/nRf89F/OkM8PeRPzrNPeoX6GgDUa8tV6zR/nUL6ppyfenT8FJ/pWHP3rMnoA6KbX9HTOSWP+zGazW8TWM13HDDbyIrHBkc4A49Oa52eqkPN0n4/yNAHoNFY2iaj5o+ySt+8QfIT3Hp+FbNAGF4r/wCQZF/12H8jXH12Hiz/AJBkP/XYfyNcfQAUUUUAFKOtJQOooA7H5/7zfnSHf/eb86PtUB6MT+FL50R/i/SgBnz/AN5vzpCX/vN+dS5Q/wAQpdoPSgCuS/8Aeb86Q7/7zfnVjyz6U0pQBXJf+83503L/AN5vzqwUppSgCyEpwSpQtOC0ARBKcEqUJTwlAEISnbKmCU4JQBpQ8QR/7o/lT6bHxEn0FOoAY3eo271K1QudvOM0ARtUL9DVpZIP44m/PNWEe09FH1WgDn5wTkAEmqM9rcbd3kS7fXYcV2qGPHybcf7NOyKAPMZ+pFVYP+PxPx/ka9SuIrV0zcxwsvrIoI/WsK6h8LIxlaW2Vx3ilyR/wFT/AEoA42SSSCZZY2KuhyDXZabfpqNklwnB+66/3W7iue1EeHyuba+umY+kW7+e3+dZ2larHpGqEeY7WcuFdmTBHo2AT0+vQmgDoPFn/IMh/wCuw/8AQTXH10/iLULS90yIW1xHIRKCVB5Awe3WuYoAKKKKACiiigC+t371Mt371zi3fvWraWGpXYzFaSleu5htB+hOM/hQBqLd+9TpdEkAck9hS2/hu463Fwi+0Yz+pxWrbaXb2jBkVmf+85yaAGxROqAv949vSlKVZKU0rQBWK00rVkrTCtAFkLTttPApwFADQtOC04CloAQClxS4pQKABZJkGEYEejDP5H/9dPF5Iv37Zj/1zcH+eKbilxQAjahEPvRzj/tkzfyBpgvIJ22IX3dcNGy/zFS4pGQOMZI9xQAyik8iQYCzZHcumSfyxTD9oRSWgDnOAI3BOPU7sAUASd81z/iq9uoFtFhuZow2/cEkIz930rbM6Ju8zdGFGWZ1KqP+BHj9a5vxa6sllIrAoRIQwPH8NAHOO7OcuxY+pOaSpYbW4uF3QW80q+scZYfpV+Hw5q020/ZSqt/EzqMfUZz+lAGXVW7BI6Guth8G3bNie6gRfWMF/wBDitC18H2cT+ZcyyTsP4fuL+Q5/WgDgLOTdkHqBV1FaU7Y1Zz6IMn9K9KXTbJFUCzt8L0/dg4qwFCqFUYA6AUAecxaPqUw+Sxm/wCBjZ/6FirkXhbU5MbhBGO++Tn9Aa7nFJigDk4vB75zNfDHokXP5k/0q3F4TsE/1klxN7M4X/0EA10OKTFAGfZ6Pp+n4+y2kUbAY37ct/30eauEU8ikxQAwimlakxSEUARFaYVqfFNIoArlaaVqcimEUATAU6kFKKAFpaSlFAC4pwFIKWgAp2KSlFAC0oFIKcKADFLiilFAABTPIi83zfLTzMY37RnH1qQUtACY5oxTqWgBmKMU6koAbikxTqSgBuKTFOpDQA00hpTSUANNIadSUANNJTjTTQAlJS0lADSKYRUhphoAeKWiigBaWiigBaWiigB2aUGiigBaUGiigBc0uaKKAFzS5oooAM0bqKKADNGaKKAEzSZoooATNJmiigBDSUUUAIabRRQAlJRRQAhpKKKAGk0w0UUAf//Z/+ICMElDQ19QUk9GSUxFAAEBAAACIGxjbXMEMAAAbW50ckdSQVlYWVogB+YABAANAAwAGAAWYWNzcE1TRlQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAPbWAAEAAAAA0y1sY21zAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGZGVzYwAAAMwAAABuY3BydAAAATwAAAA2d3RwdAAAAXQAAAAUa1RSQwAAAYgAAAAgZG1uZAAAAagAAAAkZG1kZAAAAcwAAABSbWx1YwAAAAAAAAABAAAADGVuVVMAAABSAAAAHABHAEkATQBQACAAYgB1AGkAbAB0AC0AaQBuACAARAA2ADUAIABHAHIAYQB5AHMAYwBhAGwAZQAgAHcAaQB0AGgAIABzAFIARwBCACAAVABSAEMAAG1sdWMAAAAAAAAAAQAAAAxlblVTAAAAGgAAABwAUAB1AGIAbABpAGMAIABEAG8AbQBhAGkAbgAAWFlaIAAAAAAAAPNRAAEAAAABFsxwYXJhAAAAAAADAAAAAmZmAADypwAADVkAABPQAAAKW21sdWMAAAAAAAAAAQAAAAxlblVTAAAACAAAABwARwBJAE0AUG1sdWMAAAAAAAAAAQAAAAxlblVTAAAANgAAABwARAA2ADUAIABHAHIAYQB5AHMAYwBhAGwAZQAgAHcAaQB0AGgAIABzAFIARwBCACAAVABSAEMAAP/bAEMAAwICAwICAwMDAwQDAwQFCAUFBAQFCgcHBggMCgwMCwoLCw0OEhANDhEOCwsQFhARExQVFRUMDxcYFhQYEhQVFP/CAAsIAWMB7gEBEQD/xAAcAAEBAQADAQEBAAAAAAAAAAABAAIDBAUGBwj/2gAIAQEAAAAB/oPUsrLNqZlmaqqiIggggggIFZWZWZWmZqqqgoIIiAgIjOmVmVmWWmmmqKIoCgggggM6VlZlmWZpqqpgoiIIIgIjJpZZZlmZaamqiqCKCsxEEBk0qyzLMzM01VVFERREBBEZyOnUytLM0zNVVVEURRARBBnI60sytLM0yNNRQkURQEQQGcjrSsstMzNTTExRUUERRBGcmc61p1MstM001UxVUURERQQZyZzp061MyzTNNVNUVURFEREGTOTOnTrTMzM00zVVVRFFREFAZyZyOtLp00zM1NU1VRVFREREGcmcmdOtK6VpmaapqqqKqKBCIyZMmTLp06XStNM1NVVVVFREUAZDJkznTp06V0zTTTVVVVUVEUQZAyZMmXTp0rpVmpqaqqqoqiiAMgZDJnOl06XSqrNTVVVSVRUQAGQDIZMrp0rpVVWmqpqoqqiAAADIZDOXTpXSqqsrU1VVUVEBZAAMgZDGl0rpVVWWWmqqooKACzZADJkMrpXSqqrLM01Va3vj48kEBZAAMhky6XSqqqszLcvY7HJycnLthMcXFw8XF0utsLIAGQM2ldKqralma7c8m+Xk5OTfV6PQ6PR6PQ6XR4Pq/qgAADIGVdKqqramabuaqqr8j6kNVfVfUQAAGQMrpVVVlWZm72qqp/IupVVX1P1AAAAGTLpVVVbUs0z6Gqqp/IupVVX1H04ARkADqKq6Z36vf7XLya1poznWePi62Kr8j6lVVfRfQgFkADJatK6l7P22tNVZM8fD1ur53j9b7ip/IupVVX0P0IZsgAZDn0ulXV2PrqMY488eOPq9PpdLpdPpc32X0VP5F1Kqq+l+jAMgBnIc+tK6Vef6mrjxx548cfV6fS6XT6XS5+b7z0Z/IupVVXve5vWtaawZMnPrTpXS8/0dXHjjxjHF1+l0ul0+l0+flP0vb+RdSqqu76PJycvJycvJ29ZyGefWl0utPN71WOPGOLPH1erjr+L5/T7HL5n1H27+RdSqquTm5eTk5OXk9zv5MmTn06dLrTy+1Vjjxrl3ycnIh0PG87zvm/B/WfU/I+pVVXDjk3y8/s+56xkznJz6dadOtPJ61WOPi6+ufn5ufYed5Xl+V5XhZ+3+N4Kqq87per9P9F7ejOTOcmexpda06a3y98xji69Va/N/BxVcflcnp6quHn9H0O79B61mM5M5znJ2HdrSssdNzjXfqq/KPPqrHn9X1/Q9H0fQ9D1uwQEQBnOc5z2NaVZZZZx1c47a35R59We16P0v1PNogiICAgznOc8+tMyyrLLPRxx4/Oub1PU9P1uyRERAQQQFnOc559LLKysrMrNJURBZggICAs5znmVlW1LalWWWmKCLJAEBABAYOTUyraltSqytqYILMARmAILMBg5NTKsqrKyrLNEAQAWYLMFmAxnk0yrLalWWZZqqCCIAswQAWTGeXTNqWW0orSzVVFZoIIAgswGcZ//EACwQAAEEAQIFAwQCAwAAAAAAAAABAgMRBAUTBhIUIDAQMTQjMkBQISIzgKD/2gAIAQEAAQUC/wCTjlcptPU2JDbehSp+yayxuNzCYR0bTpY0Ex4zbahSdtG21RceNRcOMXCaLgi4T0HM2xsjHr+pT29NxyCTvQ6pwmWJlNEyGG61R+fjxjtdwWD+JsNo/iyFB/Frx/FGW4dxBnOHarmPHTSP9NC/VJ7eHL+X4dD/AFSe3hy/l+HRP1Tft8OX8vw6J+BuKbim4puKbim4puKbim4puKbiiPcqx4GQ9G6YommsE0+I6KE6SE6aI2IzYjNiM2Izp4zpYjpITpozpmnSi4zhzFZ3Zny/DpDlabqm6puqbqm6puqbqm6puqbqm6puqbqm6puqUUUUUUUUUUUY6fX5lNw3DcQ3EN1putN1pusN5hvsFyYkFzYUF1KBB2s47R+vQoP4kom4jynGn6nK7I7cv5fh0koooooooooooooooooooooooooogT63jcOHDhw4cYppeZzdiGX8vw6OUUUUUUUUUUUUUUUUUUUUUUUUUUQp9bxuHCjhw4cYgrlY7Cy0y4fXL+X4dLm2jqxMk3zdOdDmT05TkKKKKKKKKKKKKKKKK9If8vjcOFHDhw4xCQw8xcHIa5Hp6Zfy/DjO5RJBJBJBJBJDcEkNwbZRRRRRRRRRRRRRRRRREn1PG4VqqdHM4l0/IaSMcwUcYfu8eaDn/wA+mX8vwtdyiSCSCSCSCSCSG4Y0C1RRRRXdRRRRRRRRGn9+5RI+YTGExmiY7DaYnYqWSadjTE3DuK8bw3tE2iZSGRg5EIrljfp2amfioZfy/DI6jcEkEkEkGKr1h07IkMfTkhWiiiiiivSu+iiihn39zvYRyoJkPQTLEyWKJI1fSxXo0k1PFiJOJMJhJxXGhJxVOpJr+c8ysiXINO1N2mTRcSQqTvSWfw5TqNwxsPJyjH4cncQ6HjRDI2xpRRRXgor1oruTJewbnQOVP57He3cjlQ1HUcrq3OV/c/7ZCN9tb9vasrEI2STDNKz5BnDuW8bwtG5cbScTE/Brxuaj06GFDYmaVmobmehHNlq/v1D5/c72fE9RGuYMeipHiZMozRM55Hw3MozhqEj0LBYRY0UP4dfhvbzt2pmnPK06uJBF5k9dQ+f2cyEePNMN0LNmMXhqOMhx48drWoz9g7BgcvSPaVlMOr2zJY/JzY9GzpCPhrIcR8MxIR6FhRkWNFD/ALJ//8QAOhAAAQIBCAYHBwQDAAAAAAAAAQACAxESISIxMnFyBDBAUYGRECAjM1BhoRM0QUJSc4IUYrHRY4Cg/9oACAEBAAY/Av8Ak4unkrpV1XTyVniVoGKvtV9Wnouq6OvdCuqxUOKof6K0Ks5o/IIzXNdJuMvht4q1fBXVYVarwRnx4bfyXvDeEpVBe7BqqwHnGQKro44uVDIbeBXezcGhU6TE4GRVoj3Yu6I3DxSPnOqjcPChqo+c6qNw8KGqj5zqo3DawJFTNZiq0TkFS5xVh5q4rgXdtVxvJXG8lcbyVxvJXG8lcCuKxfFXlaFT1o+c6qLw2uHj1rVarVeV4K8FfCvq96L5jwVEN5VWBzcqoYzhKnmPELwaKfh1o+c6qJw2tmOxvXsX2i71Y+c6qLw2tmOxvU4UEUyqd8wocN3Uj5zqolEsqsCsVm0Mx2OJ0B/yWOCDgZQaQemPnOqO1tx1tAJ4KiE5d0TgqzS3EdMTp/SvPmz+umNnP87FOfy2NuOovBXlaVYro6taCw8FVnw8CnTI8sv1BUNa/Aoz4LwMEHAzXNpB3JsQUOscNx6I2c/zqh1ZGguPkrswfuU5zp59NkGpoJW9UtW5WjppoxVbSIY/JUPc/K1VID3ZjIqkKG3GUrvpuVqliRHPPmnECcx9BaSq8J7cKVEeLHOJ1TejsoL3DfJQu1iNh+QpKpBin96kY0NHkNm3Ksyf5s/pSe0DXfS+qfVeWrtKjM/URA0OIkBVYl2J1I614Ls4MWJlYVRo037jwFXiwYeUFyBjaQ+JJ8AA1dno7ZfqNJ2yRwnDcVUaYX23Fqq6XGGaRyo0iG7NDV3R3cwgIsFjWfEtdqNIznUWS4IygjghTLgqmjRXfhIu6YzO9V9JhtyMlVeNGfxDV7uH5yXLs4TGZW+DSSlvm1URGvzt/pVoBP23Sqs72Z/yCapQQRvHU0jOeraF2cGI/BhXdiHncpY8QxTuFAU2GxrB5BVWhuAk8Ql9mGu3sqn0VTSIgz1grsKLldNPqu1gxoXnMnD0UYwYb4oLzIWsK93m53AKvGhMwBcq8eK/LIF3M/O4ldnCYzK0D/ZP/8QAKhAAAwABAgQGAwEBAQEAAAAAAAERECAxMEFRYSFxgZGh8ECxwdHx4VD/2gAIAQEAAT8h/AvCvBvCv4K0r8ilKX85fiXXeBfw7wFoWpaF+Zfw3hfhrgXTdN/JXAWu5uu8Gl/AvAeFhal/8G8K8JiFwFxbpuu6b+I2UbE8Jif414d4F03gvD0LC490XXS/g3iUeU8IT4FLruql00pfx2PG+FpvCX5tzc3TcUpR5T0p8C67wKXgXi3FHoeilKIWEXiXVeDfx3h6EyiFhFE+FdC/Nul5bHpWVhMXDpS6qUpeBeBcUel6rlCE8J4RSiZeJSl4FLqui5ui4eaXNyhCwmJiynhMuul49Lpubml13WmIWU8J4TKJ4TLw6UpSl4dKUuKXFxS6blPCEyiwsJiYsJlKUpS6LxbouLi5pcUuh61hCwmJiYsUomLTSlxSl4dKXFxSlxS5pcUuaXShCFlMpRPNKUpS5pSlKUufQpTfkLaM8mF/mjvx7wz3DLzRSlKXFLil0PF4CwnhPCxSlE9CzSlKUpRv74f4N0U+ryQue8W8TfqIcvqLbewJWyWZhox7pnocg+gxzL1OTPmM/wBBzp+D9w1f0SnPU49i6KUpcUZcXFFhYTExFE8IpSlKUpSlxSlNogm1s2LZe4dS+Yk7pxnP2MY3QN9Hmhbb3DxMCcaaUsVnl/Qj5Y3+nyxgY2/nv+H7S7+nK/khY3P1Q+fgZ6HgX25lKUpSlHwKIosp5WE8LNxRMpSlKU2vLgrcX7fN4glBeBNOz77MpS4uKXFLoosJlE8JlEy4RSlKUuKXRSnxuCtz7vrwtv155uKXNLh4bwmURcJ5TKXN0emVilKU+BwVufd9eFs+nMpcXRSlKXDx5Z5Z20dtC6aO2jso7aF0UdtHbQtlNuJIUGtuvxOXBX/gIR5nmErq82z/ANoSv8BLJ/wh/wAef8Zjn/hobuT3ZBJJl6j/AO4a8m9UJbOGHhmlbn1PXhJYnjzep2UdlHZR2UdlHZR2UdlHZQ+ijso7KOyh9NHbWCwILCslYJeREp70Tc1RJ0wd/A7M7M7QaMDboHJvs2c2vyc/gR/imv6eO8b68hY139M3yKbembeHekf90LdH3PXhLft1/AQACCwLgAHsfU8M5DHonMc5zj7m7yIht1nVdNG4+568Jb9uvEAA9AIILQCwLAh7R1PDOQx7Y7sdxzHPhu8qFFt8JyfUU9vnFlbn3fXheTjn5iZlTlErEvl8idg8GeLmhN2PAPSBYFkLAgsCQnteDyGPbQd7Oc5hDf5Ebmb4G8wuvp4iCS8HNYW59314XrOoAFgIpFY+GABZCCwextL3xB4Y1i39kYX7YUN39xHTXnEsec8XkIXfGPcmP5wR9v1fgwERdwkio+T8sHoCEIQSwQWgEEIeU0vfDQ5D3Su/sRzbBPr8xbBHoJQhBKRqrue9Yofwc3D76XuNdvte6Zfk/fc82Otr4G4mEhzchW3sdGPt+rhVhYncwduAJWIq16zz4F2Z2U8A9QDEwgkJCRBLBBBBfd0sZvGxs69TnHqGf4M3y+Y2l3qXBRXS9Wh+v42buPfK3pj+lKcXq3+J4LC9pCHuk9FwVvBHjyY1XeW6U8cFQqm74VvrFHP1IVV2PcyS/vd0J768bw9kdlhKWR4INEINEEsiRBYEiEx48m26rkcm/r+rfw+/8HhB4FXqRuMZva3fgr1IMhyHw9BtW3VzJqk3PPl4HwNOw0nj9E7gsXKX1/0Tak7h/D6+8jxIzRXk/Mxt4hCDRCDQ0Qg0QhMIJCWqYj70WosrLr+sZyGfd4qkfxb+mP8ASLBj2c0aL7ddS34ElblS9zaPWDj16EWlabeL9EVqnzpPdw5aeqf5T5aRvl/wV8fLUPhU5uFz/eMRzyMQ3d/E2H47+PmTE1QhBohCYQSEicCE1VEd6niVelTfv/g+UKPi4xvx3SZ+wvvJNQmuuFvpF5DQ40Po2c9f7GI0t74tSnoqyX9N/mdmkF8MV+g9EJohCE1whBoaIIQtE4UJiEJVOXQ9RMvcgew/pPzePyPdL9x3pS+R9BN2+RY/bYyp/EOel6/7J7bDj+G950RP9Otf2VsI4GDbe7JiExOHMQmJpZMIXAXBWlLC8Dx5+PniYhCYhMQnGmt4awtCysLK0rQkTEzCEJmYnHel5g9aytKytKysLROE+A+A9a0LK0r8ClLov4D4W5eGsp5pdFKXNKUpSlKXFxS4eLx989dawsLCELKwsrC4L0vDw9L0PLw8csM//9oACAEBAAAAELVOPV/qttszM8s9Px28O8meWy2CWdlleZT0b/Gi3nkNv/lzOPZ8nMnqqT8l4G03fdHoAFuDXPr7q1IStRrZTberszdPwTcrbyzz9L6IU98vI4OL9USqLr+gAX6uy001XeAe6rhI371jf7iJyiVLbRh4EFuxKplso/BlowpERXcf49v+llI9c/8Acj/9Jrn8hwOyf5Jwx85gAYN8dK83JsANh1wZufCVmMPV+byM4uMwi13DnxhStpbov74zeIsAMZ//AP2fn1SAP/v/ADxXLWoA/wDnmAOaHy8H/wCdy6bkBioP/i4bVsWkzD/wOOzHBtII/wCHurRYXYSz/wCySNmgKZ2P/TSoLsBCyP8A4brrewbGWv8AupMkTvgYfzwphkdJ4F/+m64GRNN9aWvDNJm3NOk98dkTikZlnsjebmD8UoPZsdzLAvVLjqZTn7Vr14zG6Ed6lO41yXmNo1hrPbVXf+7fuu//xAAoEAEBAQABAgQGAwEBAAAAAAABABExECFBUWFxIIGRobHRMMHw4fH/2gAIAQEAAT8QHYbiHYch3qc9Bzoc9ByHqOeg5DsOQ9ByII/GoTF3osu9N6LjKz5Oi9FxuZei+F426TPfo8zx1DnQ5+AO3EO9BuId6D0HbiHeg5DvQch6jnwgu9Txl6r0XGe8udGe8uW63hLs9ie8cxxL0XLmXo9eg3EOw50HOg5DsOdByHYch2HIdhyJuw5D1HOjbbbbbZejeiy7Ad5cnvLlus29F6b0XwvGPFcEu9Hm8JdlxlneHYc+APQd+BvwByHYchuYch3oOQ23NnxuSy703mXbxuEu3G29FxuZei5PeXOi9Fye8s9iXeGXQYch2HIdhyHYch3oMOQ69ByHfhDkO9RzoG22Xo3ruTHvcS51XouM97wt1nsS7eNuky70eZl2XvluluzyHYc6HPQc+AOQ7DkO3HQOw5E3Ych6jkTd+PcnoLtxLLvTeZdg5lnv0Vei+F4x4ui9FuZei7z5Shlh2h2G4h3orch3oOQ7DkO2R2h3oOQ70HIbbn+Hi2WXfgb0Xoy70XG2e7ouM95c6eEuzzl4bKXeW8w4Qw5DsOQ71DkO9ByHYch6DkPQc6B3qOdA2222y9C71UJi7BzLLsS5b0XLlt06Lk95cl2bZcu5soJLuQ9QHYc6DkOw5DsOQ70HId6DkO9ByHqORNIR+NQtJi71WXer0Llq3jHi66vRYCXohllLDrDko7z5t23oOQ7DkO25DvQch3oOdA70HOjbfgHOou/CZLLvVZd6Lku9Hu6bzLvRei5LLLLkpl3h7wyw7Lyu49B6DkO9ByOgPQch3oOdA3NnQc6m222/AF3rssu9HsS7eHRei429F6Lktu9pdJZxLvL3yXlCMoYYQhicw50HId6DkO/CHId6jkNtsZYetnv1z3sPNux/222WXeq5LvVxLtxMe8uWrmXLd5lnEsx7p7tlDDIQw7CEPUHoOQ9ByJuw5D1HIm78O29Tbfh3Ji71WXei5LvRcZd6MWYpZZZbLbDEIa5l2lvMMoxDsOQ70HId6DkO9BzoG316jkTS0t3ruWlpMXevFssu9GXeqz36Lt2JbZZZZSytyMjoEUuYZdGRDsOQ9ByHqORN34W2+t875/D8752+ttssu9WXbc6LLsS5bvMuTqX1tJZZS7blpLvDCMYQyhhyUNpIhLdhyHoOQ29BzoIRd+Ac+EF34VC0mLtudFl34TFbzLbLKXZcll6GmG0l2l0N25LZZEPXckat2HIeo5D8A51CaWlpaWlpb1F34N6F3rq3mXJ1bKS5OreZS28zGbORjiHYfWUuZW2HjaeMoYYIegat2HIYzoOdTbbf4Ny223qLtlxLatlyatvMzxS94e3e2WW2RsyhLDkOwwSJcww9AbkhsIgQ9A1bvTYbbmzqOfGAu9cg95y2WXepjqZvrOJ1LzOLe09BbSWXOhYegM+YIiLZHrbYeNp4yIbCIQhCEHeg50DbbbbbbbbbbL0b8DdmMzZehmzHVvMtvMreZZbeZbSxDsvWWW3qWnjepLfGGITTxkQww2xj1j5Yg7GI6A7/AA7liY6tOnfnOPT3noL0M0tmOrZxM2WcTqW2XvDL1kSJQwwRDFpDDEIQhCD65D670E+SJ746G+kPo2+qNedn2+cLwT7b+r7zY/q44/fP5kjX5CNx3/z1mvrIXy3dx97X/kptS5d2zi2egttvMreZxLLaS28ywkiHOgNyQz5tiEJpDDbIhhjEQ1dnrGvSMXyQop07aH9X+lPxA65f78Yj+GP6nPq7/qX7L7l/NxT9jcCvYCwsIB4WXKg+4X3wjcsPzH4Z/t6ocre68YH9XgB8u1/cQ5h9X8pknrX54TvRZzhxunOH6dC2ks46HU4l85imLk6liLvDK2w8bTxlnjE5LZEQhCHQIa/5dnpEH5RjxvkvHLjfCAevv3uBHszHY/M/mU5+gF99ASY9t9cY77Tsjj88Lmj5GRfrOhJB4Tkzdmg6eH5Ql+19+Nv1Eh7X3T7sw+n7n2P5iE0uHT98faFTM8GZ9RuLbkIPwnVVf9S2Grhee9xHbv8Aj+89hdxOOh1OpitLZSXOZbeZY1KNS5hhghhlzbclsiGGIPlak9o+boJ8kansfa+3fFv+egpHsNc3iA7J30crHzvNrvnaF1dvIgD27e3wc3b7ijumM3mYuTHVvMzxSyy5t3SIYI6AbCIETSWeMQ6BiIah2MRN3xthjE9j7X2D+Hi97/Q8/wDCfr8yz/LiaH0mYuTHVvNpOJ1bzK3m0t6HsZZEEtIcbf8AFyf3GogwxBF5IdOH6Q/5jfMw5yfZtfQ+sneT5Wo/8vZHk/Da8s97WOmdudjqeiO/j/Bxe9/oef8AhPGe+7brO+dpqzq3m0t5mOpx0Ore8rY8j6X9wnh9L+4/5L+7L9DK/S/uNP6X9w36X9x5D8n93mj/AHvH/Hf3H/Bf3AmOAdV8CBKgcT7Cadm+Tflbm69EPxcv7suSHuH9wHj+xfzcP9DcJ9Lf9/8AVf6j+pb+sv6lf1JXwPkfiNRPfIP7gkQMMf7nnZP1fkm7h8u5GrheekVO59dv67Pv8HYPeGf6u/8AhP8AlgNa1iGHf6b+5/4L+5/5r+7Pn6L+7bfwv7uf8L+5/wCa/uf+a/u/8V/d/wAS/u238L+7m/C/u739L+4K/jf3eT9F/cb6J0nciYcEJ8I14WPhDZFeT/e0X1IXD7HIHLPay5E+V649y9h7kQf+9eg/O/bUnyHzuEX1uR+R+IXP5vM/1eMfIPykb3g88pk0o8S/AbywGE/h9rdrwLRew7B54eXlaJoiPI47+XwHS9Z7/i7/AOEsHvg7e5Opzb8rx9pzN3PTb2eEx5znoe7e2c8I8xGo8pC8oXlGPCJl/j7k8tkdp95dLxS9u/e7t7H0uU4fSGcdvaSj3bs3J6t3bv4u1HEB1cxJnqgceAj97G7SVnj7vuDv69y7eHce/XsPvf6Xn/h8G+SMcfK7Z1ePtO7xzWOvCfTdnQeg3Q6HoxjwiHQnovRt+XRz/wAvc+B4ni8U8Xijlcbsniua8dze9+a5K79Ia/Cdz6zYxXMSxPk8o6Z2of8AI8/P0k59+nF73+h5/wCH084BoJc8Zn/VxP1JF3+QwHE9mPJ54AnztuI80LyPqSnnHvLSOdBjXMzGOgPTF1jofJIXlL5XfE4/KfBmjPlPjcz4251A7tzX3vH8ALkh/p8WCIcjsHl7N+b4PPSPdPEw6RE9ENHpxe9/oef+EtXtf3b8tj3u3erereverZPPsefpMIovfPK9CY9BjCEIY8InJEJhehHosv8Ad3J8uu4MMj4zhhmzxcpgfL0l37JZx/yZ/VhcnyvzS10dN1H2izsM/wAKRXe2j4mv9XYdie5PB/nW2fc/mIqp8rXz9vE3L9DuHueWJijyOJ5XP2uX/Em19bPxvB29a18Zk5t/GJz+0ghe/MHgvr6fufn6DGMa0pVjVp0DcU6DXztn/jn4HjpPjB3qHvdph3z7/pYKFbteQ5BdyvNLO6955hAAAekA3PGzu5LhJ2QCMY7zyFvnht9XEHyQb+1nOEAEzP8ADtaPvh7evyxAIR2fvjV2mbQIurHvyQGh5vftEfR7J6PpaPu/78XH/hTxuSZu3rWrzefEPHnzP9tv+eHfQO8GcfMj8o3Xfdinn35/3NydieziYxjMJpD03o9HHwj09E6kw87FeML34vFx03tnV4u1vFd/egMIG+eT4+ywfuceWJmL62gCT0Q9DPOmZsLO59JOU8gB9ctfQOQ+gGtpAzwTvsuH3mg4eIZ79ws8h4UH3D9INCfBn+yi/ezPb23jec3iMxhIUPYfBO5vlcmf2Ad+fB8ZL1N6MVNP4fV8L0o93ft4eM41Aby8ZBeZH9qPvKDPjqf4+5s0nzhX0j67Hi/gwfQkbuY+ZPdud70JxNx8JUzXwnpSHQl0ibxT0WekY7iO5hq8ze0UjH452+ahX3eHES2Pm/RE/LbG1vgbR+fFoHEfaevIfOHdvYXf5dXvfODP2WoYzwUFa04gcDg+FpCOUL81YwYdvazsmvf1sPL29Oo1e8m9yO+DkGiiXI7/AFuTq9ndeonilp+u/MjyE817BbN6Sp+Q79pYNPhcfVA+rdwX0he4K+1kKjkDfPsvIhXnf1BHHnH9y4/KZ+kgDwOA4J7+Hbyu0ya76LWqNrNelfRCheUQfla2MEEHQNiZpiuerv5nCJyBvk9oT84R/Qj7WEyHBlPn+ZawYcb/AHU9yzlW+iy8LzhB4CxoF+Rxff2+Hv8Ak/slv+Tv8e6AnxYSj47wXY2GzcTt75Zhr7m99tQvAcfsKsFW/BE+RuK+cgb2QmOr8Rh8vyLFXhCh9xD7QkAcdv8AoSDOx5Kt4MMzg8rwRg8O78xg8s4DiTymPZs2TLJJjHS6WMrymOp1HQaRQiDYMg2CCIQIIO/mwbzsOGf2ypsxAB7+GiPzLWRHzN7oflLcGOf9qvAfl46mjtvR98n0Yohm/kxK8G+Wn76dv+eZf6nn0DfP5W988flYvBXyy9JFDfpu2f5QWD8wH3hWdGvD3PkZBgbunt8uX1LZOmIDT1eX5sSmz/oBBXVV811k+d8s9u0i9+99V2eEklk9jMY4kkyzeZMueZJjHosY5QhDOgZ62b6RAzoQbBBBBBGoxBsDvgfSOxM7eXhOlmvtrj6S0sd9PdaL6w6+GD+uBfCD8flYRbWByAfnHPVD9GO4Gm+efqbAR7yN8tX2mBB8gPn2Tx5w+0Qvqw5pDx0PfX4QYacbh8w25UfdWx29JOMMzyOL2dGTqyyzPCyTbLM8Jks3oSYiTvPQkkkJ0XCwhcQadQyDbM6A2DINgyDYMizYNkCRsHew4ge+6w3po+esK3TruvdtnkAHGHEaM59+8DxqnlvbpcdCZOuoDvQkll4M9Es3mTCzbiTbiYhPaTZ7SSQkwu52ji5dOOpdgzq7LlgzqDINgzoObILk2xB5RAs6CPQyTqejMGTej4z3kyzW8JJNuFk234CdTx0dbDWTvHEHbfhePwDiObz6PH4ARzePRufCF2gvVZPMls8dF1Z46njo8dPFJ46m8Z4jmTHPgcz2Z8Z5nmOJeHQ7nV4/AGOeoNehz0G4jvsOW7DDDsOQw9Vi7LPYmLGd2Xo8zx0W8b1njo8zePQc273no83E95c2eYYLv6Q5HeHjoOdB2HIdhyUMPQHbiIQYYYxGog7bGOk34znx6fknU4maTF6Gb1PdcFsuMss9i5JcuC2XLmWXGXHeXOIcjoPCPC8ehx/GAuT3f4xuW78Twbe78Y8WeOjz0HLPEcPQ8dOF53KeSfynjo//2Q=='
+
+  tags = '[]'
+  id = randInt(0, 100000)
+  color = 0
+  assetsNumber = 0
+  creationDate = 0
+  data = '{}'
+  idProject = 0
+  idUserOwner = 0
+  modificationDate = 0
+
+  parsedData: any = null
+  parsedTags: string[] = []
+
+  // Permet de récupérer une date en format string
+  get formatedCreationDate (): string {
+    return new Date(this.creationDate).toLocaleString()
+  }
+
+  // Permet de construire une scène
+  constructor (params: Partial<CardModel>) {
+    Object.assign(this, params)
+    try {
+      // console.log(params.tags)
+      this.parsedData = JSON.parse(this.data || '[]')
+      this.parsedTags = JSON.parse(this.tags || '[]')
+      // console.log(this.parsedTags)
+    } catch (e) {
+      console.error(e)
+    }
+  }
+}
 
 // Scene recue d'unreal
 class SceneRecue {
   name = ''
-  folder = ''
-  type = ''
   position = []
   rotation = []
   scale = []
@@ -339,7 +377,7 @@ class Autre {
 
 // Message venant d'Unreal
 class messageUnreal {
-  message = ''
+  // message = ''
   nomScene = ''
   // dataRoom: CardModel = new CardModel({})
   data: Autre = new Autre({})
@@ -352,59 +390,58 @@ class messageUnreal {
 @Component
 export default class ErgonomIOAssets extends Vue {
   // Initialisation
-  cards: CardModel[] = []
-  cards2: CardModel[] = []
-  titrePopup = ''
-  textePopup = ''
+  scenes: CardModel[] = []
+  scenes2: CardModel[] = []
+
+  titlePopup = ''
+  textPopup = ''
+
   popup = false
-  creerSceneJson = false
-  modifierScene = false
+  createSceneJson = false
+  modifyScene = false
 
   search = ''
-  sceneChoisie: any = new CardModel({ id: 2 })
+  sceneChoose: any = new CardModel({ id: 2 })
 
-  nouveauTag = ''
-  nouvelleImage = ''
+  newTag = ''
+  newImage = ''
 
-  tailleCard = 30
-  tailleCardString = '30%'
+  sizeCard = 30
+  sizeCardString = '30%'
 
-  variable = ''
+  sceneForModif = ''
 
   // Begin
   mounted (): void {
     this.requeteAPI()
 
+    // Permet de récupérer la réponse d'Unreal
     Unreal.callback.$on('unreal-message', (data: unknown) => {
       this.$root.$emit('bottom-message', `Unreal : ${JSON.stringify(data)}`)
       // Unreal.send('Message recu !')
       // Unreal.send(data)
 
-      var maScene = data as Autre
-      // var mesData = maScene.assets as string
+      var maScene
+      try {
+        maScene = data as Autre
+      } catch (e) {
+        this.$root.$emit('bottom-message', `Unreal : ${e}`)
+      }
 
-      Unreal.send(maScene.assets[0].name)
-      Unreal.send(maScene.scene.nombreAssets.toString())
-      Unreal.send(maScene.scene.idScene.toString())
-      Unreal.send(maScene.assets)
+      // Unreal.send(maScene.assets[0].name)
+      Unreal.send(maScene?.scene.nombreAssets.toString())
+      Unreal.send(maScene?.scene.idScene.toString())
+      // Unreal.send(maScene.scene.idScene.toString())
+      // Unreal.send(maScene?.assets)
 
       var maCard = new CardModel({
-        assetsNumber: maScene.scene.nombreAssets,
-        id: maScene.scene.idScene,
-        name: 'aymeric.json',
-        data: JSON.stringify(maScene.assets)
+        assetsNumber: maScene?.scene.nombreAssets,
+        id: maScene?.scene.idScene,
+        name: 'aymeric2',
+        data: JSON.stringify(maScene?.assets)
       })
 
-      this.miseAJourScene(maCard)
-
-      // switch (data.message) {
-      //   case 'modifierScene':
-      //     Unreal.send('salut ça marche : ')
-
-      //     // this.rooms.push(data.dataRoom)
-      //     break
-      //   default:
-      // }
+      this.releaseScene(maCard)
     })
   }
 
@@ -420,20 +457,20 @@ export default class ErgonomIOAssets extends Vue {
       })
     ).then((response: Response) => {
       console.log('response ', response)
-      this.cards2 = ((response as unknown) as Array<Partial<CardModel>>).map(
+      this.scenes2 = ((response as unknown) as Array<Partial<CardModel>>).map(
         (scene: Partial<CardModel>) => new CardModel(scene)
       )
 
-      console.log('data : ', this.cards2[0].data)
+      console.log('data : ', this.scenes2[0].data)
 
-      for (let i = 0; i < this.cards2.length; i++) {
-        this.cards.push(this.cards2[i])
+      for (let i = 0; i < this.scenes2.length; i++) {
+        this.scenes.push(this.scenes2[i])
       }
-      this.cards2 = []
+      this.scenes2 = []
     })
   }
 
-  // Boutons scènes cards
+  // Boutons scènes scenes
   ergonomioLayout (): void {
     console.log('ergonomioLayout !')
   }
@@ -445,15 +482,15 @@ export default class ErgonomIOAssets extends Vue {
   // Permet de créer une scène vide
   createEmptyScene (): void {
     console.log('creerSceneVide')
-    const scene = new CardModel({ id: this.cards.length })
+    const scene = new CardModel({ id: this.scenes.length })
     scene.parsedTags.push('vide')
-    this.cards.push(scene)
+    this.scenes.push(scene)
 
-    this.ajouterSceneAPI(scene)
+    this.addSceneAPI(scene)
   }
 
   // Permet de faire une requête API pour ajouter une scène
-  ajouterSceneAPI (scene: CardModel): void {
+  addSceneAPI (scene: CardModel): void {
     API.put(
       this,
       '/resources/ergonomio-scenes',
@@ -472,11 +509,12 @@ export default class ErgonomIOAssets extends Vue {
       })
     ).then((response: Response) => {
       console.log('api modif scene')
+      this.refreshScenes()
     })
   }
 
   // Permet de faire une requête API pour supprimer une scène
-  supprimerSceneAPi (id: number): void {
+  deleteSceneAPi (id: number): void {
     API.delete(this, `/resources/ergonomio-scenes/${id}`, '').then(
       (response: Response) => {
         console.log('supprimer scene')
@@ -485,21 +523,33 @@ export default class ErgonomIOAssets extends Vue {
   }
 
   // Permet de charger une scène à partir d'un fichier scène
-  chargerScene (): void {
+  loadScene (): void {
     console.log('Charger scene')
     this.openUploadFile()
   }
 
   // Permet d'activer le fait de pouvoir ajouter un objet
-  addObjectInScene (scene: CardModel): void {
+  addObjectInScene (): void {
     console.log('addObjectInScene')
 
-    console.log('variable : ', this.variable)
+    console.log('sceneForModif : ', this.sceneForModif)
 
-    if (this.variable !== '') {
+    let idSceneModif
+    for (let i = 0; i < this.scenes.length; i++) {
+      if (this.sceneForModif === this.scenes[i].name) {
+        idSceneModif = this.scenes[i].id
+        break
+      }
+    }
+
+    Unreal.send('addObjectInScene')
+    Unreal.send(idSceneModif)
+
+    if (this.sceneForModif !== '') {
       // Activer le mode pour ajouter des objets dans la scène
       var objectAsset = {
-        name: this.variable,
+        name: this.sceneForModif,
+        idScene: idSceneModif,
         action: 'ajouterObjetScene'
       }
 
@@ -513,35 +563,34 @@ export default class ErgonomIOAssets extends Vue {
   }
 
   // Permet de mettre à jour la scène
-  miseAJourSceneFichier (data: unknown): void {
+  releaseSceneFichier (data: unknown): void {
     console.log('data : ', data)
   }
 
   // Permet de supprimer la scène en question
-  supprimerObjet (scene: CardModel): void {
+  deleteObjet (scene: CardModel): void {
     console.log('Supprimer objet ')
 
-    const index2 = this.cards.indexOf(scene, 0)
+    const index2 = this.scenes.indexOf(scene, 0)
 
     if (index2 > -1) {
-      this.cards.splice(index2, 1)
+      this.scenes.splice(index2, 1)
     }
 
-    this.supprimerSceneAPi(scene.id)
+    this.deleteSceneAPi(scene.id)
 
-    console.log('length : ', this.cards.length)
-    console.log('length : ', this.cards)
+    console.log('length : ', this.scenes.length)
+    console.log('length : ', this.scenes)
   }
 
   // Permet d'afficher dans une popup des informations sur la scene
   clickScene (scene: CardModel): void {
     console.log('clickScene : ', scene.id)
     this.popup = true
-    this.titrePopup = scene.name
+    this.titlePopup = scene.name
 
-    this.textePopup = scene.data
-
-    Unreal.send('test lol quentin fort')
+    this.textPopup = scene.data
+    this.releaseScene(new CardModel({ id: 1 }))
   }
 
   // Aymeric todo
@@ -550,10 +599,10 @@ export default class ErgonomIOAssets extends Vue {
   }
 
   // Permet de modifier le nom d'une scène
-  editerNomScene (scene: CardModel): void {
-    console.log('editerNomScene ')
-    this.modifierScene = true
-    this.sceneChoisie = scene
+  editNameScene (scene: CardModel): void {
+    console.log('editNameScene ')
+    this.modifyScene = true
+    this.sceneChoose = scene
   }
 
   // Permet de télécharger une scène
@@ -574,67 +623,77 @@ export default class ErgonomIOAssets extends Vue {
   // Permet de modifier une scene
   save (scene: CardModel): void {
     console.log('save : ', this.search)
-    this.modifierScene = false
+    this.modifyScene = false
 
-    if (this.nouvelleImage !== '') {
-      scene.picture = this.nouvelleImage
+    if (this.newImage !== '') {
+      scene.picture = this.newImage
     }
 
     if (this.search.length !== 0) scene.name = this.search
-    this.miseAJourScene(scene)
+    this.releaseScene(scene)
 
-    this.nouvelleImage = ''
+    this.newImage = ''
   }
 
   // Permet de copier la scène
-  copieScene (scene: CardModel): void {
-    console.log('copieScene !')
+  copyScene (scene: CardModel): void {
+    console.log('copyScene !')
 
-    this.cards.push(scene)
-    this.ajouterSceneAPI(scene)
+    this.scenes.push(scene)
+    this.addSceneAPI(scene)
   }
 
   // Permet d'ajouter un tag à une scène
-  ajouterTag (scene: CardModel, tag: string): void {
-    console.log('ajouterTag')
+  addTag (scene: CardModel, tag: string): void {
+    console.log('addTag')
 
     scene.parsedTags.push(tag)
   }
 
   // Permet de supprimer un tab d'une scène
-  supprimerTag (scene: CardModel, tags: string): void {
-    console.log('supprimerTag')
+  deleteTag (scene: CardModel, tags: string): void {
+    console.log('deleteTag')
 
     const index = scene.parsedTags.indexOf(tags, 0)
 
     if (index > -1) {
       scene.parsedTags.splice(index, 1)
     }
-    this.miseAJourScene(scene)
+    this.releaseScene(scene)
   }
 
   // Permet de mettre à jour une scène
-  miseAJourScene (scene: CardModel): void {
+  releaseScene (scene: CardModel): void {
     // Requête API pour mettre à jour la scène
     API.patch(
       this,
       `/resources/ergonomio-scenes/${scene.id}`,
       JSON.stringify({
         assetsNumber: scene.assetsNumber,
-        color: scene.color,
-        creationDate: scene.creationDate,
+        // color: scene.color,
+        // creationDate: scene.creationDate,
         data: scene.data,
-        id: scene.id,
-        idProject: scene.idProject,
-        idUserOwner: scene.idUserOwner,
-        modificationDate: scene.modificationDate,
-        name: scene.name,
-        picture: scene.picture,
-        tags: JSON.stringify(scene.parsedTags)
+        // id: scene.id,
+        // idProject: scene.idProject,
+        // idUserOwner: scene.idUserOwner,
+        // modificationDate: scene.modificationDate,
+        name: scene.name
+        // picture: scene.picture,
+        // tags: JSON.stringify(scene.parsedTags)
       })
-    ).then((response: Response) => {
-      console.log('api modif scene')
-    })
+    )
+      .then((response: Response) => {
+        console.log('api modif scene')
+        Unreal.send(response)
+        // On mets à jour les cartes
+        this.refreshScenes()
+      })
+      .catch(e => console.error(e))
+  }
+
+  refreshScenes (): void {
+    this.scenes = []
+    this.requeteAPI()
   }
 
   // Permet de récupérer le fichier qu'on veut upload
@@ -659,11 +718,24 @@ export default class ErgonomIOAssets extends Vue {
           console.log('============')
           console.log(JSON.parse(reader.result as string))
 
-          const test = new CardModel(JSON.parse(reader.result as string))
-          this.cards.push(test)
-          this.ajouterSceneAPI(test)
+          const test = new Autre(JSON.parse(reader.result as string))
 
-          console.log('test name : ', test.name)
+          console.log('============')
+          console.log('============')
+
+          console.log('test : ', test)
+
+          const maCarte = new CardModel({
+            id: test.scene.idScene,
+            assetsNumber: test.scene.nombreAssets,
+            data: JSON.stringify(test.assets)
+          })
+
+          this.scenes.push(maCarte)
+          this.addSceneAPI(maCarte)
+
+          // console.log('test name : ', test.name)
+          // console.log('test name : ', test)
         }
 
         reader.onerror = error => {
@@ -685,7 +757,7 @@ export default class ErgonomIOAssets extends Vue {
         reader.onload = () => {
           const fileString = reader.result as string
 
-          this.nouvelleImage = fileString
+          this.newImage = fileString
           console.log('fileString : ', fileString)
         }
         reader.onerror = error => {
@@ -707,7 +779,7 @@ export default class ErgonomIOAssets extends Vue {
         reader.onload = () => {
           const fileString = reader.result as string
 
-          // this.nouvelleImage = fileString
+          // this.newImage = fileString
           console.log('fileString : ', fileString)
         }
         reader.onerror = error => {
@@ -719,24 +791,26 @@ export default class ErgonomIOAssets extends Vue {
     }
   }
 
-  // Permet de baisser la taille des cards
-  baisserTailleCard (): void {
-    this.tailleCard -= 10
-    if (this.tailleCard < 10) this.tailleCard = 10
-    this.tailleCardString = this.tailleCard.toString() + '%'
+  // Permet de baisser la taille des scenes
+  decreaseSizeCard (): void {
+    this.sizeCard -= 10
+    if (this.sizeCard < 10) this.sizeCard = 10
+    this.sizeCardString = this.sizeCard.toString() + '%'
   }
 
-  // Permet d'augmenter la taille des cards
-  augmenterTailleCard (): void {
-    this.tailleCard += 10
-    if (this.tailleCard > 50) this.tailleCard = 50
-    this.tailleCardString = this.tailleCard.toString() + '%'
+  // Permet d'augmenter la taille des scenes
+  increaseSizeCard (): void {
+    this.sizeCard += 10
+    if (this.sizeCard > 50) this.sizeCard = 50
+    this.sizeCardString = this.sizeCard.toString() + '%'
   }
 
   // Permet d'envoyer un message à l'instance unreal
   // Permet de charger sur la scène cliquée
-  envoyerUnreal (scene: CardModel): void {
+  sendUnreal (scene: CardModel): void {
     console.log('asset.name : ', scene.name)
+    console.log('asset.id : ', scene.id)
+    console.log('asset : ', scene)
 
     var objectAsset = {
       name: scene.name,
@@ -753,7 +827,7 @@ export default class ErgonomIOAssets extends Vue {
 
     console.log('data : ', scene.data)
 
-    // Unreal.send(object)
+    Unreal.send(object)
   }
 }
 </script>

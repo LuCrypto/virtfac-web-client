@@ -54,7 +54,7 @@
           <v-card-actions>
             <v-spacer></v-spacer>
             <v-btn
-              v-on:click="() => joinSession(card)"
+              v-on:click="() => joinSession(room)"
               class="primary black--text"
               large
               elevation="2"
@@ -131,7 +131,7 @@ export default class ErgonomIOAssets extends Vue {
           this.refreshRoomActuelle()
           break
         case 'quitterRoomActuelle':
-          this.quitterLaRoomActuelle()
+          this.quitRoomCurrent()
           break
         default:
       }
@@ -154,7 +154,7 @@ export default class ErgonomIOAssets extends Vue {
   }
 
   // Permet de créer une room dans le lobby
-  actualisationRoomLobby (rooms: Room[]): void {
+  refreshRoomLobby (rooms: Room[]): void {
     this.rooms = rooms
   }
 
@@ -163,14 +163,14 @@ export default class ErgonomIOAssets extends Vue {
   }
 
   // Permet de quitter la room actuelle
-  quitterLaRoomActuelle () {
+  quitRoomCurrent () {
     this.rooms = []
   }
 
   // Permet de créer une room
   createSession (): void {
     console.log('Creer room')
-    this.envoyerUnreal(new Room({ action: 'creerRoom' }))
+    this.sendUnreal(new Room({ action: 'creerRoom' }))
   }
 
   // Permet de rejoindre une room
@@ -192,11 +192,11 @@ export default class ErgonomIOAssets extends Vue {
   // Permet de quitter une room
   leaveSession (): void {
     console.log('Quitter room')
-    this.envoyerUnreal(new Room({ action: 'quitterRoom' }))
+    this.sendUnreal(new Room({ action: 'quitterRoom' }))
   }
 
   // Permet d'envoyer un message à l'instance unreal
-  envoyerUnreal (room: Room): void {
+  sendUnreal (room: Room): void {
     console.log('asset.nom : ', room.nom)
 
     var objectAsset = {
