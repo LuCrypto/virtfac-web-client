@@ -347,7 +347,6 @@ export default class ErgonomIOAssetContainer extends Vue {
             }
           } else if (extension === 'stl') {
             if (object instanceof BufferGeometry) {
-              console.log('rescale')
               const m = new Matrix4()
               // m.scale(new Vector3(0.01, 0.01, 0.01))
               m.makeRotationX(-Math.PI / 2)
@@ -435,7 +434,6 @@ export default class ErgonomIOAssetContainer extends Vue {
   }
 
   onFileUploaded (event: Event) {
-    console.log('file uploaded')
     if (event != null && event.target != null) {
       const f: File = ((event.target as HTMLInputElement).files as FileList)[0]
       if (f != null) {
@@ -502,7 +500,6 @@ export default class ErgonomIOAssetContainer extends Vue {
       const fileContent = file.uri.split('base64,')[1]
       const content = atob(fileContent)
       this.loadObjectAsync(file.uri, 'gltf', obj => {
-        console.log(obj)
         if (this.viewer !== null) {
           if (this.currentAsset !== null) {
             this.viewer.controlMesh(null)
