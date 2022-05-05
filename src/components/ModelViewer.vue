@@ -305,7 +305,7 @@ export default class ModelViewer extends Vue {
   }
 
   public screenShot (
-    fileName?: string,
+    onCaptureDone: { (uri: string): void },
     width?: number,
     height?: number,
     hideGrid?: boolean,
@@ -333,10 +333,6 @@ export default class ModelViewer extends Vue {
     this.draw()
     var strMime = 'image/png'
     const imgData = this.renderer.domElement.toDataURL(strMime)
-    const dlLink = document.createElement('a')
-    dlLink.download = fileName || 'screenshot.png'
-    dlLink.href = imgData
-    dlLink.click()
     if (hideGrid) {
       this.scene.add(this.gridHelper as GridHelper)
       this.scene.add(this.floor as Mesh)
@@ -350,6 +346,7 @@ export default class ModelViewer extends Vue {
       this.camera.updateProjectionMatrix()
     }
     this.scene.background = oldColor
+    onCaptureDone(imgData)
   }
 
   private onScreenShot: { (): void } = () => {
@@ -367,7 +364,7 @@ export default class ModelViewer extends Vue {
   }
 
   public beginScreenshotSession (
-    fileName?: string,
+    onCaptureDone: { (uri: string): void },
     width?: number,
     height?: number,
     hideGrid?: boolean,
@@ -381,7 +378,7 @@ export default class ModelViewer extends Vue {
     } else {
       this.onScreenShot = () => {
         this.screenShot(
-          fileName,
+          onCaptureDone,
           width,
           height,
           hideGrid,

@@ -237,13 +237,33 @@ export default class ErgonomIOAssetContainer extends Vue {
       new MenuItem('Capture Image', 'mdi-camera', () => {
         if (this.viewer !== null) {
           this.viewer.beginScreenshotSession(
-            this.currentAssetName.replace('.gltf', '') + '.png',
+            uri => {
+              const dlLink = document.createElement('a')
+              dlLink.download = this.currentAssetName.replace('.gltf', '.png')
+              dlLink.href = uri
+              dlLink.click()
+            },
             512,
             512,
             true,
             true
           )
         }
+      })
+    )
+    this.menuItemList.push(
+      new MenuItem('Change Asset Name', 'mdi-form-textbox', () => {
+        if (this.inputField === null) return
+        this.inputField.open(
+          'Enter Asset Name',
+          this.currentAssetName.replace('.gltf', ''),
+          this.currentAssetName.replace('.gltf', ''),
+          value => {
+            if (value != null) {
+              this.currentAssetName = value + '.gltf'
+            }
+          }
+        )
       })
     )
     // const mapper = new Mapper(CAEExampleFormat1)
