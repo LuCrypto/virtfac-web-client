@@ -461,12 +461,7 @@ export default class OpenAssetPopUp extends Vue {
               'color',
               'tags',
               'mime'
-            ],
-            where: formatList.map(format => {
-              return {
-                mime: format
-              }
-            })
+            ]
           })
         )
 
