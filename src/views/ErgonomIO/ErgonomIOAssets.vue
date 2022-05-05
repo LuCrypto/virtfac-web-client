@@ -602,7 +602,9 @@ export default class ErgonomIOAssets extends Vue {
     console.log('asset.name : ', asset.name)
 
     var objectAsset = {
-      name: asset.name
+      name: asset.name,
+      id: asset.id,
+      uri: asset.uri
     }
 
     var object = {
