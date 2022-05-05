@@ -15,9 +15,9 @@
       <v-row justify="center">
         <v-dialog v-model="popup" max-width="780">
           <v-card>
-            <v-card-title> {{ titrePopup }} </v-card-title>
+            <v-card-title> {{ titlePopup }} </v-card-title>
             <v-card-text>
-              {{ textePopup }}
+              {{ textPopup }}
             </v-card-text>
 
             <v-card-actions>
@@ -32,7 +32,7 @@
 
       <!-- Popup permettant d'afficher de créer une scène avec json -->
       <v-row justify="center">
-        <v-dialog v-model="creerSceneJson" max-width="780">
+        <v-dialog v-model="createSceneJson" max-width="780">
           <v-card>
             <v-card-title> Glisser un fichier scene json </v-card-title>
 
@@ -55,7 +55,7 @@
               <v-btn
                 color="green darken-1"
                 text
-                @click="creerSceneJson = false"
+                @click="createSceneJson = false"
               >
                 OK
               </v-btn>
@@ -66,7 +66,7 @@
 
       <!-- Popup permettant de modifier des données de la scène -->
       <v-row justify="center">
-        <v-dialog v-model="modifierScene" max-width="780">
+        <v-dialog v-model="modifyScene" max-width="780">
           <v-card>
             <v-card-title> Modifier des données </v-card-title>
 
@@ -93,11 +93,11 @@
                 </v-col>
 
                 <v-col cols="4">
-                  <v-text-field v-model="nouveauTag"> </v-text-field>
+                  <v-text-field v-model="newTag"> </v-text-field>
                 </v-col>
 
                 <v-col cols="3">
-                  <v-btn v-on:click="ajouterTag(sceneChoisie, nouveauTag)" icon>
+                  <v-btn v-on:click="addTag(sceneChoose, newTag)" icon>
                     <v-icon v-text="'mdi-plus'"></v-icon>
                   </v-btn>
                 </v-col>
@@ -105,7 +105,7 @@
             </v-container>
 
             <v-container fluid>
-              <v-img height="270" :src="nouvelleImage"> </v-img>
+              <v-img height="270" :src="newImage"> </v-img>
               <v-btn
                 class="ml-6 mt-6 flex-grow-1"
                 color="primary"
@@ -125,7 +125,7 @@
             <v-container
               fluid
               :key="indexTag2"
-              v-for="(tag, indexTag2) in sceneChoisie.parsedTags"
+              v-for="(tag, indexTag2) in sceneChoose.parsedTags"
             >
               <v-row>
                 <v-col cols="2">
@@ -135,7 +135,7 @@
                 </v-col>
 
                 <v-col cols="3">
-                  <v-btn v-on:click="supprimerTag(sceneChoisie, tag)" icon>
+                  <v-btn v-on:click="deleteTag(sceneChoose, tag)" icon>
                     <v-icon v-text="'mdi-delete'"></v-icon>
                   </v-btn>
                 </v-col>
@@ -146,12 +146,12 @@
               <v-btn
                 color="green darken-1"
                 text
-                @click="copieScene(sceneChoisie)"
+                @click="copyScene(sceneChoose)"
               >
                 Faire une copie de la scène
               </v-btn>
               <v-spacer></v-spacer>
-              <v-btn color="green darken-1" text @click="save(sceneChoisie)">
+              <v-btn color="green darken-1" text @click="save(sceneChoose)">
                 Save
               </v-btn>
             </v-card-actions>
@@ -166,33 +166,34 @@
         max-height="775"
       >
         <v-card
-          :key="indexCard"
-          v-for="(card, indexCard) in cards"
-          :width="tailleCardString"
+          :key="indexScene"
+          v-for="(scene, indexScene) in scenes"
+          :width="sizeCardString"
           class="ma-3"
           elevation="5"
-          v-on:click="envoyerUnreal(card)"
+          v-on:click="sendUnreal(scene)"
         >
-          <v-img height="270" :src="card.picture"> </v-img>
-          <v-sheet height="4" :color="`#${card.color.toString(16)}`"> </v-sheet>
+          <v-img height="270" :src="scene.picture"> </v-img>
+          <v-sheet height="4" :color="`#${scene.color.toString(16)}`">
+          </v-sheet>
           <v-card-title>
-            {{ card.name }}
-            <v-btn v-on:click="editerNomScene(card)" icon>
+            {{ scene.name }}
+            <v-btn v-on:click="editNameScene(scene)" icon>
               <v-icon v-text="'mdi-pencil'"></v-icon>
             </v-btn>
           </v-card-title>
           <v-card-subtitle>
             <v-chip
               :key="indexTag"
-              v-for="(tag, indexTag) in card.parsedTags"
+              v-for="(tag, indexTag) in scene.parsedTags"
               class="mr-2 overflow-y-auto"
             >
               {{ tag }}
             </v-chip>
           </v-card-subtitle>
           <v-card-text>
-            {{ card.formatedCreationDate }}, nombre assets :
-            {{ card.assetsNumber }}
+            {{ scene.formatedCreationDate }}, nombre assets :
+            {{ scene.assetsNumber }}, id : {{ scene.id }}
           </v-card-text>
 
           <v-card-actions>
@@ -205,16 +206,16 @@
 
             <v-spacer></v-spacer>
 
-            <v-btn v-on:click="downloadScene(card)" icon>
+            <v-btn v-on:click="downloadScene(scene)" icon>
               <v-icon v-text="'mdi-download'"></v-icon>
             </v-btn>
-            <v-btn v-on:click="outline(card)" icon>
+            <v-btn v-on:click="outline(scene)" icon>
               <v-icon v-text="'mdi-eye'"></v-icon>
             </v-btn>
-            <v-btn v-on:click="clickScene(card)" icon>
+            <v-btn v-on:click="clickScene(scene)" icon>
               <v-icon v-text="'mdi-information'"></v-icon>
             </v-btn>
-            <v-btn v-on:click="supprimerObjet(card)" icon>
+            <v-btn v-on:click="deleteObjet(scene)" icon>
               <v-icon v-text="'mdi-delete'"></v-icon>
             </v-btn>
           </v-card-actions>
@@ -236,14 +237,14 @@
       </v-flex>
       <v-flex class="flex-grow-0 mx-5">
         <!-- Bouton permettant de créer une scène vide -->
-        <v-btn
-          v-on:click="creerSceneJson = true"
+        <!-- <v-btn
+          v-on:click="createSceneJson = true"
           class="yellow darken-3 font-weight-black"
           large
           elevation="2"
         >
           Créer une scène avec json
-        </v-btn>
+        </v-btn> -->
       </v-flex>
       <v-flex class="flex-grow-0 mx-5">
         <!-- Bouton permettant de charger une scène -->
@@ -277,17 +278,17 @@
       <!-- Sélection de la scene choisie -->
       <v-flex class="flex-grow-0 mx-5">
         <v-select
-          :items="cards.map(item => item.name)"
-          v-model="variable"
+          :items="scenes.map(item => item.name)"
+          v-model="sceneForModif"
           label="Scène visée"
           dense
         ></v-select>
       </v-flex>
       <v-flex class="flex-grow-0 mx-5">
-        <v-btn v-on:click="baisserTailleCard()" icon>
+        <v-btn v-on:click="decreaseSizeCard()" icon>
           <v-icon v-text="'mdi-minus'"></v-icon>
         </v-btn>
-        <v-btn v-on:click="augmenterTailleCard()" icon>
+        <v-btn v-on:click="increaseSizeCard()" icon>
           <v-icon v-text="'mdi-plus'"></v-icon>
         </v-btn>
       </v-flex>
@@ -343,8 +344,6 @@ class CardModel {
 // Scene recue d'unreal
 class SceneRecue {
   name = ''
-  folder = ''
-  type = ''
   position = []
   rotation = []
   scale = []
@@ -374,7 +373,7 @@ class Autre {
 
 // Message venant d'Unreal
 class messageUnreal {
-  message = ''
+  // message = ''
   nomScene = ''
   // dataRoom: CardModel = new CardModel({})
   data: Autre = new Autre({})
@@ -387,59 +386,58 @@ class messageUnreal {
 @Component
 export default class ErgonomIOAssets extends Vue {
   // Initialisation
-  cards: CardModel[] = []
-  cards2: CardModel[] = []
-  titrePopup = ''
-  textePopup = ''
+  scenes: CardModel[] = []
+  scenes2: CardModel[] = []
+
+  titlePopup = ''
+  textPopup = ''
+
   popup = false
-  creerSceneJson = false
-  modifierScene = false
+  createSceneJson = false
+  modifyScene = false
 
   search = ''
-  sceneChoisie: any = new CardModel({ id: 2 })
+  sceneChoose: any = new CardModel({ id: 2 })
 
-  nouveauTag = ''
-  nouvelleImage = ''
+  newTag = ''
+  newImage = ''
 
-  tailleCard = 30
-  tailleCardString = '30%'
+  sizeCard = 30
+  sizeCardString = '30%'
 
-  variable = ''
+  sceneForModif = ''
 
   // Begin
   mounted (): void {
     this.requeteAPI()
 
+    // Permet de récupérer la réponse d'Unreal
     Unreal.callback.$on('unreal-message', (data: unknown) => {
       this.$root.$emit('bottom-message', `Unreal : ${JSON.stringify(data)}`)
       // Unreal.send('Message recu !')
       // Unreal.send(data)
 
-      var maScene = data as Autre
-      // var mesData = maScene.assets as string
+      var maScene
+      try {
+        maScene = data as Autre
+      } catch (e) {
+        this.$root.$emit('bottom-message', `Unreal : ${e}`)
+      }
 
-      Unreal.send(maScene.assets[0].name)
-      Unreal.send(maScene.scene.nombreAssets.toString())
-      Unreal.send(maScene.scene.idScene.toString())
-      Unreal.send(maScene.assets)
+      // Unreal.send(maScene.assets[0].name)
+      Unreal.send(maScene?.scene.nombreAssets.toString())
+      Unreal.send(maScene?.scene.idScene.toString())
+      // Unreal.send(maScene.scene.idScene.toString())
+      // Unreal.send(maScene?.assets)
 
       var maCard = new CardModel({
-        assetsNumber: maScene.scene.nombreAssets,
-        id: maScene.scene.idScene,
-        name: 'aymeric.json',
-        data: JSON.stringify(maScene.assets)
+        assetsNumber: maScene?.scene.nombreAssets,
+        id: maScene?.scene.idScene,
+        name: 'aymeric2',
+        data: JSON.stringify(maScene?.assets)
       })
 
-      this.miseAJourScene(maCard)
-
-      // switch (data.message) {
-      //   case 'modifierScene':
-      //     Unreal.send('salut ça marche : ')
-
-      //     // this.rooms.push(data.dataRoom)
-      //     break
-      //   default:
-      // }
+      this.releaseScene(maCard)
     })
   }
 
@@ -455,18 +453,18 @@ export default class ErgonomIOAssets extends Vue {
       })
     ).then((response: Response) => {
       console.log('response ', response)
-      this.cards2 = ((response as unknown) as Array<Partial<CardModel>>).map(
+      this.scenes2 = ((response as unknown) as Array<Partial<CardModel>>).map(
         (scene: Partial<CardModel>) => new CardModel(scene)
       )
 
       for (let i = 0; i < this.cards2.length; i++) {
         this.cards.push(this.cards2[i])
       }
-      this.cards2 = []
+      this.scenes2 = []
     })
   }
 
-  // Boutons scènes cards
+  // Boutons scènes scenes
   ergonomioLayout (): void {
     console.log('ergonomioLayout !')
   }
@@ -478,15 +476,15 @@ export default class ErgonomIOAssets extends Vue {
   // Permet de créer une scène vide
   createEmptyScene (): void {
     console.log('creerSceneVide')
-    const scene = new CardModel({ id: this.cards.length })
+    const scene = new CardModel({ id: this.scenes.length })
     scene.parsedTags.push('vide')
-    this.cards.push(scene)
+    this.scenes.push(scene)
 
-    this.ajouterSceneAPI(scene)
+    this.addSceneAPI(scene)
   }
 
   // Permet de faire une requête API pour ajouter une scène
-  ajouterSceneAPI (scene: CardModel): void {
+  addSceneAPI (scene: CardModel): void {
     API.put(
       this,
       '/resources/ergonomio-scenes',
@@ -505,11 +503,12 @@ export default class ErgonomIOAssets extends Vue {
       })
     ).then((response: Response) => {
       console.log('api modif scene')
+      this.refreshScenes()
     })
   }
 
   // Permet de faire une requête API pour supprimer une scène
-  supprimerSceneAPi (id: number): void {
+  deleteSceneAPi (id: number): void {
     API.delete(this, `/resources/ergonomio-scenes/${id}`, '').then(
       (response: Response) => {
         console.log('supprimer scene')
@@ -518,21 +517,33 @@ export default class ErgonomIOAssets extends Vue {
   }
 
   // Permet de charger une scène à partir d'un fichier scène
-  chargerScene (): void {
+  loadScene (): void {
     console.log('Charger scene')
     this.openUploadFile()
   }
 
   // Permet d'activer le fait de pouvoir ajouter un objet
-  addObjectInScene (scene: CardModel): void {
+  addObjectInScene (): void {
     console.log('addObjectInScene')
 
-    console.log('variable : ', this.variable)
+    console.log('sceneForModif : ', this.sceneForModif)
 
-    if (this.variable !== '') {
+    let idSceneModif
+    for (let i = 0; i < this.scenes.length; i++) {
+      if (this.sceneForModif === this.scenes[i].name) {
+        idSceneModif = this.scenes[i].id
+        break
+      }
+    }
+
+    Unreal.send('addObjectInScene')
+    Unreal.send(idSceneModif)
+
+    if (this.sceneForModif !== '') {
       // Activer le mode pour ajouter des objets dans la scène
       var objectAsset = {
-        name: this.variable,
+        name: this.sceneForModif,
+        idScene: idSceneModif,
         action: 'ajouterObjetScene'
       }
 
@@ -546,35 +557,34 @@ export default class ErgonomIOAssets extends Vue {
   }
 
   // Permet de mettre à jour la scène
-  miseAJourSceneFichier (data: unknown): void {
+  releaseSceneFichier (data: unknown): void {
     console.log('data : ', data)
   }
 
   // Permet de supprimer la scène en question
-  supprimerObjet (scene: CardModel): void {
+  deleteObjet (scene: CardModel): void {
     console.log('Supprimer objet ')
 
-    const index2 = this.cards.indexOf(scene, 0)
+    const index2 = this.scenes.indexOf(scene, 0)
 
     if (index2 > -1) {
-      this.cards.splice(index2, 1)
+      this.scenes.splice(index2, 1)
     }
 
-    this.supprimerSceneAPi(scene.id)
+    this.deleteSceneAPi(scene.id)
 
-    console.log('length : ', this.cards.length)
-    console.log('length : ', this.cards)
+    console.log('length : ', this.scenes.length)
+    console.log('length : ', this.scenes)
   }
 
   // Permet d'afficher dans une popup des informations sur la scene
   clickScene (scene: CardModel): void {
     console.log('clickScene : ', scene.id)
     this.popup = true
-    this.titrePopup = scene.name
+    this.titlePopup = scene.name
 
-    this.textePopup = scene.data
-
-    Unreal.send('test lol quentin fort')
+    this.textPopup = scene.data
+    this.releaseScene(new CardModel({ id: 1 }))
   }
 
   // Aymeric todo
@@ -583,10 +593,10 @@ export default class ErgonomIOAssets extends Vue {
   }
 
   // Permet de modifier le nom d'une scène
-  editerNomScene (scene: CardModel): void {
-    console.log('editerNomScene ')
-    this.modifierScene = true
-    this.sceneChoisie = scene
+  editNameScene (scene: CardModel): void {
+    console.log('editNameScene ')
+    this.modifyScene = true
+    this.sceneChoose = scene
   }
 
   // Permet de télécharger une scène
@@ -607,67 +617,77 @@ export default class ErgonomIOAssets extends Vue {
   // Permet de modifier une scene
   save (scene: CardModel): void {
     console.log('save : ', this.search)
-    this.modifierScene = false
+    this.modifyScene = false
 
-    if (this.nouvelleImage !== '') {
-      scene.picture = this.nouvelleImage
+    if (this.newImage !== '') {
+      scene.picture = this.newImage
     }
 
     if (this.search.length !== 0) scene.name = this.search
-    this.miseAJourScene(scene)
+    this.releaseScene(scene)
 
-    this.nouvelleImage = ''
+    this.newImage = ''
   }
 
   // Permet de copier la scène
-  copieScene (scene: CardModel): void {
-    console.log('copieScene !')
+  copyScene (scene: CardModel): void {
+    console.log('copyScene !')
 
-    this.cards.push(scene)
-    this.ajouterSceneAPI(scene)
+    this.scenes.push(scene)
+    this.addSceneAPI(scene)
   }
 
   // Permet d'ajouter un tag à une scène
-  ajouterTag (scene: CardModel, tag: string): void {
-    console.log('ajouterTag')
+  addTag (scene: CardModel, tag: string): void {
+    console.log('addTag')
 
     scene.parsedTags.push(tag)
   }
 
   // Permet de supprimer un tab d'une scène
-  supprimerTag (scene: CardModel, tags: string): void {
-    console.log('supprimerTag')
+  deleteTag (scene: CardModel, tags: string): void {
+    console.log('deleteTag')
 
     const index = scene.parsedTags.indexOf(tags, 0)
 
     if (index > -1) {
       scene.parsedTags.splice(index, 1)
     }
-    this.miseAJourScene(scene)
+    this.releaseScene(scene)
   }
 
   // Permet de mettre à jour une scène
-  miseAJourScene (scene: CardModel): void {
+  releaseScene (scene: CardModel): void {
     // Requête API pour mettre à jour la scène
     API.patch(
       this,
       `/resources/ergonomio-scenes/${scene.id}`,
       JSON.stringify({
         assetsNumber: scene.assetsNumber,
-        color: scene.color,
-        creationDate: scene.creationDate,
+        // color: scene.color,
+        // creationDate: scene.creationDate,
         data: scene.data,
-        id: scene.id,
-        idProject: scene.idProject,
-        idUserOwner: scene.idUserOwner,
-        modificationDate: scene.modificationDate,
-        name: scene.name,
-        picture: scene.picture,
-        tags: JSON.stringify(scene.parsedTags)
+        // id: scene.id,
+        // idProject: scene.idProject,
+        // idUserOwner: scene.idUserOwner,
+        // modificationDate: scene.modificationDate,
+        name: scene.name
+        // picture: scene.picture,
+        // tags: JSON.stringify(scene.parsedTags)
       })
-    ).then((response: Response) => {
-      console.log('api modif scene')
-    })
+    )
+      .then((response: Response) => {
+        console.log('api modif scene')
+        Unreal.send(response)
+        // On mets à jour les cartes
+        this.refreshScenes()
+      })
+      .catch(e => console.error(e))
+  }
+
+  refreshScenes (): void {
+    this.scenes = []
+    this.requeteAPI()
   }
 
   // Permet de récupérer le fichier qu'on veut upload
@@ -692,11 +712,24 @@ export default class ErgonomIOAssets extends Vue {
           console.log('============')
           console.log(JSON.parse(reader.result as string))
 
-          const test = new CardModel(JSON.parse(reader.result as string))
-          this.cards.push(test)
-          this.ajouterSceneAPI(test)
+          const test = new Autre(JSON.parse(reader.result as string))
 
-          console.log('test name : ', test.name)
+          console.log('============')
+          console.log('============')
+
+          console.log('test : ', test)
+
+          const maCarte = new CardModel({
+            id: test.scene.idScene,
+            assetsNumber: test.scene.nombreAssets,
+            data: JSON.stringify(test.assets)
+          })
+
+          this.scenes.push(maCarte)
+          this.addSceneAPI(maCarte)
+
+          // console.log('test name : ', test.name)
+          // console.log('test name : ', test)
         }
 
         reader.onerror = error => {
@@ -718,7 +751,7 @@ export default class ErgonomIOAssets extends Vue {
         reader.onload = () => {
           const fileString = reader.result as string
 
-          this.nouvelleImage = fileString
+          this.newImage = fileString
           console.log('fileString : ', fileString)
         }
         reader.onerror = error => {
@@ -740,7 +773,7 @@ export default class ErgonomIOAssets extends Vue {
         reader.onload = () => {
           const fileString = reader.result as string
 
-          // this.nouvelleImage = fileString
+          // this.newImage = fileString
           console.log('fileString : ', fileString)
         }
         reader.onerror = error => {
@@ -752,24 +785,26 @@ export default class ErgonomIOAssets extends Vue {
     }
   }
 
-  // Permet de baisser la taille des cards
-  baisserTailleCard (): void {
-    this.tailleCard -= 10
-    if (this.tailleCard < 10) this.tailleCard = 10
-    this.tailleCardString = this.tailleCard.toString() + '%'
+  // Permet de baisser la taille des scenes
+  decreaseSizeCard (): void {
+    this.sizeCard -= 10
+    if (this.sizeCard < 10) this.sizeCard = 10
+    this.sizeCardString = this.sizeCard.toString() + '%'
   }
 
-  // Permet d'augmenter la taille des cards
-  augmenterTailleCard (): void {
-    this.tailleCard += 10
-    if (this.tailleCard > 50) this.tailleCard = 50
-    this.tailleCardString = this.tailleCard.toString() + '%'
+  // Permet d'augmenter la taille des scenes
+  increaseSizeCard (): void {
+    this.sizeCard += 10
+    if (this.sizeCard > 50) this.sizeCard = 50
+    this.sizeCardString = this.sizeCard.toString() + '%'
   }
 
   // Permet d'envoyer un message à l'instance unreal
   // Permet de charger sur la scène cliquée
-  envoyerUnreal (scene: CardModel): void {
+  sendUnreal (scene: CardModel): void {
     console.log('asset.name : ', scene.name)
+    console.log('asset.id : ', scene.id)
+    console.log('asset : ', scene)
 
     var objectAsset = {
       name: scene.name,
@@ -786,7 +821,7 @@ export default class ErgonomIOAssets extends Vue {
 
     console.log('data : ', scene.data)
 
-    // Unreal.send(object)
+    Unreal.send(object)
   }
 }
 </script>

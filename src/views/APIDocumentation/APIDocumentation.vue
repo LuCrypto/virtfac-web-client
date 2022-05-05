@@ -50,6 +50,7 @@
                 >
                   {{ open ? 'mdi-folder-open' : 'mdi-folder' }}
                 </v-icon>
+                <!-- Les elements -->
                 <div v-else>
                   <v-chip
                     style="min-width: 65px;"
