@@ -107,15 +107,6 @@
           <v-card-title> Les différentes catégories : </v-card-title>
 
           <v-card-text>
-            <v-btn
-              class="ma-2"
-              :key="indexCategorie"
-              v-for="(categorie, indexCategorie) in categoryAsset"
-              v-on:click="sortWithCategory(categorie)"
-            >
-              {{ categorie }}
-            </v-btn>
-
             <v-treeview
               :items="rootItem.children"
               item-key="id"

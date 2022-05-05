@@ -457,8 +457,8 @@ export default class ErgonomIOAssets extends Vue {
         (scene: Partial<CardModel>) => new CardModel(scene)
       )
 
-      for (let i = 0; i < this.cards2.length; i++) {
-        this.cards.push(this.cards2[i])
+      for (let i = 0; i < this.scenes2.length; i++) {
+        this.scenes.push(this.scenes2[i])
       }
       this.scenes2 = []
     })
