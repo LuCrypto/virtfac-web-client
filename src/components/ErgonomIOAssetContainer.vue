@@ -1,5 +1,16 @@
 <template>
   <v-card elevation="3" height="700px" class="d-flex flex-row">
+    <pop-up ref="openFilePopUp">
+      <open-file
+        @close="$refs.openFilePopUp.close()"
+        application="ERGONOM_IO"
+        accept=".gltf, .obj, .fbx, .stl, .wrl"
+        :uploadPipeline="onFileUpload"
+        :singleSelect="true"
+        :openFile="true"
+        @fileInput="onFileInput"
+      ></open-file>
+    </pop-up>
     <input
       ref="objUpload"
       type="file"
@@ -75,7 +86,9 @@ import { Rhino3dmLoader } from 'three/examples/jsm/loaders/3DMLoader'
 import { PLYLoader } from 'three/examples/jsm/loaders/PLYLoader'
 import { TDSLoader } from 'three/examples/jsm/loaders/TDSLoader'
 
-// import {  } from 'three/examples/jsm/loaders/'
+import { OBJExporter } from 'three/examples/jsm/exporters/OBJExporter'
+import { STLExporter } from 'three/examples/jsm/exporters/STLExporter'
+
 import {
   BufferGeometry,
   Group,
@@ -91,6 +104,10 @@ import {
 } from 'three'
 import { Session } from '@/utils/session'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
+import PopUp from './PopUp.vue'
+import OpenFile from '@/components/OpenFile.vue'
+import { load } from 'dotenv/types'
+import API from '@/utils/api'
 
 class MenuItem {
   text: string
@@ -115,7 +132,9 @@ interface SettingItem {
     ActionContainer,
     SelectPopUp,
     InputFieldPopUp,
-    ModelViewer
+    ModelViewer,
+    PopUp,
+    OpenFile
   }
 })
 export default class ErgonomIOAssetContainer extends Vue {
@@ -134,6 +153,9 @@ export default class ErgonomIOAssetContainer extends Vue {
   viewer: ModelViewer | null = null
 
   currentAsset: Group | null = null
+  currentAssetApiId = -1
+  currentAssetName = ''
+  inputField: InputFieldPopUp | null = null
 
   updateTheme (): void {
     if (this.viewer !== null) {
@@ -148,6 +170,7 @@ export default class ErgonomIOAssetContainer extends Vue {
   }
 
   mounted (): void {
+    this.inputField = this.$refs.inputFieldPopUp as InputFieldPopUp
     this.$root.$on('changeDarkMode', () => {
       this.updateTheme()
     })
@@ -161,18 +184,23 @@ export default class ErgonomIOAssetContainer extends Vue {
     this.updateTheme()
 
     this.menuItemList.push(
-      new MenuItem('Upload file', 'mdi-upload', () => {
+      new MenuItem('Load local file', 'mdi-upload', () => {
         (this.$refs.objUpload as HTMLElement).click()
         return true
       })
     )
     this.menuItemList.push(
       new MenuItem('Open File', 'mdi-file-document', () => {
-        this.openFilePopUp()
+        (this.$refs.openFilePopUp as PopUp).open()
       })
     )
     this.menuItemList.push(
-      new MenuItem('Save File', 'mdi-file-document', () => {
+      new MenuItem('Save File', 'mdi-content-save-edit', () => {
+        this.patchFileFromAsset()
+      })
+    )
+    this.menuItemList.push(
+      new MenuItem('Download File', 'mdi-download', () => {
         this.exportGltf()
       })
     )
@@ -189,6 +217,20 @@ export default class ErgonomIOAssetContainer extends Vue {
     this.menuItemList.push(
       new MenuItem('Switch Snap Mode', 'mdi-ruler', () => {
         this.switchSnapMode()
+      })
+    )
+    this.menuItemList.push(
+      new MenuItem('Apply Scale', 'mdi-pencil-ruler', () => {
+        if (this.currentAsset === null) return
+        if (this.inputField != null) {
+          this.inputField.open('enter scale multiplier', '1', '1', input => {
+            if (input != null) {
+              const scale = +input.replaceAll(',', '.').replaceAll(' ', '')
+              if (this.currentAsset === null) return
+              this.currentAsset.scale.multiplyScalar(scale)
+            }
+          })
+        }
       })
     )
     // const mapper = new Mapper(CAEExampleFormat1)
@@ -216,71 +258,12 @@ export default class ErgonomIOAssetContainer extends Vue {
     input.click()
   }
 
-  handleFile (files: APIFile[]): void {
-    if (files == null) {
-      console.log('This type of file cannot be read yet.')
-    } else {
-      /*
-      console.log(files, ' : coucou', typeof files)
-      const workbook = XLSX.read(files[0].uri.split('base64,')[1], {
-        type: 'base64'
-      })
-      console.log(workbook)
-      this.constraintGraph.loadXLSX(workbook as IWorkBook)
-      this.fileName = files[0].name
-      */
-    }
-  }
-
-  // dropHandler(e : )
-  saveShape (): void {
-    /*
-    if (this.inputFieldPopUp != null) {
-      this.inputFieldPopUp.open(
-        'Save Shape',
-        'enter shape name',
-        this.fileName,
-        text => {
-          if (text != null) {
-            const settingOBJ = {
-              name: text,
-              type: 'graph_position',
-              initialProject: this.fileName,
-              date: new Date(),
-              data: this.constraintGraph.getRawGraph().toJsonOBJ()
-            }
-            API.post(
-              this,
-              '/application-settings',
-              JSON.stringify({
-                idApplication: 2,
-                name: text,
-                json: JSON.stringify(settingOBJ)
-              })
-            )
-          }
-        }
-      )
-    }
-    */
-  }
-
-  openFilePopUp (): void {
-    /*
-    if (this.filePopUp != null) {
-      // this.filePopUp.open()
-    } else {
-      console.log('this.filePopUp is null')
-    }
-    */
-  }
-
   public loadObjectAsync (
     url: string,
     extension: string,
     onLoaded: { (object: Group): void },
     onProgress?: { (event: ProgressEvent<EventTarget>): void }
-  ) {
+  ): void {
     const loaders = new Map<string, Loader>([
       ['gltf', new GLTFLoader()],
       ['obj', new OBJLoader()],
@@ -292,14 +275,7 @@ export default class ErgonomIOAssetContainer extends Vue {
       ['ply', new PLYLoader()],
       ['tds', new TDSLoader()]
     ])
-    /*
-    if (extension === 'gltf') {
-      if (this.viewer !== null) {
-        this.viewer.loadGLTFFromPath(url)
-      }
-    }
-    else {
-    */
+
     const loader = loaders.get(extension)
     if (loader !== undefined) {
       loader.loadAsync(url, onProgress).then(
@@ -399,7 +375,6 @@ export default class ErgonomIOAssetContainer extends Vue {
         }
       )
     }
-    // }
   }
 
   exportGltf () {
@@ -482,33 +457,107 @@ export default class ErgonomIOAssetContainer extends Vue {
   switchSnapMode () {
     if (this.viewer !== null) this.viewer.switchMeshControlSnap()
   }
-}
 
-/*
-updateUploadFile (e: Event): void {
-    if (e.target == null) return
-    const target = e.target as HTMLInputElement
-    if (target.files != null && target.files.length > 0) {
-      // TODO : Upload file and select format before validation
-
-      [...target.files].forEach(file => {
-        const reader = new FileReader()
-        reader.onload = () => {
-          const fileString = reader.result as string
-          this.uploadFile(
-            new APIFile({
-              name: file.name,
-              uri: fileString
-            })
-          )
+  onFileInput (files: APIFile[]): void {
+    const file = files.pop()
+    if (file != null) {
+      const fileContent = file.uri.split('base64,')[1]
+      const content = atob(fileContent)
+      this.loadObjectAsync(file.uri, 'gltf', obj => {
+        console.log(obj)
+        if (this.viewer !== null) {
+          if (this.currentAsset !== null) {
+            this.viewer.controlMesh(null)
+            this.viewer.removeObjectToScene(this.currentAsset)
+          }
+          this.viewer.addObjectToScene(obj)
+          this.viewer.controlMesh(obj)
+          this.currentAsset = obj
+          this.currentAssetApiId = file.id
+          this.currentAssetName = file.name
         }
-        reader.onerror = error => {
-          console.error(error)
-          this.$root.$emit('bottom-message', 'Sorry, we cannot read this file.')
-        }
-        reader.readAsDataURL(file)
       })
+    } else {
+      console.error('Unable to open selected file.')
+      this.$root.$emit('bottom-message', 'Unable to open selected file.')
     }
   }
-*/
+
+  onFileUpload (file: File): Promise<File> {
+    return new Promise<File>((resolve, reject) => {
+      const extension = (file.name.split('.').pop() as string).toLowerCase()
+      this.loadObjectAsync(
+        URL.createObjectURL(file),
+        extension,
+        obj => {
+          const gltfExporter = new GLTFExporter()
+          gltfExporter.parse(
+            obj,
+            gltf => {
+              const blob = new Blob([JSON.stringify(gltf)], {
+                type: 'model/gltf+json'
+              })
+              const f = new File(
+                [blob],
+                file.name.substring(0, file.name.length - extension.length) +
+                  'gltf',
+                { type: 'model/gltf+json' }
+              )
+              resolve(f)
+            },
+            {}
+          )
+        },
+        event => {
+          console.log((event.loaded / event.total) * 100 + '% loaded')
+        }
+      )
+    })
+  }
+
+  patchFileFromAsset () {
+    if (this.currentAssetApiId !== -1 && this.currentAsset !== null) {
+      const exporter = new GLTFExporter()
+      exporter.parse(
+        this.currentAsset,
+        gltf => {
+          const blob = new Blob([JSON.stringify(gltf)], {
+            type: 'model/gltf+json'
+          })
+          const f = new File([blob], this.currentAssetName, {
+            type: 'model/gltf+json'
+          })
+          const reader = new FileReader()
+          reader.onload = () => {
+            const fileString = reader.result as string
+            const apiFile = new APIFile({
+              name: this.currentAssetName,
+              uri: fileString
+            })
+            API.patch(
+              this,
+              '/resources/files/' + this.currentAssetApiId,
+              JSON.stringify(apiFile.toJSON())
+            )
+              .then(res => {
+                console.log(res)
+              })
+              .catch(err => {
+                console.log(err)
+              })
+          }
+          reader.onerror = error => {
+            console.error(error)
+            this.$root.$emit(
+              'bottom-message',
+              'Sorry, we cannot read this file.'
+            )
+          }
+          reader.readAsDataURL(f)
+        },
+        {}
+      )
+    }
+  }
+}
 </script>

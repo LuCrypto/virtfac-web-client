@@ -104,7 +104,7 @@ export default class DrawingShopComponent extends Vue {
     this.nodeViewer = this.$refs.nodeViewer as BlueprintEditor
     this.actionContainer = this.$refs.actionContainer as ActionContainer
     this.inputField = this.$refs.inputFieldPopUp as InputFieldPopUp
-
+    /*
     this.menuItemList.push(
       new MenuItem('Open File', 'mdi-file-document', () => {
         (this.$refs.filePopUp as PopUp).open()
@@ -126,6 +126,7 @@ export default class DrawingShopComponent extends Vue {
         }
       })
     )
+    */
     this.menuItemList.push(
       new MenuItem('Define Scale', 'mdi-pencil-ruler', () => {
         let dist = 1
