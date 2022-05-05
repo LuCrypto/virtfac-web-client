@@ -2,6 +2,7 @@
   <v-container fluid style="max-height: 100%; overflow: auto;">
     <v-card style="max-height: 100%; overflow: auto;">
       <v-container
+        fluid
         class="d-flex flex-column"
         style="max-height: 100%; overflow: auto;"
       >
@@ -55,7 +56,7 @@
               </v-card-text>
 
               <v-card-actions class="flex-wrap">
-                <v-container>
+                <v-container fluid>
                   <v-column>
                     <v-row>
                       <v-btn color="primary" text @click="ergonomioLayout()">
@@ -92,7 +93,7 @@
           </v-row>
 
           <!-- Les différents boutons -->
-          <v-container class="mt-8">
+          <v-container class="mt-8" fluid>
             <v-column>
               <v-row justify="space-between mb-4" style="gap: 10px;">
                 <v-btn
