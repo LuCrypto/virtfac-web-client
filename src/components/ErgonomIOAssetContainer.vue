@@ -4,7 +4,7 @@
       <open-file
         @close="$refs.openFilePopUp.close()"
         application="ERGONOM_IO"
-        accept=".gltf, .obj, .fbx, .stl, .wrl"
+        accept=".gltf, .obj, .fbx, .stl, .wrl, .glb"
         :uploadPipeline="onFileUpload"
         :singleSelect="true"
         :openFile="true"
@@ -14,7 +14,7 @@
     <input
       ref="objUpload"
       type="file"
-      accept=".gltf, .obj, .fbx, .stl, .wrl"
+      accept=".gltf, .obj, .fbx, .stl, .wrl, .glb"
       hidden
       @change="onFileUploaded"
     />
@@ -233,6 +233,19 @@ export default class ErgonomIOAssetContainer extends Vue {
         }
       })
     )
+    this.menuItemList.push(
+      new MenuItem('Capture Image', 'mdi-camera', () => {
+        if (this.viewer !== null) {
+          this.viewer.beginScreenshotSession(
+            this.currentAssetName.replace('.gltf', '') + '.png',
+            512,
+            512,
+            true,
+            true
+          )
+        }
+      })
+    )
     // const mapper = new Mapper(CAEExampleFormat1)
   }
 
@@ -266,6 +279,7 @@ export default class ErgonomIOAssetContainer extends Vue {
   ): void {
     const loaders = new Map<string, Loader>([
       ['gltf', new GLTFLoader()],
+      ['glb', new GLTFLoader()],
       ['obj', new OBJLoader()],
       ['fbx', new FBXLoader()],
       ['stl', new STLLoader()],
@@ -327,7 +341,7 @@ export default class ErgonomIOAssetContainer extends Vue {
             const group = new Group()
             group.add(object)
             onLoaded(group)
-          } else if (extension === 'gltf') {
+          } else if (extension === 'gltf' || extension === 'glb') {
             object = object.scene
           }
 
