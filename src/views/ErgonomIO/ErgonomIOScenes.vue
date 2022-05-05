@@ -1,16 +1,24 @@
 <template>
   <v-container fluid style="max-height: 100%; overflow: auto;">
-    <v-card style="max-height: 100%; overflow: auto;">
-      <v-container
-        fluid
-        class="d-flex flex-column"
-        style="max-height: 100%; overflow: auto;"
-      >
-        <v-column>
-          <v-row class="text-h5 text-center pa-4 primary">Your scenes</v-row>
+    <v-card
+      style="max-height: 100%; overflow: auto;"
+      class="ma-4"
+      elevation="5"
+      :rounded="unreal.check() ? 'xl' : 'md'"
+    >
+      <v-container fluid style="max-height: 100%; overflow: auto;" class="pa-0">
+        <v-col class="ma-0 pa-0">
+          <!-- Title -->
+          <v-row no-gutters class="text-h5 text-center pa-4 primary black--text"
+            >Your scenes</v-row
+          >
 
           <!-- Les différentes scènes -->
-          <v-row class="overflow-y-auto flex-grow-1" style="max-height: 700px;">
+          <v-row
+            no-gutters
+            class="overflow-y-auto flex-grow-1 ma-4"
+            style="max-height: 600px;"
+          >
             <v-card
               class="ma-2"
               :key="indexScene"
@@ -57,13 +65,13 @@
 
               <v-card-actions class="flex-wrap">
                 <v-container fluid>
-                  <v-column>
-                    <v-row>
+                  <v-col>
+                    <v-row no-gutters>
                       <v-btn color="primary" text @click="ergonomioLayout()">
                         Open in layout
                       </v-btn>
                     </v-row>
-                    <v-row>
+                    <v-row no-gutters>
                       <v-btn
                         color="primary"
                         text
@@ -72,7 +80,7 @@
                         Open in virtual twin
                       </v-btn>
                     </v-row>
-                    <v-row justify="flex-end" class="py-2">
+                    <v-row no-gutters justify="flex-end" class="py-2">
                       <v-btn @click="downloadScene(scene)" icon>
                         <v-icon v-text="'mdi-download'"></v-icon>
                       </v-btn>
@@ -86,7 +94,7 @@
                         <v-icon v-text="'mdi-delete'"></v-icon>
                       </v-btn>
                     </v-row>
-                  </v-column>
+                  </v-col>
                 </v-container>
               </v-card-actions>
             </v-card>
@@ -94,8 +102,13 @@
 
           <!-- Les différents boutons -->
           <v-container class="mt-8" fluid>
-            <v-column>
-              <v-row justify="space-between mb-4" style="gap: 10px;">
+            <v-col>
+              <v-row
+                no-gutters
+                justify="space-between"
+                class="mb-4"
+                style="gap: 10px;"
+              >
                 <v-btn
                   @click="createEmptyScene"
                   class="primary black--text flex-grow-1"
@@ -128,7 +141,7 @@
                   Add object in scene
                 </v-btn>
               </v-row>
-              <v-row>
+              <v-row no-gutters>
                 <v-select
                   :items="scenes.map(item => item.name)"
                   v-model="sceneForModif"
@@ -136,7 +149,7 @@
                   dense
                 ></v-select>
               </v-row>
-            </v-column>
+            </v-col>
           </v-container>
 
           <!-- Popup permettant d'afficher des informations sur une scène -->
@@ -194,7 +207,7 @@
               <v-card-title> Modifier des données </v-card-title>
 
               <v-container fluid>
-                <v-row>
+                <v-row no-gutters>
                   <v-col cols="3">
                     <v-card-text>
                       Nouveau titre :
@@ -208,7 +221,7 @@
               </v-container>
 
               <v-container fluid>
-                <v-row>
+                <v-row no-gutters>
                   <v-col cols="3">
                     <v-card-text>
                       Nouveau tag :
@@ -250,7 +263,7 @@
                 :key="indexTag2"
                 v-for="(tag, indexTag2) in sceneChoose.parsedTags"
               >
-                <v-row>
+                <v-row no-gutters>
                   <v-col cols="2">
                     <v-card-text>
                       {{ tag }}
@@ -280,7 +293,7 @@
               </v-card-actions>
             </v-card>
           </v-dialog>
-        </v-column>
+        </v-col>
       </v-container>
     </v-card>
   </v-container>
@@ -396,6 +409,7 @@ export default class ErgonomIOAssets extends Vue {
   sizeCardString = '30%'
 
   sceneForModif = ''
+  unreal = Unreal
 
   // Begin
   mounted (): void {
