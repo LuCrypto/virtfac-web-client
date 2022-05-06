@@ -64,8 +64,8 @@
               </v-card-text>
 
               <v-card-actions class="flex-wrap">
-                <v-container fluid>
-                  <v-col>
+                <v-container fluid class="pa-0">
+                  <v-col class="pa-0">
                     <v-row no-gutters>
                       <v-btn color="primary" text @click="ergonomioLayout()">
                         Open in layout
@@ -80,7 +80,11 @@
                         Open in virtual twin
                       </v-btn>
                     </v-row>
-                    <v-row no-gutters justify="flex-end" class="py-2">
+                    <v-row
+                      no-gutters
+                      justify="space-between"
+                      class="pt-3 flex-wrap"
+                    >
                       <v-btn @click="downloadScene(scene)" icon>
                         <v-icon v-text="'mdi-download'"></v-icon>
                       </v-btn>
@@ -300,21 +304,18 @@
 </template>
 
 <script lang="ts">
-// ============================================================================
-// ============================================================================
-// ============================================================================
-
 import { Component, Vue } from 'vue-property-decorator'
 import API from '@/utils/api'
 import Unreal from '@/utils/unreal'
+import { imageAsset } from '@/utils/defaultData'
 
 class CardModel {
   // Initialisation
-  name = 'nouvelleScene.json'
-  picture = '@/assets/ergonom_io.png'
+  name = ''
+  picture = imageAsset
   tags = '[]'
   id = 0
-  color = '000000'
+  color = 0
   assetsNumber = 0
   creationDate = 0
   data = '{}'
@@ -332,6 +333,8 @@ class CardModel {
 
   // Permet de construire une scène
   constructor (params: Partial<CardModel>) {
+    this.name = `NewScene_${String(Date.now()).slice(-7)}`
+    this.color = Math.floor(Math.random() * 16777215)
     Object.assign(this, params)
     try {
       console.log(params.tags)
