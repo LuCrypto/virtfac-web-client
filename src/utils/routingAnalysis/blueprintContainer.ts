@@ -9,6 +9,7 @@ import { BpTheme } from '@/utils/routingAnalysis/bp_theme'
 import { Vec2, Vector2 } from '../graph/Vec'
 import { BpWindow, Destroyable } from './bp_window'
 import { LocalEvent } from '../graph/localEvent'
+import { Session } from '../session'
 
 class Grid {
   private center: V
@@ -151,6 +152,20 @@ export class BlueprintContainer {
   private theme: BpTheme
   private parentNode: HTMLElement
   private grid: Grid | null = null
+
+  updateThemeFromWeb (): void {
+    if (Session.getTheme() === 'dark') {
+      this.theme = new BpTheme()
+    } else {
+      this.theme = new BpTheme({
+        BackgroundColor: '#F0F3F4',
+        WallNodeColor: '#1E1E1E',
+        WallLinkColor: '#363636'
+      })
+    }
+    this.updateTheme()
+    console.log('update theme')
+  }
 
   /**
    * view zoom level
