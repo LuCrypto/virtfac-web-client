@@ -25,7 +25,13 @@
               v-for="(scene, indexScene) in scenes"
               width="300px"
               elevation="5"
-              @click="sendUnreal(scene)"
+              @click="
+                sendUnreal(
+                  JSON.stringify(
+                    indexScene == 0 ? 'open haguenau scene' : 'open empty scene'
+                  )
+                )
+              "
             >
               <v-img height="200" :src="scene.picture">
                 <v-btn
@@ -166,7 +172,7 @@
 
               <v-card-actions>
                 <v-spacer></v-spacer>
-                <v-btn color="green darken-1" text @click="popup = false">
+                <v-btn color="primary darken-1" text @click="popup = false">
                   OK
                 </v-btn>
               </v-card-actions>
@@ -195,7 +201,7 @@
                 </v-btn>
                 <v-spacer></v-spacer>
                 <v-btn
-                  color="green darken-1"
+                  color="primary darken-1"
                   text
                   @click="createSceneJson = false"
                 >
@@ -284,14 +290,14 @@
 
               <v-card-actions>
                 <v-btn
-                  color="green darken-1"
+                  color="primary darken-1"
                   text
                   @click="copyScene(sceneChoose)"
                 >
                   Faire une copie de la scène
                 </v-btn>
                 <v-spacer></v-spacer>
-                <v-btn color="green darken-1" text @click="save(sceneChoose)">
+                <v-btn color="primary darken-1" text @click="save(sceneChoose)">
                   Save
                 </v-btn>
               </v-card-actions>
@@ -307,7 +313,7 @@
 import { Component, Vue } from 'vue-property-decorator'
 import API from '@/utils/api'
 import Unreal from '@/utils/unreal'
-import { imageAsset } from '@/utils/defaultData'
+import { imageAsset, haguenauImageAsset } from '@/utils/defaultData'
 
 class CardModel {
   // Initialisation
@@ -418,6 +424,23 @@ export default class ErgonomIOAssets extends Vue {
   mounted (): void {
     this.requeteAPI()
 
+    // TODO : remove this
+    this.scenes.push(
+      new CardModel({
+        name: 'IUT Haguenau',
+        picture: haguenauImageAsset,
+        tags: '["exemple"]',
+        id: 13,
+        color: 0,
+        assetsNumber: 93,
+        creationDate: 1651300387714,
+        data: '{}',
+        idProject: 0,
+        idUserOwner: 0,
+        modificationDate: 1651300387714
+      })
+    )
+
     // Permet de récupérer la réponse d'Unreal
     Unreal.callback.$on('unreal-message', (data: unknown) => {
       this.$root.$emit('bottom-message', `Unreal : ${JSON.stringify(data)}`)
@@ -440,7 +463,7 @@ export default class ErgonomIOAssets extends Vue {
       var maCard = new CardModel({
         assetsNumber: maScene?.scene.nombreAssets,
         id: maScene?.scene.idScene,
-        name: 'aymeric2',
+        name: 'example',
         data: JSON.stringify(maScene?.assets)
       })
 
@@ -463,7 +486,6 @@ export default class ErgonomIOAssets extends Vue {
       this.scenes2 = ((response as unknown) as Array<Partial<CardModel>>).map(
         (scene: Partial<CardModel>) => new CardModel(scene)
       )
-
       for (let i = 0; i < this.scenes2.length; i++) {
         this.scenes.push(this.scenes2[i])
       }
@@ -795,26 +817,26 @@ export default class ErgonomIOAssets extends Vue {
   // Permet d'envoyer un message à l'instance unreal
   // Permet de charger sur la scène cliquée
   sendUnreal (scene: CardModel): void {
-    console.log('asset.name : ', scene.name)
-    console.log('asset.id : ', scene.id)
-    console.log('asset : ', scene)
+    // console.log('asset.name : ', scene.name)
+    // console.log('asset.id : ', scene.id)
+    // console.log('asset : ', scene)
 
-    var objectAsset = {
-      name: scene.name,
-      assetsNumber: scene.assetsNumber,
-      assets: JSON.parse(scene.data),
-      idScene: scene.id,
-      action: 'chargerScene'
-    }
+    // var objectAsset = {
+    //   name: scene.name,
+    //   assetsNumber: scene.assetsNumber,
+    //   assets: JSON.parse(scene.data),
+    //   idScene: scene.id,
+    //   action: 'chargerScene'
+    // }
 
-    var object = {
-      menu: 'scene',
-      objet: objectAsset
-    }
+    // var object = {
+    //   menu: 'scene',
+    //   objet: objectAsset
+    // }
 
-    console.log('data : ', scene.data)
+    // console.log('data : ', scene.data)
 
-    Unreal.send(object)
+    Unreal.send(scene)
   }
 }
 </script>
