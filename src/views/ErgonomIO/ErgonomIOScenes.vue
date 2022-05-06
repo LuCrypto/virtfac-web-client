@@ -1,317 +1,321 @@
 <template>
   <v-container fluid style="max-height: 100%; overflow: auto;">
-    <!-- Titre -->
-    <v-container fluid class="text-h3 text-center py-8">
-      Scene manager
-    </v-container>
-    <v-divider></v-divider>
-    <!-- Milieu de page : les différentes cartes de scènes -->
-    <template>
-      <v-row dense class="pa-2">
-        Les différentes scènes :
-      </v-row>
+    <v-card
+      style="max-height: 100%; overflow: auto;"
+      class="ma-4"
+      elevation="5"
+      :rounded="unreal.check() ? 'xl' : 'md'"
+    >
+      <v-container fluid style="max-height: 100%; overflow: auto;" class="pa-0">
+        <v-col class="ma-0 pa-0">
+          <!-- Title -->
+          <v-row no-gutters class="text-h5 text-center pa-4 primary black--text"
+            >Your scenes</v-row
+          >
 
-      <!-- Popup permettant d'afficher des informations sur une scène -->
-      <v-row justify="center">
-        <v-dialog v-model="popup" max-width="780">
-          <v-card>
-            <v-card-title> {{ titlePopup }} </v-card-title>
-            <v-card-text>
-              {{ textPopup }}
-            </v-card-text>
-
-            <v-card-actions>
-              <v-spacer></v-spacer>
-              <v-btn color="green darken-1" text @click="popup = false">
-                OK
-              </v-btn>
-            </v-card-actions>
-          </v-card>
-        </v-dialog>
-      </v-row>
-
-      <!-- Popup permettant d'afficher de créer une scène avec json -->
-      <v-row justify="center">
-        <v-dialog v-model="createSceneJson" max-width="780">
-          <v-card>
-            <v-card-title> Glisser un fichier scene json </v-card-title>
-
-            <v-card-actions>
-              <v-btn
-                class="ml-6 mt-6 flex-grow-1"
-                color="primary"
-                @click="openUploadFile"
-              >
-                <v-icon v-text="'mdi-upload'"></v-icon>
-                Upload new
-                <input
-                  ref="uploadFileInput"
-                  hidden
-                  type="file"
-                  @change="updateUploadFileSceneJson"
-                />
-              </v-btn>
-              <v-spacer></v-spacer>
-              <v-btn
-                color="green darken-1"
-                text
-                @click="createSceneJson = false"
-              >
-                OK
-              </v-btn>
-            </v-card-actions>
-          </v-card>
-        </v-dialog>
-      </v-row>
-
-      <!-- Popup permettant de modifier des données de la scène -->
-      <v-row justify="center">
-        <v-dialog v-model="modifyScene" max-width="780">
-          <v-card>
-            <v-card-title> Modifier des données </v-card-title>
-
-            <v-container fluid>
-              <v-row>
-                <v-col cols="3">
-                  <v-card-text>
-                    Nouveau titre :
-                  </v-card-text>
-                </v-col>
-
-                <v-col cols="4">
-                  <v-text-field v-model="search"> </v-text-field>
-                </v-col>
-              </v-row>
-            </v-container>
-
-            <v-container fluid>
-              <v-row>
-                <v-col cols="3">
-                  <v-card-text>
-                    Nouveau tag :
-                  </v-card-text>
-                </v-col>
-
-                <v-col cols="4">
-                  <v-text-field v-model="newTag"> </v-text-field>
-                </v-col>
-
-                <v-col cols="3">
-                  <v-btn v-on:click="addTag(sceneChoose, newTag)" icon>
-                    <v-icon v-text="'mdi-plus'"></v-icon>
-                  </v-btn>
-                </v-col>
-              </v-row>
-            </v-container>
-
-            <v-container fluid>
-              <v-img height="270" :src="newImage"> </v-img>
-              <v-btn
-                class="ml-6 mt-6 flex-grow-1"
-                color="primary"
-                @click="openUploadFile"
-              >
-                <v-icon v-text="'mdi-upload'"></v-icon>
-                Upload new
-                <input
-                  ref="uploadFileInput"
-                  hidden
-                  type="file"
-                  @change="updateUploadFile"
-                />
-              </v-btn>
-            </v-container>
-
-            <v-container
-              fluid
-              :key="indexTag2"
-              v-for="(tag, indexTag2) in sceneChoose.parsedTags"
+          <!-- Les différentes scènes -->
+          <v-row
+            no-gutters
+            class="overflow-y-auto flex-grow-1 ma-4"
+            style="max-height: 600px;"
+          >
+            <v-card
+              class="ma-2"
+              :key="indexScene"
+              v-for="(scene, indexScene) in scenes"
+              width="300px"
+              elevation="5"
+              @click="sendUnreal(scene)"
             >
-              <v-row>
-                <v-col cols="2">
-                  <v-card-text>
+              <v-img height="200" :src="scene.picture">
+                <v-btn
+                  @click="editNameScene(scene)"
+                  class="ma-2"
+                  fab
+                  dark
+                  small
+                  style="position: absolute; top: 0; right: 0;"
+                >
+                  <v-icon>mdi-pen</v-icon>
+                </v-btn>
+              </v-img>
+              <v-sheet
+                height="15"
+                :color="`#${scene.color.toString(16).padStart(6, '0')}`"
+              >
+              </v-sheet>
+              <v-card-title class="pt-2">
+                {{ scene.name }}
+              </v-card-title>
+              <v-card-subtitle>
+                <v-chip-group>
+                  <v-chip
+                    :key="indexTag"
+                    v-for="(tag, indexTag) in scene.parsedTags"
+                    class="mr-2 overflow-y-auto"
+                  >
                     {{ tag }}
-                  </v-card-text>
-                </v-col>
+                  </v-chip>
+                </v-chip-group>
+              </v-card-subtitle>
+              <v-card-text>
+                {{ scene.formatedCreationDate }}, nombre assets :
+                {{ scene.assetsNumber }}, id : {{ scene.id }}
+              </v-card-text>
 
-                <v-col cols="3">
-                  <v-btn v-on:click="deleteTag(sceneChoose, tag)" icon>
-                    <v-icon v-text="'mdi-delete'"></v-icon>
-                  </v-btn>
-                </v-col>
-              </v-row>
-            </v-container>
+              <v-card-actions class="flex-wrap">
+                <v-container fluid class="pa-0">
+                  <v-col class="pa-0">
+                    <v-row no-gutters>
+                      <v-btn color="primary" text @click="ergonomioLayout()">
+                        Open in layout
+                      </v-btn>
+                    </v-row>
+                    <v-row no-gutters>
+                      <v-btn
+                        color="primary"
+                        text
+                        @click="ergonomioVirtualTwin()"
+                      >
+                        Open in virtual twin
+                      </v-btn>
+                    </v-row>
+                    <v-row
+                      no-gutters
+                      justify="space-between"
+                      class="pt-3 flex-wrap"
+                    >
+                      <v-btn @click="downloadScene(scene)" icon>
+                        <v-icon v-text="'mdi-download'"></v-icon>
+                      </v-btn>
+                      <v-btn @click="outline(scene)" icon>
+                        <v-icon v-text="'mdi-eye'"></v-icon>
+                      </v-btn>
+                      <v-btn @click="clickScene(scene)" icon>
+                        <v-icon v-text="'mdi-information'"></v-icon>
+                      </v-btn>
+                      <v-btn @click="deleteObjet(scene)" icon>
+                        <v-icon v-text="'mdi-delete'"></v-icon>
+                      </v-btn>
+                    </v-row>
+                  </v-col>
+                </v-container>
+              </v-card-actions>
+            </v-card>
+          </v-row>
 
-            <v-card-actions>
-              <v-btn
-                color="green darken-1"
-                text
-                @click="copyScene(sceneChoose)"
+          <!-- Les différents boutons -->
+          <v-container class="mt-8" fluid>
+            <v-col>
+              <v-row
+                no-gutters
+                justify="space-between"
+                class="mb-4"
+                style="gap: 10px;"
               >
-                Faire une copie de la scène
-              </v-btn>
-              <v-spacer></v-spacer>
-              <v-btn color="green darken-1" text @click="save(sceneChoose)">
-                Save
-              </v-btn>
-            </v-card-actions>
-          </v-card>
-        </v-dialog>
-      </v-row>
+                <v-btn
+                  @click="createEmptyScene"
+                  class="primary black--text flex-grow-1"
+                  large
+                  elevation="2"
+                >
+                  Create new empty scene
+                </v-btn>
+                <v-btn
+                  @click="openUploadFile"
+                  class="primary black--text flex-grow-1"
+                  large
+                  elevation="2"
+                >
+                  Load scene
+                  <input
+                    accept="application/JSON"
+                    ref="uploadFileInput"
+                    hidden
+                    type="file"
+                    @change="onUploadSceneUpdate"
+                  />
+                </v-btn>
+                <v-btn
+                  @click="addObjectInScene"
+                  class="primary black--text flex-grow-1"
+                  large
+                  elevation="2"
+                >
+                  Add object in scene
+                </v-btn>
+              </v-row>
+              <v-row no-gutters>
+                <v-select
+                  :items="scenes.map(item => item.name)"
+                  v-model="sceneForModif"
+                  label="Scène visée"
+                  dense
+                ></v-select>
+              </v-row>
+            </v-col>
+          </v-container>
 
-      <!-- Les différentes scènes -->
-      <v-card
-        class="overflow-y-auto d-flex flex-row flex-wrap"
-        width="100%"
-        max-height="775"
-      >
-        <v-card
-          :key="indexScene"
-          v-for="(scene, indexScene) in scenes"
-          :width="sizeCardString"
-          class="ma-3"
-          elevation="5"
-          v-on:click="sendUnreal(scene)"
-        >
-          <v-img height="270" :src="scene.picture"> </v-img>
-          <v-sheet height="4" :color="`#${scene.color.toString(16)}`">
-          </v-sheet>
-          <v-card-title>
-            {{ scene.name }}
-            <v-btn v-on:click="editNameScene(scene)" icon>
-              <v-icon v-text="'mdi-pencil'"></v-icon>
-            </v-btn>
-          </v-card-title>
-          <v-card-subtitle>
-            <v-chip
-              :key="indexTag"
-              v-for="(tag, indexTag) in scene.parsedTags"
-              class="mr-2 overflow-y-auto"
-            >
-              {{ tag }}
-            </v-chip>
-          </v-card-subtitle>
-          <v-card-text>
-            {{ scene.formatedCreationDate }}, nombre assets :
-            {{ scene.assetsNumber }}, id : {{ scene.id }}
-          </v-card-text>
+          <!-- Popup permettant d'afficher des informations sur une scène -->
+          <v-dialog v-model="popup" max-width="780">
+            <v-card>
+              <v-card-title> {{ titlePopup }} </v-card-title>
+              <v-card-text>
+                {{ textPopup }}
+              </v-card-text>
 
-          <v-card-actions>
-            <v-btn color="primary" v-on:click="ergonomioLayout()">
-              Layout
-            </v-btn>
-            <v-btn color="primary" v-on:click="ergonomioVirtualTwin()">
-              Virtual Twin
-            </v-btn>
+              <v-card-actions>
+                <v-spacer></v-spacer>
+                <v-btn color="green darken-1" text @click="popup = false">
+                  OK
+                </v-btn>
+              </v-card-actions>
+            </v-card>
+          </v-dialog>
 
-            <v-spacer></v-spacer>
+          <!-- Popup permettant d'afficher de créer une scène avec json -->
+          <v-dialog v-model="createSceneJson" max-width="780">
+            <v-card>
+              <v-card-title> Glisser un fichier scene json </v-card-title>
 
-            <v-btn v-on:click="downloadScene(scene)" icon>
-              <v-icon v-text="'mdi-download'"></v-icon>
-            </v-btn>
-            <v-btn v-on:click="outline(scene)" icon>
-              <v-icon v-text="'mdi-eye'"></v-icon>
-            </v-btn>
-            <v-btn v-on:click="clickScene(scene)" icon>
-              <v-icon v-text="'mdi-information'"></v-icon>
-            </v-btn>
-            <v-btn v-on:click="deleteObjet(scene)" icon>
-              <v-icon v-text="'mdi-delete'"></v-icon>
-            </v-btn>
-          </v-card-actions>
-        </v-card>
-      </v-card>
-    </template>
-    <!-- Les différents boutons -->
-    <v-layout justify-center class="py-4">
-      <v-flex class="flex-grow-0 mx-5">
-        <!-- Bouton permettant de créer une scène vide -->
-        <v-btn
-          v-on:click="createEmptyScene"
-          class="primary black--text"
-          large
-          elevation="2"
-        >
-          Create new empty scene
-        </v-btn>
-      </v-flex>
-      <v-flex class="flex-grow-0 mx-5">
-        <!-- Bouton permettant de créer une scène vide -->
-        <!-- <v-btn
-          v-on:click="createSceneJson = true"
-          class="yellow darken-3 font-weight-black"
-          large
-          elevation="2"
-        >
-          Créer une scène avec json
-        </v-btn> -->
-      </v-flex>
-      <v-flex class="flex-grow-0 mx-5">
-        <!-- Bouton permettant de charger une scène -->
-        <v-btn
-          v-on:click="openUploadFile"
-          class="primary black--text"
-          large
-          elevation="2"
-        >
-          Load scene
-          <input
-            accept="application/JSON"
-            ref="uploadFileInput"
-            hidden
-            type="file"
-            @change="onUploadSceneUpdate"
-          />
-        </v-btn>
-      </v-flex>
-      <v-flex class="flex-grow-0 mx-5">
-        <!-- Bouton permettant de rajouter un objet dans une scène -->
-        <v-btn
-          v-on:click="addObjectInScene"
-          class="primary black--text"
-          large
-          elevation="2"
-        >
-          Add object in scene
-        </v-btn>
-      </v-flex>
-      <!-- Sélection de la scene choisie -->
-      <v-flex class="flex-grow-0 mx-5">
-        <v-select
-          :items="scenes.map(item => item.name)"
-          v-model="sceneForModif"
-          label="Scène visée"
-          dense
-        ></v-select>
-      </v-flex>
-      <v-flex class="flex-grow-0 mx-5">
-        <v-btn v-on:click="decreaseSizeCard()" icon>
-          <v-icon v-text="'mdi-minus'"></v-icon>
-        </v-btn>
-        <v-btn v-on:click="increaseSizeCard()" icon>
-          <v-icon v-text="'mdi-plus'"></v-icon>
-        </v-btn>
-      </v-flex>
-    </v-layout>
+              <v-card-actions>
+                <v-btn
+                  class="ml-6 mt-6 flex-grow-1"
+                  color="primary"
+                  @click="openUploadFile"
+                >
+                  <v-icon v-text="'mdi-upload'"></v-icon>
+                  Upload new
+                  <input
+                    ref="uploadFileInput"
+                    hidden
+                    type="file"
+                    @change="updateUploadFileSceneJson"
+                  />
+                </v-btn>
+                <v-spacer></v-spacer>
+                <v-btn
+                  color="green darken-1"
+                  text
+                  @click="createSceneJson = false"
+                >
+                  OK
+                </v-btn>
+              </v-card-actions>
+            </v-card>
+          </v-dialog>
+
+          <!-- Popup permettant de modifier des données de la scène -->
+          <v-dialog v-model="modifyScene" max-width="780">
+            <v-card>
+              <v-card-title> Modifier des données </v-card-title>
+
+              <v-container fluid>
+                <v-row no-gutters>
+                  <v-col cols="3">
+                    <v-card-text>
+                      Nouveau titre :
+                    </v-card-text>
+                  </v-col>
+
+                  <v-col cols="4">
+                    <v-text-field v-model="search"> </v-text-field>
+                  </v-col>
+                </v-row>
+              </v-container>
+
+              <v-container fluid>
+                <v-row no-gutters>
+                  <v-col cols="3">
+                    <v-card-text>
+                      Nouveau tag :
+                    </v-card-text>
+                  </v-col>
+
+                  <v-col cols="4">
+                    <v-text-field v-model="newTag"> </v-text-field>
+                  </v-col>
+
+                  <v-col cols="3">
+                    <v-btn @click="addTag(sceneChoose, newTag)" icon>
+                      <v-icon v-text="'mdi-plus'"></v-icon>
+                    </v-btn>
+                  </v-col>
+                </v-row>
+              </v-container>
+
+              <v-container fluid>
+                <v-img height="270" :src="newImage"> </v-img>
+                <v-btn
+                  class="ml-6 mt-6 flex-grow-1"
+                  color="primary"
+                  @click="openUploadFile"
+                >
+                  <v-icon v-text="'mdi-upload'"></v-icon>
+                  Upload new
+                  <input
+                    ref="uploadFileInput"
+                    hidden
+                    type="file"
+                    @change="updateUploadFile"
+                  />
+                </v-btn>
+              </v-container>
+
+              <v-container
+                fluid
+                :key="indexTag2"
+                v-for="(tag, indexTag2) in sceneChoose.parsedTags"
+              >
+                <v-row no-gutters>
+                  <v-col cols="2">
+                    <v-card-text>
+                      {{ tag }}
+                    </v-card-text>
+                  </v-col>
+
+                  <v-col cols="3">
+                    <v-btn @click="deleteTag(sceneChoose, tag)" icon>
+                      <v-icon v-text="'mdi-delete'"></v-icon>
+                    </v-btn>
+                  </v-col>
+                </v-row>
+              </v-container>
+
+              <v-card-actions>
+                <v-btn
+                  color="green darken-1"
+                  text
+                  @click="copyScene(sceneChoose)"
+                >
+                  Faire une copie de la scène
+                </v-btn>
+                <v-spacer></v-spacer>
+                <v-btn color="green darken-1" text @click="save(sceneChoose)">
+                  Save
+                </v-btn>
+              </v-card-actions>
+            </v-card>
+          </v-dialog>
+        </v-col>
+      </v-container>
+    </v-card>
   </v-container>
 </template>
 
 <script lang="ts">
-// ============================================================================
-// ============================================================================
-// ============================================================================
-
 import { Component, Vue } from 'vue-property-decorator'
 import API from '@/utils/api'
 import Unreal from '@/utils/unreal'
+import { imageAsset } from '@/utils/defaultData'
 
 class CardModel {
   // Initialisation
-  name = 'nouvelleScene.json'
-  picture = '@/assets/ergonom_io.png'
+  name = ''
+  picture = imageAsset
   tags = '[]'
   id = 0
-  color = '000000'
+  color = 0
   assetsNumber = 0
   creationDate = 0
   data = '{}'
@@ -329,6 +333,8 @@ class CardModel {
 
   // Permet de construire une scène
   constructor (params: Partial<CardModel>) {
+    this.name = `NewScene_${String(Date.now()).slice(-7)}`
+    this.color = Math.floor(Math.random() * 16777215)
     Object.assign(this, params)
     try {
       console.log(params.tags)
@@ -406,6 +412,7 @@ export default class ErgonomIOAssets extends Vue {
   sizeCardString = '30%'
 
   sceneForModif = ''
+  unreal = Unreal
 
   // Begin
   mounted (): void {
@@ -783,20 +790,6 @@ export default class ErgonomIOAssets extends Vue {
         reader.readAsDataURL(file)
       })
     }
-  }
-
-  // Permet de baisser la taille des scenes
-  decreaseSizeCard (): void {
-    this.sizeCard -= 10
-    if (this.sizeCard < 10) this.sizeCard = 10
-    this.sizeCardString = this.sizeCard.toString() + '%'
-  }
-
-  // Permet d'augmenter la taille des scenes
-  increaseSizeCard (): void {
-    this.sizeCard += 10
-    if (this.sizeCard > 50) this.sizeCard = 50
-    this.sizeCardString = this.sizeCard.toString() + '%'
   }
 
   // Permet d'envoyer un message à l'instance unreal
