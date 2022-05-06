@@ -27,8 +27,11 @@ export default class API {
         mode: 'cors' as RequestMode,
         headers: {
           'Content-Type': contentType,
-          Authorization: token != null ? `Bearer ${token}` : ''
-        },
+          Authorization:
+            token != null
+              ? `Bearer ${token}`
+              : 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZmlyc3RuYW1lIjoiUXVlbnRpbiIsImxhc3RuYW1lIjoiTWlzc2xpbiIsIm1haWwiOiJxLm1pc3NsaW5AdW5pc3RyYS5mciIsInBob25lIjoiMDcuODAuNTguMDAuMTIiLCJsb2dpbiI6InFtaXNzbGluIiwicHNldWRvIjoiUXVlbnRpbiIsImFjY2VzcyI6NCwiaWF0IjoxNjUxODAyNTIxfQ.9QsRO8eiPHDx_Pa-KH9bZxJvo2THUfBS2k-sXVXxpNA'
+        }, // TODO : remove this fake Auth
         method: method
       }
       if (body != null) {
