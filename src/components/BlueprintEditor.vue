@@ -106,6 +106,10 @@ export default class BlueprintEditor extends Vue {
     this.bpContainer.onModeChanged.addListener(mode => {
       this.mode = mode
     })
+    this.$root.$on('changeDarkMode', () => {
+      if (this.bpContainer !== null) this.bpContainer.updateThemeFromWeb()
+    })
+    this.bpContainer.updateThemeFromWeb()
   }
 
   setMode (mode: 'WALL' | 'DOOR' | 'WINDOW' | 'SUPP_WALL' | 'SUPP_FURNITURE') {
