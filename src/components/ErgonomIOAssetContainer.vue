@@ -594,6 +594,8 @@ export default class ErgonomIOAssetContainer extends Vue {
         },
         {}
       )
+    } else {
+      console.error('Null asset.')
     }
   }
 }

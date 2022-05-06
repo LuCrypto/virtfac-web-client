@@ -102,9 +102,9 @@
       <v-card class="overflow-y-auto d-flex flex-row" width="100%" height="750">
         <v-card width="25%">
           <v-btn width="90%" class="ma-2" v-on:click="clearCategory()">
-            Effacer le tri
+            Reset filter
           </v-btn>
-          <v-card-title> Les différentes catégories : </v-card-title>
+          <v-card-title> Categories : </v-card-title>
 
           <v-card-text>
             <v-treeview
@@ -189,11 +189,11 @@
         <!-- Bouton permettant de charger un asset -->
         <v-btn
           v-on:click="loadAsset"
-          class="yellow darken-3 font-weight-black"
+          class="primary black--text"
           large
           elevation="2"
         >
-          Charger un asset
+          Load an asset
           <input
             accept="application/JSON"
             ref="uploadFileInput"
@@ -318,7 +318,7 @@ export default class ErgonomIOAssets extends Vue {
     for (let i = 0; i < 5; i++) {
       const test: TreeItem = {
         id: idUnique,
-        name: 'Categorie ' + idUnique.toString(),
+        name: 'Category ' + idUnique.toString(),
         children: [],
         asset: new CardModel({})
       }
@@ -576,7 +576,7 @@ export default class ErgonomIOAssets extends Vue {
 
     // Trie les différents assets en fonction de la catégorie
     this.cardsSort = []
-    console.log('categorie : ', categorie)
+    console.log('category : ', categorie)
     console.log('this.assets.length : ', this.assets.length)
     for (let i = 0; i < this.assets.length; i++) {
       var asset = this.assets[i]
@@ -612,7 +612,7 @@ export default class ErgonomIOAssets extends Vue {
       objet: objectAsset
     }
 
-    Unreal.send(object)
+    Unreal.send(asset.name)
   }
 }
 </script>
