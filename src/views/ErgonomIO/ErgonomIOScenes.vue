@@ -25,13 +25,7 @@
               v-for="(scene, indexScene) in scenes"
               width="300px"
               elevation="5"
-              @click="
-                sendUnreal(
-                  JSON.stringify(
-                    indexScene == 0 ? 'open haguenau scene' : 'open empty scene'
-                  )
-                )
-              "
+              @click="sendUnreal(scene)"
             >
               <v-img height="200" :src="scene.picture">
                 <v-btn
@@ -821,18 +815,18 @@ export default class ErgonomIOAssets extends Vue {
     // console.log('asset.id : ', scene.id)
     // console.log('asset : ', scene)
 
-    // var objectAsset = {
-    //   name: scene.name,
-    //   assetsNumber: scene.assetsNumber,
-    //   assets: JSON.parse(scene.data),
-    //   idScene: scene.id,
-    //   action: 'chargerScene'
-    // }
+    var objectAsset = {
+      name: scene.name,
+      assetsNumber: scene.assetsNumber,
+      assets: JSON.parse(scene.data),
+      idScene: scene.id,
+      action: 'chargerScene'
+    }
 
-    // var object = {
-    //   menu: 'scene',
-    //   objet: objectAsset
-    // }
+    var object = {
+      menu: 'scene',
+      objet: objectAsset
+    }
 
     // console.log('data : ', scene.data)
 

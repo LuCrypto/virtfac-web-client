@@ -54,7 +54,7 @@
               <v-img height="270" :src="newImage"> </v-img>
               <v-btn
                 class="ml-6 mt-6 flex-grow-1"
-                color="primary"
+                color="green"
                 @click="openUploadFile"
               >
                 <v-icon v-text="'mdi-upload'"></v-icon>
@@ -89,9 +89,10 @@
               </v-row>
             </v-container>
 
+            <!-- Permet de sauvegarder les modifications -->
             <v-card-actions>
               <v-spacer></v-spacer>
-              <v-btn color="green darken-1" text @click="save(assetChoose)">
+              <v-btn color="primary" text @click="save(assetChoose)">
                 Save
               </v-btn>
             </v-card-actions>
@@ -99,11 +100,17 @@
         </v-dialog>
       </v-row>
 
+      <!-- Le body de la page centrale -->
       <v-card class="overflow-y-auto d-flex flex-row" width="100%" height="750">
+        <!-- Les différentes catégories -->
         <v-card width="25%">
           <v-btn width="90%" class="ma-2" v-on:click="clearCategory()">
             Reset filter
           </v-btn>
+          <v-checkbox
+            v-model="displayTag"
+            label="Afficher les tags"
+          ></v-checkbox>
           <v-card-title> Categories : </v-card-title>
 
           <v-card-text>
@@ -118,54 +125,47 @@
                 <v-icon :class="open ? 'primary--text' : ''">
                   {{ open ? 'mdi-folder-open' : 'mdi-folder' }}
                 </v-icon>
-                <!-- Les elements -->
-                <!-- <div v-else>
-                  <v-chip
-                    style="min-width: 65px;"
-                    class="ma-2"
-                    :color="getTypeColor(item.request.type)"
-                  >
-                    {{ item.request.type }}
-                  </v-chip>
-                  {{ item.request.path }}
-                </div> -->
               </template>
-
-              <!-- <template v-slot:label="{ item }">
-                <div class="pr-4" style="cursor: pointer">{{ item.name }}</div>
-              </template> -->
             </v-treeview>
           </v-card-text>
         </v-card>
 
+        <!-- Les différents assets -->
         <v-container class="d-flex flex-wrap">
-          <v-layout
+          <v-card
             :width="sizeCardString"
             :key="indexCard"
             v-for="(asset, indexCard) in useCategory ? cardsSort : assets"
           >
             <v-list-item :key="asset.name">
+              <!-- Image de l'asset -->
               <v-hover>
                 <template v-slot:default="{ hover }">
                   <v-btn
                     :elevation="hover ? 24 : 6"
-                    class="mr-2"
+                    class="mr-1"
                     v-on:click="sendUnreal(asset)"
-                    style="width:190px; height:190px"
+                    height="90"
+                    width="90"
                   >
-                    <v-img max-width="190" :src="asset.picture"></v-img>
+                    <v-img
+                      max-width="90"
+                      :src="asset.picture"
+                      class="mr-1"
+                    ></v-img>
                   </v-btn>
                 </template>
               </v-hover>
 
+              <!-- Nom + tags + bouton edit -->
               <v-list-item-content>
                 <v-list-item-title v-html="asset.name"> </v-list-item-title>
 
-                <v-container class="flex-row">
+                <v-container v-if="displayTag" class="flex-row">
                   <v-chip
                     :key="indexTag"
                     v-for="(tag, indexTag) in asset.parsedTags"
-                    class="mr-2 overflow-y-auto"
+                    class="ma-1 overflow-y-auto"
                   >
                     {{ tag }}
                   </v-chip>
@@ -178,7 +178,7 @@
                 </v-list-item-action>
               </v-list-item-content>
             </v-list-item>
-          </v-layout>
+          </v-card>
         </v-container>
       </v-card>
     </template>
@@ -204,9 +204,11 @@
         </v-btn>
       </v-flex>
       <v-flex class="flex-grow-0 mx-5">
+        <!-- Permet de réduire la taille des assets -->
         <v-btn v-on:click="decreaseSizeCard()" icon>
           <v-icon v-text="'mdi-minus'"></v-icon>
         </v-btn>
+        <!-- Permet d'augmenter la taille des assets -->
         <v-btn v-on:click="increaseSizeCard()" icon>
           <v-icon v-text="'mdi-plus'"></v-icon>
         </v-btn>
@@ -255,6 +257,7 @@ class CardModel {
   }
 }
 
+// Interface pour les catégories
 interface TreeItem {
   id: number
   name: string
@@ -280,22 +283,13 @@ export default class ErgonomIOAssets extends Vue {
   newImage = ''
 
   modifyAsset = false
+  displayTag = false
   assetChoose: CardModel = new CardModel({ id: 1 })
 
   sizeCard = 30
   sizeCardString = '30%'
 
   categoryAsset = ['test', 'autre']
-
-  items = [
-    { header: 'Today' },
-    {
-      avatar: 'https://cdn.vuetifyjs.com/images/lists/1.jpg',
-      title: 'Brunch this weekend?',
-      subtitle:
-        '<span class="text--primary">Ali Connors</span> &mdash; I\'ll be in your neighborhood doing errands this weekend. Do you want to hang out?'
-    }
-  ]
 
   rootItem: TreeItem = {
     id: 0,
@@ -306,8 +300,6 @@ export default class ErgonomIOAssets extends Vue {
 
   // Begin
   mounted (): void {
-    // this.assets.push(new CardModel({ id: this.assets.length }))
-    // this.assets.push(new CardModel({ id: this.assets.length }))
     this.requeteAPI()
     this.createCategory()
   }
@@ -393,7 +385,6 @@ export default class ErgonomIOAssets extends Vue {
     this.newImage = ''
   }
 
-  // JSON.stringify(asset.parsedTags)
   // Permet de mettre à jour une scène
   releaseAsset (asset: CardModel): void {
     // Requête API pour mettre à jour la scène
@@ -565,7 +556,7 @@ export default class ErgonomIOAssets extends Vue {
   // Permet d'augmenter la taille des assets
   increaseSizeCard (): void {
     this.sizeCard += 10
-    if (this.sizeCard > 50) this.sizeCard = 50
+    if (this.sizeCard > 60) this.sizeCard = 60
     this.sizeCardString = this.sizeCard.toString() + '%'
   }
 
@@ -576,18 +567,11 @@ export default class ErgonomIOAssets extends Vue {
 
     // Trie les différents assets en fonction de la catégorie
     this.cardsSort = []
-    console.log('category : ', categorie)
-    console.log('this.assets.length : ', this.assets.length)
     for (let i = 0; i < this.assets.length; i++) {
       var asset = this.assets[i]
-      console.log('asset.parsedTags : ', asset.parsedTags)
-      console.log('asset.parsedTags : ', asset.parsedTags[0])
 
       if (asset.parsedTags.some(cat => cat === categorie)) {
-        console.log('oui')
         this.cardsSort.push(asset)
-      } else {
-        console.log('non')
       }
     }
   }
@@ -597,7 +581,7 @@ export default class ErgonomIOAssets extends Vue {
     this.useCategory = false
   }
 
-  // Permet d'envoyer un message à l'instance unreal
+  // Permet d'envoyer l'asset à l'instance d'unreal
   sendUnreal (asset: CardModel): void {
     console.log('asset.name : ', asset.name)
 
@@ -612,7 +596,7 @@ export default class ErgonomIOAssets extends Vue {
       objet: objectAsset
     }
 
-    Unreal.send(asset.name)
+    Unreal.send(object)
   }
 }
 </script>
