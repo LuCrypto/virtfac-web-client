@@ -18,6 +18,13 @@
       hidden
       @change="onFileUploaded"
     />
+    <input
+      ref="inputTexture"
+      type="file"
+      accept=".png, .jpg, .exr, .hdr"
+      hidden
+      @change="onTextureUploaded"
+    />
     <v-navigation-drawer stateless permanent :mini-variant="menuCollapse">
       <v-list
         nav
@@ -270,6 +277,12 @@ export default class ErgonomIOAssetContainer extends Vue {
         )
       })
     )
+    this.menuItemList.push(
+      new MenuItem('Load env texture', 'mdi-upload', () => {
+        (this.$refs.inputTexture as HTMLElement).click()
+        return true
+      })
+    )
     // const mapper = new Mapper(CAEExampleFormat1)
   }
 
@@ -457,6 +470,25 @@ export default class ErgonomIOAssetContainer extends Vue {
           }
         )
       }
+    }
+  }
+
+  onTextureUploaded (event: Event) {
+    if (event != null && event.target != null) {
+      const f: File = ((event.target as HTMLInputElement).files as FileList)[0]
+      if (f != null) {
+        if (this.viewer !== null) { this.viewer.setEnvMap(URL.createObjectURL(f), 'HDR') }
+      }
+      const reader = new FileReader()
+      reader.onload = () => {
+        const fileString = reader.result as string
+        console.log(fileString)
+      }
+      reader.onerror = error => {
+        console.error(error)
+        this.$root.$emit('bottom-message', 'Sorry, we cannot read this file.')
+      }
+      reader.readAsDataURL(f)
     }
   }
 

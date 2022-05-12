@@ -522,9 +522,9 @@ export class MatrixUtils {
   }
 
   public static mainTest (alpha = -1) {
-    if (alpha === -1) alpha = 0.9
+    if (alpha === -1) alpha = 0.5
     // const m = new Matrix(randInt(50, 100), randInt(30, 50))
-    const m = new Matrix(200, 200)
+    const m = new Matrix(30, 30)
     const nbfamilly = randInt(0, Math.min(m.nbRow, m.nbColumn) / 2)
     const cGroup = []
     const rGroup = []
@@ -534,13 +534,13 @@ export class MatrixUtils {
       cGroup.push(randInt(cGroup[i - 1] + 1, m.nbColumn - nbfamilly + i))
       rGroup.push(randInt(rGroup[i - 1] + 1, m.nbRow - nbfamilly + i))
     }
-    // m.genBlocDiagonal(cGroup, rGroup)
+    m.genBlocDiagonal(cGroup, rGroup)
     const b = m.clone()
     // m.set(1, m.nbColumn - 1, 2)
     for (let i = 0; i < m.nbRow; i++) {
       for (let j = 0; j < m.nbColumn; j++) {
-        if (randFloat(0, 1) < 0.2) {
-          m.set(i, j, randInt(0, 5))
+        if (randFloat(0, 1) < 0.1) {
+          m.set(i, j, randInt(0, 1))
         }
       }
     }
