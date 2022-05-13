@@ -48,7 +48,6 @@
                 </v-col>
               </v-row>
             </v-container>
-
             <!-- Permet de changer la preview de l'asset -->
             <v-container fluid>
               <v-img height="270" :src="newImage"> </v-img>
@@ -101,13 +100,14 @@
       </v-row>
 
       <!-- Le body de la page centrale -->
-      <v-card class="overflow-y-auto d-flex flex-row" width="100%" height="750">
+      <v-card class="d-flex flex-row" width="100%" height="750">
         <!-- Les différentes catégories -->
         <v-card width="25%">
           <v-btn width="90%" class="ma-2" v-on:click="clearCategory()">
             Reset filter
           </v-btn>
           <v-checkbox
+            class="mx-2"
             v-model="displayTag"
             label="Afficher les tags"
           ></v-checkbox>
@@ -131,7 +131,7 @@
         </v-card>
 
         <!-- Les différents assets -->
-        <v-container class="d-flex flex-wrap">
+        <v-container class="d-flex flex-wrap overflow-y-auto">
           <v-card
             :width="sizeCardString"
             :key="indexCard"
@@ -142,7 +142,7 @@
               <v-hover>
                 <template v-slot:default="{ hover }">
                   <v-btn
-                    :elevation="hover ? 24 : 6"
+                    :style="{ filter: hover ? 'brightness(90%)' : 'none' }"
                     class="mr-1"
                     v-on:click="sendUnreal(asset)"
                     height="90"
@@ -265,6 +265,18 @@ interface TreeItem {
   asset: CardModel
 }
 
+class messageAsset {
+  message = ''
+  id = 0
+  position = []
+  rotation = []
+  scale = []
+
+  constructor () {
+    Object.assign(this)
+  }
+}
+
 @Component
 export default class ErgonomIOAssets extends Vue {
   // Initialisation
@@ -290,6 +302,7 @@ export default class ErgonomIOAssets extends Vue {
   sizeCardString = '30%'
 
   categoryAsset = ['test', 'autre']
+  tableauCategory: string[] = []
 
   rootItem: TreeItem = {
     id: 0,
@@ -301,7 +314,49 @@ export default class ErgonomIOAssets extends Vue {
   // Begin
   mounted (): void {
     this.requeteAPI()
-    this.createCategory()
+
+    Unreal.callback.$on('unreal-message', (data: unknown) => {
+      this.$root.$emit('bottom-message', `Unreal : ${JSON.stringify(data)}`)
+
+      Unreal.send(data)
+
+      var monObjet = data as messageAsset
+      Unreal.send(monObjet.message)
+      Unreal.send(monObjet.id)
+      Unreal.send(monObjet.position)
+
+      API.post(
+        this,
+        '/resources/assets',
+        JSON.stringify({
+          select: [],
+          where: [{ id: monObjet.id }]
+        })
+      ).then((response: Response) => {
+        const monAssetTableau = ((response as unknown) as Array<
+          Partial<CardModel>
+        >).map((asset: Partial<CardModel>) => new CardModel(asset))
+
+        const monAsset = monAssetTableau[0]
+
+        var objectAsset = {
+          action: 'aRecup',
+          name: monAsset.name,
+          id: monAsset.id,
+          uri: monAsset.uri,
+          position: monObjet.position,
+          rotation: monObjet.rotation,
+          scale: monObjet.scale
+        }
+
+        var object = {
+          menu: 'asset',
+          objet: objectAsset
+        }
+
+        Unreal.send(object)
+      })
+    })
   }
 
   // Permet de créer un exemple des différentes catégorie avec une hiérarchie
@@ -347,19 +402,22 @@ export default class ErgonomIOAssets extends Vue {
   // Requête API pour récupérer les différents assets
   requeteAPI (): void {
     console.log('api ')
-    API.post(this, '/resources/assets', JSON.stringify({})).then(
-      (response: Response) => {
-        console.log('response ', response)
-        this.assets2 = ((response as unknown) as Array<Partial<CardModel>>).map(
-          (asset: Partial<CardModel>) => new CardModel(asset)
-        )
+    API.post(
+      this,
+      '/resources/assets',
+      JSON.stringify({ select: ['name', 'picture', 'id', 'tags'] })
+    ).then((response: Response) => {
+      console.log('response ', response)
+      this.assets2 = ((response as unknown) as Array<Partial<CardModel>>).map(
+        (asset: Partial<CardModel>) => new CardModel(asset)
+      )
 
-        for (let i = 0; i < this.assets2.length; i++) {
-          this.assets.push(this.assets2[i])
-        }
-        this.assets2 = []
+      for (let i = 0; i < this.assets2.length; i++) {
+        this.assets.push(this.assets2[i])
       }
-    )
+      this.assets2 = []
+      this.getAllCategory()
+    })
   }
 
   // Permet de modifier le nom d'un asset
@@ -440,15 +498,12 @@ export default class ErgonomIOAssets extends Vue {
   // Permet de trier avec une catégorie à travers la hiérarchie
   scrollOnElement (values: number[]): void {
     console.log('values : ', values)
-
-    if (values !== []) {
-      if (values[0] === 2) {
-        console.log('Trie test !')
-        this.sortWithCategory('test')
-      } else {
-        this.clearCategory()
-      }
+    if (values.length !== 0) {
+      const element = values[0]
+      console.log('values : ', this.rootItem.children[element - 1].name)
+      this.sortWithCategory(this.rootItem.children[element - 1].name)
     } else {
+      console.log('clear !')
       this.clearCategory()
     }
   }
@@ -581,22 +636,76 @@ export default class ErgonomIOAssets extends Vue {
     this.useCategory = false
   }
 
+  // Permet de récupérer toutes les catégories différentes des assets
+  getAllCategory (): void {
+    for (let i = 0; i < this.assets.length; i++) {
+      const asset = this.assets[i]
+      for (let j = 0; j < asset.parsedTags.length; j++) {
+        const tag = asset.parsedTags[j]
+
+        let dedans = false
+        for (let k = 0; k < this.tableauCategory.length; k++) {
+          const tag2 = this.tableauCategory[k]
+          if (tag === tag2) {
+            dedans = true
+            break
+          }
+        }
+        if (!dedans) {
+          this.tableauCategory.push(tag)
+        }
+      }
+    }
+
+    let idUnique = 1
+    for (let i = 0; i < this.tableauCategory.length; i++) {
+      const test: TreeItem = {
+        id: idUnique,
+        name: this.tableauCategory[i],
+        children: [],
+        asset: new CardModel({})
+      }
+      idUnique++
+
+      this.rootItem.children.push(test)
+    }
+  }
+
   // Permet d'envoyer l'asset à l'instance d'unreal
   sendUnreal (asset: CardModel): void {
     console.log('asset.name : ', asset.name)
+    console.log('asset.name : ', asset.id)
 
-    var objectAsset = {
-      name: asset.name,
-      id: asset.id,
-      uri: asset.uri
-    }
+    API.post(
+      this,
+      '/resources/assets',
+      JSON.stringify({
+        select: [],
+        where: [{ id: asset.id }]
+      })
+    ).then((response: Response) => {
+      const monAssetTableau = ((response as unknown) as Array<
+        Partial<CardModel>
+      >).map((asset: Partial<CardModel>) => new CardModel(asset))
 
-    var object = {
-      menu: 'asset',
-      objet: objectAsset
-    }
+      const monAsset = monAssetTableau[0]
 
-    Unreal.send(object)
+      console.log(monAsset)
+
+      var objectAsset = {
+        action: 'envoieAsset',
+        name: monAsset.name,
+        id: monAsset.id,
+        uri: monAsset.uri
+      }
+
+      var object = {
+        menu: 'asset',
+        objet: objectAsset
+      }
+
+      Unreal.send(object)
+    })
   }
 }
 </script>

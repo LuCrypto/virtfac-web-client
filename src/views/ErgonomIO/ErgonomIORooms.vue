@@ -24,7 +24,7 @@
       <v-card
         class="overflow-y-auto d-flex flex-row flex-wrap"
         width="100%"
-        height="675"
+        height="660"
       >
         <v-card
           :key="indexRoom"
