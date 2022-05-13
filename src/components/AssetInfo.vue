@@ -47,6 +47,7 @@
                   <v-text-field
                     label="Name"
                     :placeholder="this.name"
+                    v-model="name"
                     :value="this.name"
                   ></v-text-field>
                   <v-combobox
@@ -254,6 +255,7 @@ export default class AssetInfo extends Vue {
           tags: JSON.stringify(this.tags)
         }
       }
+      console.log(apiFile)
       API.patch(this, '/resources/assets/' + this.id, JSON.stringify(apiFile))
         .then(res => {
           console.log(res)
