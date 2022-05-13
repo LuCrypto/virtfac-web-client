@@ -141,10 +141,48 @@ export default class AssetInfo extends Vue {
     )
   }
 
+  public loadData (id: number) {
+    if (id === -1) {
+    } else {
+      this.gltfUri = null
+      API.post(
+        this,
+        '/resources/assets',
+        JSON.stringify({
+          select: ['tags', 'name', 'picture'],
+          where: { id: id }
+        })
+      ).then(
+        response => {
+          this.tags = new Array<string>()
+          const r = (response as unknown) as [
+            { tags: string; name: string; picture: string }
+          ]
+          r[0].tags
+            .slice(1, -1)
+            .split(',')
+            .forEach(e => {
+              const t = e.replaceAll('"', '')
+              if (t.length > 0) {
+                this.tags.push(t)
+              }
+            })
+          this.name = r[0].name
+          this.iconUri = r[0].picture
+          this.id = id
+          this.onTagChanged()
+        },
+        reject => {
+          console.error(reject)
+        }
+      )
+    }
+  }
+
   public setAssetData (
     name: string,
     iconUri: string,
-    gltfUri: string|null,
+    gltfUri: string | null,
     id: number
   ): void {
     this.name = name
@@ -200,13 +238,22 @@ export default class AssetInfo extends Vue {
   }
 
   save (): void {
-    if (this.id !== -1 && this.gltfUri !== null) {
-      const apiFile = new APIAsset({
-        name: this.name,
-        uri: this.gltfUri,
-        picture: this.iconUri,
-        tags: JSON.stringify(this.tags)
-      })
+    if (this.id !== -1) {
+      let apiFile: unknown = {}
+      if (this.gltfUri !== null) {
+        apiFile = new APIAsset({
+          name: this.name,
+          uri: this.gltfUri,
+          picture: this.iconUri,
+          tags: JSON.stringify(this.tags)
+        })
+      } else {
+        apiFile = {
+          name: this.name,
+          picture: this.iconUri,
+          tags: JSON.stringify(this.tags)
+        }
+      }
       API.patch(this, '/resources/assets/' + this.id, JSON.stringify(apiFile))
         .then(res => {
           console.log(res)
