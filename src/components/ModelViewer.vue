@@ -16,7 +16,11 @@
 </style>
 
 <template>
-  <v-container fluid style="width:100%; height:100%; display:flex; flex-direction:row" class="pa-0 ma-0">
+  <v-container
+    fluid
+    style="width:100%; height:100%; display:flex; flex-direction:row"
+    class="pa-0 ma-0"
+  >
     <div
       class="viewer-3d"
       ref="canvasContainer"
@@ -338,6 +342,8 @@ export default class ModelViewer extends Vue {
 
     this.setEnvMap(studioEnvMap, 'HDR')
 
+    this.createSphere(0, 0, 0, 1)
+
     this.fov = 75
 
     // Update scene
@@ -367,6 +373,17 @@ export default class ModelViewer extends Vue {
   createCube (x: number, y: number, z: number, color: number) {
     const geometry = new THREE.BoxGeometry(1, 1, 1)
     const material = new THREE.MeshLambertMaterial({ color: color })
+    const cube = new THREE.Mesh(geometry, material)
+    cube.position.set(x, y, z)
+    if (this.scene) this.scene.add(cube)
+  }
+
+  createSphere (x: number, y: number, z: number, radius: number) {
+    const geometry = new THREE.SphereGeometry(radius)
+    const material = new THREE.MeshStandardMaterial({
+      metalness: 1,
+      roughness: 0
+    })
     const cube = new THREE.Mesh(geometry, material)
     cube.position.set(x, y, z)
     if (this.scene) this.scene.add(cube)
@@ -502,20 +519,21 @@ export default class ModelViewer extends Vue {
     type: 'HDR' | 'IMG' | 'EXR' = 'IMG',
     setBackground?: boolean
   ) {
+    const texture = null
+
+    const apply = (texture: THREE.Texture) => {
+      texture.mapping = THREE.EquirectangularRefractionMapping
+      this.scene.environment = texture
+      if (setBackground) this.scene.background = texture
+    }
+
     switch (type) {
       case 'IMG': {
-        const texture = new THREE.TextureLoader().load(url)
-        texture.mapping = THREE.EquirectangularRefractionMapping
-        this.scene.environment = texture
-        if (setBackground) this.scene.background = texture
+        new THREE.TextureLoader().load(url, apply)
         break
       }
       case 'HDR': {
-        new RGBELoader().load(url, (texture, textureData) => {
-          texture.mapping = THREE.EquirectangularRefractionMapping
-          this.scene.environment = texture
-          if (setBackground) this.scene.background = texture
-        })
+        new RGBELoader().load(url, apply)
         break
       }
     }
