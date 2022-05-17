@@ -15,14 +15,14 @@
         class="overflow-y-auto"
         style="height: 100%; max-height: 100%"
       >
-        <v-layout min-width="128">
+        <v-layout min-width="iconSize">
           <v-row class="flex-grow-1 pa-4">
             <v-col wrap>
               <v-layout justify-center>
                 <v-card
                   elevation="5"
-                  max-width="512"
-                  max-height="512"
+                  :max-width="iconSize"
+                  :max-height="iconSize"
                   style="aspect-ratio:100%"
                 >
                   <v-img
@@ -37,42 +37,36 @@
               </v-layout>
             </v-col>
             <v-col class="flex-grow-1">
-              <v-card min-width="128" class="flex-grow-1" elevation="5">
-                <v-toolbar color="primary" flat>
-                  <v-toolbar-title class="black--text">
-                    Data
-                  </v-toolbar-title>
-                </v-toolbar>
-                <v-container>
-                  <v-text-field
-                    label="Name"
-                    :placeholder="this.name"
-                    :value="this.name"
-                  ></v-text-field>
-                  <v-combobox
-                    label="Tags"
-                    v-model="tags"
-                    :items="this.knownTags"
-                    multiple
-                    chips
-                    @change="this.onTagChanged"
-                  >
-                    <template v-slot:selection="data">
-                      <v-chip @click="data.parent.selectItem(data.item)">
-                        <v-avatar
-                          class="primary white--text"
-                          left
-                          v-text="data.item.slice(0, 1).toUpperCase()"
-                        ></v-avatar>
-                        {{ data.item }}
-                        <v-icon size="10" style="margin-left:10px"
-                          >mdi-close</v-icon
-                        >
-                      </v-chip>
-                    </template></v-combobox
-                  >
-                </v-container>
-              </v-card>
+              <v-container min-width="128" class="flex-grow-1">
+                <v-text-field
+                  label="Name"
+                  :placeholder="this.name"
+                  v-model="name"
+                  :value="this.name"
+                ></v-text-field>
+                <v-combobox
+                  label="Tags"
+                  v-model="tags"
+                  :items="this.knownTags"
+                  multiple
+                  chips
+                  @change="this.onTagChanged"
+                >
+                  <template v-slot:selection="data">
+                    <v-chip @click="data.parent.selectItem(data.item)">
+                      <v-avatar
+                        class="primary white--text"
+                        left
+                        v-text="data.item.slice(0, 1).toUpperCase()"
+                      ></v-avatar>
+                      {{ data.item }}
+                      <v-icon size="10" style="margin-left:10px"
+                        >mdi-close</v-icon
+                      >
+                    </v-chip>
+                  </template></v-combobox
+                >
+              </v-container>
             </v-col></v-row
           >
         </v-layout>
@@ -98,7 +92,19 @@ import Component from 'vue-class-component'
 import { Prop } from 'vue-property-decorator'
 import { set } from 'vue/types/umd'
 
-@Component({})
+@Component({
+  computed: {
+    iconSize () {
+      switch (this.$vuetify.breakpoint.name) {
+        case 'xs': return 256
+        case 'sm': return 256
+        case 'md': return 256
+        case 'lg': return 512
+        case 'xl': return 512
+      }
+    }
+  }
+})
 export default class AssetInfo extends Vue {
   private name = ''
   private iconUri = ''
@@ -254,6 +260,7 @@ export default class AssetInfo extends Vue {
           tags: JSON.stringify(this.tags)
         }
       }
+      console.log(apiFile)
       API.patch(this, '/resources/assets/' + this.id, JSON.stringify(apiFile))
         .then(res => {
           console.log(res)
