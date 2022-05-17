@@ -6,14 +6,12 @@
 </template>
 
 <script lang="ts">
-import AvatarAnimationComponent from '@/components/ErgonomicsAnalysisComponent.vue'
 import { Component, Vue } from 'vue-property-decorator'
 import Login from '@/components/Login.vue'
 import Account from '@/components/Account.vue'
 import { Session, User } from '@/utils/session'
 @Component({
   components: {
-    AvatarAnimationComponent,
     Login,
     Account
   }
