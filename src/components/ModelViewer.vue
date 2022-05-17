@@ -61,7 +61,7 @@
       ref="hierarchy"
       style="max-width:50%; height: 100%; width:500px; right:0%; overflow-y: auto; overflow-x: hidden;"
       class="ma-0 pa-0"
-      v-if="displayInspector"
+      v-if="inspectorActive"
     >
       <!-- Hierarchy -->
       <v-card height="50%" width="100%" class="mb-14">
@@ -158,6 +158,18 @@
         </v-card>
       </v-card>
     </v-container>
+    <v-btn
+      fab
+      small
+      elevation="0"
+      v-if="displayInspector"
+      class="ma-1"
+      style="position:absolute; top:0px; right:0px"
+      color="primary"
+      @click="switchInspectorActive"
+    >
+      <v-icon>mdi-menu</v-icon>
+    </v-btn>
   </v-container>
 </template>
 
@@ -199,6 +211,11 @@ import { Matrix } from '@/utils/matrixUtils'
 })
 export default class ModelViewer extends Vue {
   @Prop({ default: () => false }) private displayInspector!: boolean
+
+  inspectorActive = false
+  switchInspectorActive () {
+    this.inspectorActive = !this.inspectorActive
+  }
 
   hierarchyItems = [
     { id: 0, name: 'scene', children: [{ id: 2, name: 'test' }] }
