@@ -1,7 +1,7 @@
 <template>
-  <v-container fluid class="d-flex flex-column" style="height: 100%;">
+  <v-container fluid class="d-flex flex-column ma-0 pa-0" style="height: 100%;">
     <v-container fluid class="d-flex flex-row pa-0">
-      <v-btn @click="toParent()" class="flex-grow-1 mr-2"
+      <v-btn @click="toParent()" class="flex-grow-1 mr-2" small fluid
         ><v-icon>mdi-keyboard-backspace</v-icon></v-btn
       >
       <v-select
@@ -33,17 +33,24 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="item in citems" v-bind:key="item.id">
-              <td
-                @mouseenter="onEnterItem(item.key)"
-                @mouseleave="onLeaveItem(item.key)"
+            <tr
+              v-for="item in citems"
+              v-bind:key="item.id"
+              @mouseenter="onEnterItem(item.key)"
+              @mouseleave="onLeaveItem(item.key)"
+              @click="selectItem(item.key)"
+              style="position:relative"
+            >
+              <v-btn
+                fluid
+                small
+                color="primary"
+                style="position:absolute; top:50%; transform: translateY(-50%)"
+                v-if="item.hasChildren"
+                @click="enterItem(item.key)"
+                ><v-icon>mdi-chevron-right</v-icon></v-btn
               >
-                <v-btn
-                  icon
-                  v-if="item.hasChildren"
-                  @click="selectItem(item.key)"
-                  ><v-icon>mdi-chevron-right</v-icon></v-btn
-                >
+              <td>
                 {{ item.name }}
               </td>
             </tr>
@@ -151,7 +158,7 @@ export default class TreeExplorer extends Vue {
     }
   }
 
-  public selectItem (key: unknown | null) {
+  public enterItem (key: unknown | null) {
     if ((this.objectMap.get(key) as Item).children.length > 0) {
       this.clearItems()
       ;(this.objectMap.get(key) as Item).children.forEach(it => {
@@ -184,9 +191,9 @@ export default class TreeExplorer extends Vue {
     this.parents.pop()
     const p = this.parents.pop()
     if (p === undefined) {
-      this.selectItem(null)
+      this.enterItem(null)
     } else {
-      this.selectItem(p.key)
+      this.enterItem(p.key)
     }
     /*
     if (
@@ -198,6 +205,10 @@ export default class TreeExplorer extends Vue {
       this.parentLabel = 'root'
     }
     */
+  }
+
+  public selectItem (item: unknown) {
+    this.$emit('onItemSelected', item)
   }
 
   public clearItems () {
