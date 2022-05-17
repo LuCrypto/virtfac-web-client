@@ -16,7 +16,11 @@
 </style>
 
 <template>
-  <v-container fluid style="width:100%; height:100%; display:flex; flex-direction:row" class="pa-0 ma-0">
+  <v-container
+    fluid
+    style="width:100%; height:100%; display:flex; flex-direction:row"
+    class="pa-0 ma-0"
+  >
     <div
       class="viewer-3d"
       ref="canvasContainer"
@@ -55,10 +59,12 @@
     </div>
     <v-container
       ref="hierarchy"
-      style="max-width:50%; height: 100%; width:500px; right:0%;"
+      style="max-width:50%; height: 100%; width:500px; right:0%; overflow-y: auto; overflow-x: hidden;"
+      class="ma-0 pa-0"
       v-if="displayInspector"
     >
-      <v-card height="50%" width="100%" class="scroll">
+      <!-- Hierarchy -->
+      <v-card height="50%" width="100%" class="mb-14">
         <v-toolbar dense color="primary" flat>
           <v-toolbar-title dense class="black--text">
             <v-icon left v-text="'mdi-file-tree'"></v-icon>
@@ -79,7 +85,76 @@
                 setHighlightObj(item, false)
               }
             "
+            @onItemSelected="selectItem"
           ></tree-explorer>
+        </v-card>
+      </v-card>
+
+      <!-- Transform -->
+      <v-card width="100%">
+        <v-toolbar dense color="primary" flat>
+          <v-toolbar-title dense class="black--text">
+            <v-icon left v-text="'mdi-axis'"></v-icon>
+            Transform
+          </v-toolbar-title>
+        </v-toolbar>
+
+        <v-card class="fill-height">
+          <v-simple-table
+            ><template v-slot:default>
+              <thead>
+                <tr>
+                  <th class="text-left">
+                    Name
+                  </th>
+                  <th class="text-left">
+                    X
+                  </th>
+                  <th class="text-left">
+                    Y
+                  </th>
+                  <th class="text-left">
+                    Z
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="item in transformMatrix" v-bind:key="item.name">
+                  <td>{{ item.name }}</td>
+                  <td>
+                    <v-text-field
+                      v-model="item.x"
+                      dense
+                      single-line
+                      type="number"
+                      @change="applyTransformMatrix"
+                      @mouseup="applyTransformMatrix"
+                    ></v-text-field>
+                  </td>
+                  <td>
+                    <v-text-field
+                      v-model="item.y"
+                      dense
+                      single-line
+                      type="number"
+                      @change="applyTransformMatrix"
+                      @mouseup="applyTransformMatrix"
+                    ></v-text-field>
+                  </td>
+                  <td>
+                    <v-text-field
+                      v-model="item.z"
+                      dense
+                      single-line
+                      type="number"
+                      @change="applyTransformMatrix"
+                      @mouseup="applyTransformMatrix"
+                    ></v-text-field>
+                  </td>
+                </tr>
+              </tbody>
+            </template>
+          </v-simple-table>
         </v-card>
       </v-card>
     </v-container>
@@ -99,10 +174,12 @@ import {
   CanvasTexture,
   Color,
   DoubleSide,
+  Euler,
   GridHelper,
   Group,
   Mesh,
-  Object3D
+  Object3D,
+  Vector3
 } from 'three'
 import { TransformControls } from 'three/examples/jsm/controls/TransformControls'
 import { Session } from '@/utils/session'
@@ -111,6 +188,7 @@ import { Prop } from 'vue-property-decorator'
 import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader'
 import { studioEnvMap } from '@/utils/imageData'
 import TreeExplorer from '@/components/TreeExplorer.vue'
+import { Matrix } from '@/utils/matrixUtils'
 
 // import AVATAR from '@/utils/avatar'
 
@@ -134,6 +212,21 @@ export default class ModelViewer extends Vue {
 
   public get fov () {
     return this.mfov
+  }
+
+  private mtransformMatrix = [
+    { name: 'position', x: 0, y: 0, z: 0 },
+    { name: 'rotation', x: 0, y: 0, z: 0 },
+    { name: 'scale', x: 0, y: 0, z: 0 }
+  ]
+
+  get transformMatrix () {
+    return this.mtransformMatrix
+  }
+
+  set transformMatrix (value) {
+    this.mtransformMatrix = value
+    this.applyTransformMatrix()
   }
 
   screenshotViewer: HTMLElement | null = null
@@ -202,13 +295,64 @@ export default class ModelViewer extends Vue {
           this.renderer.domElement
         )
         this.scene.add(this.gizmo)
-        this.gizmo.addEventListener('change', this.draw)
+        this.gizmo.addEventListener('change', () => {
+          this.updateTransformMatrix()
+          this.draw()
+        })
         this.gizmo.addEventListener('dragging-changed', e => {
           this.controls.enabled = !e.value
         })
       }
       this.gizmo.attach(obj)
     }
+  }
+
+  private updateTransformMatrix () {
+    if (this.gizmo !== null && this.gizmo.object !== undefined) {
+      const d = [
+        this.gizmo.object.position,
+        this.gizmo.object.rotation
+          .toVector3()
+          .divideScalar(Math.PI * 2)
+          .multiplyScalar(360),
+        this.gizmo.object.scale
+      ]
+      for (let i = 0; i < 3; i++) {
+        this.mtransformMatrix[i].x = d[i].x
+        this.mtransformMatrix[i].y = d[i].y
+        this.mtransformMatrix[i].z = d[i].z
+      }
+    }
+  }
+
+  private applyTransformMatrix () {
+    if (this.gizmo !== null && this.gizmo.object !== undefined) {
+      this.gizmo.object.position.set(
+        this.transformMatrix[0].x,
+        this.transformMatrix[0].y,
+        this.transformMatrix[0].z
+      )
+      this.gizmo.object.rotation.set(
+        (this.transformMatrix[1].x / 360) * Math.PI * 2,
+        (this.transformMatrix[1].y / 360) * Math.PI * 2,
+        (this.transformMatrix[1].z / 360) * Math.PI * 2
+      )
+
+      this.gizmo.object.scale.set(
+        this.transformMatrix[2].x,
+        this.transformMatrix[2].y,
+        this.transformMatrix[2].z
+      )
+
+      this.gizmo.object.updateMatrix()
+    }
+  }
+
+  private selectItem (item: Group) {
+    if (this.gizmo !== null) {
+      this.gizmo.attach(item)
+    }
+    this.updateTransformMatrix()
   }
 
   public setHighlightObj (obj: Group, active = true): void {
