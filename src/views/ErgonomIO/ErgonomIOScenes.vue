@@ -25,13 +25,7 @@
               v-for="(scene, indexScene) in scenes"
               width="300px"
               elevation="5"
-              @click="
-                sendUnreal(
-                  JSON.stringify(
-                    indexScene == 0 ? 'open haguenau scene' : 'open empty scene'
-                  )
-                )
-              "
+              @click="sendUnreal(scene)"
             >
               <v-img height="200" :src="scene.picture">
                 <v-btn
@@ -420,26 +414,26 @@ export default class ErgonomIOAssets extends Vue {
   sceneForModif = ''
   unreal = Unreal
 
+  haguenauExample = new CardModel({
+    name: 'IUT Haguenau',
+    picture: haguenauImageAsset,
+    tags: '["exemple"]',
+    id: 13,
+    color: 0,
+    assetsNumber: 93,
+    creationDate: 1651300387714,
+    data: '{}',
+    idProject: 0,
+    idUserOwner: 0,
+    modificationDate: 1651300387714
+  })
+
   // Begin
   mounted (): void {
     this.requeteAPI()
 
     // TODO : remove this
-    this.scenes.push(
-      new CardModel({
-        name: 'IUT Haguenau',
-        picture: haguenauImageAsset,
-        tags: '["exemple"]',
-        id: 13,
-        color: 0,
-        assetsNumber: 93,
-        creationDate: 1651300387714,
-        data: '{}',
-        idProject: 0,
-        idUserOwner: 0,
-        modificationDate: 1651300387714
-      })
-    )
+    this.scenes.push(this.haguenauExample)
 
     // Permet de récupérer la réponse d'Unreal
     Unreal.callback.$on('unreal-message', (data: unknown) => {
@@ -715,7 +709,24 @@ export default class ErgonomIOAssets extends Vue {
   }
 
   refreshScenes (): void {
-    this.scenes = []
+    this.scenes = [this.haguenauExample]
+
+    this.scenes.push(
+      new CardModel({
+        name: 'IUT Haguenau',
+        picture: haguenauImageAsset,
+        tags: '["exemple"]',
+        id: 13,
+        color: 0,
+        assetsNumber: 93,
+        creationDate: 1651300387714,
+        data: '{}',
+        idProject: 0,
+        idUserOwner: 0,
+        modificationDate: 1651300387714
+      })
+    )
+
     this.requeteAPI()
   }
 
@@ -821,22 +832,22 @@ export default class ErgonomIOAssets extends Vue {
     // console.log('asset.id : ', scene.id)
     // console.log('asset : ', scene)
 
-    // var objectAsset = {
-    //   name: scene.name,
-    //   assetsNumber: scene.assetsNumber,
-    //   assets: JSON.parse(scene.data),
-    //   idScene: scene.id,
-    //   action: 'chargerScene'
-    // }
+    var objectAsset = {
+      name: scene.name,
+      assetsNumber: scene.assetsNumber,
+      assets: JSON.parse(scene.data),
+      idScene: scene.id,
+      action: 'chargerScene'
+    }
 
-    // var object = {
-    //   menu: 'scene',
-    //   objet: objectAsset
-    // }
+    var object = {
+      menu: 'scene',
+      objet: objectAsset
+    }
 
     // console.log('data : ', scene.data)
 
-    Unreal.send(scene)
+    Unreal.send(object)
   }
 }
 </script>

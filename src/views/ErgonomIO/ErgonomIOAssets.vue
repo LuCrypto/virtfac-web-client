@@ -1,10 +1,23 @@
 <template>
   <v-container fluid style="max-height: 100%; overflow: auto;">
+    <pop-up ref="assetInfo">
+      <asset-info
+        ref="assetInfoComponent"
+        @close="$refs.assetInfo.close()"
+      ></asset-info>
+    </pop-up>
     <!-- Titre -->
-    <v-container fluid class="text-h3 text-center py-8">
-      Asset library
+    <v-container
+      v-if="!this.fullpage"
+      class="spacing-playground pa-6 contradiction-analysis"
+      fluid
+    >
+      <v-card elevation="3" class="mx-auto mb-6 flex-grow-1">
+        <v-card-title> Asset library </v-card-title>
+        <v-card-subtitle> List of all assets </v-card-subtitle>
+      </v-card>
     </v-container>
-    <v-divider></v-divider>
+
     <!-- Milieu de page : les différentes cartes de scènes -->
     <template>
       <!-- Popup permettant de modifier des données de la scène -->
@@ -48,13 +61,12 @@
                 </v-col>
               </v-row>
             </v-container>
-
             <!-- Permet de changer la preview de l'asset -->
             <v-container fluid>
               <v-img height="270" :src="newImage"> </v-img>
               <v-btn
                 class="ml-6 mt-6 flex-grow-1"
-                color="primary"
+                color="green"
                 @click="openUploadFile"
               >
                 <v-icon v-text="'mdi-upload'"></v-icon>
@@ -89,9 +101,10 @@
               </v-row>
             </v-container>
 
+            <!-- Permet de sauvegarder les modifications -->
             <v-card-actions>
               <v-spacer></v-spacer>
-              <v-btn color="green darken-1" text @click="save(assetChoose)">
+              <v-btn color="primary" text @click="save(assetChoose)">
                 Save
               </v-btn>
             </v-card-actions>
@@ -99,11 +112,23 @@
         </v-dialog>
       </v-row>
 
-      <v-card class="overflow-y-auto d-flex flex-row" width="100%" height="750">
+      <!-- Le body de la page centrale -->
+      <v-card
+        :class="!this.fullpage ? 'ma-10' : 'ma-6'"
+        class="d-flex flex-row"
+        width="97%"
+        height="700"
+      >
+        <!-- Les différentes catégories -->
         <v-card width="25%">
           <v-btn width="90%" class="ma-2" v-on:click="clearCategory()">
             Reset filter
           </v-btn>
+          <v-checkbox
+            class="mx-2"
+            v-model="displayTag"
+            label="Afficher les tags"
+          ></v-checkbox>
           <v-card-title> Categories : </v-card-title>
 
           <v-card-text>
@@ -118,54 +143,47 @@
                 <v-icon :class="open ? 'primary--text' : ''">
                   {{ open ? 'mdi-folder-open' : 'mdi-folder' }}
                 </v-icon>
-                <!-- Les elements -->
-                <!-- <div v-else>
-                  <v-chip
-                    style="min-width: 65px;"
-                    class="ma-2"
-                    :color="getTypeColor(item.request.type)"
-                  >
-                    {{ item.request.type }}
-                  </v-chip>
-                  {{ item.request.path }}
-                </div> -->
               </template>
-
-              <!-- <template v-slot:label="{ item }">
-                <div class="pr-4" style="cursor: pointer">{{ item.name }}</div>
-              </template> -->
             </v-treeview>
           </v-card-text>
         </v-card>
 
-        <v-container class="d-flex flex-wrap">
-          <v-layout
+        <!-- Les différents assets -->
+        <v-container class="d-flex flex-wrap overflow-y-auto">
+          <v-card
             :width="sizeCardString"
             :key="indexCard"
             v-for="(asset, indexCard) in useCategory ? cardsSort : assets"
           >
             <v-list-item :key="asset.name">
+              <!-- Image de l'asset -->
               <v-hover>
                 <template v-slot:default="{ hover }">
                   <v-btn
-                    :elevation="hover ? 24 : 6"
-                    class="mr-2"
+                    :style="{ filter: hover ? 'brightness(90%)' : 'none' }"
+                    class="mr-1"
                     v-on:click="sendUnreal(asset)"
-                    style="width:190px; height:190px"
+                    height="90"
+                    width="90"
                   >
-                    <v-img max-width="190" :src="asset.picture"></v-img>
+                    <v-img
+                      max-width="90"
+                      :src="asset.picture"
+                      class="mr-1"
+                    ></v-img>
                   </v-btn>
                 </template>
               </v-hover>
 
+              <!-- Nom + tags + bouton edit -->
               <v-list-item-content>
                 <v-list-item-title v-html="asset.name"> </v-list-item-title>
 
-                <v-container class="flex-row">
+                <v-container v-if="displayTag" class="flex-row">
                   <v-chip
                     :key="indexTag"
                     v-for="(tag, indexTag) in asset.parsedTags"
-                    class="mr-2 overflow-y-auto"
+                    class="ma-1 overflow-y-auto"
                   >
                     {{ tag }}
                   </v-chip>
@@ -178,7 +196,7 @@
                 </v-list-item-action>
               </v-list-item-content>
             </v-list-item>
-          </v-layout>
+          </v-card>
         </v-container>
       </v-card>
     </template>
@@ -204,9 +222,11 @@
         </v-btn>
       </v-flex>
       <v-flex class="flex-grow-0 mx-5">
+        <!-- Permet de réduire la taille des assets -->
         <v-btn v-on:click="decreaseSizeCard()" icon>
           <v-icon v-text="'mdi-minus'"></v-icon>
         </v-btn>
+        <!-- Permet d'augmenter la taille des assets -->
         <v-btn v-on:click="increaseSizeCard()" icon>
           <v-icon v-text="'mdi-plus'"></v-icon>
         </v-btn>
@@ -220,6 +240,9 @@ import { Component, Vue } from 'vue-property-decorator'
 import API from '@/utils/api'
 import Unreal from '@/utils/unreal'
 import { APIAsset } from '@/utils/models'
+import AssetInfo from '@/components/AssetInfo.vue'
+import PopUp from '@/components/PopUp.vue'
+import VueRouter from 'vue-router'
 
 // Classe pour les assets
 class CardModel {
@@ -255,6 +278,7 @@ class CardModel {
   }
 }
 
+// Interface pour les catégories
 interface TreeItem {
   id: number
   name: string
@@ -262,7 +286,24 @@ interface TreeItem {
   asset: CardModel
 }
 
-@Component
+class messageAsset {
+  message = ''
+  id = 0
+  position = []
+  rotation = []
+  scale = []
+
+  constructor () {
+    Object.assign(this)
+  }
+}
+
+@Component({
+  components: {
+    PopUp,
+    AssetInfo
+  }
+})
 export default class ErgonomIOAssets extends Vue {
   // Initialisation
   assets: CardModel[] = []
@@ -280,22 +321,18 @@ export default class ErgonomIOAssets extends Vue {
   newImage = ''
 
   modifyAsset = false
+  displayTag = false
   assetChoose: CardModel = new CardModel({ id: 1 })
 
   sizeCard = 30
   sizeCardString = '30%'
 
   categoryAsset = ['test', 'autre']
+  tableauCategory: string[] = []
 
-  items = [
-    { header: 'Today' },
-    {
-      avatar: 'https://cdn.vuetifyjs.com/images/lists/1.jpg',
-      title: 'Brunch this weekend?',
-      subtitle:
-        '<span class="text--primary">Ali Connors</span> &mdash; I\'ll be in your neighborhood doing errands this weekend. Do you want to hang out?'
-    }
-  ]
+  router: VueRouter = this.$router
+  query = this.router.currentRoute.query
+  fullpage: boolean = this.query.fullpage === 'true'
 
   rootItem: TreeItem = {
     id: 0,
@@ -306,10 +343,50 @@ export default class ErgonomIOAssets extends Vue {
 
   // Begin
   mounted (): void {
-    // this.assets.push(new CardModel({ id: this.assets.length }))
-    // this.assets.push(new CardModel({ id: this.assets.length }))
     this.requeteAPI()
-    this.createCategory()
+
+    Unreal.callback.$on('unreal-message', (data: unknown) => {
+      this.$root.$emit('bottom-message', `Unreal : ${JSON.stringify(data)}`)
+
+      Unreal.send(data)
+
+      var monObjet = data as messageAsset
+      Unreal.send(monObjet.message)
+      Unreal.send(monObjet.id)
+      Unreal.send(monObjet.position)
+
+      API.post(
+        this,
+        '/resources/assets',
+        JSON.stringify({
+          select: [],
+          where: [{ id: monObjet.id }]
+        })
+      ).then((response: Response) => {
+        const monAssetTableau = ((response as unknown) as Array<
+          Partial<CardModel>
+        >).map((asset: Partial<CardModel>) => new CardModel(asset))
+
+        const monAsset = monAssetTableau[0]
+
+        var objectAsset = {
+          action: 'aRecup',
+          name: monAsset.name,
+          id: monAsset.id,
+          uri: monAsset.uri,
+          position: monObjet.position,
+          rotation: monObjet.rotation,
+          scale: monObjet.scale
+        }
+
+        var object = {
+          menu: 'asset',
+          objet: objectAsset
+        }
+
+        Unreal.send(object)
+      })
+    })
   }
 
   // Permet de créer un exemple des différentes catégorie avec une hiérarchie
@@ -355,26 +432,33 @@ export default class ErgonomIOAssets extends Vue {
   // Requête API pour récupérer les différents assets
   requeteAPI (): void {
     console.log('api ')
-    API.post(this, '/resources/assets', JSON.stringify({})).then(
-      (response: Response) => {
-        console.log('response ', response)
-        this.assets2 = ((response as unknown) as Array<Partial<CardModel>>).map(
-          (asset: Partial<CardModel>) => new CardModel(asset)
-        )
+    API.post(
+      this,
+      '/resources/assets',
+      JSON.stringify({ select: ['name', 'picture', 'id', 'tags'] })
+    ).then((response: Response) => {
+      console.log('response ', response)
+      this.assets2 = ((response as unknown) as Array<Partial<CardModel>>).map(
+        (asset: Partial<CardModel>) => new CardModel(asset)
+      )
 
-        for (let i = 0; i < this.assets2.length; i++) {
-          this.assets.push(this.assets2[i])
-        }
-        this.assets2 = []
+      for (let i = 0; i < this.assets2.length; i++) {
+        this.assets.push(this.assets2[i])
       }
-    )
+      this.assets2 = []
+      this.getAllCategory()
+    })
   }
 
   // Permet de modifier le nom d'un asset
   editNameAsset (asset: CardModel): void {
-    console.log('editNameAsset ')
-    this.modifyAsset = true
-    this.assetChoose = asset
+    // this.modifyAsset = true
+    // this.assetChoose = asset
+    console.log('editNameAsset')
+    ;(this.$refs.assetInfo as PopUp).open()
+    requestAnimationFrame(() => {
+      (this.$refs.assetInfoComponent as AssetInfo).loadData(asset.id)
+    })
   }
 
   // Permet de modifier un asset
@@ -393,7 +477,6 @@ export default class ErgonomIOAssets extends Vue {
     this.newImage = ''
   }
 
-  // JSON.stringify(asset.parsedTags)
   // Permet de mettre à jour une scène
   releaseAsset (asset: CardModel): void {
     // Requête API pour mettre à jour la scène
@@ -449,15 +532,12 @@ export default class ErgonomIOAssets extends Vue {
   // Permet de trier avec une catégorie à travers la hiérarchie
   scrollOnElement (values: number[]): void {
     console.log('values : ', values)
-
-    if (values !== []) {
-      if (values[0] === 2) {
-        console.log('Trie test !')
-        this.sortWithCategory('test')
-      } else {
-        this.clearCategory()
-      }
+    if (values.length !== 0) {
+      const element = values[0]
+      console.log('values : ', this.rootItem.children[element - 1].name)
+      this.sortWithCategory(this.rootItem.children[element - 1].name)
     } else {
+      console.log('clear !')
       this.clearCategory()
     }
   }
@@ -565,7 +645,7 @@ export default class ErgonomIOAssets extends Vue {
   // Permet d'augmenter la taille des assets
   increaseSizeCard (): void {
     this.sizeCard += 10
-    if (this.sizeCard > 50) this.sizeCard = 50
+    if (this.sizeCard > 60) this.sizeCard = 60
     this.sizeCardString = this.sizeCard.toString() + '%'
   }
 
@@ -576,18 +656,11 @@ export default class ErgonomIOAssets extends Vue {
 
     // Trie les différents assets en fonction de la catégorie
     this.cardsSort = []
-    console.log('category : ', categorie)
-    console.log('this.assets.length : ', this.assets.length)
     for (let i = 0; i < this.assets.length; i++) {
       var asset = this.assets[i]
-      console.log('asset.parsedTags : ', asset.parsedTags)
-      console.log('asset.parsedTags : ', asset.parsedTags[0])
 
       if (asset.parsedTags.some(cat => cat === categorie)) {
-        console.log('oui')
         this.cardsSort.push(asset)
-      } else {
-        console.log('non')
       }
     }
   }
@@ -597,22 +670,76 @@ export default class ErgonomIOAssets extends Vue {
     this.useCategory = false
   }
 
-  // Permet d'envoyer un message à l'instance unreal
+  // Permet de récupérer toutes les catégories différentes des assets
+  getAllCategory (): void {
+    for (let i = 0; i < this.assets.length; i++) {
+      const asset = this.assets[i]
+      for (let j = 0; j < asset.parsedTags.length; j++) {
+        const tag = asset.parsedTags[j]
+
+        let dedans = false
+        for (let k = 0; k < this.tableauCategory.length; k++) {
+          const tag2 = this.tableauCategory[k]
+          if (tag === tag2) {
+            dedans = true
+            break
+          }
+        }
+        if (!dedans) {
+          this.tableauCategory.push(tag)
+        }
+      }
+    }
+
+    let idUnique = 1
+    for (let i = 0; i < this.tableauCategory.length; i++) {
+      const test: TreeItem = {
+        id: idUnique,
+        name: this.tableauCategory[i],
+        children: [],
+        asset: new CardModel({})
+      }
+      idUnique++
+
+      this.rootItem.children.push(test)
+    }
+  }
+
+  // Permet d'envoyer l'asset à l'instance d'unreal
   sendUnreal (asset: CardModel): void {
     console.log('asset.name : ', asset.name)
+    console.log('asset.name : ', asset.id)
 
-    var objectAsset = {
-      name: asset.name,
-      id: asset.id,
-      uri: asset.uri
-    }
+    API.post(
+      this,
+      '/resources/assets',
+      JSON.stringify({
+        select: [],
+        where: [{ id: asset.id }]
+      })
+    ).then((response: Response) => {
+      const monAssetTableau = ((response as unknown) as Array<
+        Partial<CardModel>
+      >).map((asset: Partial<CardModel>) => new CardModel(asset))
 
-    var object = {
-      menu: 'asset',
-      objet: objectAsset
-    }
+      const monAsset = monAssetTableau[0]
 
-    Unreal.send(asset.name)
+      console.log(monAsset)
+
+      var objectAsset = {
+        action: 'envoieAsset',
+        name: monAsset.name,
+        id: monAsset.id,
+        uri: monAsset.uri
+      }
+
+      var object = {
+        menu: 'asset',
+        objet: objectAsset
+      }
+
+      Unreal.send(object)
+    })
   }
 }
 </script>
