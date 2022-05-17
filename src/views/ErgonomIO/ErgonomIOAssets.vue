@@ -1,10 +1,23 @@
 <template>
   <v-container fluid style="max-height: 100%; overflow: auto;">
+    <pop-up ref="assetInfo">
+      <asset-info
+        ref="assetInfoComponent"
+        @close="$refs.assetInfo.close()"
+      ></asset-info>
+    </pop-up>
     <!-- Titre -->
-    <v-container fluid class="text-h3 text-center py-8">
-      Asset library
+    <v-container
+      v-if="!this.fullpage"
+      class="spacing-playground pa-6 contradiction-analysis"
+      fluid
+    >
+      <v-card elevation="3" class="mx-auto mb-6 flex-grow-1">
+        <v-card-title> Asset library </v-card-title>
+        <v-card-subtitle> List of all assets </v-card-subtitle>
+      </v-card>
     </v-container>
-    <v-divider></v-divider>
+
     <!-- Milieu de page : les différentes cartes de scènes -->
     <template>
       <!-- Popup permettant de modifier des données de la scène -->
@@ -100,7 +113,12 @@
       </v-row>
 
       <!-- Le body de la page centrale -->
-      <v-card class="d-flex flex-row" width="100%" height="750">
+      <v-card
+        :class="!this.fullpage ? 'ma-10' : 'ma-6'"
+        class="d-flex flex-row"
+        width="97%"
+        height="700"
+      >
         <!-- Les différentes catégories -->
         <v-card width="25%">
           <v-btn width="90%" class="ma-2" v-on:click="clearCategory()">
@@ -222,6 +240,9 @@ import { Component, Vue } from 'vue-property-decorator'
 import API from '@/utils/api'
 import Unreal from '@/utils/unreal'
 import { APIAsset } from '@/utils/models'
+import AssetInfo from '@/components/AssetInfo.vue'
+import PopUp from '@/components/PopUp.vue'
+import VueRouter from 'vue-router'
 
 // Classe pour les assets
 class CardModel {
@@ -277,7 +298,12 @@ class messageAsset {
   }
 }
 
-@Component
+@Component({
+  components: {
+    PopUp,
+    AssetInfo
+  }
+})
 export default class ErgonomIOAssets extends Vue {
   // Initialisation
   assets: CardModel[] = []
@@ -303,6 +329,10 @@ export default class ErgonomIOAssets extends Vue {
 
   categoryAsset = ['test', 'autre']
   tableauCategory: string[] = []
+
+  router: VueRouter = this.$router
+  query = this.router.currentRoute.query
+  fullpage: boolean = this.query.fullpage === 'true'
 
   rootItem: TreeItem = {
     id: 0,
@@ -422,9 +452,13 @@ export default class ErgonomIOAssets extends Vue {
 
   // Permet de modifier le nom d'un asset
   editNameAsset (asset: CardModel): void {
-    console.log('editNameAsset ')
-    this.modifyAsset = true
-    this.assetChoose = asset
+    // this.modifyAsset = true
+    // this.assetChoose = asset
+    console.log('editNameAsset')
+    ;(this.$refs.assetInfo as PopUp).open()
+    requestAnimationFrame(() => {
+      (this.$refs.assetInfoComponent as AssetInfo).loadData(asset.id)
+    })
   }
 
   // Permet de modifier un asset

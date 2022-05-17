@@ -47,11 +47,21 @@ import V from '@/utils/vector'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 import { GLTFLoader, GLTF } from 'three/examples/jsm/loaders/GLTFLoader'
 import { BVHLoader, BVH } from 'three/examples/jsm/loaders/BVHLoader'
-import { Color, DoubleSide, GridHelper, Group, Mesh, Object3D } from 'three'
+import {
+  CanvasTexture,
+  Color,
+  DoubleSide,
+  GridHelper,
+  Group,
+  Mesh,
+  Object3D
+} from 'three'
 import { TransformControls } from 'three/examples/jsm/controls/TransformControls'
 import { Session } from '@/utils/session'
 import { Vector2 } from '@/utils/graph/Vec'
 import { Prop } from 'vue-property-decorator'
+import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader'
+import { studioEnvMap } from '@/utils/imageData'
 
 // import AVATAR from '@/utils/avatar'
 
@@ -87,17 +97,18 @@ export default class ModelViewer extends Vue {
       alpha: true,
       preserveDrawingBuffer: true
     })
+
     this.controls = new OrbitControls(this.camera, this.renderer.domElement)
   }
 
   public setFogActive (active: boolean, color = 0xa0a0a0) {
     if (active) {
       const fogColor = new THREE.Color(color)
-      this.scene.background = fogColor
+      // this.scene.background = fogColor
       this.scene.fog = new THREE.Fog(fogColor, 0.0025, 20)
     } else {
       const fogColor = new THREE.Color(color)
-      this.scene.background = fogColor
+      // this.scene.background = fogColor
       this.scene.fog = null
     }
   }
@@ -209,7 +220,7 @@ export default class ModelViewer extends Vue {
   mounted (): void {
     // Create scene
     const fogColor = new THREE.Color(0xa0a0a0)
-    this.scene.background = fogColor
+    // this.scene.background = fogColor
     this.scene.fog = new THREE.Fog(fogColor, 0.0025, 20)
     // Create camera
     this.camera.position.set(1.5, 2.5, 1.5)
@@ -237,6 +248,8 @@ export default class ModelViewer extends Vue {
     // const sunHelper = new THREE.DirectionalLightHelper(sun, 4, 0xffb000)
     // this.scene.add(sunHelper)
     this.setGrid(100, 100, 0xaaaaaa, 0xfefefe)
+
+    this.setEnvMap(studioEnvMap, 'HDR')
 
     // Update scene
     this.updateSize()
@@ -373,6 +386,30 @@ export default class ModelViewer extends Vue {
 
   private onScreenShot: { (): void } = () => {
     /**/
+  }
+
+  public setEnvMap (
+    url: string,
+    type: 'HDR' | 'IMG' | 'EXR' = 'IMG',
+    setBackground?: boolean
+  ) {
+    switch (type) {
+      case 'IMG': {
+        const texture = new THREE.TextureLoader().load(url)
+        texture.mapping = THREE.EquirectangularRefractionMapping
+        this.scene.environment = texture
+        if (setBackground) this.scene.background = texture
+        break
+      }
+      case 'HDR': {
+        new RGBELoader().load(url, (texture, textureData) => {
+          texture.mapping = THREE.EquirectangularRefractionMapping
+          this.scene.environment = texture
+          if (setBackground) this.scene.background = texture
+        })
+        break
+      }
+    }
   }
 
   private screanShotAlreadyActive = false
