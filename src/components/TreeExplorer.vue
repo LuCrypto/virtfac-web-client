@@ -1,7 +1,23 @@
 <template>
-  <v-container class="d-flex flex-column" style="height: 100%;">
-    <v-btn @click="toParent()"><v-icon>mdi-keyboard-backspace</v-icon></v-btn>
-    <v-container class="flex-grow-1" style="overflow: auto;">
+  <v-container fluid class="d-flex flex-column" style="height: 100%;">
+    <v-container fluid class="d-flex flex-row pa-0">
+      <v-btn @click="toParent()" class="flex-grow-1 mr-2"
+        ><v-icon>mdi-keyboard-backspace</v-icon></v-btn
+      >
+      <v-select
+        :label="parentLabel"
+        :placeholder="parentLabel"
+        persistent-placeholder
+        @change="selectParent"
+        class="flex-grow-1"
+        :items="parents"
+        item-text="name"
+        item-value="key"
+        single-line
+        dense
+      ></v-select>
+    </v-container>
+    <v-container class="flex-grow-1 pa-0" style="overflow: auto;">
       <!-- <v-row no-gutters v-for="item in citems" v-bind:key="item.id">
         <v-chip style="width:100%" label dense @click="selectItem(item.key)">{{
           item.name
@@ -22,7 +38,10 @@
                 @mouseenter="onEnterItem(item.key)"
                 @mouseleave="onLeaveItem(item.key)"
               >
-                <v-btn icon v-if="item.hasChildren" @click="selectItem(item.key)"
+                <v-btn
+                  icon
+                  v-if="item.hasChildren"
+                  @click="selectItem(item.key)"
                   ><v-icon>mdi-chevron-right</v-icon></v-btn
                 >
                 {{ item.name }}
@@ -63,6 +82,7 @@ class Item {
 
 @Component({})
 export default class TreeExplorer extends Vue {
+  parentLabel = 'root'
   objectMap = new Map<unknown | null, Item>()
   id = 0
 
@@ -114,6 +134,23 @@ export default class TreeExplorer extends Vue {
     })
   }
 
+  public selectParent (key: unknown | null) {
+    let maxGoback = 500
+    while (maxGoback > 0 && this.parents[this.parents.length - 1].key !== key) {
+      this.toParent()
+      maxGoback--
+    }
+
+    if (
+      this.parents.length > 0 &&
+      this.parents[this.parents.length - 1] !== null
+    ) {
+      this.parentLabel = this.parents[this.parents.length - 1].name
+    } else {
+      this.parentLabel = 'root'
+    }
+  }
+
   public selectItem (key: unknown | null) {
     if ((this.objectMap.get(key) as Item).children.length > 0) {
       this.clearItems()
@@ -133,6 +170,14 @@ export default class TreeExplorer extends Vue {
         hasChildren: it.children.length > 0
       })
     }
+    if (
+      this.parents.length > 0 &&
+      this.parents[this.parents.length - 1] !== null
+    ) {
+      this.parentLabel = this.parents[this.parents.length - 1].name
+    } else {
+      this.parentLabel = 'root'
+    }
   }
 
   public toParent () {
@@ -143,6 +188,16 @@ export default class TreeExplorer extends Vue {
     } else {
       this.selectItem(p.key)
     }
+    /*
+    if (
+      this.parents.length > 0 &&
+      this.parents[this.parents.length - 1] !== null
+    ) {
+      this.parentLabel = this.parents[this.parents.length - 1].name
+    } else {
+      this.parentLabel = 'root'
+    }
+    */
   }
 
   public clearItems () {

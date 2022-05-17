@@ -1,12 +1,61 @@
+<style scoped>
+.screenshotViewer {
+  position: absolute;
+  max-width: 100%;
+  max-height: 100%;
+  aspect-ratio: 1/1;
+  width: 10000px;
+  border: dashed;
+  border-width: thin;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  box-shadow: 0 0 0 1000px rgb(0, 0, 0, 0.5);
+}
+</style>
+
 <template>
-  <div
-    class="viewer-3d"
-    ref="canvasContainer"
-    style="overflow:hidden; position:relative"
-  >
+  <v-container fluid style="width:100%; height:100%; display:flex; flex-direction:row" class="pa-0 ma-0">
+    <div
+      class="viewer-3d"
+      ref="canvasContainer"
+      style="overflow:hidden; position:relative"
+    >
+      <div ref="screenshotViewer" class="screenshotViewer">
+        <v-layout class="d-flex flex-row">
+          <v-btn
+            elevation="2"
+            class="ma-2"
+            color="primary"
+            style="pointer-events:visible"
+            @click="screenShotButtonClick"
+            ><v-icon>mdi-camera</v-icon></v-btn
+          >
+          <v-slider
+            v-model="fov"
+            :value="mfov"
+            :max="150"
+            :min="1"
+            @change="onFovChanged"
+            style="pointer-events: visible"
+            class="ma-2"
+            ><template v-slot:append>
+              <v-text-field
+                v-model="fov"
+                class="mt-0 pt-0"
+                hide-details
+                single-line
+                type="number"
+                style="width: 60px; transform: translateY(-30%)"
+              ></v-text-field></template
+          ></v-slider>
+        </v-layout>
+      </div>
+    </div>
     <v-container
       ref="hierarchy"
-      style="position:absolute; max-width:50%; height: 100%; width:500px; right:0%;"
+      style="max-width:50%; height: 100%; width:500px; right:0%;"
       v-if="displayInspector"
     >
       <v-card height="50%" width="100%" class="scroll">
@@ -34,40 +83,7 @@
         </v-card>
       </v-card>
     </v-container>
-    <div
-      ref="screenshotViewer"
-      style="position:absolute; max-width:100%; max-height: 100%; aspect-ratio:1/1; width:10000px; border: dashed; border-width:thin; left:50%; top: 50%; transform: translate(-50%,-50%); pointer-events: none; box-shadow: 0 0 0 1000px rgb(0,0,0,0.5);"
-    >
-      <v-layout class="d-flex flex-row">
-        <v-btn
-          elevation="2"
-          class="ma-2"
-          color="primary"
-          style="pointer-events:visible"
-          @click="screenShotButtonClick"
-          ><v-icon>mdi-camera</v-icon></v-btn
-        >
-        <v-slider
-          v-model="fov"
-          :value="mfov"
-          :max="150"
-          :min="1"
-          @change="onFovChanged"
-          style="pointer-events: visible"
-          class="ma-2"
-          ><template v-slot:append>
-            <v-text-field
-              v-model="fov"
-              class="mt-0 pt-0"
-              hide-details
-              single-line
-              type="number"
-              style="width: 60px; transform: translateY(-30%)"
-            ></v-text-field></template
-        ></v-slider>
-      </v-layout>
-    </div>
-  </div>
+  </v-container>
 </template>
 
 <script lang="ts">

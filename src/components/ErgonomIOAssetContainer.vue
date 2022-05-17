@@ -1,5 +1,5 @@
 <template>
-  <v-card elevation="3" height="700px" class="d-flex flex-row">
+  <v-card elevation="3" height="700px" class="d-flex flex-row pa-0 ma-0">
     <pop-up ref="openFilePopUp">
       <open-asset
         @close="$refs.openFilePopUp.close()"
@@ -69,7 +69,7 @@
         </v-list-item-group>
       </v-list>
     </v-navigation-drawer>
-    <v-container style="width: auto; margin: 0; flex-grow: 1;">
+    <v-container fluid style="width: auto; margin: 0; flex-grow: 1;" class="pa-0 ma-0">
       <model-viewer ref="viewer" :displayInspector="true"></model-viewer>
     </v-container>
     <select-pop-up ref="selectPopUp"></select-pop-up>
