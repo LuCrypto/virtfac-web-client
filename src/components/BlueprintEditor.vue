@@ -74,6 +74,7 @@ import { Node } from '@/utils/graph/node'
 import { Link } from '@/utils/graph/link'
 import { Vector2, Vec2 } from '@/utils/graph/Vec'
 import { BlueprintContainer } from '@/utils/routingAnalysis/blueprintContainer'
+import { MatrixUtils } from '@/utils/matrixUtils'
 
 import Component from 'vue-class-component'
 
@@ -110,6 +111,7 @@ export default class BlueprintEditor extends Vue {
       if (this.bpContainer !== null) this.bpContainer.updateThemeFromWeb()
     })
     this.bpContainer.updateThemeFromWeb()
+    MatrixUtils.mainTest()
   }
 
   setMode (mode: 'WALL' | 'DOOR' | 'WINDOW' | 'SUPP_WALL' | 'SUPP_FURNITURE') {

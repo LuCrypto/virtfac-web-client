@@ -11,12 +11,25 @@
         @fileInput="onFileInput"
       ></open-asset>
     </pop-up>
+    <pop-up ref="assetInfo">
+      <asset-info
+        ref="assetInfoComponent"
+        @close="$refs.assetInfo.close()"
+      ></asset-info>
+    </pop-up>
     <input
       ref="objUpload"
       type="file"
       accept=".gltf, .obj, .fbx, .stl, .wrl, .glb"
       hidden
       @change="onFileUploaded"
+    />
+    <input
+      ref="inputTexture"
+      type="file"
+      accept=".png, .jpg, .exr, .hdr"
+      hidden
+      @change="onTextureUploaded"
     />
     <v-navigation-drawer stateless permanent :mini-variant="menuCollapse">
       <v-list
@@ -106,6 +119,7 @@ import { Session } from '@/utils/session'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
 import PopUp from './PopUp.vue'
 import OpenAsset from '@/components/OpenAsset.vue'
+import AssetInfo from '@/components/AssetInfo.vue'
 import { load } from 'dotenv/types'
 import API from '@/utils/api'
 
@@ -134,7 +148,8 @@ interface SettingItem {
     InputFieldPopUp,
     ModelViewer,
     PopUp,
-    OpenAsset
+    OpenAsset,
+    AssetInfo
   }
 })
 export default class ErgonomIOAssetContainer extends Vue {
@@ -191,13 +206,33 @@ export default class ErgonomIOAssetContainer extends Vue {
       })
     )
     this.menuItemList.push(
-      new MenuItem('Open File', 'mdi-file-document', () => {
+      new MenuItem('Open Asset', 'mdi-file-document', () => {
         (this.$refs.openFilePopUp as PopUp).open()
       })
     )
     this.menuItemList.push(
-      new MenuItem('Save File', 'mdi-content-save-edit', () => {
-        this.patchFileFromAsset()
+      new MenuItem('Save Asset', 'mdi-content-save-edit', () => {
+        // this.patchFileFromAsset()
+        (this.$refs.assetInfo as PopUp).open()
+        requestAnimationFrame(() => {
+          if (this.currentAsset !== null) {
+            this.ObjectToGLTFUri(this.currentAsset as Group).then(gltf => {
+              (this.$refs.assetInfoComponent as AssetInfo).setAssetData(
+                this.currentAssetName,
+                this.currentAssetPicture,
+                gltf,
+                this.currentAssetApiId
+              )
+            })
+          } else {
+            (this.$refs.assetInfoComponent as AssetInfo).setAssetData(
+              this.currentAssetName,
+              this.currentAssetPicture,
+              null,
+              this.currentAssetApiId
+            )
+          }
+        })
       })
     )
     this.menuItemList.push(
@@ -255,6 +290,7 @@ export default class ErgonomIOAssetContainer extends Vue {
         }
       })
     )
+    /*
     this.menuItemList.push(
       new MenuItem('Change Asset Name', 'mdi-form-textbox', () => {
         if (this.inputField === null) return
@@ -270,6 +306,15 @@ export default class ErgonomIOAssetContainer extends Vue {
         )
       })
     )
+    */
+    /*
+    this.menuItemList.push(
+      new MenuItem('Load env texture', 'mdi-upload', () => {
+        (this.$refs.inputTexture as HTMLElement).click()
+        return true
+      })
+    )
+    */
     // const mapper = new Mapper(CAEExampleFormat1)
   }
 
@@ -460,6 +505,27 @@ export default class ErgonomIOAssetContainer extends Vue {
     }
   }
 
+  onTextureUploaded (event: Event) {
+    if (event != null && event.target != null) {
+      const f: File = ((event.target as HTMLInputElement).files as FileList)[0]
+      if (f != null) {
+        if (this.viewer !== null) {
+          this.viewer.setEnvMap(URL.createObjectURL(f), 'HDR')
+        }
+      }
+      const reader = new FileReader()
+      reader.onload = () => {
+        const fileString = reader.result as string
+        console.log(fileString)
+      }
+      reader.onerror = error => {
+        console.error(error)
+        this.$root.$emit('bottom-message', 'Sorry, we cannot read this file.')
+      }
+      reader.readAsDataURL(f)
+    }
+  }
+
   applyTransform () {
     if (this.currentAsset === null) return
     this.currentAsset.updateMatrix()
@@ -547,6 +613,33 @@ export default class ErgonomIOAssetContainer extends Vue {
         event => {
           console.log((event.loaded / event.total) * 100 + '% loaded')
         }
+      )
+    })
+  }
+
+  public ObjectToGLTFUri (object: Group): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const exporter = new GLTFExporter()
+      exporter.parse(
+        object,
+        gltf => {
+          const blob = new Blob([JSON.stringify(gltf)], {
+            type: 'model/gltf+json'
+          })
+          const f = new File([blob], this.currentAssetName, {
+            type: 'model/gltf+json'
+          })
+          const reader = new FileReader()
+          reader.onload = () => {
+            const fileString = reader.result as string
+            resolve(fileString)
+          }
+          reader.onerror = error => {
+            reject(error)
+          }
+          reader.readAsDataURL(f)
+        },
+        {}
       )
     })
   }
