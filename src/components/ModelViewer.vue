@@ -7,6 +7,7 @@
     <v-container
       ref="hierarchy"
       style="position:absolute; max-width:50%; height: 100%; width:500px; right:0%;"
+      v-if="displayInspector"
     >
       <v-card height="50%" width="100%" class="scroll">
         <v-toolbar dense color="primary" flat>
@@ -30,7 +31,6 @@
               }
             "
           ></tree-explorer>
-          <!-- <p>ahhh je suis un text</p> -->
         </v-card>
       </v-card>
     </v-container>
@@ -104,7 +104,8 @@ import TreeExplorer from '@/components/TreeExplorer.vue'
   }
 })
 export default class ModelViewer extends Vue {
-  // @Prop({ default: () => 75 }) private fov!: number
+  @Prop({ default: () => false }) private displayInspector!: boolean
+
   hierarchyItems = [
     { id: 0, name: 'scene', children: [{ id: 2, name: 'test' }] }
   ]

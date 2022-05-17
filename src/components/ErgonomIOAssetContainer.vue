@@ -70,7 +70,7 @@
       </v-list>
     </v-navigation-drawer>
     <v-container style="width: auto; margin: 0; flex-grow: 1;">
-      <model-viewer ref="viewer"></model-viewer>
+      <model-viewer ref="viewer" :displayInspector="true"></model-viewer>
     </v-container>
     <select-pop-up ref="selectPopUp"></select-pop-up>
     <input-field-pop-up ref="inputFieldPopUp"></input-field-pop-up>
