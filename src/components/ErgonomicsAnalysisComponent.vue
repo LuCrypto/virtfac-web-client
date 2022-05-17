@@ -56,7 +56,7 @@
       style="width: 100%; max-width: none;display: flex; flex-direction: column;"
     >
       <div style="width: 100%; height: 10px; flex-grow: 1;">
-        <v-card class="currentScore">
+        <v-card style="z-index: 10;" class="currentScore">
           Score RULA : {{ this.rula ? this.rula.currentScore : 0 }}
         </v-card>
         <ModelViewer ref="viewer"></ModelViewer>
