@@ -56,6 +56,8 @@ export default class App extends Vue {
     y: 0
   }
 
+  scrollbarWidth = 40
+
   mounted () {
     // Unreal Engine handler
     window.addEventListener('resize', () => this.resize())

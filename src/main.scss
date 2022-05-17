@@ -22,7 +22,8 @@ $typoOptions: display-4 display-3 display-2 display-1 headline title subtitle-1
 .v-application--wrap,
 .v-main,
 .v-main__wrap,
-.v-main__wrap > * {
+.v-main__wrap>*
+{
   min-width: auto;
   min-height: auto;
   width: 100%;
@@ -35,6 +36,7 @@ $typoOptions: display-4 display-3 display-2 display-1 headline title subtitle-1
 .v-main__wrap {
   box-sizing: border-box;
 }
+
 
 /* Global styles */
 .v-btn__content {
@@ -49,7 +51,7 @@ $typoOptions: display-4 display-3 display-2 display-1 headline title subtitle-1
 
 /* Scrollbar */
 ::-webkit-scrollbar {
-  width: 20px;
+  width: 10px;
 }
 
 ::-webkit-scrollbar-thumb {
