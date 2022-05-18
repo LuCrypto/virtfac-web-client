@@ -185,8 +185,8 @@ export default class AvatarAnimationComponent extends Vue {
     if (this.viewer == null) return
     const viewer = this.viewer
     const material = new THREE.MeshStandardMaterial({
-      color: 0xffb000,
-      metalness: 1,
+      color: 0x683e00, // Burned orange
+      metalness: 0,
       roughness: 1
     })
     this.viewer
