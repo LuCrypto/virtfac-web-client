@@ -277,6 +277,7 @@ export default class ModelViewer extends Vue {
       alpha: true,
       preserveDrawingBuffer: true
     })
+    this.renderer.toneMapping = THREE.ACESFilmicToneMapping
 
     this.controls = new OrbitControls(this.camera, this.renderer.domElement)
   }
