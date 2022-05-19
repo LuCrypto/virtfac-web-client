@@ -1,101 +1,111 @@
 <template>
-  <v-container class="spacing-playground pa-6 contradiction-analysis" fluid>
-    <v-card elevation="3" height="700" style="width: 100%">
-      <v-card-title class="pa-2 primary black--text"
-        >Gesture analysis</v-card-title
-      >
+  <v-container
+    fluid
+    class="d-flex flex-wrap pt-6 pl-6"
+    style="max-height: 100%; overflow: auto;"
+  >
+    <v-container
+      class="d-flex flex-column"
+      style="max-height: 100%; overflow: auto;"
+      fluid
+    >
+      <v-card class="flex-grow-1 d-flex flex-column" style="overflow: auto;">
+        <v-card-title class="pa-2 primary black--text"
+          >Gesture analysis</v-card-title
+        >
 
-      <v-card-text class="pa-0" style="height: 100%;">
-        <v-layout row class="ma-0" fill-height>
-          <!-- Side bar -->
-          <v-navigation-drawer
-            class="ma-0 pa-0"
-            stateless
-            permanent
-            :mini-variant="menuCollapse"
-          >
-            <v-list
-              nav
-              dense
-              class="d-flex flex-column justify-start;"
-              style="height: 100%"
+        <v-card-text class="pa-0" style="height: 100%;">
+          <v-layout row class="ma-0" fill-height>
+            <!-- Side bar -->
+            <v-navigation-drawer
+              class="ma-0 pa-0"
+              stateless
+              permanent
+              :mini-variant="menuCollapse"
             >
-              <v-list-item-group v-model="selectedMenuItem" color="primary">
-                <v-list-item
-                  v-for="(menuItem, i) in menuItemList"
-                  :key="i"
-                  class="justify-start"
-                  @click.stop="menuItem.action"
-                >
-                  <v-list-item-icon>
-                    <v-icon v-text="menuItem.icon"></v-icon>
-                  </v-list-item-icon>
-                  <v-list-item-content>
-                    <v-list-item-title
-                      v-text="menuItem.text"
-                    ></v-list-item-title>
-                  </v-list-item-content>
-                </v-list-item>
-              </v-list-item-group>
-              <v-list-item-group class="mt-auto">
-                <v-list-item
-                  class="justify-start"
-                  @click="menuCollapse = !menuCollapse"
-                >
-                  <v-list-item-icon>
-                    <v-icon
-                      v-if="menuCollapse"
-                      v-text="'mdi-arrow-right'"
-                    ></v-icon>
-                    <v-icon
-                      v-if="!menuCollapse"
-                      v-text="'mdi-arrow-left'"
-                    ></v-icon>
-                  </v-list-item-icon>
-                  <v-list-item-content>
-                    <v-list-item-title
-                      v-text="'Menu labels'"
-                    ></v-list-item-title>
-                  </v-list-item-content>
-                </v-list-item>
-              </v-list-item-group>
-            </v-list>
-          </v-navigation-drawer>
+              <v-list
+                nav
+                dense
+                class="d-flex flex-column justify-start;"
+                style="height: 100%"
+              >
+                <v-list-item-group v-model="selectedMenuItem" color="primary">
+                  <v-list-item
+                    v-for="(menuItem, i) in menuItemList"
+                    :key="i"
+                    class="justify-start"
+                    @click.stop="menuItem.action"
+                  >
+                    <v-list-item-icon>
+                      <v-icon v-text="menuItem.icon"></v-icon>
+                    </v-list-item-icon>
+                    <v-list-item-content>
+                      <v-list-item-title
+                        v-text="menuItem.text"
+                      ></v-list-item-title>
+                    </v-list-item-content>
+                  </v-list-item>
+                </v-list-item-group>
+                <v-list-item-group class="mt-auto">
+                  <v-list-item
+                    class="justify-start"
+                    @click="menuCollapse = !menuCollapse"
+                  >
+                    <v-list-item-icon>
+                      <v-icon
+                        v-if="menuCollapse"
+                        v-text="'mdi-arrow-right'"
+                      ></v-icon>
+                      <v-icon
+                        v-if="!menuCollapse"
+                        v-text="'mdi-arrow-left'"
+                      ></v-icon>
+                    </v-list-item-icon>
+                    <v-list-item-content>
+                      <v-list-item-title
+                        v-text="'Menu labels'"
+                      ></v-list-item-title>
+                    </v-list-item-content>
+                  </v-list-item>
+                </v-list-item-group>
+              </v-list>
+            </v-navigation-drawer>
 
-          <v-layout column class="ma-0">
-            <div style="width: 100%; height: 10px; flex-grow: 1;">
-              <!-- Score RULA -->
-              <v-card style="z-index: 10;" class="currentScore">
-                Score RULA : {{ this.rula ? this.rula.currentScore : 0 }}
-              </v-card>
+            <v-layout column class="ma-0">
+              <div style="width: 100%; height: 10px; flex-grow: 1;">
+                <!-- Score RULA -->
+                <v-card style="z-index: 10;" class="currentScore">
+                  Score RULA : {{ this.rula ? this.rula.currentScore : 0 }}
+                </v-card>
 
-              <!-- Model viewer -->
-              <ModelViewer ref="viewer"></ModelViewer>
-            </div>
-            <v-slider
-              v-model="animationValue"
-              @input="rula.update()"
-              dense
-              min="0"
-              max="1"
-              step="0.001"
-              class="flex-grow-0 px-6 pt-5"
-            ></v-slider>
+                <!-- Model viewer -->
+                <ModelViewer ref="viewer"></ModelViewer>
+              </div>
+              <v-slider
+                v-model="animationValue"
+                @input="rula.update()"
+                dense
+                min="0"
+                max="1"
+                step="0.001"
+                class="flex-grow-0 px-6 pt-5"
+              ></v-slider>
+            </v-layout>
           </v-layout>
-        </v-layout>
-      </v-card-text>
-    </v-card>
+        </v-card-text>
+      </v-card>
 
-    <!-- Popup -->
-    <pop-up ref="openFilePopUp">
-      <open-file
-        @close="$refs.openFilePopUp.close()"
-        application="ERGONOM_IO_ANALYSIS"
-        :singleSelect="true"
-        :openFile="true"
-        @fileInput="onFileInput"
-      ></open-file>
-    </pop-up>
+      <!-- Popup -->
+      <pop-up ref="openFilePopUp">
+        <open-file
+          @close="$refs.openFilePopUp.close()"
+          application="ERGONOM_IO_ANALYSIS"
+          :singleSelect="true"
+          :openFile="true"
+          @fileInput="onFileInput"
+        ></open-file>
+      </pop-up>
+    </v-container>
   </v-container>
 </template>
 

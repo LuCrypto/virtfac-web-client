@@ -10,6 +10,12 @@ declare global {
       }
     }
   }
+  interface Performance {
+    memory: {
+      usedJSHeapSize: number
+      jsHeapSizeLimit: number
+    }
+  }
 }
 
 /**
