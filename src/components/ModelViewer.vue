@@ -69,7 +69,7 @@
       v-if="inspectorActive"
     >
       <!-- Hierarchy -->
-      <v-card height="50%" width="100%" class="mb-14">
+      <v-card height="50%" width="100%" class="mb-12">
         <v-toolbar dense color="primary" flat>
           <v-toolbar-title dense class="black--text">
             <v-icon left v-text="'mdi-file-tree'"></v-icon>
@@ -77,7 +77,7 @@
           </v-toolbar-title>
         </v-toolbar>
 
-        <v-card class="fill-height">
+        <v-card class="fill-height pt-2" flat>
           <tree-explorer
             ref="hierarchyTree"
             @onMouseEnterItem="
@@ -91,77 +91,83 @@
               }
             "
             @onItemSelected="selectItem"
+            @mounted="refreshSceneHierarchy"
           ></tree-explorer>
         </v-card>
       </v-card>
 
       <!-- Transform -->
-      <v-card width="100%">
-        <v-toolbar dense color="primary" flat>
-          <v-toolbar-title dense class="black--text">
-            <v-icon left v-text="'mdi-axis'"></v-icon>
-            Transform
-          </v-toolbar-title>
-        </v-toolbar>
+      <!-- <v-card width="100%" flat> -->
+      <v-toolbar dense color="primary" flat>
+        <v-toolbar-title dense class="black--text">
+          <v-icon left v-text="'mdi-axis'"></v-icon>
+          Transform
+        </v-toolbar-title>
+      </v-toolbar>
 
-        <v-card class="fill-height">
-          <v-simple-table
-            ><template v-slot:default>
-              <thead>
-                <tr>
-                  <th class="text-left">
-                    Name
-                  </th>
-                  <th class="text-left">
-                    X
-                  </th>
-                  <th class="text-left">
-                    Y
-                  </th>
-                  <th class="text-left">
-                    Z
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="item in transformMatrix" v-bind:key="item.name">
-                  <td>{{ item.name }}</td>
-                  <td>
-                    <v-text-field
-                      v-model="item.x"
-                      dense
-                      single-line
-                      type="number"
-                      @change="applyTransformMatrix"
-                      @mouseup="applyTransformMatrix"
-                    ></v-text-field>
-                  </td>
-                  <td>
-                    <v-text-field
-                      v-model="item.y"
-                      dense
-                      single-line
-                      type="number"
-                      @change="applyTransformMatrix"
-                      @mouseup="applyTransformMatrix"
-                    ></v-text-field>
-                  </td>
-                  <td>
-                    <v-text-field
-                      v-model="item.z"
-                      dense
-                      single-line
-                      type="number"
-                      @change="applyTransformMatrix"
-                      @mouseup="applyTransformMatrix"
-                    ></v-text-field>
-                  </td>
-                </tr>
-              </tbody>
-            </template>
-          </v-simple-table>
-        </v-card>
+      <v-card flat>
+        <v-simple-table
+          ><template v-slot:default>
+            <thead>
+              <tr>
+                <th class="text-left">
+                  Name
+                </th>
+                <th class="text-left" style="color:#E74C3C">
+                  X
+                </th>
+                <th class="text-left" style="color:#27AE60">
+                  Y
+                </th>
+                <th class="text-left" style="color:#3498DB">
+                  Z
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="item in transformMatrix" v-bind:key="item.name">
+                <td>{{ item.name }}</td>
+                <td>
+                  <v-text-field
+                    v-model="item.x"
+                    dense
+                    single-line
+                    type="number"
+                    @change="applyTransformMatrix"
+                    @mouseup="applyTransformMatrix"
+                  ></v-text-field>
+                </td>
+                <td>
+                  <v-text-field
+                    v-model="item.y"
+                    dense
+                    single-line
+                    type="number"
+                    @change="applyTransformMatrix"
+                    @mouseup="applyTransformMatrix"
+                  ></v-text-field>
+                </td>
+                <td>
+                  <v-text-field
+                    v-model="item.z"
+                    dense
+                    single-line
+                    type="number"
+                    @change="applyTransformMatrix"
+                    @mouseup="applyTransformMatrix"
+                  ></v-text-field>
+                </td>
+              </tr>
+            </tbody>
+          </template>
+        </v-simple-table>
       </v-card>
+      <v-btn dense color="primary" style="width:100%">
+        <v-toolbar-title dense class="black--text">
+          <v-icon left v-text="'mdi-plus'"></v-icon>
+        </v-toolbar-title>
+      </v-btn>
+      <!-- </v-card> -->
     </v-container>
     <v-btn
       fab
@@ -323,6 +329,12 @@ export default class ModelViewer extends Vue {
         this.gizmo.addEventListener('change', () => {
           this.updateTransformMatrix()
           this.draw()
+          const h = this.boxHelpers.get(
+            (this.gizmo as TransformControls).object as Group
+          )
+          if (h !== undefined) {
+            h.update()
+          }
         })
         this.gizmo.addEventListener('dragging-changed', e => {
           this.controls.enabled = !e.value
@@ -375,6 +387,14 @@ export default class ModelViewer extends Vue {
 
   private selectItem (item: Group) {
     if (this.gizmo !== null) {
+      if (
+        this.gizmo.object !== null &&
+        this.boxHelpers.get(this.gizmo.object as Group) !== undefined
+      ) {
+        this.scene.remove(
+          this.boxHelpers.get(this.gizmo.object as Group) as BoxHelper
+        )
+      }
       this.gizmo.attach(item)
     }
     this.updateTransformMatrix()
@@ -385,12 +405,13 @@ export default class ModelViewer extends Vue {
       let helper = this.boxHelpers.get(obj)
       if (helper === undefined) {
         helper = new BoxHelper(obj, 0xf5a406)
+        // helper.attach(obj)
         this.scene.add(helper)
         this.boxHelpers.set(obj, helper)
       }
     } else {
       const helper = this.boxHelpers.get(obj)
-      if (helper !== undefined) {
+      if (helper !== undefined && obj !== this.gizmo?.object) {
         this.scene.remove(helper)
         this.boxHelpers.delete(obj)
       }
@@ -518,21 +539,28 @@ export default class ModelViewer extends Vue {
   }
 
   public refreshSceneHierarchy () {
-    const hierarchy = this.$refs.hierarchyTree as TreeExplorer
-    hierarchy.clear()
-    this.scene.children.forEach(child => {
-      if (child instanceof Group && this.userObjects.has(child)) {
-        child.traverse(c => {
-          if (c.parent === this.scene) {
-            hierarchy.addItem(c, c.name + ' ' + c.type, null)
-          } else {
-            hierarchy.addItem(c, c.name + ' ' + c.type, c.parent)
-          }
-        })
+    const hierarchy = this.$refs.hierarchyTree as TreeExplorer | undefined
+    if (hierarchy !== undefined) {
+      hierarchy.clear()
+      this.scene.children.forEach(child => {
+        if (child instanceof Group && this.userObjects.has(child)) {
+          child.traverse(c => {
+            if (c.parent === this.scene) {
+              hierarchy.addItem(c, c.name + ' ' + c.type, null)
+            } else {
+              hierarchy.addItem(c, c.name + ' ' + c.type, c.parent)
+            }
+          })
+        }
+      })
+      // this.hierarchyItems = hierarchy.items as never[]
+      if (this.gizmo !== null) {
+        hierarchy.selectedItem = this.gizmo.object
+      } else {
+        hierarchy.selectedItem = null
       }
-    })
-    // this.hierarchyItems = hierarchy.items as never[]
-    hierarchy.refresh()
+      hierarchy.refresh()
+    }
   }
 
   // Simple method to add cube in scene

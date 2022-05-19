@@ -38,15 +38,16 @@
         </v-list-item-group>
       </v-list>
     </v-navigation-drawer>
-    <v-container style="width: auto; margin: 0; flex-grow: 1;">
+    <v-container class="pa-0" style="width: auto; margin: 0; flex-grow: 1;">
       <NV ref="nodeViewer" :graph="getGraph()" />
     </v-container>
     <pop-up ref="filePopUp">
       <open-file
         @close="$refs.filePopUp.close()"
-        application="ALL"
+        application="CONTRADICTION_ANALYSIS"
         :singleSelect="true"
         :openFile="true"
+        accept=".xlsx"
         @fileInput="handleFile"
       ></open-file>
     </pop-up>
@@ -116,6 +117,7 @@ export default class ContradictionExpert extends Vue {
   menuItemList: MenuItem[] = []
   constraintGraph: ConstraintGraph = new ConstraintGraph()
   fileName = ''
+  openedFile: APIFile | null = null
 
   getGraph (): Graph {
     return (this.constraintGraph as ConstraintGraph).getRawGraph()
@@ -130,7 +132,7 @@ export default class ContradictionExpert extends Vue {
 
     this.menuItemList.push(
       new MenuItem('Open File', 'mdi-file-document', () => {
-        (this.$refs.openFilePopUp as PopUp).open()
+        (this.$refs.filePopUp as PopUp).open()
       })
     )
     this.menuItemList.push(
@@ -148,9 +150,6 @@ export default class ContradictionExpert extends Vue {
       new MenuItem('Layouts', 'mdi-graphql', () => {
         this.selectLayout()
       })
-    )
-    this.menuItemList.push(
-      new MenuItem('Download file', 'mdi-download', () => true)
     )
     this.menuItemList.push(
       new MenuItem('Save image', 'mdi-camera', () => {
@@ -190,11 +189,10 @@ export default class ContradictionExpert extends Vue {
     if (files == null) {
       console.log('This type of file cannot be read yet.')
     } else {
-      console.log(files, ' : coucou', typeof files)
+      this.openedFile = files[0]
       const workbook = XLSX.read(files[0].uri.split('base64,')[1], {
         type: 'base64'
       })
-      console.log(workbook)
       this.constraintGraph.loadXLSX(workbook as IWorkBook)
       this.fileName = files[0].name
     }
@@ -208,16 +206,20 @@ export default class ContradictionExpert extends Vue {
       type: 'graph_position',
       data: this.constraintGraph.getRawGraph().toJsonOBJ()
     }
-    API.post(
-      this,
-      '/application-settings',
-      JSON.stringify({
-        idApplication: 2,
-        name: this.fileName,
-        json: JSON.stringify(settingOBJ)
-      })
-    )
-    */
+    if (this.openedFile !== null){
+      API.put(
+        this,
+        '/resources/files',
+        JSON.stringify(
+        new APIFile({idProject: this.openedFile.idProject,
+          tags: '["graph_shape"]',
+          mime: 'application/json',
+          uri:
+          }).toJSON())
+      )
+    }
+    /**/
+    /*
     if (this.inputFieldPopUp != null) {
       this.inputFieldPopUp.open(
         'Save Shape',
@@ -245,6 +247,7 @@ export default class ContradictionExpert extends Vue {
         }
       )
     }
+    /**/
   }
 
   selectLayout () {
@@ -298,7 +301,7 @@ export default class ContradictionExpert extends Vue {
         ],
         item => {
           if (item === null) return
-          ((item as Record<string, unknown>).exec as { (): void })()
+          ;((item as Record<string, unknown>).exec as { (): void })()
         }
       )
     }
@@ -425,6 +428,15 @@ export default class ContradictionExpert extends Vue {
       }
     })
   }
+
+  /*
+  onUploadFile (file: File): Promise<File> {
+    return new Promise<File>((resolve, reject) => {
+      console.log(file.type)
+      resolve(file)
+    })
+  }
+  */
 
   selectSheetPopUp (workbook: any): void {
     console.log(workbook)
