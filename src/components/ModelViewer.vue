@@ -18,6 +18,7 @@
 <template>
   <v-container
     fluid
+    ref="mainContainer"
     style="width:100%; height:100%; display:flex; flex-direction:row"
     class="pa-0 ma-0"
   >
@@ -26,6 +27,10 @@
       ref="canvasContainer"
       style="overflow:hidden; position:relative"
     >
+      <model-viewer-stats
+        ref="stats"
+        :pannelIds="[0, 1, 2]"
+      ></model-viewer-stats>
       <div ref="screenshotViewer" class="screenshotViewer">
         <v-layout class="d-flex flex-row">
           <v-btn
@@ -207,12 +212,14 @@ import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader'
 import { studioEnvMap } from '@/utils/imageData'
 import TreeExplorer from '@/components/TreeExplorer.vue'
 import { Matrix } from '@/utils/matrixUtils'
+import ModelViewerStats from '@/components/ModelViewerStats.vue'
 
 // import AVATAR from '@/utils/avatar'
 
 @Component({
   components: {
-    TreeExplorer
+    TreeExplorer,
+    ModelViewerStats
   }
 })
 export default class ModelViewer extends Vue {
@@ -254,6 +261,7 @@ export default class ModelViewer extends Vue {
 
   screenshotViewer: HTMLElement | null = null
   container: HTMLElement | null = null
+  mainContainer: HTMLElement | null = null
 
   selectedMenuItem = -1
   menuCollapse = false
@@ -283,8 +291,7 @@ export default class ModelViewer extends Vue {
       alpha: true,
       preserveDrawingBuffer: true
     })
-    this.renderer.toneMapping = THREE.ACESFilmicToneMapping
-
+    // this.renderer.toneMapping = THREE.ACESFilmicToneMapping
     this.controls = new OrbitControls(this.camera, this.renderer.domElement)
   }
 
@@ -498,9 +505,10 @@ export default class ModelViewer extends Vue {
 
     this.screenshotViewer = this.$refs.screenshotViewer as HTMLElement
 
+    this.mainContainer = this.$refs.mainContainer as HTMLElement
+
     this.container = this.$refs.canvasContainer as HTMLElement
     this.container.appendChild(this.renderer.domElement)
-
     this.container.removeChild(this.screenshotViewer)
 
     this.renderer.setClearColor(0x000000, 0)
@@ -785,6 +793,11 @@ export default class ModelViewer extends Vue {
   draw () {
     if (this.renderer && this.scene && this.camera) {
       this.updateSize()
+
+      const stats = this.$refs.stats as ModelViewerStats
+      if (stats) {
+        stats.update()
+      }
       if (this.update) {
         this.update()
       }
