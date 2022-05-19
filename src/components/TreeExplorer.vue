@@ -1,7 +1,7 @@
 <template>
   <v-container fluid class="d-flex flex-column ma-0 pa-0" style="height: 100%;">
     <v-container fluid class="d-flex flex-row pa-0">
-      <v-btn @click="toParent()" class="flex-grow-1 mr-2" small fluid
+      <v-btn @click="toParent()" class="flex-grow-1 mr-2 mt-1 ml-2" small fluid
         ><v-icon>mdi-keyboard-backspace</v-icon></v-btn
       >
       <v-select
@@ -25,32 +25,34 @@
       </v-row> -->
       <v-simple-table dense>
         <template v-slot:default>
-          <thead>
+          <!-- <thead>
             <tr>
-              <th class="text-left">
-                Name
-              </th>
+              <th class="text-left" style="width:50px"></th>
+              <th class="text-left"></th>
             </tr>
-          </thead>
+          </thead> -->
           <tbody>
             <tr
               v-for="item in citems"
               v-bind:key="item.id"
               @mouseenter="onEnterItem(item.key)"
               @mouseleave="onLeaveItem(item.key)"
-              @click="selectItem(item.key)"
+              :class="{ active: selectedKey == item.key }"
               style="position:relative"
             >
-              <v-btn
-                fluid
-                small
-                color="primary"
-                style="position:absolute; top:50%; transform: translateY(-50%)"
-                v-if="item.hasChildren"
-                @click="enterItem(item.key)"
-                ><v-icon>mdi-chevron-right</v-icon></v-btn
-              >
-              <td>
+              <td v-if="item.hasChildren">
+                <v-btn
+                  fluid
+                  small
+                  icon
+                  color="primary"
+                  style="position:absolute; top:50%; transform: translateY(-50%)"
+                  @click="enterItem(item.key)"
+                  ><v-icon>mdi-chevron-right</v-icon></v-btn
+                >
+              </td>
+              <td v-if="!item.hasChildren"></td>
+              <td style="word-break: break-all" @click="selectItem(item.key)">
                 {{ item.name }}
               </td>
             </tr>
@@ -89,9 +91,18 @@ class Item {
 
 @Component({})
 export default class TreeExplorer extends Vue {
+  selectedKey: unknown | null = null
   parentLabel = 'root'
   objectMap = new Map<unknown | null, Item>()
   id = 0
+
+  public set selectedItem (value: unknown | null) {
+    this.selectedKey = value
+  }
+
+  public get selectedItem (): unknown | null {
+    return this.selectedKey
+  }
 
   private citems: {
     id: number
@@ -116,12 +127,12 @@ export default class TreeExplorer extends Vue {
   }
 
   public get items () {
-    console.log(this.objectMap.get(null))
     return (this.objectMap.get(null) as Item).children
   }
 
   mounted (): void {
     this.objectMap.set(null, new Item(0, 'root'))
+    this.$emit('mounted')
   }
 
   public clear () {
@@ -208,6 +219,7 @@ export default class TreeExplorer extends Vue {
   }
 
   public selectItem (item: unknown) {
+    this.selectedKey = item
     this.$emit('onItemSelected', item)
   }
 
