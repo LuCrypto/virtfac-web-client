@@ -6,7 +6,7 @@ export class V {
     this.set(x, y)
   }
 
-  set (x: number, y: number) {
+  set (x: number, y: number): void {
     this.x = x
     this.y = y
   }
@@ -54,11 +54,11 @@ export class V {
     return this.x === v.x && this.y === v.y
   }
 
-  angle () {
+  angle (): number {
     return Math.atan2(this.x, this.y)
   }
 
-  angleWith (v: V) {
+  angleWith (v: V): number {
     const tmp = (Math.PI * 2 + this.angle() - v.angle()) % (Math.PI * 2)
     if (tmp > Math.PI) {
       return -1 * (Math.PI * 2 - tmp)
@@ -66,7 +66,7 @@ export class V {
     return tmp
   }
 
-  norm () {
+  norm (): number {
     return Math.sqrt(this.x * this.x + this.y * this.y)
   }
 }

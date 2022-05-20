@@ -1,7 +1,5 @@
 import { V } from '@/utils/nodeViewer/v'
 import { NvEl } from '@/utils/nodeViewer/nv_el'
-import { Blueprint } from './blueprint'
-import { Node } from '@/utils/graph/node'
 import { Link } from '@/utils/graph/link'
 import { BlueprintContainer } from './blueprintContainer'
 import { Vec2, Vector2 } from '@/utils/graph/Vec'
@@ -88,7 +86,7 @@ export class BpWallLink {
       .onDataChanged()
       .addMappedListener(
         '_highlighted',
-        arg => {
+        () => {
           this.updateTheme()
         },
         this
@@ -98,13 +96,13 @@ export class BpWallLink {
       .onDataChanged()
       .addMappedListener(
         '_highlighted',
-        arg => {
+        () => {
           this.updateTheme()
         },
         this
       )
 
-    const onmouseleave = (e: MouseEvent) => {
+    const onmouseleave = () => {
       this.container.removeFurniturePreview()
       this.hovered = false
       this.updateTheme()
@@ -197,16 +195,6 @@ export class BpWallLink {
             this.container.getBlueprint().getOrAddData<number>('tunnelId', 0) +
             1
           this.container.getBlueprint().setData<number>('tunnelId', tunnelId)
-          const hpos = this.hoveringPosition
-          const dist2 =
-            Vector2.norm(
-              Vector2.minus(
-                (otherLink as Link).getOriginNode().getData<Vec2>('position'),
-                pos as Vec2
-              )
-            ) /
-            (otherLink as Link).getData<number>('length') /
-            this.container.getBlueprint().getData<number>('scale')
           ;(otherLink as Link)
             .getOrAddData<Map<Destroyable, BpWallHole>>(
               'holes',
@@ -242,15 +230,15 @@ export class BpWallLink {
                     )
                   } else throw new Error('invalid window')
                 },
-                l => {
+                () => {
                   // xsize
                   return 1.5
                 },
-                l => {
+                () => {
                   // ybottom
                   return bottom
                 },
-                l => {
+                () => {
                   // ytop
                   return 2
                 },
@@ -270,15 +258,15 @@ export class BpWallLink {
                 // xpos
                 return l.getData<number>('length') * dist
               },
-              l => {
+              () => {
                 // xsize
                 return 1.5
               },
-              l => {
+              () => {
                 // ybottom
                 return bottom
               },
-              l => {
+              () => {
                 // ytop
                 return 2
               },
@@ -301,7 +289,7 @@ export class BpWallLink {
     this.collider.getDom().onmousedown = e => {
       if (e.button === 1) this.container.onMouseDown(e)
     }
-    this.collider.getDom().onmouseover = e => {
+    this.collider.getDom().onmouseover = () => {
       this.hovered = true
       this.updateTheme()
     }
@@ -379,7 +367,7 @@ export class BpWallLink {
     this.updateTheme()
   }
 
-  public updateTheme () {
+  public updateTheme (): void {
     this.length.setStyle({ fill: this.container.getTheme().WallLinkColor })
     this.line
       .getDom()
@@ -415,7 +403,7 @@ export class BpWallLink {
     this.refreshPos()
   }
 
-  public refreshPos () {
+  public refreshPos (): void {
     const p1 = this.link.getOriginNode().getData<Vec2>('position')
     const p2 = this.link.getNode().getData<Vec2>('position')
     const l = this.link.getData<number>('length')
@@ -503,7 +491,7 @@ export class BpWallLink {
       )
   }
 
-  destroy () {
+  destroy (): void {
     this.link.onDataChanged().removeMappedListener('double', this)
     this.container
       .getLinkLayer()

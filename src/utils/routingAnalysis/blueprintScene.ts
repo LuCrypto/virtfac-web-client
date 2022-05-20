@@ -1,30 +1,14 @@
-import { V } from '@/utils/nodeViewer/v'
 import { Blueprint } from './blueprint'
-import { Node } from '@/utils/graph/node'
-import { Link } from '@/utils/graph/link'
 import { Vec2, Vector2 } from '../graph/Vec'
-import THREE, {
+import {
   BufferGeometry,
   BufferAttribute,
-  Camera,
   Mesh,
-  Renderer,
-  Scene,
-  MeshBasicMaterial,
-  WebGLBufferRenderer,
-  BoxGeometry,
-  MeshNormalMaterial,
-  DoubleSide,
-  MeshLambertMaterial,
-  MeshToonMaterial,
   Vector3,
-  MeshPhongMaterial,
   MeshPhysicalMaterial,
   Group
 } from 'three'
-import { DelayedCallback } from '../graph/delayedCallback'
 import { GLTFExporter } from 'three/examples/jsm/exporters/GLTFExporter'
-import { OBJExporter } from 'three/examples/jsm/exporters/OBJExporter'
 import Delaunator from 'delaunator'
 import { Destroyable } from './bp_window'
 import { BpWallHole } from './bp_wallLink'
@@ -37,7 +21,7 @@ export class BlueprintScene {
    * - scale : number
    * @param blueprint
    */
-  public static exportGeometry (blueprint: Blueprint) {
+  public static exportGeometry (blueprint: Blueprint): void {
     const tunnel = new Map<
       number,
       {
@@ -57,7 +41,7 @@ export class BlueprintScene {
     const uv = new Array<number>()
     const triangles = new Array<number[]>()
     const h = blueprint.getDataOrDefault<number>('roof_height', 2.5)
-    const w = blueprint.getDataOrDefault<number>('wall_width', 0.01)
+    // const w = blueprint.getDataOrDefault<number>('wall_width', 0.01)
     let nextIndex = 0
 
     const x = 0
@@ -716,7 +700,10 @@ export class BlueprintScene {
         'normal',
         new BufferAttribute(Float32Array.from(localNormal), 3)
       )
-      geometry.setAttribute('uv', new BufferAttribute(Float32Array.from(localUv), 2))
+      geometry.setAttribute(
+        'uv',
+        new BufferAttribute(Float32Array.from(localUv), 2)
+      )
       geometry.setIndex(
         new BufferAttribute(
           Uint16Array.from(
@@ -768,11 +755,13 @@ export class BlueprintScene {
       })
     ]
     */
+    /*
     const mat = new MeshPhysicalMaterial({
       color: 0xffffff,
       roughness: 1,
       metalness: 0
     })
+    */
 
     const exporter = new GLTFExporter()
     exporter.parse(

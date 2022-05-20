@@ -7,7 +7,7 @@ import { V } from './v'
 export class NvNode {
   private appliedScale = 1
   private root: NvContainer
-  public getRoot () {
+  public getRoot (): NvContainer {
     return this.root
   }
 
@@ -17,22 +17,22 @@ export class NvNode {
   }
 
   private links: NvLink[] = new Array<NvLink>()
-  public getLinks () {
+  public getLinks (): NvLink[] {
     return this.links
   }
 
   private socketInDir: Map<NvSocket, V> = new Map<NvSocket, V>()
-  public getSocketInDir () {
+  public getSocketInDir (): Map<NvSocket, V> {
     return this.socketInDir
   }
 
   private socketOutDir: Map<NvSocket, V> = new Map<NvSocket, V>()
-  public getSocketOutDir () {
+  public getSocketOutDir (): Map<NvSocket, V> {
     return this.socketOutDir
   }
 
   private index: number
-  public getIndex () {
+  public getIndex (): number {
     return this.index
   }
 
@@ -43,12 +43,12 @@ export class NvNode {
   }
 
   private container: NvEl
-  public getContainer () {
+  public getContainer (): NvEl {
     return this.container
   }
 
   private socketContainerMap: Map<NvSocket, NvEl> = new Map<NvSocket, NvEl>()
-  public getSocketContainerMap () {
+  public getSocketContainerMap (): Map<NvSocket, NvEl> {
     return this.socketContainerMap
   }
 
@@ -60,11 +60,11 @@ export class NvNode {
   }
 
   private content: NvEl
-  public getContent () {
+  public getContent (): NvEl {
     return this.content
   }
 
-  public userSetPosition = (position: V) => {
+  public userSetPosition = (position: V): void => {
     this.setPosition(position)
   }
 
@@ -95,10 +95,10 @@ export class NvNode {
       this.socketContainer.bottom
     )
 
-    this.container.getDom().onmouseenter = e => {
+    this.container.getDom().onmouseenter = () => {
       if (this.currentButton === -1) this.activateZoom()
     }
-    this.container.getDom().onmouseleave = e => {
+    this.container.getDom().onmouseleave = () => {
       if (this.currentButton === -1) this.deactivateZoom()
     }
 
@@ -107,7 +107,7 @@ export class NvNode {
     this.content.getDom().onmousedown = e => this.dragMouseDown(e)
   }
 
-  public setPosition = (position: V) => {
+  public setPosition = (position: V): void => {
     this.position = position.step(10)
     this.container.setStyle({
       left: `${this.position.x -
@@ -128,7 +128,7 @@ export class NvNode {
   private translationStartPosition: V = new V(0, 0)
   private translationActive = false
 
-  public dragMouseDown (event: MouseEvent) {
+  public dragMouseDown (event: MouseEvent): void {
     event = event || window.event
 
     event.preventDefault()
@@ -156,7 +156,7 @@ export class NvNode {
     }
   }
 
-  public dragMouseUp (event: MouseEvent) {
+  public dragMouseUp (event: MouseEvent): void {
     if (event.button === this.currentButton) {
       this.currentButton = -1
       document.onmouseup = null
@@ -171,7 +171,7 @@ export class NvNode {
     }
   }
 
-  public dragMouseMove (event: MouseEvent) {
+  public dragMouseMove (event: MouseEvent): void {
     event = event || window.event
     event.preventDefault()
 
@@ -191,7 +191,7 @@ export class NvNode {
     }
   }
 
-  public setImage (url: string, width: string, height: string) {
+  public setImage (url: string, width: string, height: string): void {
     // console.log('add image');
     // const img = new NV_El('img');
     // (img.getDom() as HTMLImageElement).src = url;
@@ -209,7 +209,7 @@ export class NvNode {
   private textActif = false
 
   private zoomActive = false
-  public activateZoom () {
+  public activateZoom (): void {
     if (this.zoomActive) return
     else this.zoomActive = true
     this.container.setStyle({
@@ -219,7 +219,7 @@ export class NvNode {
     this.appliedScale = Math.max(0.725 / this.root.getScale(), 1)
     this.updateLinks()
 
-    this.root.onScaleChanged().addListener(arg => {
+    this.root.onScaleChanged().addListener(() => {
       this.container.setStyle({
         transform: `scale(${Math.max(0.725 / this.root.getScale(), 1)})`
       })
@@ -228,7 +228,7 @@ export class NvNode {
     }, this)
   }
 
-  public deactivateZoom () {
+  public deactivateZoom (): void {
     if (!this.zoomActive) return
     else this.zoomActive = false
     this.root.onScaleChanged().removeListener(this)
@@ -237,7 +237,7 @@ export class NvNode {
     this.updateLinks()
   }
 
-  public setText (text: string, controleSize = false) {
+  public setText (text: string, controleSize = false): void {
     this.text = text
     this.textEl.getDom().innerHTML = text
     if (!controleSize && !this.textActif) {
@@ -258,7 +258,7 @@ export class NvNode {
     side: 'top' | 'bottom' | 'left' | 'right',
     text: string,
     color: string | null
-  ) {
+  ): void {
     const type: 'in' | 'out' = side === 'top' || side === 'left' ? 'in' : 'out'
     const tangent = new V(
       side === 'left' ? -1 : side === 'right' ? 1 : 0,
@@ -277,14 +277,14 @@ export class NvNode {
     }
   }
 
-  public updateLinks () {
+  public updateLinks (): void {
     const rect = (this.container.getDom()
       .parentNode as Element).getBoundingClientRect()
     const delta = new V(rect.x, rect.y)
     this.links.forEach(link => link.update(delta))
   }
 
-  public updateTheme () {
+  public updateTheme (): void {
     this.textEl.setStyle({
       'white-space': 'break-spaces',
       'backdrop-filter': this.root.theme.nodeTextBackgroundBlur,

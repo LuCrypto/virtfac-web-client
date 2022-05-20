@@ -72,13 +72,13 @@ export class APIFileMIME {
   }
 
   // Create new MIME from string
-  static parseFromString (MIMEString: string | null) {
+  static parseFromString (MIMEString: string | null): APIFileMIME {
     const [media, format, structure] = APIFileMIME.valuesFromString(MIMEString)
     return new APIFileMIME({ media, format, structure })
   }
 
   // Convert MIME to string
-  toString () {
+  toString (): string {
     const structure = this.structure != null ? `.${this.structure}` : ''
     const format = this.format != null ? `/${this.format}${structure}` : ''
     return `${this.media}${format}`

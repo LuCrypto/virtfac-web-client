@@ -59,17 +59,12 @@
 <script lang="ts">
 import Vue from 'vue'
 import Component from 'vue-class-component'
-import ActionContainer, {
-  ActionCallbackData
-} from '@/components/ActionContainer.vue'
-import NodeViewer from '@/components/NodeViewer.vue'
+import ActionContainer from '@/components/ActionContainer.vue'
 import OpenFile from '@/components/OpenFile.vue'
 import XLSX from 'xlsx'
-import Mapper from '@/utils/mapper'
 import NV from '@/components/NV.vue'
 import { APIFile } from '@/utils/models'
 
-import CAEExampleFormat1 from '@/exemples/CAEExampleFormat1'
 import { ConstraintGraph } from '@/utils/graph/constraintGraph'
 import { Graph } from '@/utils/graph/graph'
 import { IWorkBook } from 'ts-xlsx'
@@ -173,11 +168,13 @@ export default class ContradictionExpert extends Vue {
     }
   }
 
+  /*
   onUpdate (data: ActionCallbackData): void {
     if (this.nodeViewer != null) {
       // this.nodeViewer.update(data)
     }
   }
+  */
 
   inputFile (): void {
     const input = this.$refs.inputFile as HTMLInputElement
@@ -250,7 +247,7 @@ export default class ContradictionExpert extends Vue {
     /**/
   }
 
-  selectLayout () {
+  selectLayout (): void {
     const headers = new Array<{
       text: string
       value: string
@@ -262,7 +259,7 @@ export default class ContradictionExpert extends Vue {
           value: 'name',
           align: 'start',
           sortable: false,
-          sort: (a, b) => 0
+          sort: () => 0
         })
     if (this.selectPopUp !== null) {
       this.selectPopUp.open(
@@ -419,7 +416,7 @@ export default class ContradictionExpert extends Vue {
               {
                 text: 'delete',
                 icon: 'mdi-delete-outline',
-                action: item => {
+                action: () => {
                   console.log('delete item')
                 }
               }
@@ -438,7 +435,7 @@ export default class ContradictionExpert extends Vue {
   }
   */
 
-  selectSheetPopUp (workbook: any): void {
+  selectSheetPopUp (workbook: Record<string, unknown>): void {
     console.log(workbook)
     // this.$refs.excel.active = true;
     // console.log(workbook);

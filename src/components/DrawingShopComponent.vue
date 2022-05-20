@@ -57,18 +57,13 @@
 <script lang="ts">
 import Vue from 'vue'
 import Component from 'vue-class-component'
-import ActionContainer, {
-  ActionCallbackData
-} from '@/components/ActionContainer.vue'
-import NodeViewer from '@/components/NodeViewer.vue'
+import ActionContainer from '@/components/ActionContainer.vue'
 import InputFieldPopUp from '@/components/popup/InputFieldPopUp.vue'
 import OpenFile from '@/components/OpenFile.vue'
 import XLSX from 'xlsx'
-import Mapper from '@/utils/mapper'
 import BlueprintEditor from '@/components/BlueprintEditor.vue'
 import PopUp from '@/components/PopUp.vue'
 
-import CAEExampleFormat1 from '@/exemples/CAEExampleFormat1'
 import { BlueprintContainer } from '@/utils/routingAnalysis/blueprintContainer'
 import { BlueprintScene } from '@/utils/routingAnalysis/blueprintScene'
 
@@ -211,13 +206,13 @@ export default class DrawingShopComponent extends Vue {
           workbook,
           JSON.stringify(workbook.Sheets[workbook.SheetNames[0]])
         )
-        const mapper = new Mapper(workbook.Sheets[workbook.SheetNames[0]])
+        // const mapper = new Mapper(workbook.Sheets[workbook.SheetNames[0]])
       }
       reader.readAsBinaryString(file)
     }
   }
 
-  selectSheetPopUp (workbook: any): void {
+  selectSheetPopUp (workbook: Record<string, unknown>): void {
     console.log(workbook)
     // this.$refs.excel.active = true;
     // console.log(workbook);

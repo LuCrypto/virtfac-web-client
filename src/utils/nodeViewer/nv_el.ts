@@ -4,7 +4,16 @@ export class NvEl {
   private dom: SVGElement | HTMLElement | null = null
 
   constructor (type: string, ...classList: string[]) {
-    this.dom = ['linearGradient', 'path', 'stop', 'svg', 'defs', 'rect', 'text', 'circle'].includes(type)
+    this.dom = [
+      'linearGradient',
+      'path',
+      'stop',
+      'svg',
+      'defs',
+      'rect',
+      'text',
+      'circle'
+    ].includes(type)
       ? (this.dom = document.createElementNS(NVSVGNS, type))
       : (this.dom = document.createElement(type))
     this.dom.setAttribute('style', '')
@@ -13,21 +22,24 @@ export class NvEl {
     })
   }
 
-  appendChild (...childs: NvEl[]) {
+  appendChild (...childs: NvEl[]): void {
     childs.forEach(child => this.dom?.appendChild(child.dom as Node))
   }
 
-  setStyle (style: any) {
+  setStyle (style: Record<string, string | number>): void {
     // à vérifier
     Object.keys(style).forEach(key =>
-      (this.dom as ElementCSSInlineStyle).style.setProperty(key, style[key])
+      (this.dom as ElementCSSInlineStyle).style.setProperty(
+        key,
+        '' + style[key]
+      )
     )
 
     // background-color
     // backgroundColor
   }
 
-  appendDom (...doms: Node[]) {
+  appendDom (...doms: Node[]): void {
     doms.forEach(dom => {
       (this.dom as SVGElement | HTMLElement).appendChild(dom)
     })
