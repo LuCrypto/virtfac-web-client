@@ -50,17 +50,17 @@ export class Matrix {
     this.data[row][col] = value
   }
 
-  public getRowLabel (row: number) {
+  public getRowLabel (row: number): number {
     this.checkRow(row)
     return this.data[row][this._nbCol]
   }
 
-  public getColLabel (col: number) {
+  public getColLabel (col: number): number {
     this.checkCol(col)
     return this.data[this._nbRow][col]
   }
 
-  public reorderRows (positions: Array<number>) {
+  public reorderRows (positions: Array<number>): void {
     if (positions.length !== this.nbRow) {
       throw new Error('positions needs to place all rows')
     }
@@ -72,7 +72,7 @@ export class Matrix {
     }
   }
 
-  public reorderColumns (positions: Array<number>) {
+  public reorderColumns (positions: Array<number>): void {
     if (positions.length !== this.nbColumn) {
       throw new Error('positions needs to place all columns')
     }
@@ -118,7 +118,7 @@ export class Matrix {
     })
   }
 
-  public multScalar (scalar: number) {
+  public multScalar (scalar: number): void {
     for (let i = 0; i < this.nbRow; i++) {
       for (let j = 0; j < this.nbColumn; j++) {
         this.data[i][j] *= scalar
@@ -126,7 +126,7 @@ export class Matrix {
     }
   }
 
-  public maxValue () {
+  public maxValue (): number {
     let m = this.data[0][0]
     for (let i = 0; i < this.nbRow; i++) {
       for (let j = 0; j < this.nbColumn; j++) {
@@ -136,7 +136,7 @@ export class Matrix {
     return m
   }
 
-  public minValue () {
+  public minValue (): number {
     let m = this.data[0][0]
     for (let i = 0; i < this.nbRow; i++) {
       for (let j = 0; j < this.nbColumn; j++) {
@@ -146,7 +146,10 @@ export class Matrix {
     return m
   }
 
-  public genBlocDiagonal (colGroups: Array<number>, rowGroups: Array<number>) {
+  public genBlocDiagonal (
+    colGroups: Array<number>,
+    rowGroups: Array<number>
+  ): void {
     let rowGroupIndex = 0
     for (let i = 0; i < this._nbRow; i++) {
       if (rowGroupIndex < rowGroups.length && rowGroups[rowGroupIndex] === i) {
@@ -177,7 +180,7 @@ export class Matrix {
   public findIndexInRow (
     row: number,
     predicate: { (value: number, index: number, data: Array<number>): boolean }
-  ) {
+  ): number {
     const c = this.data[row].findIndex(predicate)
     return c < this._nbCol ? c : -1
   }
@@ -263,7 +266,7 @@ export class MatrixUtils {
     colGroups: Map<number, number>,
     alpha: number,
     col: number
-  ) {
+  ): number {
     const beta = 1 - alpha
     let sum = 0
     for (let i = 0; i < a.nbRow; i++) {
@@ -284,7 +287,7 @@ export class MatrixUtils {
     colGroups: Map<number, number>,
     alpha: number,
     row: number
-  ) {
+  ): number {
     const beta = 1 - alpha
     let sum = 0
     for (let j = 0; j < a.nbColumn; j++) {
@@ -314,11 +317,10 @@ export class MatrixUtils {
       rowGroups.set(i, -1)
     }
 
-    const currentBMatrix = new Matrix(a.nbRow, a.nbColumn)
     // rowGroups.push(1)
     let rindex = 0
     do {
-      const r = a.findIndexInRow(rindex, (v, i, d) => {
+      const r = a.findIndexInRow(rindex, v => {
         return v !== 0
       })
       // console.log(r, rindex)
@@ -521,7 +523,9 @@ export class MatrixUtils {
     return v
   }
 
-  public static mainTest (alpha = -1) {
+  public static mainTest (
+    alpha = -1
+  ): { initScore: number; resultScore: number } {
     if (alpha === -1) alpha = 0.5
     // const m = new Matrix(randInt(50, 100), randInt(30, 50))
     const m = new Matrix(30, 30)
@@ -535,11 +539,11 @@ export class MatrixUtils {
       rGroup.push(randInt(rGroup[i - 1] + 1, m.nbRow - nbfamilly + i))
     }
     m.genBlocDiagonal(cGroup, rGroup)
-    const b = m.clone()
+    // const b = m.clone()
     // m.set(1, m.nbColumn - 1, 2)
     for (let i = 0; i < m.nbRow; i++) {
       for (let j = 0; j < m.nbColumn; j++) {
-        if (randFloat(0, 1) < 0.1) {
+        if (randFloat(0, 1) < 0.2) {
           m.set(i, j, randInt(0, 1))
         }
       }
@@ -570,7 +574,7 @@ export class MatrixUtils {
     }
   }
 
-  public static statTest () {
+  public static statTest (): void {
     const n = 1
     const pArray = new Array<Promise<void>>()
     for (let alpha = 0.2; alpha <= 1.01; alpha += 0.05) {

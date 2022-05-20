@@ -67,18 +67,13 @@
 </template>
 
 <script lang="ts">
-import Vue, { PropType } from 'vue'
+import Vue from 'vue'
 
 import { Graph } from '@/utils/graph/graph'
-import { Node } from '@/utils/graph/node'
-import { Link } from '@/utils/graph/link'
-import { Vector2, Vec2 } from '@/utils/graph/Vec'
 import { BlueprintContainer } from '@/utils/routingAnalysis/blueprintContainer'
 import { MatrixUtils } from '@/utils/matrixUtils'
 
 import Component from 'vue-class-component'
-
-import { Session } from '@/utils/session'
 
 @Component({
   props: {
@@ -97,11 +92,11 @@ export default class BlueprintEditor extends Vue {
     | 'SCALE' = 'WALL'
 
   private bpContainer: BlueprintContainer | null = null
-  public getBpContainer () {
+  public getBpContainer (): BlueprintContainer | null {
     return this.bpContainer
   }
 
-  mounted () {
+  mounted (): void {
     this.container = this.$refs.container as Element
     this.bpContainer = new BlueprintContainer(this.container as HTMLElement)
     this.bpContainer.onModeChanged.addListener(mode => {
@@ -114,7 +109,9 @@ export default class BlueprintEditor extends Vue {
     MatrixUtils.mainTest()
   }
 
-  setMode (mode: 'WALL' | 'DOOR' | 'WINDOW' | 'SUPP_WALL' | 'SUPP_FURNITURE') {
+  setMode (
+    mode: 'WALL' | 'DOOR' | 'WINDOW' | 'SUPP_WALL' | 'SUPP_FURNITURE'
+  ): void {
     this.mode = mode
     if (this.bpContainer === null) return
     if (this.bpContainer.getMode() === mode) {

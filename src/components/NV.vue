@@ -3,7 +3,7 @@
 </template>
 
 <script lang="ts">
-import Vue, { PropType } from 'vue'
+import Vue from 'vue'
 
 // import { NV_El } from '@/utils/nodeViewer/nv_el'
 import { NvNode } from '@/utils/nodeViewer/nv_node'
@@ -18,7 +18,6 @@ import { Link } from '@/utils/graph/link'
 import { Vector2, Vec2 } from '@/utils/graph/Vec'
 
 // import domtoimage from "dom-to-image";
-import GraphParams from '../components/GraphParams.vue'
 import { ConstraintGraph } from '@/utils/graph/constraintGraph'
 import Component from 'vue-class-component'
 
@@ -85,7 +84,7 @@ export default class NV extends Vue {
     })
   )
 
-  public changeTheme () {
+  public changeTheme (): void {
     this.themeID++
     this.themeID %= this.themes.length
     if (this.container == null) return
@@ -104,11 +103,11 @@ export default class NV extends Vue {
     });
   }
 */
-  public exportToPNG () {
+  public exportToPNG (): void {
     if (this.container == null) return
 
     const scale = this.container.getScale()
-    const rect = this.container.getRect()
+    // const rect = this.container.getRect()
     this.container.setScale(1)
 
     let nodeRect = this.container.getBoundingNodeRect()
@@ -311,21 +310,16 @@ export default class NV extends Vue {
     }
   }
 
-  mounted () {
+  mounted (): void {
     this.$root.$on('changeDarkMode', () => {
       this.setTheme(Session.getTheme())
     })
-
-    const colors = {
-      main: '#d77d00',
-      second: '#ffc107'
-    }
 
     this.container = new NvContainer(
       this.$refs.container as Element,
       this.themes[this.themeID]
     )
-    const cgraph = this.graph.getData<ConstraintGraph>('constraintGraph')
+    // const cgraph = this.graph.getData<ConstraintGraph>('constraintGraph')
     this.graph.getOrAddData('actions', new Array<string>()).push('download')
     this.graph.getOrAddData('actions', new Array<string>()).push('upload')
     this.graph.setData<{(): void }>('download', () => {
@@ -343,7 +337,7 @@ export default class NV extends Vue {
         const f: File = ((e.target as HTMLInputElement).files as FileList)[0]
         if (f != null) {
           const fr = new FileReader()
-          fr.onload = event => {
+          fr.onload = () => {
             this.graph.applyJson(JSON.parse(fr.result as string))
           }
           fr.readAsText(f, 'utf8')
@@ -395,7 +389,7 @@ export default class NV extends Vue {
           if (f != null) {
             if (f.name.split('.').pop() === 'json') {
               const fr = new FileReader()
-              fr.onload = event => {
+              fr.onload = () => {
                 this.graph.applyJson(JSON.parse(fr.result as string))
               }
               fr.readAsText(f, 'utf8')
@@ -403,11 +397,11 @@ export default class NV extends Vue {
               f.name.split('.').pop() === 'xlsx' ||
               f.name.split('.').pop() === 'xls'
             ) {
-              let array: any
+              let array: ArrayBuffer | string | null
               const fileReader = new FileReader()
-              fileReader.onload = e => {
+              fileReader.onload = () => {
                 array = fileReader.result
-                const data = new Uint8Array(array)
+                const data = new Uint8Array(array as ArrayBuffer)
                 var arr = []
                 for (let i = 0; i !== data.length; ++i) {
                   arr[i] = String.fromCharCode(data[i])

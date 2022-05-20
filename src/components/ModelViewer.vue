@@ -192,26 +192,12 @@ import V from '@/utils/vector'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 import { GLTFLoader, GLTF } from 'three/examples/jsm/loaders/GLTFLoader'
 import { BVHLoader, BVH } from 'three/examples/jsm/loaders/BVHLoader'
-import {
-  BoxHelper,
-  CanvasTexture,
-  Color,
-  DoubleSide,
-  Euler,
-  GridHelper,
-  Group,
-  Mesh,
-  Object3D,
-  Vector3
-} from 'three'
+import { BoxHelper, GridHelper, Group, Mesh, Object3D } from 'three'
 import { TransformControls } from 'three/examples/jsm/controls/TransformControls'
-import { Session } from '@/utils/session'
-import { Vector2 } from '@/utils/graph/Vec'
 import { Prop } from 'vue-property-decorator'
 import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader'
 import { studioEnvMap } from '@/utils/imageData'
 import TreeExplorer from '@/components/TreeExplorer.vue'
-import { Matrix } from '@/utils/matrixUtils'
 import ModelViewerStats from '@/components/ModelViewerStats.vue'
 
 // import AVATAR from '@/utils/avatar'
@@ -226,7 +212,7 @@ export default class ModelViewer extends Vue {
   @Prop({ default: () => false }) private displayInspector!: boolean
 
   inspectorActive = false
-  switchInspectorActive () {
+  switchInspectorActive (): void {
     this.inspectorActive = !this.inspectorActive
   }
 
@@ -240,7 +226,7 @@ export default class ModelViewer extends Vue {
     this.onFovChanged(value)
   }
 
-  public get fov () {
+  public get fov (): number {
     return this.mfov
   }
 
@@ -250,11 +236,13 @@ export default class ModelViewer extends Vue {
     { name: 'scale', x: 0, y: 0, z: 0 }
   ]
 
-  get transformMatrix () {
+  get transformMatrix (): { name: string; x: number; y: number; z: number }[] {
     return this.mtransformMatrix
   }
 
-  set transformMatrix (value) {
+  set transformMatrix (
+    value: { name: string; x: number; y: number; z: number }[]
+  ) {
     this.mtransformMatrix = value
     this.applyTransformMatrix()
   }
@@ -295,13 +283,12 @@ export default class ModelViewer extends Vue {
     this.controls = new OrbitControls(this.camera, this.renderer.domElement)
   }
 
-  public setFogActive (active: boolean, color = 0xa0a0a0) {
+  public setFogActive (active: boolean, color = 0xa0a0a0): void {
     if (active) {
       const fogColor = new THREE.Color(color)
       // this.scene.background = fogColor
       this.scene.fog = new THREE.Fog(fogColor, 0.0025, 20)
     } else {
-      const fogColor = new THREE.Color(color)
       // this.scene.background = fogColor
       this.scene.fog = null
     }
@@ -313,7 +300,7 @@ export default class ModelViewer extends Vue {
   private gizmo: TransformControls | null = null
   private controledObject: Object3D | null = null
 
-  public controlMesh (obj: Object3D | null) {
+  public controlMesh (obj: Object3D | null): void {
     this.controledObject = obj
     if (obj === null) {
       if (this.gizmo !== null) {
@@ -344,7 +331,7 @@ export default class ModelViewer extends Vue {
     }
   }
 
-  private updateTransformMatrix () {
+  private updateTransformMatrix (): void {
     if (this.gizmo !== null && this.gizmo.object !== undefined) {
       const d = [
         this.gizmo.object.position,
@@ -362,7 +349,7 @@ export default class ModelViewer extends Vue {
     }
   }
 
-  private applyTransformMatrix () {
+  private applyTransformMatrix (): void {
     if (this.gizmo !== null && this.gizmo.object !== undefined) {
       this.gizmo.object.position.set(
         this.transformMatrix[0].x,
@@ -385,7 +372,7 @@ export default class ModelViewer extends Vue {
     }
   }
 
-  private selectItem (item: Group) {
+  private selectItem (item: Group): void {
     if (this.gizmo !== null) {
       if (
         this.gizmo.object !== null &&
@@ -418,7 +405,7 @@ export default class ModelViewer extends Vue {
     }
   }
 
-  public setMeshControlMode (mode: 'translate' | 'rotate' | 'scale') {
+  public setMeshControlMode (mode: 'translate' | 'rotate' | 'scale'): void {
     if (this.gizmo === null) {
       this.gizmo = new TransformControls(this.camera, this.renderer.domElement)
     }
@@ -538,7 +525,7 @@ export default class ModelViewer extends Vue {
     this.loop()
   }
 
-  public refreshSceneHierarchy () {
+  public refreshSceneHierarchy (): void {
     const hierarchy = this.$refs.hierarchyTree as TreeExplorer | undefined
     if (hierarchy !== undefined) {
       hierarchy.clear()
@@ -564,7 +551,7 @@ export default class ModelViewer extends Vue {
   }
 
   // Simple method to add cube in scene
-  createCube (x: number, y: number, z: number, color: number) {
+  createCube (x: number, y: number, z: number, color: number): void {
     const geometry = new THREE.BoxGeometry(1, 1, 1)
     const material = new THREE.MeshLambertMaterial({ color: color })
     const cube = new THREE.Mesh(geometry, material)
@@ -572,7 +559,7 @@ export default class ModelViewer extends Vue {
     if (this.scene) this.scene.add(cube)
   }
 
-  createSphere (x: number, y: number, z: number, radius: number) {
+  createSphere (x: number, y: number, z: number, radius: number): void {
     const geometry = new THREE.SphereGeometry(radius)
     const material = new THREE.MeshStandardMaterial({
       metalness: 1,
@@ -583,7 +570,7 @@ export default class ModelViewer extends Vue {
     if (this.scene) this.scene.add(cube)
   }
 
-  updateSize () {
+  updateSize (): void {
     const size = new V(
       this.renderer.domElement.offsetWidth,
       this.renderer.domElement.offsetHeight
@@ -640,7 +627,7 @@ export default class ModelViewer extends Vue {
     color: number,
     intensity: number,
     castShadow = true
-  ) {
+  ): void {
     const sun = new THREE.DirectionalLight(color, intensity)
     sun.position.set(x, y, z)
     sun.castShadow = castShadow
@@ -665,7 +652,7 @@ export default class ModelViewer extends Vue {
     height?: number,
     hideGrid?: boolean,
     hideTransformControler?: boolean
-  ) {
+  ): void {
     const oldsize = new THREE.Vector2(0, 0)
     this.renderer.getSize(oldsize)
     if (hideGrid) {
@@ -712,9 +699,7 @@ export default class ModelViewer extends Vue {
     url: string,
     type: 'HDR' | 'IMG' | 'EXR' = 'IMG',
     setBackground?: boolean
-  ) {
-    const texture = null
-
+  ): void {
     const apply = (texture: THREE.Texture) => {
       texture.mapping = THREE.EquirectangularRefractionMapping
       this.scene.environment = texture
@@ -735,12 +720,12 @@ export default class ModelViewer extends Vue {
 
   private screanShotAlreadyActive = false
 
-  private onFovChanged (value: number) {
+  private onFovChanged (value: number): void {
     this.camera.fov = value
     this.camera.updateProjectionMatrix()
   }
 
-  private screenShotButtonClick () {
+  private screenShotButtonClick (): void {
     this.onScreenShot()
     if (this.container !== null && this.screenshotViewer !== null) {
       this.container.removeChild(this.screenshotViewer)
@@ -756,7 +741,7 @@ export default class ModelViewer extends Vue {
     height?: number,
     hideGrid?: boolean,
     hideTransformControler?: boolean
-  ) {
+  ): void {
     this.refreshSceneHierarchy()
     if (this.screanShotAlreadyActive) {
       if (this.container !== null && this.screenshotViewer !== null) {
@@ -790,7 +775,7 @@ export default class ModelViewer extends Vue {
   http://lo-th.github.io/root/blending2/index_bvh.html
   */
 
-  draw () {
+  draw (): void {
     if (this.renderer && this.scene && this.camera) {
       this.updateSize()
 
@@ -805,7 +790,7 @@ export default class ModelViewer extends Vue {
     }
   }
 
-  loop () {
+  loop (): void {
     this.draw()
     requestAnimationFrame(() => this.loop())
   }

@@ -97,7 +97,13 @@ export class BlueprintContainer {
     | 'SUPP_FURNITURE'
     | 'SCALE' = 'WALL'
 
-  public getMode () {
+  public getMode ():
+    | 'WALL'
+    | 'DOOR'
+    | 'WINDOW'
+    | 'SUPP_WALL'
+    | 'SUPP_FURNITURE'
+    | 'SCALE' {
     return this.mode
   }
 
@@ -107,7 +113,7 @@ export class BlueprintContainer {
 
   public setMode (
     mode: 'WALL' | 'DOOR' | 'WINDOW' | 'SUPP_WALL' | 'SUPP_FURNITURE'
-  ) {
+  ): void {
     this.mode = mode
     switch (this.mode) {
       case 'WALL':
@@ -175,7 +181,7 @@ export class BlueprintContainer {
    *
    * @returns view zoom level
    */
-  public scale () {
+  public scale (): number {
     return this.size
   }
 
@@ -212,7 +218,7 @@ export class BlueprintContainer {
    */
   private bp: Blueprint
 
-  public getBlueprint () {
+  public getBlueprint (): Blueprint {
     return this.bp
   }
 
@@ -230,18 +236,18 @@ export class BlueprintContainer {
    *
    * @returns container for wall nodes
    */
-  public getNodeLayer () {
+  public getNodeLayer (): NvEl {
     return this.svgNodeLayer
   }
 
   /**
    * container for wall link
    */
-  public getLinkLayer () {
+  public getLinkLayer (): NvEl {
     return this.svgLinkLayer
   }
 
-  public getFurnitureLayer () {
+  public getFurnitureLayer (): NvEl {
     return this.svgFurnitureLayer
   }
 
@@ -257,7 +263,7 @@ export class BlueprintContainer {
     originDistance: number,
     windowWidth: number,
     isDoor: boolean
-  ) {
+  ): void {
     if (this.furniturePreview === null) {
       this.furniturePreview = new BpWindow(this)
     }
@@ -270,7 +276,7 @@ export class BlueprintContainer {
     )
   }
 
-  public removeFurniturePreview () {
+  public removeFurniturePreview (): void {
     if (this.furniturePreview !== null) {
       this.furniturePreview.destroy()
       this.furniturePreview = null
@@ -342,7 +348,7 @@ export class BlueprintContainer {
         try {
           if (f != null) {
             const fr = new FileReader()
-            fr.onload = event => {
+            fr.onload = () => {
               this.img.getDom().setAttribute('src', fr.result as string)
             }
             fr.readAsDataURL(f)
@@ -456,7 +462,7 @@ export class BlueprintContainer {
     this.updateTheme()
   }
 
-  public updateTheme () {
+  public updateTheme (): void {
     this.snapXLine.setStyle({ stroke: `${this.theme.WallSnapLineColor}` })
     this.snapYLine.setStyle({ stroke: `${this.theme.WallSnapLineColor}` })
 
@@ -489,7 +495,7 @@ export class BlueprintContainer {
     })
   }
 
-  public refreshScaleViewer () {
+  public refreshScaleViewer (): void {
     const right = 100 * this.bp.getData<number>('scale') * this.size
     const path = `M${new V(0, 0).str()} L${new V(right, 0).str()}`
     this.scaleDisplayer.lineCol1.getDom().setAttribute('d', path)
@@ -521,7 +527,7 @@ export class BlueprintContainer {
     return p
   }
 
-  public resetGrid () {
+  public resetGrid (): void {
     this.container.getDom().onmousedown = null
     this.container.getDom().onmouseup = null
     this.container.getDom().onmousemove = null
@@ -548,7 +554,7 @@ export class BlueprintContainer {
         this.updateTransform()
       }
 
-      this.container.getDom().onmouseup = e => {
+      this.container.getDom().onmouseup = () => {
         this.container.getDom().onmousemove = null
         this.container.getDom().onmouseup = null
         this.defaultMode()
@@ -597,12 +603,12 @@ export class BlueprintContainer {
 
   public testPoint = new NvEl('rect')
 
-  public defaultMode () {
+  public defaultMode (): void {
     this.container.getDom().onmousedown = null
     this.container.getDom().onmouseup = null
     this.container.getDom().onmousemove = null
 
-    this.container.getDom().onmousemove = e => {
+    this.container.getDom().onmousemove = () => {
       /*
       const clientPos = this.clientPosToContainerPos(e.clientX, e.clientY)
 
@@ -736,22 +742,18 @@ export class BlueprintContainer {
 
   public hoveredWall: BpWallLink | null = null
 
-  public placeWindowMode () {
-    //
-  }
-
-  public removeWallMode () {
+  public removeWallMode (): void {
     this.container.getDom().onmousedown = null
     this.container.getDom().onmouseup = null
     this.container.getDom().onmousemove = null
   }
 
-  public moveNodeMode (node: Node) {
+  public moveNodeMode (node: Node): void {
     this.container.getDom().onmousedown = null
     this.container.getDom().onmouseup = null
     this.container.getDom().onmousemove = null
 
-    this.container.getDom().onmousemove = e => {
+    this.container.getDom().onmousemove = () => {
       // const pos = this.clientPosToContainerPos(e.clientX, e.clientY)
       // this.bp.addWall(n, n2)
       this.container.getDom().onmousemove = e1 => {
@@ -827,11 +829,11 @@ export class BlueprintContainer {
     }
   }
 
-  public wallNodeEnter (node: BpWallNode) {
+  public wallNodeEnter (node: BpWallNode): void {
     this.hoveredNode = node
   }
 
-  public wallNodeExit (node: BpWallNode) {
+  public wallNodeExit (node: BpWallNode): void {
     if (this.hoveredNode === node) this.hoveredNode = null
   }
 
@@ -839,7 +841,7 @@ export class BlueprintContainer {
     return v.mult(1 / this.size)
   }
 
-  public zoom (event: WheelEvent) {
+  public zoom (event: WheelEvent): void {
     event.preventDefault()
     const rect = this.container.getDom().getBoundingClientRect()
     const offset = new V(
@@ -878,25 +880,25 @@ export class BlueprintContainer {
     this.updateTransform()
   }
 
-  public onMouseDown (event: MouseEvent) {
+  public onMouseDown (event: MouseEvent): void {
     if (this.container.getDom().onmousedown != null) {
       (this.container.getDom().onmousedown as { (e: MouseEvent): void })(event)
     }
   }
 
-  public onMouseUp (event: MouseEvent) {
+  public onMouseUp (event: MouseEvent): void {
     if (this.container.getDom().onmouseup != null) {
       (this.container.getDom().onmouseup as { (e: MouseEvent): void })(event)
     }
   }
 
-  public onMouseMove (event: MouseEvent) {
+  public onMouseMove (event: MouseEvent): void {
     if (this.container.getDom().onmousemove != null) {
       (this.container.getDom().onmousemove as { (e: MouseEvent): void })(event)
     }
   }
 
-  updateTransform () {
+  updateTransform (): void {
     this.content.setStyle({
       transform: `scale(${this.size})`,
       left: `${this.position.x * this.size}px`,
@@ -931,7 +933,7 @@ export class BlueprintContainer {
     })
   }
 
-  defineScaleMode (refDist = 1) {
+  defineScaleMode (refDist = 1): void {
     this.mode = 'SCALE'
     this.onModeChanged.notify(this.mode)
 

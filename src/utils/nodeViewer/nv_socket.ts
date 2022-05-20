@@ -25,7 +25,7 @@ export class NvSocket {
   private hideWhenNotLinked = true
 
   private links: Set<NvLink>
-  public foreachLink (func: { (l: NvLink): void }) {
+  public foreachLink (func: { (l: NvLink): void }): void {
     this.links.forEach(func)
   }
 
@@ -111,7 +111,7 @@ export class NvSocket {
 
   private tooltip: NvEl | undefined = undefined
 
-  static mouseEnter (e: MouseEvent, socket: NvSocket) {
+  static mouseEnter (e: MouseEvent, socket: NvSocket): void {
     if (socket.tooltip !== undefined) {
       socket.parentNode
         .getRoot()
@@ -121,6 +121,7 @@ export class NvSocket {
     } else {
       const theme: NvTheme = socket.parentNode.getRoot().theme
       socket.tooltip = new NvEl('div', 'node')
+      /*
       let xo = 0
       let yo = 0
       if (socket.tangent.x < 0) {
@@ -135,6 +136,7 @@ export class NvSocket {
         yo = 50
       } else yo = 0
       const rect = socket.point.getDom().getBoundingClientRect()
+      */
       socket.tooltip.setStyle({
         'background-color': theme.nodeContentBackgroundColor,
         transform: `scale(${Math.max(0.725 / socket.root.getScale(), 1)})`,
@@ -142,7 +144,7 @@ export class NvSocket {
         'z-index': '1',
         'pointer-events': 'none'
       })
-      socket.root.onScaleChanged().addListener(arg => {
+      socket.root.onScaleChanged().addListener(() => {
         (socket.tooltip as NvEl).setStyle({ transform: `scale(${Math.max(0.725 / socket.root.getScale(), 1)})` })
         NvSocket.refreshTooltipPos(socket)
       }, socket)
@@ -202,7 +204,7 @@ export class NvSocket {
     }
   }
 
-  static refreshTooltipPos (socket: NvSocket) {
+  static refreshTooltipPos (socket: NvSocket): void {
     if (socket.tooltip === undefined) return
     const rect = socket.container.getDom().getBoundingClientRect()
     const trect = socket.tooltip.getDom().getBoundingClientRect()
@@ -235,7 +237,7 @@ export class NvSocket {
     */
   }
 
-  static mouseExit (e: MouseEvent, socket: NvSocket) {
+  static mouseExit (e: MouseEvent, socket: NvSocket): void {
     if (socket.tooltip !== undefined) {
       //*
       socket.parentNode

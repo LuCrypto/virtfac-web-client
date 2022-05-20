@@ -13,18 +13,18 @@ export class NvContainer {
   public theme: NvTheme
   private positionStart: V = new V(0, 0)
   private position: V = new V(0, 0)
-  public getPosition () {
+  public getPosition (): V {
     return this.position
   }
 
   private origin: V = new V(0, 0)
   private size = 1
-  public getScale () {
+  public getScale (): number {
     return this.size
   }
 
   private scaleChanged = new LocalEvent<number>()
-  public onScaleChanged () {
+  public onScaleChanged (): LocalEvent<number> {
     return this.scaleChanged
   }
 
@@ -33,14 +33,14 @@ export class NvContainer {
   private nextNodeId = 0
 
   private background: NvEl
-  public getBackground () {
+  public getBackground (): NvEl {
     return this.background
   }
 
   private svgDefs: NvEl
 
   private content: NvEl
-  public getContent () {
+  public getContent (): NvEl {
     return this.content
   }
 
@@ -89,7 +89,7 @@ export class NvContainer {
     this.updateTransform()
   }
 
-  public dragMouseDown (event: MouseEvent) {
+  public dragMouseDown (event: MouseEvent): void {
     if (document.onmouseup != null && document.onmousemove != null) {
       return
     }
@@ -103,7 +103,7 @@ export class NvContainer {
     document.onmousemove = e => this.dragMouseMove(e)
   }
 
-  public dragMouseMove (event: MouseEvent) {
+  public dragMouseMove (event: MouseEvent): void {
     event = event || window.event
     event.preventDefault()
     this.position = this.unscale(new V(event.clientX, event.clientY)).sub(
@@ -112,7 +112,7 @@ export class NvContainer {
     this.updateTransform()
   }
 
-  public dragMouseUp (event: MouseEvent) {
+  public dragMouseUp (event: MouseEvent): void {
     document.onmouseup = null
     document.onmousemove = null
     event.preventDefault()
@@ -126,7 +126,7 @@ export class NvContainer {
     return v.mult(1 / this.size).sub(this.position)
   }
 
-  public setScale (scale: number) {
+  public setScale (scale: number): void {
     const rect = this.container.getDom().getBoundingClientRect()
     const offset = new V(-this.position.x, -this.position.y)
     const center = new V(
@@ -146,7 +146,7 @@ export class NvContainer {
     this.scaleChanged.notify(this.size)
   }
 
-  public zoom (event: WheelEvent) {
+  public zoom (event: WheelEvent): void {
     event.preventDefault()
     const rect = this.container.getDom().getBoundingClientRect()
     const offset = new V(
@@ -185,7 +185,7 @@ export class NvContainer {
     return center
   }
 
-  public addNode (position: V) {
+  public addNode (position: V): NvNode {
     const node = new NvNode(this, this.nextNodeId++, position)
     this.content.appendChild(node.getContainer())
     this.nodes.set(node.getIndex(), node)
@@ -201,7 +201,7 @@ export class NvContainer {
     return node
   }
 
-  public removeNode (node: NvNode) {
+  public removeNode (node: NvNode): void {
     if (this.nodes.has(node.getIndex())) {
       this.nodes.delete(node.getIndex())
       this.content.getDom().removeChild(node.getContainer().getDom())
@@ -213,7 +213,7 @@ export class NvContainer {
     }
   }
 
-  public addLink (socketIn: NvSocket, socketOut: NvSocket) {
+  public addLink (socketIn: NvSocket, socketOut: NvSocket): NvLink {
     const link = new NvLink(this, socketIn, socketOut, this.delta)
     // this.svgDefs.appendChild(link.getGradient());
     this.background.appendChild(link.getPath())
@@ -226,7 +226,7 @@ export class NvContainer {
     return link
   }
 
-  public updateTheme () {
+  public updateTheme (): void {
     this.nodes.forEach(node => {
       node.getContainer().setStyle({
         'background-color': this.theme.nodeSocketBackgroundColor,
@@ -241,7 +241,7 @@ export class NvContainer {
     })
   }
 
-  public updateTransform () {
+  public updateTransform (): void {
     const gridColor = this.theme.gridColor.replace('#', '%23')
     const pattern = `<rect x="0" y="0" width="${this.theme.gridPointPercent}" height="${this.theme.gridPointPercent}" fill="${gridColor}"/>`
     const svgGrid = `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">${pattern}</svg>`
@@ -279,7 +279,7 @@ export class NvContainer {
       ymin: Number.MAX_VALUE,
       ymax: Number.MIN_VALUE
     }
-    this.nodes.forEach((value: NvNode, key: number) => {
+    this.nodes.forEach((value: NvNode) => {
       const r = value
         .getContainer()
         .getDom()
@@ -293,7 +293,7 @@ export class NvContainer {
     return rect
   }
 
-  private refreshContainerSize () {
+  private refreshContainerSize (): void {
     const rect = this.getBoundingNodeRect()
     this.content.setStyle({
       width: Math.trunc(rect.xmax - rect.xmin) / this.getScale() + 'px',
@@ -308,16 +308,16 @@ export class NvContainer {
     5
   )
 
-  public callRefreshContainerSize () {
+  public callRefreshContainerSize (): void {
     this.refreshContainerSizeCaller.call()
   }
 
-  public translate (translation: V) {
+  public translate (translation: V): void {
     this.position = this.position.add(translation)
     this.updateTransform()
   }
 
-  public setPosition (position: V) {
+  public setPosition (position: V): void {
     this.position = position
     this.updateTransform()
   }

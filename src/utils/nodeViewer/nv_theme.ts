@@ -33,5 +33,3 @@ export class NvTheme {
     }
   }
 }
-
-const NV_THEME: NvTheme[] = new Array<NvTheme>()
