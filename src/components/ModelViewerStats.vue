@@ -8,7 +8,7 @@
   gap: 10px;
   cursor: pointer;
   opacity: 0.9;
-  z-index: 10000;
+  z-index: 2;
 }
 </style>
 
