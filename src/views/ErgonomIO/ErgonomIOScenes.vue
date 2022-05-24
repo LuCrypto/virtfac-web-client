@@ -371,6 +371,7 @@ class SceneInfo {
 class Autre {
   scene: SceneInfo = new SceneInfo()
   assets: SceneRecue[] = []
+  name = ''
 
   constructor (params: Partial<SceneRecue>) {
     Object.assign(this, params)
@@ -457,7 +458,6 @@ export default class ErgonomIOAssets extends Vue {
       var maCard = new CardModel({
         assetsNumber: maScene?.scene.nombreAssets,
         id: maScene?.scene.idScene,
-        name: 'example',
         data: JSON.stringify(maScene?.assets)
       })
 
@@ -689,12 +689,11 @@ export default class ErgonomIOAssets extends Vue {
         assetsNumber: scene.assetsNumber,
         // color: scene.color,
         // creationDate: scene.creationDate,
-        data: scene.data,
+        data: scene.data
         // id: scene.id,
         // idProject: scene.idProject,
         // idUserOwner: scene.idUserOwner,
         // modificationDate: scene.modificationDate,
-        name: scene.name
         // picture: scene.picture,
         // tags: JSON.stringify(scene.parsedTags)
       })
@@ -710,22 +709,6 @@ export default class ErgonomIOAssets extends Vue {
 
   refreshScenes (): void {
     this.scenes = [this.haguenauExample]
-
-    this.scenes.push(
-      new CardModel({
-        name: 'IUT Haguenau',
-        picture: haguenauImageAsset,
-        tags: '["exemple"]',
-        id: 13,
-        color: 0,
-        assetsNumber: 93,
-        creationDate: 1651300387714,
-        data: '{}',
-        idProject: 0,
-        idUserOwner: 0,
-        modificationDate: 1651300387714
-      })
-    )
 
     this.requeteAPI()
   }

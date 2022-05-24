@@ -18,106 +18,112 @@
       </v-card>
     </v-container>
 
-    <!-- Milieu de page : les différentes cartes de scènes -->
-    <template>
-      <!-- Popup permettant de modifier des données de la scène -->
-      <v-row justify="center">
-        <v-dialog v-model="modifyAsset" max-width="780">
-          <v-card>
-            <v-card-title> Modifier des données </v-card-title>
+    <!-- Popup permettant de modifier des données de la scène -->
+    <v-row justify="center">
+      <v-dialog v-model="modifyAsset" max-width="780">
+        <v-card>
+          <v-card-title> Modifier des données </v-card-title>
 
-            <!-- Permet de changer le titre de l'asset -->
-            <v-container fluid>
-              <v-row>
-                <v-col cols="3">
-                  <v-card-text>
-                    Nouveau titre :
-                  </v-card-text>
-                </v-col>
+          <!-- Permet de changer le titre de l'asset -->
+          <v-container fluid>
+            <v-row>
+              <v-col cols="3">
+                <v-card-text>
+                  Nouveau titre :
+                </v-card-text>
+              </v-col>
 
-                <v-col cols="4">
-                  <v-text-field v-model="search"> </v-text-field>
-                </v-col>
-              </v-row>
-            </v-container>
+              <v-col cols="4">
+                <v-text-field v-model="search"> </v-text-field>
+              </v-col>
+            </v-row>
+          </v-container>
 
-            <!-- Permet d'ajouter des tags -->
-            <v-container fluid>
-              <v-row>
-                <v-col cols="3">
-                  <v-card-text>
-                    Nouveau tag :
-                  </v-card-text>
-                </v-col>
+          <!-- Permet d'ajouter des tags -->
+          <v-container fluid>
+            <v-row>
+              <v-col cols="3">
+                <v-card-text>
+                  Nouveau tag :
+                </v-card-text>
+              </v-col>
 
-                <v-col cols="4">
-                  <v-text-field v-model="newTag"> </v-text-field>
-                </v-col>
+              <v-col cols="4">
+                <v-text-field v-model="newTag"> </v-text-field>
+              </v-col>
 
-                <v-col cols="3">
-                  <v-btn v-on:click="addTag(assetChoose, newTag)" icon>
-                    <v-icon v-text="'mdi-plus'"></v-icon>
-                  </v-btn>
-                </v-col>
-              </v-row>
-            </v-container>
-            <!-- Permet de changer la preview de l'asset -->
-            <v-container fluid>
-              <v-img height="270" :src="newImage"> </v-img>
-              <v-btn
-                class="ml-6 mt-6 flex-grow-1"
-                color="green"
-                @click="openUploadFile"
-              >
-                <v-icon v-text="'mdi-upload'"></v-icon>
-                Upload new
-                <input
-                  ref="uploadFileInput"
-                  hidden
-                  type="file"
-                  @change="updateUploadFile"
-                />
-              </v-btn>
-            </v-container>
-
-            <!-- Permet de supprimer des tags -->
-            <v-container
-              fluid
-              :key="indexTag2"
-              v-for="(tag, indexTag2) in assetChoose.parsedTags"
+              <v-col cols="3">
+                <v-btn v-on:click="addTag(assetChoose, newTag)" icon>
+                  <v-icon v-text="'mdi-plus'"></v-icon>
+                </v-btn>
+              </v-col>
+            </v-row>
+          </v-container>
+          <!-- Permet de changer la preview de l'asset -->
+          <v-container fluid>
+            <v-img height="270" :src="newImage"> </v-img>
+            <v-btn
+              class="ml-6 mt-6 flex-grow-1"
+              color="green"
+              @click="openUploadFile"
             >
-              <v-row>
-                <v-col cols="2">
-                  <v-card-text>
-                    {{ tag }}
-                  </v-card-text>
-                </v-col>
+              <v-icon v-text="'mdi-upload'"></v-icon>
+              Upload new
+              <input
+                ref="uploadFileInput"
+                hidden
+                type="file"
+                @change="updateUploadFile"
+              />
+            </v-btn>
+          </v-container>
 
-                <v-col cols="3">
-                  <v-btn v-on:click="deleteTag(assetChoose, tag)" icon>
-                    <v-icon v-text="'mdi-delete'"></v-icon>
-                  </v-btn>
-                </v-col>
-              </v-row>
-            </v-container>
+          <!-- Permet de supprimer des tags -->
+          <v-container
+            fluid
+            :key="indexTag2"
+            v-for="(tag, indexTag2) in assetChoose.parsedTags"
+          >
+            <v-row>
+              <v-col cols="2">
+                <v-card-text>
+                  {{ tag }}
+                </v-card-text>
+              </v-col>
 
-            <!-- Permet de sauvegarder les modifications -->
-            <v-card-actions>
-              <v-spacer></v-spacer>
-              <v-btn color="primary" text @click="save(assetChoose)">
-                Save
-              </v-btn>
-            </v-card-actions>
-          </v-card>
-        </v-dialog>
-      </v-row>
+              <v-col cols="3">
+                <v-btn v-on:click="deleteTag(assetChoose, tag)" icon>
+                  <v-icon v-text="'mdi-delete'"></v-icon>
+                </v-btn>
+              </v-col>
+            </v-row>
+          </v-container>
 
-      <!-- Le body de la page centrale -->
+          <!-- Permet de sauvegarder les modifications -->
+          <v-card-actions>
+            <v-spacer></v-spacer>
+            <v-btn color="primary" text @click="save(assetChoose)">
+              Save
+            </v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
+    </v-row>
+
+    <!-- Milieu de page : les différentes cartes de scènes -->
+    <!-- Le body de la page centrale -->
+    <v-card
+      class="d-flex flex-column"
+      :rounded="unrealContext.check() ? 'xl' : 'md'"
+    >
       <v-card
-        :class="!this.fullpage ? 'ma-10' : 'ma-6'"
+        :class="!this.fullpage ? 'ma-10' : 'my-8'"
         class="d-flex flex-row"
-        width="97%"
-        height="700"
+        width="95%"
+        :height="!this.fullpage ? '700' : '850'"
+        style="overflow:hidden"
+        :rounded="unrealContext.check() ? 'xl' : 'md'"
+        elevation="0"
       >
         <!-- Les différentes catégories -->
         <v-card width="25%">
@@ -199,39 +205,39 @@
           </v-card>
         </v-container>
       </v-card>
-    </template>
 
-    <!-- Les différents boutons -->
-    <v-layout justify-center class="py-4">
-      <v-flex class="flex-grow-0 mx-5">
-        <!-- Bouton permettant de charger un asset -->
-        <v-btn
-          v-on:click="loadAsset"
-          class="primary black--text"
-          large
-          elevation="2"
-        >
-          Load an asset
-          <input
-            accept="application/JSON"
-            ref="uploadFileInput"
-            hidden
-            type="file"
-            @change="updateUploadFileChargerAsset"
-          />
-        </v-btn>
-      </v-flex>
-      <v-flex class="flex-grow-0 mx-5">
-        <!-- Permet de réduire la taille des assets -->
-        <v-btn v-on:click="decreaseSizeCard()" icon>
-          <v-icon v-text="'mdi-minus'"></v-icon>
-        </v-btn>
-        <!-- Permet d'augmenter la taille des assets -->
-        <v-btn v-on:click="increaseSizeCard()" icon>
-          <v-icon v-text="'mdi-plus'"></v-icon>
-        </v-btn>
-      </v-flex>
-    </v-layout>
+      <!-- Les différents boutons -->
+      <v-layout justify-center>
+        <v-flex class="flex-grow-0 mx-5">
+          <!-- Bouton permettant de charger un asset -->
+          <v-btn
+            v-on:click="loadAsset"
+            class="primary black--text"
+            large
+            elevation="2"
+          >
+            Load an asset
+            <input
+              accept="application/JSON"
+              ref="uploadFileInput"
+              hidden
+              type="file"
+              @change="updateUploadFileChargerAsset"
+            />
+          </v-btn>
+        </v-flex>
+        <v-flex class="flex-grow-0 mx-5">
+          <!-- Permet de réduire la taille des assets -->
+          <v-btn v-on:click="decreaseSizeCard()" icon>
+            <v-icon v-text="'mdi-minus'"></v-icon>
+          </v-btn>
+          <!-- Permet d'augmenter la taille des assets -->
+          <v-btn v-on:click="increaseSizeCard()" icon>
+            <v-icon v-text="'mdi-plus'"></v-icon>
+          </v-btn>
+        </v-flex>
+      </v-layout>
+    </v-card>
   </v-container>
 </template>
 
@@ -340,6 +346,8 @@ export default class ErgonomIOAssets extends Vue {
     children: [],
     asset: new CardModel({})
   }
+
+  unrealContext = Unreal
 
   // Begin
   mounted (): void {
