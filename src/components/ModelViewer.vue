@@ -368,6 +368,11 @@ export default class ModelViewer extends Vue {
                     obj.rotation.copy(initTransform.rotation)
                     obj.scale.copy(initTransform.scale)
                     obj.updateMatrix()
+                    this.updateTransformMatrix()
+                    const h = this.boxHelpers.get(obj as Group)
+                    if (h !== undefined) {
+                      h.update()
+                    }
                     this.draw()
                     resolve()
                   })
@@ -378,6 +383,11 @@ export default class ModelViewer extends Vue {
                     obj.rotation.copy(finalTransform.rotation)
                     obj.scale.copy(finalTransform.scale)
                     obj.updateMatrix()
+                    this.updateTransformMatrix()
+                    const h = this.boxHelpers.get(obj as Group)
+                    if (h !== undefined) {
+                      h.update()
+                    }
                     this.draw()
                     resolve()
                   })

@@ -14,6 +14,10 @@ export class Matrix {
     return this._nbRow
   }
 
+  /**
+   * check if the index of the row is valid
+   * @param row
+   */
   private checkRow (row: number) {
     if (row < 0 || row >= this._nbRow) {
       throw new Error(
@@ -26,6 +30,10 @@ export class Matrix {
     }
   }
 
+  /**
+   * check if the index of the column is valid
+   * @param col
+   */
   private checkCol (col: number) {
     if (col < 0 || col >= this._nbCol) {
       throw new Error(
@@ -50,16 +58,30 @@ export class Matrix {
     this.data[row][col] = value
   }
 
+  /**
+   *
+   * @param row
+   * @returns index of the row at the creation of the matrix
+   */
   public getRowLabel (row: number): number {
     this.checkRow(row)
     return this.data[row][this._nbCol]
   }
 
+  /**
+   *
+   * @param col
+   * @returns index of the col at the creation of the matrix
+   */
   public getColLabel (col: number): number {
     this.checkCol(col)
     return this.data[this._nbRow][col]
   }
 
+  /**
+   * reassign position of each rows
+   * @param positions
+   */
   public reorderRows (positions: Array<number>): void {
     if (positions.length !== this.nbRow) {
       throw new Error('positions needs to place all rows')
@@ -72,6 +94,10 @@ export class Matrix {
     }
   }
 
+  /**
+   * reassign position of each column
+   * @param positions
+   */
   public reorderColumns (positions: Array<number>): void {
     if (positions.length !== this.nbColumn) {
       throw new Error('positions needs to place all columns')
@@ -177,6 +203,12 @@ export class Matrix {
     }
   }
 
+  /**
+   * finds the first column that meets the condition of the predicate
+   * @param row
+   * @param predicate
+   * @returns
+   */
   public findIndexInRow (
     row: number,
     predicate: { (value: number, index: number, data: Array<number>): boolean }
@@ -260,6 +292,15 @@ export class MatrixUtils {
     return sum
   }
 
+  /**
+   * return the concordance score of a column
+   * @param a matrix
+   * @param rowGroups map that assign row to groups
+   * @param colGroups map that assign column to groups
+   * @param alpha impact on the score of missing 1 and correct 1 (between 0 and 1 : 0 => only decrease with missing 1, 1 => only grow with correct 1)
+   * @param col index of computed column
+   * @returns
+   */
   public static groupColConcordance (
     a: Matrix,
     rowGroups: Map<number, number>,
@@ -281,6 +322,15 @@ export class MatrixUtils {
     return sum
   }
 
+  /**
+   * return the concordance score of a row
+   * @param a matrix
+   * @param rowGroups map that assign row to groups
+   * @param colGroups map that assign column to groups
+   * @param alpha impact on the score of missing 1 and correct 1 (between 0 and 1 : 0 => only decrease with missing 1, 1 => only grow with correct 1)
+   * @param row index of computed row
+   * @returns
+   */
   public static groupRowConcordance (
     a: Matrix,
     rowGroups: Map<number, number>,
@@ -304,11 +354,11 @@ export class MatrixUtils {
 
   public static blockDiagonalisation (a: Matrix, alpha = 0.5): number {
     const colGroups = new Map<number, number>()
-    // colGroups.push(1)
     const rowGroups = new Map<number, number>()
 
     let nbGroups = 0
 
+    // init group attribution to collector for all cols and rows
     for (let i = 0; i < a.nbColumn; i++) {
       colGroups.set(i, -1)
     }
@@ -367,6 +417,7 @@ export class MatrixUtils {
             rowGroups.set(i, optimalChoice.group)
           }
         }
+        // search best group
         for (let g = 0; g < nbGroups; g++) {
           rowGroups.set(i, g)
           const score = MatrixUtils.groupRowConcordance(
@@ -441,6 +492,7 @@ export class MatrixUtils {
             colGroups.set(j, optimalChoice.group)
           }
         }
+        // search best group
         for (let g = 0; g < nbGroups; g++) {
           colGroups.set(j, g)
           const score = MatrixUtils.groupColConcordance(

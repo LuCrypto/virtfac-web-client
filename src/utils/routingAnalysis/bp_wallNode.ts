@@ -30,6 +30,7 @@ export class BpWallNode {
     const p = node.getData<Vec2>('position')
     if (p !== undefined) this.setPos(p.x, p.y)
 
+    // hovering wall nodes :
     this.collider.getDom().onmouseenter = () => {
       this.container.wallNodeEnter(this)
       this.node.setData('_highlighted', true)
@@ -47,6 +48,7 @@ export class BpWallNode {
       this.point.setStyle({ fill: `${bpContainer.getTheme().WallNodeColor}` })
     }
 
+    // enter move node mode
     this.collider.getDom().onmousedown = e => {
       e.preventDefault()
       if (this.container.getMode() === 'WALL') {
@@ -54,6 +56,7 @@ export class BpWallNode {
         else this.container.onMouseDown(e)
       }
     }
+    // exit move node mode
     this.collider.getDom().onmouseup = e => {
       if (this.container.getMode() === 'SUPP_WALL') {
         if (e.button === 0) {
