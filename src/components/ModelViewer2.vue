@@ -147,11 +147,25 @@ export default class ModelViewer2 extends Vue {
     if (this.displayFog) {
       this.setFogActive(true)
     }
-    console.log('dipslay fog')
 
     // Update scene
     this.updateSize()
+    this.updateTheme()
     this.loop()
+
+    this.$root.$on('changeDarkMode', () => {
+      this.updateTheme()
+    })
+  }
+
+  updateTheme (): void {
+    if (this.$vuetify.theme.dark) {
+      this.setFogActive(false, 0x1e1e1e)
+      this.setGrid(100, 100, 0x555555, 0x1e1e1e, 0xeeeeee)
+    } else {
+      this.setFogActive(false, 0xfefefe)
+      this.setGrid(100, 100, 0xaaaaaa, 0xfefefe, 0x111111)
+    }
   }
 
   // Simple method to add cube in scene
