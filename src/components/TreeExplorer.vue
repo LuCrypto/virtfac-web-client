@@ -64,12 +64,8 @@
 </template>
 
 <script lang="ts">
-import API from '@/utils/api'
-import { APIAsset } from '@/utils/models'
 import Vue from 'vue'
 import Component from 'vue-class-component'
-import { Prop } from 'vue-property-decorator'
-import { set } from 'vue/types/umd'
 
 class Item {
   key: unknown | null
@@ -120,13 +116,13 @@ export default class TreeExplorer extends Vue {
 
   private isMobileView = false
 
-  public addItem (ref: unknown, name: string, parent: unknown | null) {
+  public addItem (ref: unknown, name: string, parent: unknown | null): void {
     const item = new Item(this.id++, name, ref)
     this.objectMap.set(ref, item)
     ;(this.objectMap.get(parent) as Item).children.push(item)
   }
 
-  public get items () {
+  public get items (): Item[] {
     return (this.objectMap.get(null) as Item).children
   }
 
@@ -135,12 +131,12 @@ export default class TreeExplorer extends Vue {
     this.$emit('mounted')
   }
 
-  public clear () {
+  public clear (): void {
     this.objectMap = new Map<unknown | null, Item>()
     this.objectMap.set(null, new Item(0, 'root'))
   }
 
-  public refresh () {
+  public refresh (): void {
     this.citems = []
     ;(this.objectMap.get(null) as Item).children.forEach(it => {
       this.citems.push({
@@ -152,7 +148,7 @@ export default class TreeExplorer extends Vue {
     })
   }
 
-  public selectParent (key: unknown | null) {
+  public selectParent (key: unknown | null): void {
     let maxGoback = 500
     while (maxGoback > 0 && this.parents[this.parents.length - 1].key !== key) {
       this.toParent()
@@ -169,7 +165,7 @@ export default class TreeExplorer extends Vue {
     }
   }
 
-  public enterItem (key: unknown | null) {
+  public enterItem (key: unknown | null): void {
     if ((this.objectMap.get(key) as Item).children.length > 0) {
       this.clearItems()
       ;(this.objectMap.get(key) as Item).children.forEach(it => {
@@ -198,7 +194,7 @@ export default class TreeExplorer extends Vue {
     }
   }
 
-  public toParent () {
+  public toParent (): void {
     this.parents.pop()
     const p = this.parents.pop()
     if (p === undefined) {
@@ -218,23 +214,23 @@ export default class TreeExplorer extends Vue {
     */
   }
 
-  public selectItem (item: unknown) {
+  public selectItem (item: unknown): void {
     this.selectedKey = item
     this.$emit('onItemSelected', item)
   }
 
-  public clearItems () {
+  public clearItems (): void {
     this.citems.forEach(item => {
       this.$emit('onMouseLeaveItem', item.key)
     })
     this.citems = []
   }
 
-  public onEnterItem (item: unknown) {
+  public onEnterItem (item: unknown): void {
     this.$emit('onMouseEnterItem', item)
   }
 
-  public onLeaveItem (item: unknown) {
+  public onLeaveItem (item: unknown): void {
     this.$emit('onMouseLeaveItem', item)
   }
 }

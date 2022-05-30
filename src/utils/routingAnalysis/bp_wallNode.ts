@@ -1,14 +1,11 @@
-import { V } from '@/utils/nodeViewer/v'
 import { NvEl } from '@/utils/nodeViewer/nv_el'
-import { Blueprint } from './blueprint'
 import { Node } from '@/utils/graph/node'
-import { Link } from '@/utils/graph/link'
 import { BlueprintContainer } from './blueprintContainer'
 import { Vec2 } from '../graph/Vec'
 
 export class BpWallNode {
   private node: Node
-  public getNode () {
+  public getNode (): Node {
     return this.node
   }
 
@@ -33,7 +30,7 @@ export class BpWallNode {
     const p = node.getData<Vec2>('position')
     if (p !== undefined) this.setPos(p.x, p.y)
 
-    this.collider.getDom().onmouseenter = e => {
+    this.collider.getDom().onmouseenter = () => {
       this.container.wallNodeEnter(this)
       this.node.setData('_highlighted', true)
       this.point.setStyle({
@@ -44,7 +41,7 @@ export class BpWallNode {
         }`
       })
     }
-    this.collider.getDom().onmouseleave = e => {
+    this.collider.getDom().onmouseleave = () => {
       this.node.setData('_highlighted', undefined)
       this.container.wallNodeExit(this)
       this.point.setStyle({ fill: `${bpContainer.getTheme().WallNodeColor}` })
@@ -59,7 +56,9 @@ export class BpWallNode {
     }
     this.collider.getDom().onmouseup = e => {
       if (this.container.getMode() === 'SUPP_WALL') {
-        if (e.button === 0) { this.container.getBlueprint().removeWallNode(this.node) } else this.container.onMouseUp(e)
+        if (e.button === 0) {
+          this.container.getBlueprint().removeWallNode(this.node)
+        } else this.container.onMouseUp(e)
       } else this.container.onMouseUp(e)
     }
     this.collider.getDom().onmousemove = e => {
@@ -72,7 +71,7 @@ export class BpWallNode {
     this.updateTheme()
   }
 
-  public updateTheme () {
+  public updateTheme (): void {
     this.collider
       .getDom()
       .setAttribute('r', '' + this.container.getTheme().WallNodeColliderRange)
@@ -86,7 +85,7 @@ export class BpWallNode {
     })
   }
 
-  public setPos (x: number, y: number) {
+  public setPos (x: number, y: number): void {
     this.point.setStyle({
       transform: `translate(${Math.trunc(
         x - this.container.getTheme().WallNodeSize / 2
@@ -95,15 +94,15 @@ export class BpWallNode {
     this.collider.setStyle({ transform: `translate(${x}px,${y}px)` })
   }
 
-  public enableMoving () {
+  public enableMoving (): void {
     this.point.setStyle({ 'pointer-events': 'none' })
   }
 
-  public disableMoving () {
+  public disableMoving (): void {
     this.point.setStyle({ 'pointer-events': 'visiblefill' })
   }
 
-  public destroy () {
+  public destroy (): void {
     this.container
       .getNodeLayer()
       .getDom()

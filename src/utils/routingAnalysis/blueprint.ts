@@ -3,35 +3,36 @@ import { Node } from '../graph/node'
 import { Vec2, Vector2 } from '@/utils/graph/Vec'
 import { Link } from '../graph/link'
 import { MetaData } from '../graph/metadata'
+import { LocalEvent, MapLocalEvent } from '../graph/localEvent'
 
 export class Blueprint extends MetaData {
   private wallGraph: Graph
 
-  public onWallNodeAdded () {
+  public onWallNodeAdded (): LocalEvent<{graph: Graph, node: Node}> {
     return this.wallGraph.onNodeAdded()
   }
 
-  public onWallNodeRemoved () {
+  public onWallNodeRemoved (): LocalEvent<{graph: Graph, node: Node}> {
     return this.wallGraph.onNodeRemoved()
   }
 
-  public onWallNodeDataChanged () {
+  public onWallNodeDataChanged (): MapLocalEvent<string, {graph: Graph, node: Node, value: unknown}> {
     return this.wallGraph.onNodeDataChanged()
   }
 
-  public onWallLinkAdded () {
+  public onWallLinkAdded () : LocalEvent<{graph: Graph, link: Link}> {
     return this.wallGraph.onLinkAdded()
   }
 
-  public onWallLinkRemoved () {
+  public onWallLinkRemoved () : LocalEvent<{graph: Graph, link: Link}> {
     return this.wallGraph.onLinkRemoved()
   }
 
-  public onWallLinkDataChanged () {
+  public onWallLinkDataChanged (): MapLocalEvent<string, {graph: Graph, link: Link, value: unknown}> {
     return this.wallGraph.onLinkDataChanged()
   }
 
-  public foreachWallNode (func: { (node: Node): void }) {
+  public foreachWallNode (func: { (node: Node): void }): void {
     this.wallGraph.foreachNode(func)
   }
 
@@ -44,7 +45,7 @@ export class Blueprint extends MetaData {
     return n
   }
 
-  public removeWallNode (node: Node) {
+  public removeWallNode (node: Node): void {
     node.foreachLink(l => {
       l.getNode()
         .getData<Set<Node>>('targetBy')
@@ -57,7 +58,7 @@ export class Blueprint extends MetaData {
     this.wallGraph.removeNode(node)
   }
 
-  public addWall (n1: Node, n2: Node) {
+  public addWall (n1: Node, n2: Node): void {
     const l = n1.addLink(n2)
     n2.getOrAddData<Set<Node>>('targetBy', new Set<Node>()).add(n1)
     l.setData<number>(
@@ -71,7 +72,7 @@ export class Blueprint extends MetaData {
     )
   }
 
-  public removeWall (link: Link) {
+  public removeWall (link: Link): void {
     link.getOriginNode().removeLink(link.getNode())
     link
       .getNode()
@@ -79,7 +80,7 @@ export class Blueprint extends MetaData {
       .delete(link.getOriginNode())
   }
 
-  public isInside (pos: Vec2) {
+  public isInside (pos: Vec2): boolean {
     let leftCount = 0
     let rightCount = 0
     let topCount = 0
@@ -162,7 +163,7 @@ export class Blueprint extends MetaData {
     )
     this.onDataChanged().addMappedListener(
       'scale',
-      arg => {
+      () => {
         this.wallGraph.foreachNode(n => {
           n.foreachLink(l => {
             l.setData<number>(

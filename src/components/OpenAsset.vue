@@ -299,7 +299,7 @@
 import { Component, Prop, Vue } from 'vue-property-decorator'
 import { DataTableHeader } from 'vuetify/types'
 import API from '@/utils/api'
-import { APIFileItem, APIGroupItem, APIFile, APIFileMIME, APIAsset } from '@/utils/models'
+import { APIGroupItem, APIFileMIME, APIAsset } from '@/utils/models'
 
 class DataTableHeaderSelector {
   active = true
@@ -544,7 +544,7 @@ export default class OpenAssetPopUp extends Vue {
         this.selectedFileAfterLoad = id
         this.load()
       })
-      .catch(_ => {
+      .catch(() => {
         console.error('Fail posted resource :', file)
       })
   }

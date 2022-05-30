@@ -113,7 +113,7 @@ export default class SelectPopUp extends Vue {
     sort: { (a: unknown, b: unknown): number }
   }[] = []
 
-  cancel () {
+  cancel (): void {
     (this.callback as { (selected: unknown | null): void })(null)
     this.show = false
   }
@@ -129,7 +129,7 @@ export default class SelectPopUp extends Vue {
     items: unknown[],
     callback: { (item: unknown): void },
     actions: MenuItem[] | null = null
-  ) {
+  ): void {
     this.headers = headers
     this.items = items
     this.callback = callback
@@ -144,7 +144,7 @@ export default class SelectPopUp extends Vue {
         value: 'actions',
         align: 'end',
         sortable: false,
-        sort: (a, b) => {
+        sort: () => {
           return -1
         }
       })

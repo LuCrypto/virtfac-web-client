@@ -1,6 +1,4 @@
-import { V } from '@/utils/nodeViewer/v'
 import { NvEl } from '@/utils/nodeViewer/nv_el'
-import { Blueprint } from './blueprint'
 import { Node } from '@/utils/graph/node'
 import { Link } from '@/utils/graph/link'
 import { BlueprintContainer } from './blueprintContainer'
@@ -62,9 +60,8 @@ export class BpWindow implements Destroyable {
     wall: Link,
     originDistance: number,
     windowWidth: number,
-    isDoor: boolean,
-    linkedWall: Link | undefined = undefined
-  ) {
+    isDoor: boolean
+  ): void {
     if (this.placement !== null) {
       this.placement.wall.onDataChanged().removeMappedListener('length', this)
       this.placement.wall
@@ -74,14 +71,13 @@ export class BpWindow implements Destroyable {
     this.placement = {
       anchor: anchor,
       wall: wall,
-      originDistance:
-        originDistance,
+      originDistance: originDistance,
       windowWidth: windowWidth,
       isDoor: isDoor
     }
     this.placement.wall.onDataChanged().addMappedListener(
       'length',
-      arg => {
+      () => {
         this.updateTransform()
       },
       this
@@ -93,7 +89,7 @@ export class BpWindow implements Destroyable {
     this.updateTransform()
   }
 
-  public updateTheme () {
+  public updateTheme (): void {
     this.collider
       .getDom()
       .setAttribute(
@@ -122,7 +118,7 @@ export class BpWindow implements Destroyable {
     this.displayer.appendChild(this.border, this.back)
   }
 
-  public updateTransform () {
+  public updateTransform (): void {
     if (this.placement === null) return
     const scale = this.container.getBlueprint().getData<number>('scale')
     const p1 = this.placement.wall.getNode().getData<Vec2>('position')
@@ -189,7 +185,7 @@ export class BpWindow implements Destroyable {
   }
   */
 
-  destroy () {
+  destroy (): void {
     if (this.placement !== null) {
       this.placement.wall.onDataChanged().removeMappedListener('length', this)
       this.placement.wall

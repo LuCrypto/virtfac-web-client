@@ -28,7 +28,7 @@ export class NvLink {
   private pointerEventPath: NvEl
 
   private path: NvEl
-  public getPath () {
+  public getPath (): NvEl {
     return this.path
   }
 
@@ -37,7 +37,7 @@ export class NvLink {
     return this.link
   }
 
-  public setLink (link: Link | undefined = undefined) {
+  public setLink (link: Link | undefined = undefined): void {
     if (this.link !== undefined) {
       this.link.onDataChanged().removeMappedListener('width', this)
     }
@@ -85,7 +85,7 @@ export class NvLink {
     this.pointerEventPath.setStyle({ 'pointer-events': 'visiblestroke' })
 
     this.path.setStyle({ 'pointer-events': 'none' })
-    this.pointerEventPath.getDom().onmouseenter = e => {
+    this.pointerEventPath.getDom().onmouseenter = () => {
       this.pointerEventPath.getDom().onmousemove = e => {
         NvLink.mouseMove(e, this)
       }
@@ -102,7 +102,7 @@ export class NvLink {
 
   private tooltip: NvEl | undefined = undefined
 
-  public static mouseMove (event: MouseEvent, nvLink: NvLink) {
+  public static mouseMove (event: MouseEvent, nvLink: NvLink): void {
     if (nvLink.tooltip === undefined) {
       const theme = nvLink.nodeIn.getRoot().theme
       nvLink.tooltip = new NvEl('div', 'node')
@@ -114,7 +114,7 @@ export class NvLink {
         transform: `scale(${Math.max(0.725 / nvLink.root.getScale(), 1)})`
       })
 
-      nvLink.root.onScaleChanged().addListener(arg => {
+      nvLink.root.onScaleChanged().addListener(() => {
         (nvLink.tooltip as NvEl).setStyle({
           transform: `scale(${Math.max(0.725 / nvLink.root.getScale(), 1)})`
         })
@@ -212,7 +212,7 @@ export class NvLink {
       .appendChild(nvLink.tooltip)
   }
 
-  public static mouseExit (event: MouseEvent, nvLink: NvLink) {
+  public static mouseExit (event: MouseEvent, nvLink: NvLink): void {
     if (nvLink.tooltip !== undefined) {
       nvLink.nodeIn
         .getRoot()
@@ -243,10 +243,10 @@ export class NvLink {
   }
 
   private delta: { (): V }
-  public update (delta: V) {
+  public update (delta: V): void {
     if (this.cpath !== undefined) {
-      const p1 = this.root.unscale(this.socketIn.getMiddle().sub(delta))
-      const p2 = this.root.unscale(this.socketOut.getMiddle().sub(delta))
+      // const p1 = this.root.unscale(this.socketIn.getMiddle().sub(delta))
+      // const p2 = this.root.unscale(this.socketOut.getMiddle().sub(delta))
       this.updatePath(this.cpath)
     } else {
       this.refreshSockets()
@@ -262,14 +262,14 @@ export class NvLink {
     // this.delta = delta;
   }
 
-  public delete () {
+  public delete (): void {
     this.root
       .getBackground()
       .getDom()
       .removeChild(this.path.getDom())
   }
 
-  private refreshSockets () {
+  private refreshSockets (): void {
     // const vIn = ((this.cpath != undefined) ? this.cpath[this.cpath.length-1] : this.nodeOut.getPosition()).sub(this.nodeIn.getPosition());
     const vIn = this.nodeOut.getPosition().sub(this.nodeIn.getPosition())
     const vOut = (this.cpath !== undefined
@@ -327,7 +327,7 @@ export class NvLink {
     // return res;
   }
 
-  public updatePath (cPath: Array<V> | undefined) {
+  public updatePath (cPath: Array<V> | undefined): void {
     this.cpath = cPath
     if (cPath === undefined) {
       this.update(this.delta())

@@ -69,7 +69,11 @@
         </v-list-item-group>
       </v-list>
     </v-navigation-drawer>
-    <v-container fluid style="width: auto; margin: 0; flex-grow: 1;" class="pa-0 ma-0">
+    <v-container
+      fluid
+      style="width: auto; margin: 0; flex-grow: 1;"
+      class="pa-0 ma-0"
+    >
       <model-viewer ref="viewer" :displayInspector="true"></model-viewer>
     </v-container>
     <select-pop-up ref="selectPopUp"></select-pop-up>
@@ -80,10 +84,8 @@
 <script lang="ts">
 import Vue from 'vue'
 import Component from 'vue-class-component'
-import ActionContainer, {
-  ActionCallbackData
-} from '@/components/ActionContainer.vue'
-import { APIAsset, APIFile } from '@/utils/models'
+import ActionContainer from '@/components/ActionContainer.vue'
+import { APIAsset } from '@/utils/models'
 
 import SelectPopUp from '@/components/popup/SelectPopUp.vue'
 import InputFieldPopUp from '@/components/popup/InputFieldPopUp.vue'
@@ -99,20 +101,14 @@ import { Rhino3dmLoader } from 'three/examples/jsm/loaders/3DMLoader'
 import { PLYLoader } from 'three/examples/jsm/loaders/PLYLoader'
 import { TDSLoader } from 'three/examples/jsm/loaders/TDSLoader'
 
-import { OBJExporter } from 'three/examples/jsm/exporters/OBJExporter'
-import { STLExporter } from 'three/examples/jsm/exporters/STLExporter'
-
 import {
   BufferGeometry,
   Group,
   Loader,
-  LoadingManager,
   Matrix4,
   Mesh,
   MeshLambertMaterial,
-  MeshPhongMaterial,
   Object3D,
-  TorusGeometry,
   Vector3
 } from 'three'
 import { Session } from '@/utils/session'
@@ -120,7 +116,6 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
 import PopUp from './PopUp.vue'
 import OpenAsset from '@/components/OpenAsset.vue'
 import AssetInfo from '@/components/AssetInfo.vue'
-import { load } from 'dotenv/types'
 import API from '@/utils/api'
 
 class MenuItem {
@@ -134,12 +129,14 @@ class MenuItem {
   }
 }
 
+/*
 interface SettingItem {
   id: number
   idApplication: number
   name: string
   json: string
 }
+*/
 
 @Component({
   components: {
@@ -330,9 +327,11 @@ export default class ErgonomIOAssetContainer extends Vue {
     }
   }
 
+  /*
   onUpdate (data: ActionCallbackData): void {
     //
   }
+*/
 
   inputFile (): void {
     const input = this.$refs.inputFile as HTMLInputElement
@@ -459,7 +458,7 @@ export default class ErgonomIOAssetContainer extends Vue {
     }
   }
 
-  exportGltf () {
+  exportGltf (): void {
     if (this.currentAsset === null) return
     const gltfExporter = new GLTFExporter()
     gltfExporter.parse(
@@ -478,7 +477,7 @@ export default class ErgonomIOAssetContainer extends Vue {
     )
   }
 
-  onFileUploaded (event: Event) {
+  onFileUploaded (event: Event): void {
     if (event != null && event.target != null) {
       const f: File = ((event.target as HTMLInputElement).files as FileList)[0]
       if (f != null) {
@@ -505,7 +504,7 @@ export default class ErgonomIOAssetContainer extends Vue {
     }
   }
 
-  onTextureUploaded (event: Event) {
+  onTextureUploaded (event: Event): void {
     if (event != null && event.target != null) {
       const f: File = ((event.target as HTMLInputElement).files as FileList)[0]
       if (f != null) {
@@ -526,7 +525,7 @@ export default class ErgonomIOAssetContainer extends Vue {
     }
   }
 
-  applyTransform () {
+  applyTransform (): void {
     if (this.currentAsset === null) return
     this.currentAsset.updateMatrix()
     // this.currentAsset.applyMatrix4(this.currentAsset.matrix)
@@ -541,7 +540,7 @@ export default class ErgonomIOAssetContainer extends Vue {
     this.currentAsset.updateMatrix()
   }
 
-  switchAxisMode () {
+  switchAxisMode (): void {
     if (this.viewer === null) return
     switch (this.viewer.getMeshControlMode()) {
       case 'translate':
@@ -556,15 +555,15 @@ export default class ErgonomIOAssetContainer extends Vue {
     }
   }
 
-  switchSnapMode () {
+  switchSnapMode (): void {
     if (this.viewer !== null) this.viewer.switchMeshControlSnap()
   }
 
   onFileInput (files: APIAsset[]): void {
     const file = files.pop()
     if (file != null) {
-      const fileContent = file.uri.split('base64,')[1]
-      const content = atob(fileContent)
+      // const fileContent = file.uri.split('base64,')[1]
+      // const content = atob(fileContent)
       this.loadObjectAsync(file.uri, 'gltf', obj => {
         if (this.viewer !== null) {
           if (this.currentAsset !== null) {
@@ -586,7 +585,7 @@ export default class ErgonomIOAssetContainer extends Vue {
   }
 
   onFileUpload (file: File): Promise<File> {
-    return new Promise<File>((resolve, reject) => {
+    return new Promise<File>((resolve) => {
       const extension = (file.name.split('.').pop() as string).toLowerCase()
       this.loadObjectAsync(
         URL.createObjectURL(file),
@@ -644,7 +643,7 @@ export default class ErgonomIOAssetContainer extends Vue {
     })
   }
 
-  patchFileFromAsset () {
+  patchFileFromAsset (): void {
     if (this.currentAssetApiId !== -1 && this.currentAsset !== null) {
       const exporter = new GLTFExporter()
       exporter.parse(

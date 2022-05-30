@@ -89,18 +89,21 @@ import API from '@/utils/api'
 import { APIAsset } from '@/utils/models'
 import Vue from 'vue'
 import Component from 'vue-class-component'
-import { Prop } from 'vue-property-decorator'
-import { set } from 'vue/types/umd'
 
 @Component({
   computed: {
     iconSize () {
       switch (this.$vuetify.breakpoint.name) {
-        case 'xs': return 256
-        case 'sm': return 256
-        case 'md': return 256
-        case 'lg': return 512
-        case 'xl': return 512
+        case 'xs':
+          return 256
+        case 'sm':
+          return 256
+        case 'md':
+          return 256
+        case 'lg':
+          return 512
+        case 'xl':
+          return 512
       }
     }
   }
@@ -125,7 +128,6 @@ export default class AssetInfo extends Vue {
     ).then(
       response => {
         const r = (response as unknown) as [{ tags: string }]
-        const tagSet = new Set<string>()
         r.forEach(item => {
           item.tags
             .slice(1, -1)
@@ -147,7 +149,7 @@ export default class AssetInfo extends Vue {
     )
   }
 
-  public loadData (id: number) {
+  public loadData (id: number): void {
     if (id === -1) {
     } else {
       this.gltfUri = null
@@ -223,7 +225,7 @@ export default class AssetInfo extends Vue {
     }
   }
 
-  public onTagChanged () {
+  public onTagChanged (): void {
     this.tags.forEach(tag => {
       // const index = this.knownTags.indexOf(tag, 0)
       if (!this.knownTagsSet.has(tag)) {
@@ -233,9 +235,8 @@ export default class AssetInfo extends Vue {
     })
   }
 
-  public removeTag (tag: string) {
+  public removeTag (tag: string): void {
     this.tags.splice(this.tags.indexOf(tag as never, 0), 1)
-    console.log(tag)
   }
 
   cancel (): void {
