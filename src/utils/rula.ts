@@ -7,6 +7,21 @@ interface RULABonesSettings {
   computeScore: (angles: THREE.Vector3, scores: Map<string, number>) => void
 }
 
+export const RULA_LABELS = {
+  TRUNK_POSTURE: 'TRUNK_POSTURE',
+  NECK: 'NECK',
+  RIGHT_SHOULDER: 'RIGHT_SHOULDER',
+  RIGHT_ELBOW: 'RIGHT_ELBOW',
+  RIGHT_WRIST: 'RIGHT_WRIST',
+  RIGHT_WRIST_TWIST: 'RIGHT_WRIST_TWIST',
+  LEFT_ARM: 'LEFT_ARM',
+  LEFT_ELBOW: 'LEFT_ELBOW',
+  LEFT_WRISTLE: 'LEFT_WRISTLE',
+  LEFT_WRIST_TWIST: 'LEFT_WRIST_TWIST',
+  LEGS: 'LEGS',
+  FINAL_SCORE: 'FINAL_SCORE'
+}
+
 const RULA_TABLE_A = [
   [1, 2, 2, 2, 2, 3, 3, 3],
   [2, 2, 2, 2, 3, 3, 3, 3],
@@ -73,7 +88,7 @@ export default class RULA {
         // Rotation du tronc
         if (angles.y < -5 || angles.z > 5) score += 1
 
-        scores.set('POSTURE_DU_TRONC', score)
+        scores.set(RULA_LABELS.TRUNK_POSTURE, score)
       }
     },
     {
@@ -97,7 +112,7 @@ export default class RULA {
 
         // Inclinaison de la nuque
         if (angles.y < -5 || angles.y > 5) score += 1
-        scores.set('NUQUE', score)
+        scores.set(RULA_LABELS.NECK, score)
       }
     },
     {
@@ -122,7 +137,7 @@ export default class RULA {
         // Orientation du bras (= position du coude sur le PDF ??)
         if (angles.x < -10 || angles.x > 10) score += 1
 
-        scores.set('EPAULE_DROITE', score)
+        scores.set(RULA_LABELS.RIGHT_SHOULDER, score)
       }
     },
     {
@@ -139,7 +154,7 @@ export default class RULA {
         if (angles.y >= 60 && angles.y < 100) score += 1
         if (angles.y >= 100) score += 2
 
-        scores.set('COUDE_DROIT', score)
+        scores.set(RULA_LABELS.RIGHT_ELBOW, score)
       }
     },
     {
@@ -162,7 +177,7 @@ export default class RULA {
 
         // Tourner la main (neutre autour de -15° )
         if (angles.y > -10 || angles.y < -20) score += 1
-        scores.set('POIGNET_DROIT', score)
+        scores.set(RULA_LABELS.RIGHT_WRIST, score)
 
         score = 0
 
@@ -171,7 +186,7 @@ export default class RULA {
         if (angles.x > 10) score += 2
         if (angles.x < -5 || angles.x >= -10) score += 1
         if (angles.x < 10) score += 2
-        scores.set('TORSION_POIGNET_DROIT', score)
+        scores.set(RULA_LABELS.RIGHT_WRIST_TWIST, score)
       }
     },
     {
@@ -196,7 +211,7 @@ export default class RULA {
         // Orientation du bras (= position du coude sur le PDF ??)
         if (angles.x < -10 || angles.x > 10) score += 1
 
-        scores.set('EPAULE_GAUCHE', score)
+        scores.set(RULA_LABELS.LEFT_ARM, score)
       }
     },
     {
@@ -213,7 +228,7 @@ export default class RULA {
         if (angles.y <= -60 && angles.y > -100) score += 1
         if (angles.y <= -100) score += 2
 
-        scores.set('COUDE_GAUCHE', score)
+        scores.set(RULA_LABELS.LEFT_ELBOW, score)
       }
     },
     {
@@ -236,7 +251,7 @@ export default class RULA {
 
         // Tourner la main (neutre autour de 15° )
         if (angles.y < 10 || angles.y > 20) score += 1
-        scores.set('POIGNET_GAUCHE', score)
+        scores.set(RULA_LABELS.LEFT_WRISTLE, score)
 
         score = 0
         // Torsion du poignet (différence partielle/extrème jugée à +-10°)
@@ -245,7 +260,7 @@ export default class RULA {
         if (angles.x < -5 || angles.x >= -10) score += 1
         if (angles.x < 10) score += 2
 
-        scores.set('TORSION_POIGNET_GAUCHE', score)
+        scores.set(RULA_LABELS.LEFT_WRIST_TWIST, score)
       }
     }
   ]
@@ -359,7 +374,7 @@ export default class RULA {
     // Step 10 : "POSTURE_DU_TRONC"
 
     // Step 11
-    scores.set('JAMBES', 2)
+    scores.set(RULA_LABELS.LEGS, 2)
 
     // Step 12
     const RowTableB = this.getLocalScore(scores, 'NUQUE', 1, 6)
@@ -390,7 +405,7 @@ export default class RULA {
     )
     const valueTableC = RULA_TABLE_C[RowTableC][ColumnTableC]
 
-    scores.set('FINAL_SCORE', valueTableC)
+    scores.set(RULA_LABELS.FINAL_SCORE, valueTableC)
     this.data.push(new Map(scores))
     this.currentScore = valueTableC
   }
