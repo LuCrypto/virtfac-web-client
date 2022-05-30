@@ -78,11 +78,6 @@
             </v-navigation-drawer>
 
             <v-col class="pa-0 d-flex flex-column" style="overflow: hidden;">
-              <!-- Absolute -->
-              <v-card style="z-index: 10;" class="currentScore">
-                Score RULA : {{ this.rula ? this.rula.currentScore : 0 }}
-              </v-card>
-
               <!-- Rows -->
               <v-row class="ma-0 flex-grow-1">
                 <model-viewer-2
@@ -154,11 +149,11 @@
                     <v-col
                       no-gutters
                       class="flex-grow-0 ma-2"
-                      style="min-width: 200px; max-height: 400px; overflow: auto"
+                      style="min-width: 250px; max-height: 400px; overflow: auto"
                     >
                       <v-expansion-panels flat tile>
                         <v-expansion-panel
-                          v-for="(item, i) in 20"
+                          v-for="(item, i) in axisNeuronSkeleton"
                           :key="i"
                           class="ma-0"
                         >
@@ -166,7 +161,7 @@
                             ripple
                             expand-icon="mdi-menu-down"
                           >
-                            Item
+                            {{ item }}
                           </v-expansion-panel-header>
                           <v-expansion-panel-content
                             >Rotation</v-expansion-panel-content
@@ -206,9 +201,10 @@ import ModelViewer2 from '@/components/ModelViewer2.vue'
 import OpenFile from '@/components/OpenFile.vue'
 import { APIFile } from '@/utils/models'
 import * as THREE from 'three'
-import RULA from '@/utils/rula'
+import RULA, { RULA_LABELS } from '@/utils/rula'
 import PopUp from '@/components/PopUp.vue'
 import GraphChart from '@/components/charts/graphChart.vue'
+import { AxisNeuronSkeleton, UnrealSkeleton } from '@/utils/avatar'
 
 class SkeletonHelper extends THREE.SkeletonHelper {
   skeleton: THREE.Skeleton | null = null
@@ -223,6 +219,16 @@ class MenuItem {
     this.icon = icon
     this.action = action
   }
+}
+
+class DataAnalysis {
+  values: {
+    name: string // exemple : Hips
+    data: {
+      subname: string // exemple : Rotation / Position
+      value: number[]
+    }[]
+  }[] = []
 }
 
 @Component({
@@ -246,29 +252,17 @@ export default class AvatarAnimationComponent extends Vue {
   animationDuration = 0
   clock = new THREE.Clock()
 
+  // Data
+
+  axisNeuronSkeleton = AxisNeuronSkeleton
+  unrealSkeleton = UnrealSkeleton
+  rulaLabels = Object.keys(RULA_LABELS)
+
   mounted (): void {
     this.viewer = this.$refs.viewer as ModelViewer2
     this.createMenu()
     this.createAvatar()
     this.rula = new RULA(this.viewer.scene)
-    this.updateTheme()
-
-    this.$root.$on('changeDarkMode', () => {
-      this.updateTheme()
-    })
-  }
-
-  // TODO : put updateTheme in ModelViewer
-  updateTheme (): void {
-    if (this.viewer !== null) {
-      if (this.$vuetify.theme.dark) {
-        this.viewer.setFogActive(false, 0x1e1e1e)
-        this.viewer.setGrid(100, 100, 0x555555, 0x1e1e1e, 0xeeeeee)
-      } else {
-        this.viewer.setFogActive(false, 0xfefefe)
-        this.viewer.setGrid(100, 100, 0xaaaaaa, 0xfefefe, 0x111111)
-      }
-    }
   }
 
   createMenu (): void {
@@ -311,6 +305,21 @@ export default class AvatarAnimationComponent extends Vue {
       .catch(e => console.error('Cannot load GLTF', e))
   }
 
+  computeData (
+    animation: THREE.AnimationMixer,
+    duration: number,
+    fps = 30
+  ): void {
+    for (let frame = 1; frame <= duration * fps; frame++) {
+      animation.update((frame * duration) / fps)
+
+      if (this.rula) {
+        this.rula.update()
+        console.log('Compute...', frame, duration, this.rula.currentScore)
+      }
+    }
+  }
+
   loadBVHAndAnimate (content: string): void {
     if (this.viewer == null) return
     if (this.viewer.scene == null) return
@@ -338,6 +347,8 @@ export default class AvatarAnimationComponent extends Vue {
       .setEffectiveWeight(1.0)
       .play()
 
+    this.computeData(this.mixer, bvh.clip.duration, 30)
+
     this.displayRULA()
     this.viewer.update = () => this.update()
   }
@@ -348,6 +359,7 @@ export default class AvatarAnimationComponent extends Vue {
     if (this.viewer.scene == null) return
     if (this.bvhSkeletonHelper == null) return
     if (this.rula == null) return
+
     this.rula.createRULAMarkers(this.bvhSkeletonHelper)
     this.rula.update()
   }
