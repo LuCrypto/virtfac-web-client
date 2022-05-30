@@ -25,6 +25,10 @@ export default class GraphChart extends Vue {
   canvas: HTMLCanvasElement | null = null
   context: CanvasRenderingContext2D | null = null
 
+  theme = {
+    backgroundColor: '#252525'
+  }
+
   mounted (): void {
     this.canvas = this.$refs.canvas as HTMLCanvasElement
 
@@ -34,17 +38,29 @@ export default class GraphChart extends Vue {
     this.container = this.canvas.parentNode as HTMLElement
     this.context = this.canvas.getContext('2d')
     this.updateSize()
+    this.updateTheme()
+    this.loop()
 
     if (this.context) {
       this.context.translate(0, this.size.y / 2)
     }
 
-    this.loop()
-
     // Event listener
     this.canvas.addEventListener('mousedown', e => this.beginDrag(e))
     this.canvas.addEventListener('mousemove', e => this.updateDrag(e))
     document.addEventListener('mouseup', e => this.endDrag(e))
+
+    this.$root.$on('changeDarkMode', () => {
+      this.updateTheme()
+    })
+  }
+
+  updateTheme (): void {
+    if (this.$vuetify.theme.dark) {
+      this.theme.backgroundColor = '#252525'
+    } else {
+      this.theme.backgroundColor = '#eeeeee'
+    }
   }
 
   beginDrag (e: MouseEvent): void {
@@ -78,7 +94,7 @@ export default class GraphChart extends Vue {
     // Draw grid
     for (let i = 0; i < squareNumber.x; i++) {
       for (let j = 0; j < squareNumber.y; j++) {
-        this.context.fillStyle = '#252525'
+        this.context.fillStyle = this.theme.backgroundColor
         this.context.fillRect(
           padding.x + offset.x + (i - 1) * gridSize.x,
           padding.y + offset.y + (j - 1) * gridSize.y,
@@ -95,7 +111,7 @@ export default class GraphChart extends Vue {
 
       // Draw x axis values
       this.context.fillStyle = '#ff0000'
-      this.context.font = '16px serif'
+      this.context.font = '16px Montserrat'
       this.context.fillText(`${xAxis}`, 8 + xPosition, 16)
 
       // Draw x axis
@@ -113,7 +129,7 @@ export default class GraphChart extends Vue {
 
       // Draw y axis values
       this.context.fillStyle = '#00ff00'
-      this.context.font = '16px serif'
+      this.context.font = '16px Montserrat'
       this.context.fillText(`${yAxis}`, 8, 16 + yPosition)
 
       // Draw y axis
