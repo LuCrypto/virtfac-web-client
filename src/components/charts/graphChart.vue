@@ -25,9 +25,20 @@ export default class GraphChart extends Vue {
   canvas: HTMLCanvasElement | null = null
   context: CanvasRenderingContext2D | null = null
 
-  theme = {
-    backgroundColor: '#252525'
+  themes = {
+    dark: {
+      backgroundColor: '#151515',
+      gridColor: '#252525',
+      axisAlpha: 0.2
+    },
+    light: {
+      axisAlpha: 0.6,
+      gridColor: '#dddddd',
+      backgroundColor: '#f0f0f0'
+    }
   }
+
+  theme = this.themes.dark
 
   mounted (): void {
     this.canvas = this.$refs.canvas as HTMLCanvasElement
@@ -50,17 +61,11 @@ export default class GraphChart extends Vue {
     this.canvas.addEventListener('mousemove', e => this.updateDrag(e))
     document.addEventListener('mouseup', e => this.endDrag(e))
 
-    this.$root.$on('changeDarkMode', () => {
-      this.updateTheme()
-    })
+    this.$root.$on('changeDarkMode', () => this.updateTheme())
   }
 
   updateTheme (): void {
-    if (this.$vuetify.theme.dark) {
-      this.theme.backgroundColor = '#252525'
-    } else {
-      this.theme.backgroundColor = '#eeeeee'
-    }
+    this.theme = this.$vuetify.theme.dark ? this.themes.dark : this.themes.light
   }
 
   beginDrag (e: MouseEvent): void {
@@ -116,7 +121,7 @@ export default class GraphChart extends Vue {
 
       // Draw x axis
       if (xAxis === 0) {
-        this.context.globalAlpha = 0.2
+        this.context.globalAlpha = this.theme.axisAlpha
         this.context.fillStyle = '#00ff00'
         this.context.fillRect(xPosition, 0, axisSize.x, this.size.y)
         this.context.globalAlpha = 1.0
@@ -134,7 +139,7 @@ export default class GraphChart extends Vue {
 
       // Draw y axis
       if (yAxis === 0) {
-        this.context.globalAlpha = 0.2
+        this.context.globalAlpha = this.theme.axisAlpha
         this.context.fillStyle = '#ff0000'
         this.context.fillRect(0, yPosition, this.size.x, axisSize.y)
         this.context.globalAlpha = 1.0
@@ -170,7 +175,9 @@ export default class GraphChart extends Vue {
     const transform = this.context.getTransform()
     const position = new T().initFromDomMatrix(transform).position
     this.context.setTransform(1, 0, 0, 1, 0, 0)
-    this.context.clearRect(0, 0, this.size.x, this.size.y)
+
+    this.context.fillStyle = this.theme.gridColor
+    this.context.fillRect(0, 0, this.size.x, this.size.y)
     this.drawGrid(position)
     this.context.setTransform(transform)
   }
