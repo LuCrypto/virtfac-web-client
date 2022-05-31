@@ -1,7 +1,13 @@
+<style>
+.v-badge * {
+  color: black !important;
+}
+</style>
+
 <template>
   <v-container
     fluid
-    class="d-flex flex-wrap pt-6 pl-6"
+    class="d-flex flex-wrap pt-6 pl-6 flex-grow-1"
     style="max-height: 100%; overflow: auto;"
   >
     <v-container
@@ -71,26 +77,105 @@
               </v-list>
             </v-navigation-drawer>
 
-            <v-layout column class="ma-0">
-              <div style="width: 100%; height: 10px; flex-grow: 1;">
-                <!-- Score RULA -->
-                <v-card style="z-index: 10;" class="currentScore">
-                  Score RULA : {{ this.rula ? this.rula.currentScore : 0 }}
-                </v-card>
+            <v-col class="pa-0 d-flex flex-column" style="overflow: hidden;">
+              <!-- Rows -->
+              <v-row class="ma-0 flex-grow-1">
+                <model-viewer-2
+                  :displayFog="true"
+                  ref="viewer"
+                ></model-viewer-2>
+              </v-row>
+              <v-row class="ma-0 flex-grow-0">
+                <v-container class="flex-grow-0 ma-0 pa-0" fluid>
+                  <v-row no-gutters class="align-center justify-center">
+                    <!-- Player control -->
+                    <v-col no-gutters class="flex-grow-0">
+                      <v-row no-gutters class="flex-nowrap pa-2 align-center">
+                        <v-btn fab x-small class="mr-2 primary--text">
+                          <v-icon>mdi-format-list-bulleted-square</v-icon>
+                        </v-btn>
+                        <v-btn fab x-small class="mr-2">
+                          <v-icon>mdi-skip-next</v-icon>
+                        </v-btn>
+                        <v-btn fab small class="mr-2 primary black--text">
+                          <v-icon>mdi-play</v-icon>
+                        </v-btn>
+                        <v-btn fab x-small class="mr-2">
+                          <v-icon>mdi-pause</v-icon>
+                        </v-btn>
 
-                <!-- Model viewer -->
-                <ModelViewer ref="viewer"></ModelViewer>
-              </div>
-              <v-slider
-                v-model="animationValue"
-                @input="rula.update()"
-                dense
-                min="0"
-                max="1"
-                step="0.001"
-                class="flex-grow-0 px-6 pt-5"
-              ></v-slider>
-            </v-layout>
+                        <v-btn fab x-small>
+                          <v-icon>mdi-skip-previous</v-icon>
+                        </v-btn>
+                      </v-row>
+                    </v-col>
+                    <v-col no-gutters>
+                      <v-tabs show-arrows align-with-title>
+                        <v-tabs-slider></v-tabs-slider>
+                        <v-tab>
+                          <v-badge
+                            :color="
+                              this.rula
+                                ? this.rula.currentScore <= 2
+                                  ? 'green'
+                                  : this.rula.currentScore <= 4
+                                  ? 'yellow'
+                                  : this.rula.currentScore <= 6
+                                  ? 'orange'
+                                  : 'red'
+                                : 'primary'
+                            "
+                            inline
+                            :value="this.rula ? this.rula.currentScore : 0"
+                            :content="this.rula ? this.rula.currentScore : 0"
+                          >
+                            Rula
+                          </v-badge>
+                        </v-tab>
+                        <v-tab
+                          ><v-badge color="primary" value="" content="0">
+                            Input
+                          </v-badge></v-tab
+                        >
+                        <v-tab
+                          ><v-badge color="primary" value="" content="0">
+                            Output
+                          </v-badge></v-tab
+                        >
+                      </v-tabs>
+                    </v-col>
+                  </v-row>
+                  <v-row no-gutters>
+                    <v-col
+                      no-gutters
+                      class="flex-grow-0 ma-2"
+                      style="min-width: 250px; max-height: 400px; overflow: auto"
+                    >
+                      <v-expansion-panels flat tile>
+                        <v-expansion-panel
+                          v-for="(item, i) in axisNeuronSkeleton"
+                          :key="i"
+                          class="ma-0"
+                        >
+                          <v-expansion-panel-header
+                            ripple
+                            expand-icon="mdi-menu-down"
+                          >
+                            {{ item }}
+                          </v-expansion-panel-header>
+                          <v-expansion-panel-content
+                            >Rotation</v-expansion-panel-content
+                          >
+                        </v-expansion-panel>
+                      </v-expansion-panels>
+                    </v-col>
+                    <v-col no-gutters class="d-flex">
+                      <graph-chart></graph-chart>
+                    </v-col>
+                  </v-row>
+                </v-container>
+              </v-row>
+            </v-col>
           </v-layout>
         </v-card-text>
       </v-card>
@@ -111,14 +196,15 @@
 
 <script lang="ts">
 import Vue from 'vue'
-import { Session } from '@/utils/session'
 import Component from 'vue-class-component'
-import ModelViewer from '@/components/ModelViewer.vue'
+import ModelViewer2 from '@/components/ModelViewer2.vue'
 import OpenFile from '@/components/OpenFile.vue'
 import { APIFile } from '@/utils/models'
 import * as THREE from 'three'
-import RULA from '@/utils/rula'
+import RULA, { RULA_LABELS } from '@/utils/rula'
 import PopUp from '@/components/PopUp.vue'
+import GraphChart from '@/components/charts/graphChart.vue'
+import { AxisNeuronSkeleton, UnrealSkeleton } from '@/utils/avatar'
 
 class SkeletonHelper extends THREE.SkeletonHelper {
   skeleton: THREE.Skeleton | null = null
@@ -135,18 +221,29 @@ class MenuItem {
   }
 }
 
+class DataAnalysis {
+  values: {
+    name: string // exemple : Hips
+    data: {
+      subname: string // exemple : Rotation / Position
+      value: number[]
+    }[]
+  }[] = []
+}
+
 @Component({
   components: {
-    ModelViewer,
+    ModelViewer2,
     OpenFile,
-    PopUp
+    PopUp,
+    GraphChart
   }
 })
 export default class AvatarAnimationComponent extends Vue {
   selectedMenuItem = -1
   menuCollapse = true
   menuItemList: MenuItem[] = []
-  viewer: ModelViewer | null = null
+  viewer: ModelViewer2 | null = null
   animationValue = 0
   rula: RULA | null = null
   bvhSkeletonHelper: SkeletonHelper | null = null
@@ -155,29 +252,17 @@ export default class AvatarAnimationComponent extends Vue {
   animationDuration = 0
   clock = new THREE.Clock()
 
+  // Data
+
+  axisNeuronSkeleton = AxisNeuronSkeleton
+  unrealSkeleton = UnrealSkeleton
+  rulaLabels = Object.keys(RULA_LABELS)
+
   mounted (): void {
-    this.viewer = this.$refs.viewer as ModelViewer
+    this.viewer = this.$refs.viewer as ModelViewer2
     this.createMenu()
     this.createAvatar()
     this.rula = new RULA(this.viewer.scene)
-    this.updateTheme()
-
-    this.$root.$on('changeDarkMode', () => {
-      this.updateTheme()
-    })
-  }
-
-  // TODO : put updateTheme in ModelViewer
-  updateTheme (): void {
-    if (this.viewer !== null) {
-      if (Session.getTheme() === 'dark') {
-        this.viewer.setFogActive(false, 0x1e1e1e)
-        this.viewer.setGrid(100, 100, 0x555555, 0x1e1e1e, 0xeeeeee)
-      } else {
-        this.viewer.setFogActive(false, 0xfefefe)
-        this.viewer.setGrid(100, 100, 0xaaaaaa, 0xfefefe, 0x111111)
-      }
-    }
   }
 
   createMenu (): void {
@@ -220,6 +305,21 @@ export default class AvatarAnimationComponent extends Vue {
       .catch(e => console.error('Cannot load GLTF', e))
   }
 
+  computeData (
+    animation: THREE.AnimationMixer,
+    duration: number,
+    fps = 30
+  ): void {
+    for (let frame = 1; frame <= duration * fps; frame++) {
+      animation.update((frame * duration) / fps)
+
+      if (this.rula) {
+        this.rula.update()
+        console.log('Compute...', frame, duration, this.rula.currentScore)
+      }
+    }
+  }
+
   loadBVHAndAnimate (content: string): void {
     if (this.viewer == null) return
     if (this.viewer.scene == null) return
@@ -247,6 +347,8 @@ export default class AvatarAnimationComponent extends Vue {
       .setEffectiveWeight(1.0)
       .play()
 
+    this.computeData(this.mixer, bvh.clip.duration, 30)
+
     this.displayRULA()
     this.viewer.update = () => this.update()
   }
@@ -257,6 +359,7 @@ export default class AvatarAnimationComponent extends Vue {
     if (this.viewer.scene == null) return
     if (this.bvhSkeletonHelper == null) return
     if (this.rula == null) return
+
     this.rula.createRULAMarkers(this.bvhSkeletonHelper)
     this.rula.update()
   }

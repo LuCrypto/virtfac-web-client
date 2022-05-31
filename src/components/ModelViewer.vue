@@ -16,16 +16,11 @@
 </style>
 
 <template>
-  <v-container
-    fluid
-    ref="mainContainer"
-    style="width:100%; height:100%; display:flex; flex-direction:row"
-    class="pa-0 ma-0"
-  >
+  <v-container fluid ref="mainContainer" class="pa-0 ma-0 d-flex flex-row">
     <div
       class="viewer-3d"
       ref="canvasContainer"
-      style="overflow:hidden; position:relative"
+      style="overflow:hidden; position:relative;"
     >
       <model-viewer-stats
         ref="stats"
@@ -587,8 +582,6 @@ export default class ModelViewer extends Vue {
 
     this.setEnvMap(studioEnvMap, 'HDR')
 
-    this.createSphere(0, 0, 0, 1)
-
     this.fov = 75
 
     this.undoManager.bind()
@@ -644,14 +637,16 @@ export default class ModelViewer extends Vue {
 
   updateSize (): void {
     const size = new V(
-      this.renderer.domElement.offsetWidth,
-      this.renderer.domElement.offsetHeight
+      this.container ? this.container.offsetWidth : 0,
+      this.container ? this.container.offsetHeight : 0
     )
+
     if (!this.size.equal(size)) {
       this.size = size
       this.camera.aspect = this.size.x / this.size.y
       this.camera.updateProjectionMatrix()
-      this.renderer.setSize(this.size.x, this.size.y)
+
+      this.renderer.setSize(this.size.x, this.size.y, false)
       this.controls.update()
     }
   }
