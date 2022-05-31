@@ -49,7 +49,7 @@ export default class App extends Vue {
   transparency: boolean = this.query.transparency === 'true'
   snackbarShow = false
   lastSnackBarCall = 0
-  snackbarTime = 4000
+  snackbarTime = 8000
   snackbarText = ''
   zoom = 1
   size = {
