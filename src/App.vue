@@ -14,7 +14,7 @@
     </v-main>
 
     <!-- Global bottom message -->
-    <v-snackbar v-model="snackbarShow" :timeout="snackbarTime">
+    <v-snackbar v-model="snackbarShow" :timeout="-1">
       {{ snackbarText }}
 
       <template v-slot:action="{ attrs }">
@@ -48,6 +48,7 @@ export default class App extends Vue {
   fullpage: boolean = this.query.fullpage === 'true'
   transparency: boolean = this.query.transparency === 'true'
   snackbarShow = false
+  lastSnackBarCall = 0
   snackbarTime = 4000
   snackbarText = ''
   zoom = 1
@@ -66,7 +67,14 @@ export default class App extends Vue {
     // Global botom message handler
     this.$root.$on('bottom-message', (message: string) => {
       this.snackbarShow = true
+      const snackBarCall = Date.now()
+      this.lastSnackBarCall = snackBarCall
       this.snackbarText = message
+      setTimeout(() => {
+        if (snackBarCall === this.lastSnackBarCall) {
+          this.snackbarShow = false
+        }
+      }, this.snackbarTime)
     })
 
     // User disconnection handler
