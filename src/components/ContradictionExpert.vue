@@ -49,6 +49,7 @@
         :openFile="true"
         accept=".xlsx"
         @fileInput="handleFile"
+        :uploadPipeline="createConstraintProject"
       ></open-file>
     </pop-up>
     <select-pop-up ref="selectPopUp"></select-pop-up>
@@ -85,6 +86,15 @@ class MenuItem {
   }
 }
 
+class ConstraintProject {
+  public xlsxUri = ''
+  public shapes = new Array<{ date: number; name: string; data: unknown }>()
+
+  constructor (xlsxUri: string) {
+    this.xlsxUri = xlsxUri
+  }
+}
+
 interface SettingItem {
   id: number
   idApplication: number
@@ -113,6 +123,7 @@ export default class ContradictionExpert extends Vue {
   constraintGraph: ConstraintGraph = new ConstraintGraph()
   fileName = ''
   openedFile: APIFile | null = null
+  openedProject: ConstraintProject | null = null
 
   getGraph (): Graph {
     return (this.constraintGraph as ConstraintGraph).getRawGraph()
@@ -130,6 +141,7 @@ export default class ContradictionExpert extends Vue {
         (this.$refs.filePopUp as PopUp).open()
       })
     )
+    /*
     this.menuItemList.push(
       new MenuItem('Save shape', 'mdi-graph-outline', () => {
         this.saveShape()
@@ -140,6 +152,7 @@ export default class ContradictionExpert extends Vue {
         this.loadShape()
       })
     )
+    */
     this.menuItemList.push(new MenuItem('Settings', 'mdi-cog', () => true))
     this.menuItemList.push(
       new MenuItem('Layouts', 'mdi-graphql', () => {
@@ -187,64 +200,65 @@ export default class ContradictionExpert extends Vue {
       console.log('This type of file cannot be read yet.')
     } else {
       this.openedFile = files[0]
-      const workbook = XLSX.read(files[0].uri.split('base64,')[1], {
-        type: 'base64'
-      })
+      this.openedProject = JSON.parse(
+        atob(files[0].uri.split('base64,')[1])
+      ) as ConstraintProject
+      console.log(this.openedFile, this.openedProject)
+
+      const workbook = XLSX.read(
+        this.openedProject.xlsxUri.split('base64,')[1],
+        {
+          type: 'base64'
+        }
+      )
       this.constraintGraph.loadXLSX(workbook as IWorkBook)
       this.fileName = files[0].name
+      // this.projectId = files[0].idProject
     }
+  }
+
+  createConstraintProject (xlsx: File): Promise<File> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = () => {
+        const xlsxUri = reader.result as string
+        const constraintProject = new ConstraintProject(xlsxUri)
+
+        const blob = new Blob([JSON.stringify(constraintProject)], {
+          type: 'application/virtfac.constraint+json'
+        })
+        const f = new File([blob], xlsx.name, {
+          type: 'application/virtfac.constraint+json'
+        })
+        resolve(f)
+      }
+      reader.onerror = error => {
+        reject(error)
+      }
+      reader.readAsDataURL(xlsx)
+    })
   }
 
   // dropHandler(e : )
   saveShape (): void {
-    /*
-    const settingOBJ = {
-      name: this.fileName,
-      type: 'graph_position',
-      data: this.constraintGraph.getRawGraph().toJsonOBJ()
-    }
-    if (this.openedFile !== null){
-      API.put(
+    //*
+    if (this.openedProject !== null && this.openedFile !== null) {
+      this.openedProject.shapes.push({
+        date: Date.now(),
+        name: 'shape ' + this.openedProject.shapes.length,
+        data: this.constraintGraph.getRawGraph().toJsonOBJ()
+      })
+
+      API.patch(
         this,
-        '/resources/files',
-        JSON.stringify(
-        new APIFile({idProject: this.openedFile.idProject,
-          tags: '["graph_shape"]',
-          mime: 'application/json',
-          uri:
-          }).toJSON())
+        '/resources/files/' + this.openedFile.id,
+        JSON.stringify({
+          uri: JSON.stringify(this.openedProject)
+        })
       )
+        .then(console.log)
+        .catch(console.error)
     }
-    /**/
-    /*
-    if (this.inputFieldPopUp != null) {
-      this.inputFieldPopUp.open(
-        'Save Shape',
-        'enter shape name',
-        this.fileName,
-        text => {
-          if (text != null) {
-            const settingOBJ = {
-              name: text,
-              type: 'graph_position',
-              initialProject: this.fileName,
-              date: new Date(),
-              data: this.constraintGraph.getRawGraph().toJsonOBJ()
-            }
-            API.post(
-              this,
-              '/application-settings',
-              JSON.stringify({
-                idApplication: 2,
-                name: text,
-                json: JSON.stringify(settingOBJ)
-              })
-            )
-          }
-        }
-      )
-    }
-    /**/
   }
 
   selectLayout (): void {
@@ -305,6 +319,28 @@ export default class ContradictionExpert extends Vue {
   }
 
   loadShape (): void {
+    if (this.openedFile === null) return
+    if (this.openedFile.idProject === 0) {
+      return
+    }
+    const searchParam = JSON.stringify({
+      select: [
+        'id',
+        'creationDate',
+        'modificationDate',
+        'name',
+        'color',
+        'idProject'
+      ],
+      where: {
+        idProject: this.openedFile.idProject
+      }
+    })
+
+    API.post(this, '/resources/files', searchParam).then(response => {
+      console.log(response)
+    })
+    /*
     API.get(
       this,
       '/application-settings',
@@ -424,6 +460,7 @@ export default class ContradictionExpert extends Vue {
         )
       }
     })
+    */
   }
 
   /*
