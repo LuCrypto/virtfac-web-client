@@ -7,7 +7,7 @@
       background: this.transparency ? 'transparent' : ''
     }"
   >
-    <!-- Display of not vue in fullpage -->
+    <!-- Display or not vue in fullpage -->
     <nav-bar v-if="!this.fullpage"></nav-bar>
     <v-main style="background-color: transparent;">
       <router-view style="background-color: transparent;"></router-view>

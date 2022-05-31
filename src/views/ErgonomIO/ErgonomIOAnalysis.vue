@@ -114,20 +114,10 @@
                         <v-tabs-slider></v-tabs-slider>
                         <v-tab>
                           <v-badge
-                            :color="
-                              this.rula
-                                ? this.rula.currentScore <= 2
-                                  ? 'green'
-                                  : this.rula.currentScore <= 4
-                                  ? 'yellow'
-                                  : this.rula.currentScore <= 6
-                                  ? 'orange'
-                                  : 'red'
-                                : 'primary'
-                            "
+                            :color="this.data[this.frame].getRulaColor()"
                             inline
-                            :value="this.rula ? this.rula.currentScore : 0"
-                            :content="this.rula ? this.rula.currentScore : 0"
+                            :value="this.data[this.frame].getRulaScore() >= 0"
+                            :content="this.data[this.frame].getRulaScore()"
                           >
                             Rula
                           </v-badge>
@@ -205,6 +195,7 @@ import RULA, { RULA_LABELS } from '@/utils/rula'
 import PopUp from '@/components/PopUp.vue'
 import GraphChart from '@/components/charts/graphChart.vue'
 import { AxisNeuronSkeleton, UnrealSkeleton } from '@/utils/avatar'
+import T from '@/utils/transform'
 
 class SkeletonHelper extends THREE.SkeletonHelper {
   skeleton: THREE.Skeleton | null = null
@@ -221,14 +212,29 @@ class MenuItem {
   }
 }
 
-class DataAnalysis {
-  values: {
-    name: string // exemple : Hips
-    data: {
-      subname: string // exemple : Rotation / Position
-      value: number[]
-    }[]
-  }[] = []
+class DataFrame {
+  rula: Map<string, number> = new Map<string, number>()
+  input: Map<string, T> = new Map<string, T>()
+  output: Map<string, T> = new Map<string, T>()
+
+  constructor (data: Partial<DataFrame> | null = null) {
+    Object.assign(this, data)
+  }
+
+  getRulaScore (): number {
+    return this.rula.get('FINAL_SCORE') || -1
+  }
+
+  getRulaColor (): string {
+    const score = this.getRulaScore()
+    return score <= 2
+      ? 'green'
+      : score <= 4
+        ? 'yellow'
+        : score <= 6
+          ? 'orange'
+          : 'red'
+  }
 }
 
 @Component({
@@ -252,7 +258,9 @@ export default class AvatarAnimationComponent extends Vue {
   animationDuration = 0
   clock = new THREE.Clock()
 
-  // Data
+  // Analysed data
+  data: DataFrame[] = [new DataFrame()]
+  frame = 0
 
   axisNeuronSkeleton = AxisNeuronSkeleton
   unrealSkeleton = UnrealSkeleton
@@ -262,7 +270,6 @@ export default class AvatarAnimationComponent extends Vue {
     this.viewer = this.$refs.viewer as ModelViewer2
     this.createMenu()
     this.createAvatar()
-    this.rula = new RULA(this.viewer.scene)
   }
 
   createMenu (): void {
@@ -306,18 +313,52 @@ export default class AvatarAnimationComponent extends Vue {
   }
 
   computeData (
+    skeleton: THREE.Bone,
     animation: THREE.AnimationMixer,
     duration: number,
     fps = 30
   ): void {
+    if (!this.viewer || !this.bvhSkeletonHelper) {
+      return
+    }
+
+    skeleton.matrixAutoUpdate = false
+
+    const rula = new RULA(this.viewer.scene)
+    rula.createRULAMarkers(this.bvhSkeletonHelper)
+
     for (let frame = 1; frame <= duration * fps; frame++) {
       animation.update((frame * duration) / fps)
-
-      if (this.rula) {
-        this.rula.update()
-        console.log('Compute...', frame, duration, this.rula.currentScore)
-      }
+      skeleton.updateMatrix()
+      this.data.push(
+        new DataFrame({
+          rula: rula.compute()
+        })
+      )
+      console.log('Compute...')
     }
+    skeleton.matrixAutoUpdate = true
+  }
+
+  download (filename: string, text: string): void {
+    const element = document.createElement('a')
+    element.setAttribute(
+      'href',
+      'data:text/plain;charset=utf-8,' + encodeURIComponent(text)
+    )
+    element.setAttribute('download', filename)
+    element.style.display = 'none'
+    document.body.appendChild(element)
+    element.click()
+    document.body.removeChild(element)
+  }
+
+  export (): void {
+    const csv = ''
+    // const header = [...this.data[0].keys()].join(',')
+    // const values = this.data.map(o => [...o.values()].join(',')).join('\n')
+    // csv += header + '\n' + values
+    this.download('data.csv', csv)
   }
 
   loadBVHAndAnimate (content: string): void {
@@ -347,27 +388,13 @@ export default class AvatarAnimationComponent extends Vue {
       .setEffectiveWeight(1.0)
       .play()
 
-    this.computeData(this.mixer, bvh.clip.duration, 30)
+    // Convert BVH to data
+    this.computeData(bvh.skeleton.bones[0], this.mixer, bvh.clip.duration, 30)
 
-    this.displayRULA()
     this.viewer.update = () => this.update()
   }
 
-  // Enable or not RULA visualization
-  displayRULA (): void {
-    if (this.viewer == null) return
-    if (this.viewer.scene == null) return
-    if (this.bvhSkeletonHelper == null) return
-    if (this.rula == null) return
-
-    this.rula.createRULAMarkers(this.bvhSkeletonHelper)
-    this.rula.update()
-  }
-
   update (): void {
-    if (this.rula == null) return
-    this.rula.update()
-
     if (this.mixer == null) return
     const delta = this.clock.getDelta()
     this.animationTime = (this.animationTime + delta) % this.animationDuration
