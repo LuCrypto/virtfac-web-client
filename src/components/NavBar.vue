@@ -4,7 +4,11 @@
     <v-app-bar app color="primary" light>
       <v-app-bar-nav-icon @click="drawer = !drawer"></v-app-bar-nav-icon>
       <div class="d-flex align-center">
-        <div class="display-2 font-weight-black" @click="clickTitle()">
+        <div
+          class="display-2 font-weight-black"
+          style="user-select: none;"
+          @click="clickTitle()"
+        >
           VIRTFac
         </div>
       </div>
