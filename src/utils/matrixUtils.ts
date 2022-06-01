@@ -629,7 +629,7 @@ export class MatrixUtils {
 
     for (let currentTest = 0; currentTest < 1; currentTest++) {
       const startTime = Date.now()
-      const m = new Matrix(30, 30)
+      const m = new Matrix(50, 50)
       const nbfamilly = randInt(0, Math.min(m.nbRow, m.nbColumn) / 2)
       const cGroup = []
       const rGroup = []
@@ -650,7 +650,7 @@ export class MatrixUtils {
           }
         }
       }
-      // m.printMat()
+      m.printMat()
       const maxV = m.maxValue()
       m.multScalar(1 / maxV)
       const initScore = MatrixUtils.concordance(m, z, alpha)
@@ -663,10 +663,11 @@ export class MatrixUtils {
         for (let j = 0; j < m.nbColumn; j++) {
           a.switchCols(randInt(0, a.nbColumn - 1), randInt(0, a.nbColumn - 1))
         }
+        a.printMat()
 
         r = this.blockDiagonalisation(a, alpha)
         a.multScalar(maxV)
-        // a.printMat()
+        a.printMat()
 
         console.log({
           initScore: initScore,
