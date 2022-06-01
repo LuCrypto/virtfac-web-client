@@ -116,8 +116,6 @@ export class GraphLayout {
        ------  x=0, y>0  ---
        |                   |
        x=-s/2,y=0      x=s/2, y=0
-    loop :
-      get next node with y>0,
     */
 
     let childPositionning: 'LEFT' | 'MIDDLE' | 'RIGHT' = 'MIDDLE'
@@ -154,6 +152,12 @@ export class GraphLayout {
       }
     })
 
+    /*
+    loop :
+      get next node n with y>0, get the moy x coord from already positionned linked nodes and use it as reference.
+      from this x position we determine if we add childs to the left/right or alternate(middle)
+      loop to the next node.
+    */
     for (let i = start + 1; i < nodeArray.length; i++) {
       const node = nodeArray[i].n
 

@@ -4,7 +4,7 @@
     <v-toolbar color="primary" flat>
       <v-toolbar-title class="black--text">
         <v-icon left v-text="'mdi-file-document'"></v-icon>
-        {{ openFile ? 'Open files' : 'Files manager' }}
+        {{ openFile ? 'Open Asset' : 'Files manager' }}
       </v-toolbar-title>
     </v-toolbar>
 
@@ -91,7 +91,7 @@
             :items="myfileList"
             :key="refreshTableKey"
             item-key="id"
-            :height="this.isMobileView ? undefined : 530"
+            :height="this.isMobileView ? undefined : '362'"
             :fixed-header="!this.isMobileView"
             :search="'true'"
             :show-select="true"
@@ -102,6 +102,7 @@
             :custom-filter="customFilter"
             :loading="waitingTasks > 0"
             loading-text="Loading... Please wait"
+            dense
           >
             <!-- Custom header button for "actions" column -->
             <template v-slot:[`header.actions`]>

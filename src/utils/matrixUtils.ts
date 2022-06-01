@@ -14,6 +14,10 @@ export class Matrix {
     return this._nbRow
   }
 
+  /**
+   * check if the index of the row is valid
+   * @param row
+   */
   private checkRow (row: number) {
     if (row < 0 || row >= this._nbRow) {
       throw new Error(
@@ -26,6 +30,10 @@ export class Matrix {
     }
   }
 
+  /**
+   * check if the index of the column is valid
+   * @param col
+   */
   private checkCol (col: number) {
     if (col < 0 || col >= this._nbCol) {
       throw new Error(
@@ -50,16 +58,40 @@ export class Matrix {
     this.data[row][col] = value
   }
 
+  /**
+   * default : index of the row at the creation of the matrix
+   * @param row
+   * @returns label of row
+   */
   public getRowLabel (row: number): number {
     this.checkRow(row)
     return this.data[row][this._nbCol]
   }
 
+  public setRowLabel (row: number, value: number): void {
+    this.checkRow(row)
+    this.data[row][this._nbCol] = value
+  }
+
+  /**
+   * default : index of the col at the creation of the matrix
+   * @param col
+   * @returns label of column
+   */
   public getColLabel (col: number): number {
     this.checkCol(col)
     return this.data[this._nbRow][col]
   }
 
+  public setColLabel (col: number, value: number): void {
+    this.checkCol(col)
+    this.data[this._nbRow][col] = value
+  }
+
+  /**
+   * reassign position of each rows
+   * @param positions
+   */
   public reorderRows (positions: Array<number>): void {
     if (positions.length !== this.nbRow) {
       throw new Error('positions needs to place all rows')
@@ -72,6 +104,10 @@ export class Matrix {
     }
   }
 
+  /**
+   * reassign position of each column
+   * @param positions
+   */
   public reorderColumns (positions: Array<number>): void {
     if (positions.length !== this.nbColumn) {
       throw new Error('positions needs to place all columns')
@@ -177,6 +213,12 @@ export class Matrix {
     }
   }
 
+  /**
+   * finds the first column that meets the condition of the predicate
+   * @param row
+   * @param predicate
+   * @returns
+   */
   public findIndexInRow (
     row: number,
     predicate: { (value: number, index: number, data: Array<number>): boolean }
@@ -260,6 +302,15 @@ export class MatrixUtils {
     return sum
   }
 
+  /**
+   * return the concordance score of a column
+   * @param a matrix
+   * @param rowGroups map that assign row to groups
+   * @param colGroups map that assign column to groups
+   * @param alpha impact on the score of missing 1 and correct 1 (between 0 and 1 : 0 => only decrease with missing 1, 1 => only grow with correct 1)
+   * @param col index of computed column
+   * @returns
+   */
   public static groupColConcordance (
     a: Matrix,
     rowGroups: Map<number, number>,
@@ -270,17 +321,25 @@ export class MatrixUtils {
     const beta = 1 - alpha
     let sum = 0
     for (let i = 0; i < a.nbRow; i++) {
-      sum +=
-        (alpha * a.get(i, col) - beta * (1 - a.get(i, col))) *
-        ((rowGroups.get(i) as number) === (colGroups.get(col) as number)
-          ? (rowGroups.get(i) as number) === -1
-            ? 0
-            : 1
-          : 0)
+      if (
+        (rowGroups.get(i) as number) === (colGroups.get(col) as number) &&
+        (rowGroups.get(i) as number) !== -1
+      ) {
+        sum += alpha * a.get(i, col) - beta * (1 - a.get(i, col))
+      }
     }
     return sum
   }
 
+  /**
+   * return the concordance score of a row
+   * @param a matrix
+   * @param rowGroups map that assign row to groups
+   * @param colGroups map that assign column to groups
+   * @param alpha impact on the score of missing 1 and correct 1 (between 0 and 1 : 0 => only decrease with missing 1, 1 => only grow with correct 1)
+   * @param row index of computed row
+   * @returns
+   */
   public static groupRowConcordance (
     a: Matrix,
     rowGroups: Map<number, number>,
@@ -291,31 +350,21 @@ export class MatrixUtils {
     const beta = 1 - alpha
     let sum = 0
     for (let j = 0; j < a.nbColumn; j++) {
-      sum +=
-        (alpha * a.get(row, j) - beta * (1 - a.get(row, j))) *
-        ((rowGroups.get(row) as number) === (colGroups.get(j) as number)
-          ? (rowGroups.get(row) as number) === -1
-            ? 0
-            : 1
-          : 0)
+      if (
+        (rowGroups.get(row) as number) === (colGroups.get(j) as number) &&
+        (rowGroups.get(row) as number) !== -1
+      ) {
+        sum += alpha * a.get(row, j) - beta * (1 - a.get(row, j))
+      }
     }
     return sum
   }
 
   public static blockDiagonalisation (a: Matrix, alpha = 0.5): number {
-    const colGroups = new Map<number, number>()
-    // colGroups.push(1)
-    const rowGroups = new Map<number, number>()
+    const bestColGroups = new Map<number, number>()
+    const bestRowGroups = new Map<number, number>()
 
     let nbGroups = 0
-
-    for (let i = 0; i < a.nbColumn; i++) {
-      colGroups.set(i, -1)
-    }
-
-    for (let i = 0; i < a.nbRow; i++) {
-      rowGroups.set(i, -1)
-    }
 
     // rowGroups.push(1)
     let rindex = 0
@@ -333,65 +382,45 @@ export class MatrixUtils {
       }
     } while (rindex !== -1 && rindex < a.nbRow)
 
-    // main loop
-    let modif = false
-    do {
-      modif = false
-      // assign row
-      for (let i = 0; i < a.nbRow; i++) {
-        const optimalChoice = {
-          score: MatrixUtils.groupRowConcordance(
-            a,
-            rowGroups,
-            colGroups,
-            alpha,
-            i
-          ),
-          group: rowGroups.get(i) as number
-        }
-        {
-          // to collector
-          rowGroups.set(i, -1)
-          const score = MatrixUtils.groupRowConcordance(
-            a,
-            rowGroups,
-            colGroups,
-            alpha,
-            i
-          )
-          if (optimalChoice.score < score) {
-            optimalChoice.score = score
-            optimalChoice.group = -1
-            modif = true
-          } else {
-            rowGroups.set(i, optimalChoice.group)
-          }
-        }
-        for (let g = 0; g < nbGroups; g++) {
-          rowGroups.set(i, g)
-          const score = MatrixUtils.groupRowConcordance(
-            a,
-            rowGroups,
-            colGroups,
-            alpha,
-            i
-          )
-          if (score > optimalChoice.score) {
-            optimalChoice.score = score
-            optimalChoice.group = g
-            modif = true
-          } else {
-            rowGroups.set(i, optimalChoice.group)
-          }
-        }
+    let nbLoops = 0
+    let oldScore = 0
 
-        // create new group
-        const g = nbGroups
-        for (let j = 0; j < a.nbColumn; j++) {
-          const v = a.get(i, j)
-          if (v !== 0 && (colGroups.get(j) as number) === -1) {
-            rowGroups.set(i, g)
-            colGroups.set(j, g)
+    for (let l = 0; l < 10; l++) {
+      const colGroups = new Map<number, number>()
+      const rowGroups = new Map<number, number>()
+      // init group attribution to collector for all cols and rows
+      const rowOrder = new Array<number>()
+      const colOrder = new Array<number>()
+
+      for (let i = 0; i < a.nbColumn; i++) {
+        colGroups.set(i, -1)
+        colOrder.splice(Math.trunc(Math.random() * colOrder.length), 0, i)
+      }
+
+      for (let i = 0; i < a.nbRow; i++) {
+        rowGroups.set(i, -1)
+        rowOrder.splice(Math.trunc(Math.random() * rowOrder.length), 0, i)
+      }
+
+      // main loop
+      let modif = false
+      do {
+        modif = false
+        // assign row
+        rowOrder.forEach(i => {
+          const optimalChoice = {
+            score: MatrixUtils.groupRowConcordance(
+              a,
+              rowGroups,
+              colGroups,
+              alpha,
+              i
+            ),
+            group: rowGroups.get(i) as number
+          }
+          {
+            // to collector
+            rowGroups.set(i, -1)
             const score = MatrixUtils.groupRowConcordance(
               a,
               rowGroups,
@@ -399,72 +428,91 @@ export class MatrixUtils {
               alpha,
               i
             )
-            if (score < optimalChoice.score) {
-              colGroups.set(j, -1)
-              rowGroups.set(i, optimalChoice.group)
+            if (optimalChoice.score <= score) {
+              optimalChoice.score = score
+              optimalChoice.group = -1
+              if (optimalChoice.score < score) modif = true
             } else {
-              modif = true
-              nbGroups++
-              break
+              rowGroups.set(i, optimalChoice.group)
             }
           }
-        }
-      }
-
-      // assign col
-      for (let j = 0; j < a.nbColumn; j++) {
-        const optimalChoice = {
-          score: MatrixUtils.groupColConcordance(
-            a,
-            rowGroups,
-            colGroups,
-            alpha,
-            j
-          ),
-          group: colGroups.get(j) as number
-        }
-        {
-          // to collector
-          colGroups.set(j, -1)
-          const score = MatrixUtils.groupColConcordance(
-            a,
-            rowGroups,
-            colGroups,
-            alpha,
-            j
-          )
-          if (optimalChoice.score < score) {
-            optimalChoice.score = score
-            optimalChoice.group = -1
-            modif = true
-          } else {
-            colGroups.set(j, optimalChoice.group)
-          }
-        }
-        for (let g = 0; g < nbGroups; g++) {
-          colGroups.set(j, g)
-          const score = MatrixUtils.groupColConcordance(
-            a,
-            rowGroups,
-            colGroups,
-            alpha,
-            j
-          )
-          if (score > optimalChoice.score) {
-            optimalChoice.score = score
-            optimalChoice.group = g
-            modif = true
-          } else {
-            colGroups.set(j, optimalChoice.group)
-          }
-        }
-
-        // create new group
-        const g = nbGroups
-        for (let i = 0; i < a.nbRow; i++) {
-          const v = a.get(i, j)
-          if (v !== 0 && (rowGroups.get(i) as number) === -1) {
+          // search best group
+          for (let g = 0; g < nbGroups; g++) {
             rowGroups.set(i, g)
+            const score = MatrixUtils.groupRowConcordance(
+              a,
+              rowGroups,
+              colGroups,
+              alpha,
+              i
+            )
+            if (score > optimalChoice.score) {
+              optimalChoice.score = score
+              optimalChoice.group = g
+              modif = true
+            } else {
+              rowGroups.set(i, optimalChoice.group)
+            }
+          }
+
+          // create new group
+          const g = nbGroups
+          for (let j = 0; j < a.nbColumn; j++) {
+            const v = a.get(i, j)
+            if (v !== 0 && (colGroups.get(j) as number) === -1) {
+              rowGroups.set(i, g)
+              colGroups.set(j, g)
+              const score = MatrixUtils.groupRowConcordance(
+                a,
+                rowGroups,
+                colGroups,
+                alpha,
+                i
+              )
+              if (score < optimalChoice.score) {
+                colGroups.set(j, -1)
+                rowGroups.set(i, optimalChoice.group)
+              } else {
+                modif = true
+                nbGroups++
+                break
+              }
+            }
+          }
+        })
+
+        // assign col
+        colOrder.forEach(j => {
+          const optimalChoice = {
+            score: MatrixUtils.groupColConcordance(
+              a,
+              rowGroups,
+              colGroups,
+              alpha,
+              j
+            ),
+            group: colGroups.get(j) as number
+          }
+          {
+            // to collector
+            colGroups.set(j, -1)
+            const score = MatrixUtils.groupColConcordance(
+              a,
+              rowGroups,
+              colGroups,
+              alpha,
+              j
+            )
+            if (optimalChoice.score <= score) {
+              optimalChoice.score = score
+              optimalChoice.group = -1
+              if (optimalChoice.score < score) modif = true
+            } else {
+              colGroups.set(j, optimalChoice.group)
+            }
+          }
+          // search best group
+          for (let g = 0; g < nbGroups; g++) {
             colGroups.set(j, g)
             const score = MatrixUtils.groupColConcordance(
               a,
@@ -473,20 +521,68 @@ export class MatrixUtils {
               alpha,
               j
             )
-            if (score < optimalChoice.score) {
-              colGroups.set(j, optimalChoice.group)
-              rowGroups.set(i, -1)
-            } else {
+            if (score > optimalChoice.score) {
+              optimalChoice.score = score
+              optimalChoice.group = g
               modif = true
-              nbGroups++
-              break
+            } else {
+              colGroups.set(j, optimalChoice.group)
             }
           }
-        }
-      }
-    } while (modif)
 
+          // create new group
+          const g = nbGroups
+          for (let i = 0; i < a.nbRow; i++) {
+            const v = a.get(i, j)
+            if (v !== 0 && (rowGroups.get(i) as number) === -1) {
+              rowGroups.set(i, g)
+              colGroups.set(j, g)
+              const score = MatrixUtils.groupColConcordance(
+                a,
+                rowGroups,
+                colGroups,
+                alpha,
+                j
+              )
+              if (score < optimalChoice.score) {
+                colGroups.set(j, optimalChoice.group)
+                rowGroups.set(i, -1)
+              } else {
+                modif = true
+                nbGroups++
+                break
+              }
+            }
+          }
+        })
+        nbLoops++
+      } while (modif)
+
+      const score = MatrixUtils.groupConcordance(a, rowGroups, colGroups, alpha)
+      if (score > oldScore) {
+        bestColGroups.clear()
+        bestRowGroups.clear()
+
+        colGroups.forEach((value, key) => {
+          bestColGroups.set(key, value)
+        })
+        rowGroups.forEach((value, key) => {
+          bestRowGroups.set(key, value)
+        })
+        oldScore = score
+      }
+    }
+
+    console.log('nbLoops: ' + nbLoops)
     // console.log(MatrixUtils.groupConcordance(a, rowGroups, colGroups, alpha))
+
+    bestRowGroups.forEach((value, key) => {
+      a.setRowLabel(key, value)
+    })
+
+    bestColGroups.forEach((value, key) => {
+      a.setColLabel(key, value)
+    })
 
     const rgroups = new Array<Array<number>>()
     const cgroups = new Array<Array<number>>()
@@ -495,7 +591,7 @@ export class MatrixUtils {
       cgroups.push(new Array<number>())
     }
 
-    rowGroups.forEach((value, key) => {
+    bestRowGroups.forEach((value, key) => {
       if (value === -1) {
         rgroups[nbGroups].push(key)
       } else {
@@ -503,7 +599,7 @@ export class MatrixUtils {
       }
     })
 
-    colGroups.forEach((value, key) => {
+    bestColGroups.forEach((value, key) => {
       if (value === -1) {
         cgroups[nbGroups].push(key)
       } else {
@@ -511,7 +607,7 @@ export class MatrixUtils {
       }
     })
 
-    const v = MatrixUtils.groupConcordance(a, rowGroups, colGroups, alpha)
+    // const v = MatrixUtils.groupConcordance(a, rowGroups, colGroups, alpha)
     const rg = new Array<number>()
     const cg = new Array<number>()
     for (let i = 0; i < nbGroups + 1; i++) {
@@ -520,7 +616,7 @@ export class MatrixUtils {
     }
     a.reorderRows(rg)
     a.reorderColumns(cg)
-    return v
+    return oldScore
   }
 
   public static mainTest (
@@ -528,49 +624,63 @@ export class MatrixUtils {
   ): { initScore: number; resultScore: number } {
     if (alpha === -1) alpha = 0.5
     // const m = new Matrix(randInt(50, 100), randInt(30, 50))
-    const m = new Matrix(30, 30)
-    const nbfamilly = randInt(0, Math.min(m.nbRow, m.nbColumn) / 2)
-    const cGroup = []
-    const rGroup = []
-    cGroup.push(randInt(1, m.nbColumn - nbfamilly))
-    rGroup.push(randInt(1, m.nbRow - nbfamilly))
-    for (let i = 1; i < nbfamilly; i++) {
-      cGroup.push(randInt(cGroup[i - 1] + 1, m.nbColumn - nbfamilly + i))
-      rGroup.push(randInt(rGroup[i - 1] + 1, m.nbRow - nbfamilly + i))
-    }
-    m.genBlocDiagonal(cGroup, rGroup)
-    // const b = m.clone()
-    // m.set(1, m.nbColumn - 1, 2)
-    for (let i = 0; i < m.nbRow; i++) {
-      for (let j = 0; j < m.nbColumn; j++) {
-        if (randFloat(0, 1) < 0.2) {
-          m.set(i, j, randInt(0, 1))
+
+    let output = ''
+
+    for (let currentTest = 0; currentTest < 1; currentTest++) {
+      const startTime = Date.now()
+      const m = new Matrix(30, 30)
+      const nbfamilly = randInt(0, Math.min(m.nbRow, m.nbColumn) / 2)
+      const cGroup = []
+      const rGroup = []
+      cGroup.push(randInt(1, m.nbColumn - nbfamilly))
+      rGroup.push(randInt(1, m.nbRow - nbfamilly))
+      for (let i = 1; i < nbfamilly; i++) {
+        cGroup.push(randInt(cGroup[i - 1] + 1, m.nbColumn - nbfamilly + i))
+        rGroup.push(randInt(rGroup[i - 1] + 1, m.nbRow - nbfamilly + i))
+      }
+      m.genBlocDiagonal(cGroup, rGroup)
+      const z = m.clone()
+      // const b = m.clone()
+      // m.set(1, m.nbColumn - 1, 2)
+      for (let i = 0; i < m.nbRow; i++) {
+        for (let j = 0; j < m.nbColumn; j++) {
+          if (randFloat(0, 1) < 0.2) {
+            m.set(i, j, randInt(0, 1))
+          }
         }
       }
-    }
-    m.printMat()
-    const maxV = m.maxValue()
-    m.multScalar(1 / maxV)
-    const initScore = MatrixUtils.concordance(m, m, alpha)
+      // m.printMat()
+      const maxV = m.maxValue()
+      m.multScalar(1 / maxV)
+      const initScore = MatrixUtils.concordance(m, z, alpha)
+      let r = 0
+      for (let k = 0; k < 1; k++) {
+        const a = m.clone()
+        for (let i = 0; i < a.nbRow; i++) {
+          a.switchRows(randInt(0, a.nbRow - 1), randInt(0, a.nbRow - 1))
+        }
+        for (let j = 0; j < m.nbColumn; j++) {
+          a.switchCols(randInt(0, a.nbColumn - 1), randInt(0, a.nbColumn - 1))
+        }
 
-    for (let i = 0; i < m.nbRow; i++) {
-      m.switchRows(randInt(0, m.nbRow - 1), randInt(0, m.nbRow - 1))
-    }
-    for (let j = 0; j < m.nbColumn; j++) {
-      m.switchCols(randInt(0, m.nbColumn - 1), randInt(0, m.nbColumn - 1))
+        r = this.blockDiagonalisation(a, alpha)
+        a.multScalar(maxV)
+        // a.printMat()
+
+        console.log({
+          initScore: initScore,
+          resultScore: r,
+          duration: Date.now() - startTime
+        })
+        output += initScore + ';' + r + '\n'
+      }
     }
 
-    const r = this.blockDiagonalisation(m, alpha)
-    m.multScalar(maxV)
-    m.printMat()
-
-    console.log({
-      initScore: initScore,
-      resultScore: r
-    })
+    console.log(output)
     return {
-      initScore: initScore,
-      resultScore: this.blockDiagonalisation(m, alpha)
+      initScore: 0,
+      resultScore: 0
     }
   }
 

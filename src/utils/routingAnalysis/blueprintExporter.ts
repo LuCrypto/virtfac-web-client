@@ -13,7 +13,7 @@ import Delaunator from 'delaunator'
 import { Destroyable } from './bp_window'
 import { BpWallHole } from './bp_wallLink'
 
-export class BlueprintScene {
+export class BlueprintExporter {
   /**
    * using blueprint metadata :
    * - roof_height : number
@@ -270,6 +270,30 @@ export class BlueprintScene {
           hArray.sort((a, b) => {
             return a.x - b.x
           })
+
+          /*
+            generating mesh for a wall of type : [node 1] --- [holes ?] --- [node 2]
+
+            logic of vertex name :
+              - 1 => nearest node : node 1.
+              - 2 => nearest node : node 2.
+              - t => top
+              - b => bottom
+              - m => middle quad
+              - h => hole
+
+            example : hmt1 means vertex of a hole at the node 1 side and at the top of the middle quad of the wall.
+
+            shape of the generated part of mesh :
+                [t1]-----[ht1]------[ht2]-----[t2]
+                  |        |          |         |
+                [mt1]----[hmt1]-----[hmt2]----[mt2]
+                  |        |          |         |
+                [mb1]----[hmb1]-----[hmb2]----[mb2]
+                  |        |          |         |
+                [b1]-----[hb1]------[hb2]-----[b2]
+
+          */
 
           let b1 = addVertex(pos.x, pos.y, 0, normal, length)
           let mb1 = addVertex(pos.x, pos.y, h / 3, normal, length)

@@ -97,6 +97,10 @@ export class BlueprintContainer {
     | 'SUPP_FURNITURE'
     | 'SCALE' = 'WALL'
 
+  /**
+   * The user interaction mode
+   * @returns
+   */
   public getMode ():
     | 'WALL'
     | 'DOOR'
@@ -111,6 +115,10 @@ export class BlueprintContainer {
     'WALL' | 'DOOR' | 'WINDOW' | 'SUPP_WALL' | 'SUPP_FURNITURE' | 'SCALE'
   >()
 
+  /**
+   * change the user interaction mode
+   * @param mode
+   */
   public setMode (
     mode: 'WALL' | 'DOOR' | 'WINDOW' | 'SUPP_WALL' | 'SUPP_FURNITURE'
   ): void {
@@ -156,9 +164,16 @@ export class BlueprintContainer {
    * display theme
    */
   private theme: BpTheme
+
+  /**
+   * dom element that contain the component
+   */
   private parentNode: HTMLElement
   private grid: Grid | null = null
 
+  /**
+   * update theme to match the website
+   */
   updateThemeFromWeb (): void {
     if (Session.getTheme() === 'dark') {
       this.theme = new BpTheme()
@@ -202,10 +217,13 @@ export class BlueprintContainer {
    */
   private svgLinkLayer: NvEl
   /**
-   * container for wall link
+   * container for furniture (door/window/workstation)
    */
   private svgFurnitureLayer: NvEl
 
+  /**
+   * html components for the global scale displayer |--------|
+   */
   private scaleDisplayer = {
     leftPoint: new NvEl('rect'),
     lineCol1: new NvEl('path'),
@@ -320,8 +338,8 @@ export class BlueprintContainer {
       position: 'absolute',
       top: '0px',
       bottom: '0px',
-      width: '1px',
-      height: '1px',
+      width: '100px',
+      height: '100px',
       'transform-origin': '0px 0px',
       overflow: 'visible'
     }
@@ -427,6 +445,7 @@ export class BlueprintContainer {
     this.testPoint.setStyle({ 'pointer-events': 'none' })
     // this.getNodeLayer().appendChild(this.testPoint)
 
+    // init display of global scale
     const scaleSvgContainer = new NvEl('svg')
     scaleSvgContainer.setStyle({
       position: 'absolute',
@@ -515,8 +534,8 @@ export class BlueprintContainer {
   public clientPosToContainerPos (x: number, y: number): V {
     const rect = this.container.getDom().getBoundingClientRect()
     return new V(
-      (x - rect.x) / this.size - this.position.x,
-      (y - rect.y) / this.size - this.position.y
+      (x - rect.x + 100) / this.size - this.position.x,
+      (y - rect.y + 100) / this.size - this.position.y
     )
   }
 
@@ -603,6 +622,9 @@ export class BlueprintContainer {
 
   public testPoint = new NvEl('rect')
 
+  /**
+   * set user interaction to place wall
+   */
   public defaultMode (): void {
     this.container.getDom().onmousedown = null
     this.container.getDom().onmouseup = null
@@ -829,10 +851,18 @@ export class BlueprintContainer {
     }
   }
 
+  /**
+   * called when mouse enter the collider of a wall node
+   * @param node
+   */
   public wallNodeEnter (node: BpWallNode): void {
     this.hoveredNode = node
   }
 
+  /**
+   * call when mouse exit the collider of a wall node
+   * @param node
+   */
   public wallNodeExit (node: BpWallNode): void {
     if (this.hoveredNode === node) this.hoveredNode = null
   }
@@ -880,18 +910,30 @@ export class BlueprintContainer {
     this.updateTransform()
   }
 
+  /**
+   * used for redirection of mouse event from child dom elements
+   * @param event
+   */
   public onMouseDown (event: MouseEvent): void {
     if (this.container.getDom().onmousedown != null) {
       (this.container.getDom().onmousedown as { (e: MouseEvent): void })(event)
     }
   }
 
+  /**
+   * used for redirection of mouse event from child dom elements
+   * @param event
+   */
   public onMouseUp (event: MouseEvent): void {
     if (this.container.getDom().onmouseup != null) {
       (this.container.getDom().onmouseup as { (e: MouseEvent): void })(event)
     }
   }
 
+  /**
+   * used for redirection of mouse event from child dom elements
+   * @param event
+   */
   public onMouseMove (event: MouseEvent): void {
     if (this.container.getDom().onmousemove != null) {
       (this.container.getDom().onmousemove as { (e: MouseEvent): void })(event)
@@ -905,16 +947,22 @@ export class BlueprintContainer {
       top: `${this.position.y * this.size}px`
     })
     this.svgLinkLayer.setStyle({
-      transform: `translate(${this.position.x * this.size}px, ${this.position
-        .y * this.size}px) scale(${this.size})`
+      transform: `translate(${this.position.x * this.size - 100}px, ${this
+        .position.y *
+        this.size -
+        100}px) scale(${this.size})`
     })
     this.svgNodeLayer.setStyle({
-      transform: `translate(${this.position.x * this.size}px, ${this.position
-        .y * this.size}px) scale(${this.size})`
+      transform: `translate(${this.position.x * this.size - 100}px, ${this
+        .position.y *
+        this.size -
+        100}px) scale(${this.size})`
     })
     this.svgFurnitureLayer.setStyle({
-      transform: `translate(${this.position.x * this.size}px, ${this.position
-        .y * this.size}px) scale(${this.size})`
+      transform: `translate(${this.position.x * this.size - 100}px, ${this
+        .position.y *
+        this.size -
+        100}px) scale(${this.size})`
     })
     this.refreshScaleViewer()
     if (this.grid === null) return
@@ -933,6 +981,10 @@ export class BlueprintContainer {
     })
   }
 
+  /**
+   * user interaction mode to define global scale
+   * @param refDist
+   */
   defineScaleMode (refDist = 1): void {
     this.mode = 'SCALE'
     this.onModeChanged.notify(this.mode)

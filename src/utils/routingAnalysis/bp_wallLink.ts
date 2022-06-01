@@ -56,6 +56,8 @@ export class BpWallLink {
   private length: NvEl
   private container: BlueprintContainer
 
+  private furnitures = new Set<BpWindow>()
+
   private hoveringPosition: Vec2 = new Vector2(0, 0)
   private hovered = false
 
@@ -119,7 +121,9 @@ export class BpWallLink {
         (this.container.getMode() === 'WINDOW' ||
           this.container.getMode() === 'DOOR')
       ) {
+        // user input : add window or door
         const w = new BpWindow(this.container)
+        this.furnitures.add(w)
 
         const dist =
           Vector2.norm(
@@ -401,6 +405,11 @@ export class BpWallLink {
       )
     this.collider.getDom().setAttribute('stroke', '#00000000')
     this.refreshPos()
+
+    // call refresh theme for all attached furnitures
+    this.furnitures.forEach(item => {
+      item.updateTheme()
+    })
   }
 
   public refreshPos (): void {

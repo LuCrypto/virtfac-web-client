@@ -65,7 +65,7 @@ import BlueprintEditor from '@/components/BlueprintEditor.vue'
 import PopUp from '@/components/PopUp.vue'
 
 import { BlueprintContainer } from '@/utils/routingAnalysis/blueprintContainer'
-import { BlueprintScene } from '@/utils/routingAnalysis/blueprintScene'
+import { BlueprintExporter } from '@/utils/routingAnalysis/blueprintExporter'
 
 class MenuItem {
   text: string
@@ -152,7 +152,7 @@ export default class DrawingShopComponent extends Vue {
     )
     this.menuItemList.push(
       new MenuItem('export GLTF', 'mdi-cube-scan', () => {
-        BlueprintScene.exportGeometry(
+        BlueprintExporter.exportGeometry(
           ((this
             .nodeViewer as BlueprintEditor).getBpContainer() as BlueprintContainer).getBlueprint()
         )

@@ -187,13 +187,22 @@ import V from '@/utils/vector'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 import { GLTFLoader, GLTF } from 'three/examples/jsm/loaders/GLTFLoader'
 import { BVHLoader, BVH } from 'three/examples/jsm/loaders/BVHLoader'
-import { BoxHelper, GridHelper, Group, Mesh, Object3D } from 'three'
+import {
+  BoxHelper,
+  Euler,
+  GridHelper,
+  Group,
+  Mesh,
+  Object3D,
+  Vector3
+} from 'three'
 import { TransformControls } from 'three/examples/jsm/controls/TransformControls'
 import { Prop } from 'vue-property-decorator'
 import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader'
 import { studioEnvMap } from '@/utils/imageData'
 import TreeExplorer from '@/components/TreeExplorer.vue'
 import ModelViewerStats from '@/components/ModelViewerStats.vue'
+import { UndoManager, Action } from '@/utils/undoManager'
 
 // import AVATAR from '@/utils/avatar'
 
@@ -205,6 +214,8 @@ import ModelViewerStats from '@/components/ModelViewerStats.vue'
 })
 export default class ModelViewer extends Vue {
   @Prop({ default: () => false }) private displayInspector!: boolean
+
+  undoManager = new UndoManager()
 
   inspectorActive = false
   switchInspectorActive (): void {
@@ -295,6 +306,12 @@ export default class ModelViewer extends Vue {
   private gizmo: TransformControls | null = null
   private controledObject: Object3D | null = null
 
+  private savedTransform: {
+    position: Vector3
+    rotation: Euler
+    scale: Vector3
+  } | null = null
+
   public controlMesh (obj: Object3D | null): void {
     this.controledObject = obj
     if (obj === null) {
@@ -320,6 +337,60 @@ export default class ModelViewer extends Vue {
         })
         this.gizmo.addEventListener('dragging-changed', e => {
           this.controls.enabled = !e.value
+        })
+        this.gizmo.addEventListener('mouseDown', e => {
+          const obj = this.gizmo?.object as Object3D
+          this.savedTransform = {
+            position: obj.position.clone(),
+            rotation: obj.rotation.clone(),
+            scale: obj.scale.clone()
+          }
+        })
+        this.gizmo.addEventListener('mouseUp', e => {
+          if (this.savedTransform !== null) {
+            const obj = this.gizmo?.object as Object3D
+            const initTransform = this.savedTransform
+            const finalTransform = {
+              position: obj.position.clone(),
+              rotation: obj.rotation.clone(),
+              scale: obj.scale.clone()
+            }
+            this.undoManager.addAction(
+              new Action(
+                () => {
+                  return new Promise<void>(resolve => {
+                    obj.position.copy(initTransform.position)
+                    obj.rotation.copy(initTransform.rotation)
+                    obj.scale.copy(initTransform.scale)
+                    obj.updateMatrix()
+                    this.updateTransformMatrix()
+                    const h = this.boxHelpers.get(obj as Group)
+                    if (h !== undefined) {
+                      h.update()
+                    }
+                    this.draw()
+                    resolve()
+                  })
+                },
+                () => {
+                  return new Promise<void>(resolve => {
+                    obj.position.copy(finalTransform.position)
+                    obj.rotation.copy(finalTransform.rotation)
+                    obj.scale.copy(finalTransform.scale)
+                    obj.updateMatrix()
+                    this.updateTransformMatrix()
+                    const h = this.boxHelpers.get(obj as Group)
+                    if (h !== undefined) {
+                      h.update()
+                    }
+                    this.draw()
+                    resolve()
+                  })
+                }
+              )
+            )
+            this.savedTransform = null
+          }
         })
       }
       this.gizmo.attach(obj)
@@ -513,6 +584,7 @@ export default class ModelViewer extends Vue {
 
     this.fov = 75
 
+    this.undoManager.bind()
     // Update scene
     this.updateSize()
     this.loop()

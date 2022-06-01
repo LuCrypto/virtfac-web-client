@@ -49,6 +49,7 @@
         :openFile="true"
         accept=".xlsx"
         @fileInput="handleFile"
+        :uploadPipeline="createConstraintProject"
       ></open-file>
     </pop-up>
     <select-pop-up ref="selectPopUp"></select-pop-up>
@@ -85,6 +86,15 @@ class MenuItem {
   }
 }
 
+class ConstraintProject {
+  public xlsxUri = ''
+  public shapes = new Array<{ date: number; name: string; data: unknown }>()
+
+  constructor (xlsxUri: string) {
+    this.xlsxUri = xlsxUri
+  }
+}
+
 interface SettingItem {
   id: number
   idApplication: number
@@ -113,6 +123,7 @@ export default class ContradictionExpert extends Vue {
   constraintGraph: ConstraintGraph = new ConstraintGraph()
   fileName = ''
   openedFile: APIFile | null = null
+  openedProject: ConstraintProject | null = null
 
   getGraph (): Graph {
     return (this.constraintGraph as ConstraintGraph).getRawGraph()
@@ -187,64 +198,67 @@ export default class ContradictionExpert extends Vue {
       console.log('This type of file cannot be read yet.')
     } else {
       this.openedFile = files[0]
-      const workbook = XLSX.read(files[0].uri.split('base64,')[1], {
-        type: 'base64'
-      })
+      this.openedProject = JSON.parse(
+        atob(files[0].uri.split('base64,')[1])
+      ) as ConstraintProject
+      console.log(this.openedFile, this.openedProject)
+
+      const workbook = XLSX.read(
+        this.openedProject.xlsxUri.split('base64,')[1],
+        {
+          type: 'base64'
+        }
+      )
       this.constraintGraph.loadXLSX(workbook as IWorkBook)
       this.fileName = files[0].name
+      // this.projectId = files[0].idProject
     }
+  }
+
+  createConstraintProject (xlsx: File): Promise<File> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = () => {
+        const xlsxUri = reader.result as string
+        const constraintProject = new ConstraintProject(xlsxUri)
+
+        const blob = new Blob([JSON.stringify(constraintProject)], {
+          type: 'application/virtfac.constraint+json'
+        })
+        const f = new File([blob], xlsx.name, {
+          type: 'application/virtfac.constraint+json'
+        })
+        resolve(f)
+      }
+      reader.onerror = error => {
+        reject(error)
+      }
+      reader.readAsDataURL(xlsx)
+    })
   }
 
   // dropHandler(e : )
   saveShape (): void {
-    /*
-    const settingOBJ = {
-      name: this.fileName,
-      type: 'graph_position',
-      data: this.constraintGraph.getRawGraph().toJsonOBJ()
-    }
-    if (this.openedFile !== null){
-      API.put(
+    //*
+    if (this.openedProject !== null && this.openedFile !== null) {
+      this.openedProject.shapes.push({
+        date: Date.now(),
+        name: 'shape ' + this.openedProject.shapes.length,
+        data: this.constraintGraph.getRawGraph().toJsonOBJ()
+      })
+
+      API.patch(
         this,
-        '/resources/files',
-        JSON.stringify(
-        new APIFile({idProject: this.openedFile.idProject,
-          tags: '["graph_shape"]',
-          mime: 'application/json',
+        '/resources/files/' + this.openedFile.id,
+        JSON.stringify({
           uri:
-          }).toJSON())
+            'data:application/json;base64,' +
+            Buffer.from(JSON.stringify(this.openedProject), 'utf-8').toString('base64')
+        })
       )
+        .then(console.log)
+        .catch(console.error)
     }
-    /**/
-    /*
-    if (this.inputFieldPopUp != null) {
-      this.inputFieldPopUp.open(
-        'Save Shape',
-        'enter shape name',
-        this.fileName,
-        text => {
-          if (text != null) {
-            const settingOBJ = {
-              name: text,
-              type: 'graph_position',
-              initialProject: this.fileName,
-              date: new Date(),
-              data: this.constraintGraph.getRawGraph().toJsonOBJ()
-            }
-            API.post(
-              this,
-              '/application-settings',
-              JSON.stringify({
-                idApplication: 2,
-                name: text,
-                json: JSON.stringify(settingOBJ)
-              })
-            )
-          }
-        }
-      )
-    }
-    /**/
   }
 
   selectLayout (): void {
@@ -305,125 +319,98 @@ export default class ContradictionExpert extends Vue {
   }
 
   loadShape (): void {
-    API.get(
-      this,
-      '/application-settings',
-      new URLSearchParams({ application: 'CONTRADICTION_ANALYSIS' })
-    ).then(response => {
-      const headers = new Array<{
-        text: string
-        value: string
-        align: string
-        sortable: boolean
-        sort: {(a: unknown, b: unknown): number }
-          }>(
-          {
-            text: 'Name',
-            value: 'name',
-            align: 'start',
-            sortable: true,
-            sort: (a: unknown, b: unknown) => {
-              return (a as string).localeCompare(b as string)
-            }
-          },
-          {
-            text: 'Initial Project',
-            value: 'initialProject',
-            align: 'start',
-            sortable: true,
-            sort: (a: unknown, b: unknown) => {
-              return (a as string).localeCompare(b as string)
-            }
-          },
-          {
-            text: 'Date',
-            value: 'date',
-            align: 'end',
-            sortable: true,
-            sort: (a: unknown, b: unknown) => {
-              return new Date(a as string) > new Date(b as string) ? 1 : -1
-            }
-          }
-          )
-      const r = (response as unknown) as SettingItem[]
-      const m = new Array<{
-        name: string
-        initialProject: string
-        date: string
-        return: unknown
-      }>()
-      r.forEach(item => {
-        const setting = JSON.parse(item.json)
-        const it = {
-          name: item.name,
-          initialProject:
-            setting.initialProject === undefined
-              ? 'N.A.'
-              : setting.initialProject,
-          date:
-            setting.date === undefined
-              ? 'N.A.'
-              : new Date(setting.date).toLocaleTimeString() +
-                ' ' +
-                new Date(setting.date).toLocaleDateString(),
-          return: item
-        }
-        if (setting.type === 'graph_position') {
-          m.push(it)
-        }
-      })
+    if (this.openedFile === null) return
+    if (this.openedProject === null) return
 
-      if (this.selectPopUp != null) {
-        this.selectPopUp.open(
-          headers,
-          m,
-          item => {
-            if (item != null) {
-              const settingItem = (item as Record<string, unknown>)
-                .return as SettingItem
-              this.getGraph().applyJson(JSON.parse(settingItem.json).data)
-            }
-          },
-          new Array<{
-            text: string
-            icon: string
-            action: {(item: unknown): void }
-              }>(
-              {
-                text: 'download',
-                icon: 'mdi-download',
-                action: item => {
-                  const a = document.createElement('a')
-                  const file = new Blob(
-                    [
-                      JSON.stringify(
-                        JSON.parse(
-                          ((item as Record<string, unknown>)
-                            .return as SettingItem).json
-                        ).data
-                      )
-                    ],
-                    {
-                      type: 'text/plain'
-                    }
-                  )
-                  a.href = URL.createObjectURL(file)
-                  a.download =
-                  ((item as Record<string, unknown>).name as string) + '.json'
-                  a.click()
-                }
-              },
-              {
-                text: 'delete',
-                icon: 'mdi-delete-outline',
-                action: () => {
-                  console.log('delete item')
-                }
-              }
-              )
+    const headers = new Array<{
+      text: string
+      value: string
+      align: string
+      sortable: boolean
+      sort: {(a: unknown, b: unknown): number }
+        }>(
+        {
+          text: 'Name',
+          value: 'name',
+          align: 'start',
+          sortable: true,
+          sort: (a: unknown, b: unknown) => {
+            return (a as string).localeCompare(b as string)
+          }
+        },
+        {
+          text: 'Date',
+          value: 'date',
+          align: 'end',
+          sortable: true,
+          sort: (a: unknown, b: unknown) => {
+            return new Date(a as string) > new Date(b as string) ? 1 : -1
+          }
+        }
         )
+    const m = new Array<{
+      name: string
+      date: string
+      return: unknown
+    }>()
+    this.openedProject.shapes.forEach(item => {
+      const it = {
+        name: item.name,
+        date:
+          new Date(item.date).toLocaleTimeString() +
+          ' ' +
+          new Date(item.date).toLocaleDateString(),
+        return: item.data
       }
+      m.push(it)
     })
+
+    if (this.selectPopUp != null) {
+      this.selectPopUp.open(
+        headers,
+        m,
+        item => {
+          if (item != null) {
+            this.getGraph().applyJson(
+              (item as Record<string, unknown>).return as Record<
+                string,
+                unknown
+              >
+            )
+          }
+        },
+        new Array<{
+          text: string
+          icon: string
+          action: {(item: unknown): void }
+            }>(
+            {
+              text: 'download',
+              icon: 'mdi-download',
+              action: item => {
+                const a = document.createElement('a')
+                const file = new Blob(
+                  [JSON.stringify((item as Record<string, unknown>).return)],
+                  {
+                    type: 'application/json'
+                  }
+                )
+                a.href = URL.createObjectURL(file)
+                a.download =
+                ((item as Record<string, unknown>).name as string) + '.json'
+                a.click()
+              }
+            },
+            {
+              text: 'delete',
+              icon: 'mdi-delete-outline',
+              action: () => {
+                console.log('delete item')
+              }
+            }
+            )
+      )
+    }
   }
 
   /*
