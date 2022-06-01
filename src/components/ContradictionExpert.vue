@@ -141,7 +141,6 @@ export default class ContradictionExpert extends Vue {
         (this.$refs.filePopUp as PopUp).open()
       })
     )
-    /*
     this.menuItemList.push(
       new MenuItem('Save shape', 'mdi-graph-outline', () => {
         this.saveShape()
@@ -152,7 +151,6 @@ export default class ContradictionExpert extends Vue {
         this.loadShape()
       })
     )
-    */
     this.menuItemList.push(new MenuItem('Settings', 'mdi-cog', () => true))
     this.menuItemList.push(
       new MenuItem('Layouts', 'mdi-graphql', () => {
@@ -253,7 +251,9 @@ export default class ContradictionExpert extends Vue {
         this,
         '/resources/files/' + this.openedFile.id,
         JSON.stringify({
-          uri: JSON.stringify(this.openedProject)
+          uri:
+            'data:application/json;base64,' +
+            Buffer.from(JSON.stringify(this.openedProject), 'utf-8').toString('base64')
         })
       )
         .then(console.log)
@@ -320,147 +320,97 @@ export default class ContradictionExpert extends Vue {
 
   loadShape (): void {
     if (this.openedFile === null) return
-    if (this.openedFile.idProject === 0) {
-      return
-    }
-    const searchParam = JSON.stringify({
-      select: [
-        'id',
-        'creationDate',
-        'modificationDate',
-        'name',
-        'color',
-        'idProject'
-      ],
-      where: {
-        idProject: this.openedFile.idProject
-      }
-    })
+    if (this.openedProject === null) return
 
-    API.post(this, '/resources/files', searchParam).then(response => {
-      console.log(response)
-    })
-    /*
-    API.get(
-      this,
-      '/application-settings',
-      new URLSearchParams({ application: 'CONTRADICTION_ANALYSIS' })
-    ).then(response => {
-      const headers = new Array<{
-        text: string
-        value: string
-        align: string
-        sortable: boolean
-        sort: {(a: unknown, b: unknown): number }
-          }>(
-          {
-            text: 'Name',
-            value: 'name',
-            align: 'start',
-            sortable: true,
-            sort: (a: unknown, b: unknown) => {
-              return (a as string).localeCompare(b as string)
-            }
-          },
-          {
-            text: 'Initial Project',
-            value: 'initialProject',
-            align: 'start',
-            sortable: true,
-            sort: (a: unknown, b: unknown) => {
-              return (a as string).localeCompare(b as string)
-            }
-          },
-          {
-            text: 'Date',
-            value: 'date',
-            align: 'end',
-            sortable: true,
-            sort: (a: unknown, b: unknown) => {
-              return new Date(a as string) > new Date(b as string) ? 1 : -1
-            }
+    const headers = new Array<{
+      text: string
+      value: string
+      align: string
+      sortable: boolean
+      sort: {(a: unknown, b: unknown): number }
+        }>(
+        {
+          text: 'Name',
+          value: 'name',
+          align: 'start',
+          sortable: true,
+          sort: (a: unknown, b: unknown) => {
+            return (a as string).localeCompare(b as string)
           }
-          )
-      const r = (response as unknown) as SettingItem[]
-      const m = new Array<{
-        name: string
-        initialProject: string
-        date: string
-        return: unknown
-      }>()
-      r.forEach(item => {
-        const setting = JSON.parse(item.json)
-        const it = {
-          name: item.name,
-          initialProject:
-            setting.initialProject === undefined
-              ? 'N.A.'
-              : setting.initialProject,
-          date:
-            setting.date === undefined
-              ? 'N.A.'
-              : new Date(setting.date).toLocaleTimeString() +
-                ' ' +
-                new Date(setting.date).toLocaleDateString(),
-          return: item
+        },
+        {
+          text: 'Date',
+          value: 'date',
+          align: 'end',
+          sortable: true,
+          sort: (a: unknown, b: unknown) => {
+            return new Date(a as string) > new Date(b as string) ? 1 : -1
+          }
         }
-        if (setting.type === 'graph_position') {
-          m.push(it)
-        }
-      })
-
-      if (this.selectPopUp != null) {
-        this.selectPopUp.open(
-          headers,
-          m,
-          item => {
-            if (item != null) {
-              const settingItem = (item as Record<string, unknown>)
-                .return as SettingItem
-              this.getGraph().applyJson(JSON.parse(settingItem.json).data)
-            }
-          },
-          new Array<{
-            text: string
-            icon: string
-            action: {(item: unknown): void }
-              }>(
-              {
-                text: 'download',
-                icon: 'mdi-download',
-                action: item => {
-                  const a = document.createElement('a')
-                  const file = new Blob(
-                    [
-                      JSON.stringify(
-                        JSON.parse(
-                          ((item as Record<string, unknown>)
-                            .return as SettingItem).json
-                        ).data
-                      )
-                    ],
-                    {
-                      type: 'text/plain'
-                    }
-                  )
-                  a.href = URL.createObjectURL(file)
-                  a.download =
-                  ((item as Record<string, unknown>).name as string) + '.json'
-                  a.click()
-                }
-              },
-              {
-                text: 'delete',
-                icon: 'mdi-delete-outline',
-                action: () => {
-                  console.log('delete item')
-                }
-              }
-              )
         )
+    const m = new Array<{
+      name: string
+      date: string
+      return: unknown
+    }>()
+    this.openedProject.shapes.forEach(item => {
+      const it = {
+        name: item.name,
+        date:
+          new Date(item.date).toLocaleTimeString() +
+          ' ' +
+          new Date(item.date).toLocaleDateString(),
+        return: item.data
       }
+      m.push(it)
     })
-    */
+
+    if (this.selectPopUp != null) {
+      this.selectPopUp.open(
+        headers,
+        m,
+        item => {
+          if (item != null) {
+            this.getGraph().applyJson(
+              (item as Record<string, unknown>).return as Record<
+                string,
+                unknown
+              >
+            )
+          }
+        },
+        new Array<{
+          text: string
+          icon: string
+          action: {(item: unknown): void }
+            }>(
+            {
+              text: 'download',
+              icon: 'mdi-download',
+              action: item => {
+                const a = document.createElement('a')
+                const file = new Blob(
+                  [JSON.stringify((item as Record<string, unknown>).return)],
+                  {
+                    type: 'application/json'
+                  }
+                )
+                a.href = URL.createObjectURL(file)
+                a.download =
+                ((item as Record<string, unknown>).name as string) + '.json'
+                a.click()
+              }
+            },
+            {
+              text: 'delete',
+              icon: 'mdi-delete-outline',
+              action: () => {
+                console.log('delete item')
+              }
+            }
+            )
+      )
+    }
   }
 
   /*
