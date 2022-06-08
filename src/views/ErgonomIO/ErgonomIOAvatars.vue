@@ -1,20 +1,21 @@
 <template>
-  <v-container fluid class="d-flex">
-    <v-card class="pa-6 ma-6">
-      <v-img height="400" src="../../assets/ergonom_io_2.png"></v-img>
-      <v-card-text>
-        The avatars page is not yet functional. This tool will allow the
-        creation of custom avatars, to allow users to have a virtual body that
-        looks like them. The avatar tool will also allow users to save profiles
-        for motion capture, taking into account their height and body type.
-      </v-card-text>
+  <v-container class="spacing-playground pa-6 contradiction-analysis" fluid>
+    <v-card elevation="3" class="mx-auto mb-6 flex-grow-1">
+      <v-card-title>Ergonom.io Avatars</v-card-title>
+      <v-card-subtitle>Avatar custom tool for ergonom.io</v-card-subtitle>
     </v-card>
+    <ErgonomIOAvatarsContainer></ErgonomIOAvatarsContainer>
   </v-container>
 </template>
 
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator'
+import ErgonomIOAvatarsContainer from '@/components/ErgonomIOAvatarsContainer.vue'
 
-@Component
+@Component({
+  components: {
+    ErgonomIOAvatarsContainer
+  }
+})
 export default class ErgonomIOAvatars extends Vue {}
 </script>
