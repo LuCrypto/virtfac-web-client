@@ -1,0 +1,7 @@
+{
+    "include": [
+        "**/src/**/*.vue"
+    ],
+    "outDir": "public/doc",
+    "markdownDir": "components"
+}
