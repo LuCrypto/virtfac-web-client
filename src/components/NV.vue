@@ -26,11 +26,14 @@ import { Session } from '@/utils/session'
 import * as XLSX from 'ts-xlsx'
 
 @Component({
+  name: 'NV',
   props: {
     graph: Graph
     // placementFunction: Function as PropType<(g: Graph) => void>
   }
 })
+// @vuese
+// @group COMPONENTS
 export default class NV extends Vue {
   graph!: Graph
   public themeID = 0

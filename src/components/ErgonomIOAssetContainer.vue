@@ -139,6 +139,7 @@ interface SettingItem {
 */
 
 @Component({
+  name: 'ErgonomIOAssetContainer',
   components: {
     ActionContainer,
     SelectPopUp,
@@ -149,6 +150,8 @@ interface SettingItem {
     AssetInfo
   }
 })
+// @vuese
+// @group COMPONENTS
 export default class ErgonomIOAssetContainer extends Vue {
   defaultMaterial = new MeshLambertMaterial({
     color: 0xaaaaaa
@@ -585,7 +588,7 @@ export default class ErgonomIOAssetContainer extends Vue {
   }
 
   onFileUpload (file: File): Promise<File> {
-    return new Promise<File>((resolve) => {
+    return new Promise<File>(resolve => {
       const extension = (file.name.split('.').pop() as string).toLowerCase()
       this.loadObjectAsync(
         URL.createObjectURL(file),

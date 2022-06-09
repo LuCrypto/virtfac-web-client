@@ -23,6 +23,9 @@ import ErgonomIOLogin from '@/views/ErgonomIO/ErgonomIOLogin.vue'
 import ErgonomioMainMenu from '@/components/ergonomio_ui/ErgonomioMainMenu.vue'
 import DatabaseViewer from '@/views/APIDocumentation/DatabaseViewer.vue'
 import APIDocumentation from '@/views/APIDocumentation/APIDocumentation.vue'
+import HelpEditor from '@/views/APIDocumentation/HelpEditor.vue'
+
+import CodeStructure from '@/views/APIDocumentation/CodeStructure.vue'
 
 Vue.use(VueRouter)
 
@@ -190,12 +193,29 @@ export const routes: Array<Route> = [
   }),
 
   new Route({
-    icon: 'mdi-xml',
+    icon: 'mdi-swap-horizontal',
     name: 'API',
     subname: 'Interface documentation',
     path: '/documentation-api',
     category: 'Documentation',
     component: APIDocumentation
+  }),
+
+  new Route({
+    icon: 'mdi-help-circle-outline',
+    name: 'Help',
+    subname: 'Applications guide',
+    path: '/help-editor',
+    category: 'Documentation',
+    component: HelpEditor
+  }),
+  new Route({
+    icon: 'mdi-xml',
+    name: 'Code structure',
+    subname: 'Of vue project',
+    path: '/code-structure',
+    category: 'Documentation',
+    component: CodeStructure
   }),
 
   // Hidded menus

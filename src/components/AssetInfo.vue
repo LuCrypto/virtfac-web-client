@@ -91,6 +91,7 @@ import Vue from 'vue'
 import Component from 'vue-class-component'
 
 @Component({
+  name: 'AssetInfo',
   computed: {
     iconSize () {
       switch (this.$vuetify.breakpoint.name) {
@@ -108,6 +109,8 @@ import Component from 'vue-class-component'
     }
   }
 })
+// @vuese
+// @group COMPONENTS
 export default class AssetInfo extends Vue {
   private name = ''
   private iconUri = ''

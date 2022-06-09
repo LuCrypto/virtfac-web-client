@@ -8,7 +8,11 @@
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator'
 
-@Component
+@Component({
+  name: 'AboutRoutingAnalysis'
+})
+// @vuese
+// @group VIEWS
 export default class AboutRoutingAnalysis extends Vue {
   page = 'http://10.244.77.203/about-routing-analysis'
 }

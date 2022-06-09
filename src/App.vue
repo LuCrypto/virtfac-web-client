@@ -38,10 +38,13 @@ import NavBar from '@/components/NavBar.vue'
 import Unreal from '@/utils/unreal'
 
 @Component({
+  name: 'App',
   components: {
     NavBar
   }
 })
+// @vuese
+// @group MAIN
 export default class App extends Vue {
   router: VueRouter = this.$router
   query = this.router.currentRoute.query

@@ -14,7 +14,11 @@ import { Component, Vue } from 'vue-property-decorator'
 import V from '@/utils/vector'
 import T from '@/utils/transform'
 
-@Component
+@Component({
+  name: 'GraphChart'
+})
+// @vuese
+// @group COMPONENTS
 export default class GraphChart extends Vue {
   zoom = 1
   delta = new V(0, 0)

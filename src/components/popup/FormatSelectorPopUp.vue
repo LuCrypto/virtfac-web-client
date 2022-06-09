@@ -61,10 +61,13 @@ import FormatPreview from '@/components/FormatPreview.vue'
 import { FORMAT_TYPE, FORMAT_INFO, FormatInfo } from '@/utils/format'
 
 @Component({
+  name: 'FormatSelectorPopUp',
   components: {
     FormatPreview
   }
 })
+// @vuese
+// @group COMPONENTS
 export default class FormatSelectorPopUp extends Vue {
   show = false
   availableFormatList: FormatInfo[] = Object.keys(FORMAT_INFO).map(

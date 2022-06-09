@@ -25,7 +25,11 @@
 
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator'
-@Component
+@Component({
+  name: 'ContradictionAnalysisSimulation'
+})
+// @vuese
+// @group VIEWS
 export default class ContradictionAnalysisSimulation extends Vue {
   mounted (): void {
     console.log('Hello Ergonom.io')

@@ -85,7 +85,11 @@ class Item {
   }
 }
 
-@Component({})
+@Component({
+  name: 'TreeExplorer'
+})
+// @vuese
+// @group COMPONENTS
 export default class TreeExplorer extends Vue {
   selectedKey: unknown | null = null
   parentLabel = 'root'

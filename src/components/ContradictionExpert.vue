@@ -103,6 +103,7 @@ interface SettingItem {
 }
 
 @Component({
+  name: 'ContradictionExpert',
   components: {
     ActionContainer,
     OpenFile,
@@ -112,6 +113,8 @@ interface SettingItem {
     InputFieldPopUp
   }
 })
+// @vuese
+// @group COMPONENTS
 export default class ContradictionExpert extends Vue {
   selectedMenuItem = -1
   nodeViewer: NV | null = null
@@ -253,7 +256,9 @@ export default class ContradictionExpert extends Vue {
         JSON.stringify({
           uri:
             'data:application/json;base64,' +
-            Buffer.from(JSON.stringify(this.openedProject), 'utf-8').toString('base64')
+            Buffer.from(JSON.stringify(this.openedProject), 'utf-8').toString(
+              'base64'
+            )
         })
       )
         .then(console.log)

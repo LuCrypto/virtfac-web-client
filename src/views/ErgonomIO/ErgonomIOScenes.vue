@@ -389,8 +389,12 @@ class messageUnreal {
   }
 }
 
-@Component
-export default class ErgonomIOAssets extends Vue {
+@Component({
+  name: 'ErgonomIOScenes'
+})
+// @vuese
+// @group VIEWS
+export default class ErgonomIOScenes extends Vue {
   // Initialisation
   scenes: CardModel[] = []
   scenes2: CardModel[] = []

@@ -65,17 +65,32 @@
       </v-list>
     </v-navigation-drawer>
     <!--Rendu three.js-->
-    <v-container
-      fluid
-      style="width: auto; margin: 0; flex-grow: 1;"
-      class="pa-0 ma-0"
-    >
-      <model-viewer-avatar
-        ref="viewer"
-        :displayInspector="false"
-        :displayStats="false"
-      ></model-viewer-avatar>
-    </v-container>
+    <v-col class="pa-0 d-flex flex-column" style="overflow: hidden;">
+      <!-- Rows -->
+      <v-row class="ma-0 flex-grow-1">
+        <model-viewer-2 :displayFog="true" ref="viewer"></model-viewer-2>
+      </v-row>
+      <v-row class="ma-0 flex-grow-0">
+        <v-container class="flex-grow-0 ma-0 pa-0" fluid>
+          <v-row no-gutters class="align-center justify-center">
+            <v-btn class="mx-2" fab dark small color="primary">
+              <v-icon v-text="'mdi-tshirt-crew'"></v-icon>
+            </v-btn>
+            <v-btn class="mx-2" fab dark small color="primary">
+              <v-icon v-text="'mdi-tshirt-crew'"></v-icon>
+            </v-btn>
+            <v-btn class="mx-2" fab dark small color="primary">
+              <v-icon v-text="'mdi-tshirt-crew'"></v-icon>
+            </v-btn>
+            <v-btn class="mx-2" fab dark small color="primary">
+              <v-icon v-text="'mdi-tshirt-crew'"></v-icon>
+            </v-btn>
+            <v-btn class="mx-2" fab dark small color="primary">
+              <v-icon v-text="'mdi-tshirt-crew'"></v-icon>
+            </v-btn> </v-row
+        ></v-container>
+      </v-row>
+    </v-col>
 
     <!-- Je sais pas-->
     <select-pop-up ref="selectPopUp"></select-pop-up>
@@ -92,7 +107,7 @@ import { APIAsset } from '@/utils/models'
 // Usefull for PopUp windows
 import SelectPopUp from '@/components/popup/SelectPopUp.vue'
 import InputFieldPopUp from '@/components/popup/InputFieldPopUp.vue'
-import ModelViewerAvatar from '@/components/ModelViewerAvatar.vue'
+import ModelViewer2 from '@/components/ModelViewer2.vue'
 
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader'
 import { VRMLLoader } from 'three/examples/jsm/loaders/VRMLLoader'
@@ -137,7 +152,7 @@ class MenuItem {
     ActionContainer,
     SelectPopUp,
     InputFieldPopUp,
-    ModelViewerAvatar,
+    ModelViewer2,
     PopUp,
     OpenAsset,
     OpenAvatar,
@@ -153,7 +168,7 @@ export default class ErgonomIOAvatarsContainer extends Vue {
   selectedMenuItem = -1
   menuItemList: MenuItem[] = []
   menuCollapse = false
-  viewer: ModelViewerAvatar | null = null
+  viewer: ModelViewer2 | null = null
 
   inputField: InputFieldPopUp | null = null
 

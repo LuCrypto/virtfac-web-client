@@ -1,9 +1,13 @@
 <template>
-  <v-card elevation="3" class="range-bar-chart-container mx-auto my-3 pt-3 pb-6">
+  <v-card
+    elevation="3"
+    class="range-bar-chart-container mx-auto my-3 pt-3 pb-6"
+  >
     <div ref="rangeBarChart" class="range-bar-chart"></div>
     <div ref="rangeBarSlider" class="range-bar-slider">
       <div class="name"></div>
-      <v-range-slider class="slider"
+      <v-range-slider
+        class="slider"
         :min="rangeView[0]"
         :max="rangeView[1]"
         v-model="range"
@@ -30,12 +34,16 @@ export class RangeBarData {
   }
 }
 
-@Component
+@Component({
+  name: 'RangeBar'
+})
+// @vuese
+// @group COMPONENTS
 export default class RangeBar extends Vue {
   @Prop({ default: () => [] }) private rangeBarChartData!: RangeBarData[]
   @Prop({ default: () => [0, 100] }) private defaultRange!: number[]
 
-  rangeBarChart: HTMLElement | null = null;
+  rangeBarChart: HTMLElement | null = null
 
   names = []
   values = []
@@ -75,22 +83,27 @@ export default class RangeBar extends Vue {
     return dom
   }
 
-  generateViewScale ():void {
+  generateViewScale (): void {
     // Get scale from data
     this.rangeView[0] = 0
     this.rangeView[1] = 0
     this.rangeBarChartData.forEach(data => {
-      this.rangeView[0] = data.value < this.rangeView[0] ? data.value : this.rangeView[0]
-      this.rangeView[1] = data.value > this.rangeView[1] ? data.value : this.rangeView[1]
+      this.rangeView[0] =
+        data.value < this.rangeView[0] ? data.value : this.rangeView[0]
+      this.rangeView[1] =
+        data.value > this.rangeView[1] ? data.value : this.rangeView[1]
     })
 
     this.rangeView[0] = Math.floor(this.rangeView[0] / 10) * 10
     this.rangeView[1] = Math.ceil(this.rangeView[1] / 10) * 10
 
     // Generate number
-    const createStepLabel = (index:number) => {
+    const createStepLabel = (index: number) => {
       const label = this.div('label')
-      label.innerText = String(this.rangeView[0] + index * (this.rangeView[1] - this.rangeView[0]) / 5)
+      label.innerText = String(
+        this.rangeView[0] +
+          (index * (this.rangeView[1] - this.rangeView[0])) / 5
+      )
       return label
     }
 
@@ -114,7 +127,7 @@ export default class RangeBar extends Vue {
     }
   }
 
-  generateGradingOfValues () : HTMLElement {
+  generateGradingOfValues (): HTMLElement {
     const gradingOfValues = this.div('grading-of-values')
     for (let i = 0; i < this.gradingStepNumber; i++) {
       gradingOfValues.appendChild(this.div('grading'))
@@ -122,7 +135,7 @@ export default class RangeBar extends Vue {
     return gradingOfValues
   }
 
-  generateContent () : void {
+  generateContent (): void {
     const content = this.div('content')
     this.rangeBarChartData.forEach(dataRow => {
       const row = this.div('row')
@@ -145,10 +158,10 @@ export default class RangeBar extends Vue {
     }
   }
 
-  updateRange () : void {
+  updateRange (): void {
     if (this.rangeBarChart != null) {
-      [...this.rangeBarChart.querySelectorAll('.value-bar')]
-        .forEach((valueBar, index) => {
+      [...this.rangeBarChart.querySelectorAll('.value-bar')].forEach(
+        (valueBar, index) => {
           const value = this.rangeBarChartData[index].value
           if (value >= this.range[0] && value <= this.range[1]) {
             valueBar.classList.add('primary')
@@ -157,12 +170,17 @@ export default class RangeBar extends Vue {
           }
           valueBar.setAttribute('style', `width:${value}%;`)
           valueBar.setAttribute('aria-label', `${value.toFixed(2)}`)
-        })
-      const range = this.range[1] - this.range[0];
-      [...this.rangeBarChart.querySelectorAll('.range-bar')]
-        .forEach(rangeBar => {
-          rangeBar.setAttribute('style', `left:${this.range[0]}%;width:${range}%;`)
-        })
+        }
+      )
+      const range = this.range[1] - this.range[0]
+      ;[...this.rangeBarChart.querySelectorAll('.range-bar')].forEach(
+        rangeBar => {
+          rangeBar.setAttribute(
+            'style',
+            `left:${this.range[0]}%;width:${range}%;`
+          )
+        }
+      )
     }
   }
 }

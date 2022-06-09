@@ -7,7 +7,11 @@
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator'
 
-@Component
+@Component({
+  name: 'PopUp'
+})
+// @vuese
+// @group COMPONENTS
 export default class PopUp extends Vue {
   isOpen = false
 

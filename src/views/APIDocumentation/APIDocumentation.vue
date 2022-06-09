@@ -250,7 +250,11 @@ interface TreeItem {
   request: APIRequest | null
 }
 
-@Component
+@Component({
+  name: 'APIDocumentation'
+})
+// @vuese
+// @group VIEWS
 export default class APIDocumentation extends Vue {
   requests: APIRequest[] = []
   requestsReferences: Map<number, number> = new Map<number, number>()

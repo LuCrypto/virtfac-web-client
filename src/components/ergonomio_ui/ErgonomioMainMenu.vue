@@ -9,7 +9,11 @@
 
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator'
-@Component
+@Component({
+  name: 'ErgonomioMainMenu'
+})
+// @vuese
+// @group COMPONENTS
 export default class ErgonomioMainMenu extends Vue {
   mounted (): void {
     console.log('Hello Ergonom.io')

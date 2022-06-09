@@ -67,8 +67,10 @@ import PopUp from './PopUp.vue'
 import Unreal from '@/utils/unreal'
 
 @Component({
-  components: {}
+  name: 'Login'
 })
+// @vuese
+// @group COMPONENTS
 export default class Login extends Vue {
   login = ''
   password = ''

@@ -13,9 +13,13 @@ import { Component, Vue } from 'vue-property-decorator'
 import ErgonomIOAvatarsContainer from '@/components/ErgonomIOAvatarsContainer.vue'
 
 @Component({
+  name: 'ErgonomIOAsset',
   components: {
     ErgonomIOAvatarsContainer
   }
 })
+
+// @vuese
+// @group VIEWS
 export default class ErgonomIOAvatars extends Vue {}
 </script>
