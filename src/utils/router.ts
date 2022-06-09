@@ -202,7 +202,7 @@ export const routes: Array<Route> = [
   }),
 
   new Route({
-    icon: 'mdi-help-circle',
+    icon: 'mdi-help-circle-outline',
     name: 'Help',
     subname: 'Applications guide',
     path: '/help-editor',
