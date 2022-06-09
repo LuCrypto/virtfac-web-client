@@ -193,7 +193,7 @@ export const routes: Array<Route> = [
   }),
 
   new Route({
-    icon: 'mdi-xml',
+    icon: 'mdi-swap-horizontal',
     name: 'API',
     subname: 'Interface documentation',
     path: '/documentation-api',
@@ -204,15 +204,15 @@ export const routes: Array<Route> = [
   new Route({
     icon: 'mdi-help-circle',
     name: 'Help',
-    subname: 'Editor for Help and Langages',
+    subname: 'Applications guide',
     path: '/help-editor',
     category: 'Documentation',
     component: HelpEditor
   }),
   new Route({
-    icon: 'mdi-help-circle',
-    name: 'Code',
-    subname: 'Structure of vue project',
+    icon: 'mdi-xml',
+    name: 'Code structure',
+    subname: 'Of vue project',
     path: '/code-structure',
     category: 'Documentation',
     component: CodeStructure
