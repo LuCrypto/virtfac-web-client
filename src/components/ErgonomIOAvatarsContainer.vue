@@ -64,33 +64,44 @@
         </v-list-item-group>
       </v-list>
     </v-navigation-drawer>
-    <!--Rendu three.js-->
+
     <v-col class="pa-0 d-flex flex-column" style="overflow: hidden;">
-      <!-- Rows -->
+      <!--Rendu three.js-->
       <v-row class="ma-0 flex-grow-1">
         <model-viewer-2 :displayFog="true" ref="viewer"></model-viewer-2>
       </v-row>
-      <v-row class="ma-0 flex-grow-0">
+      <!--clothes list defined by Customize icons (list of haire, pants etc...)-->
+      <v-row class="ma-3 flex-grow-0 align-center justify-center">
+        <v-btn
+          class="mx-2"
+          fab
+          dark
+          color="primary"
+          v-for="(menuItem, i) in menuItemList"
+          :key="i"
+          @click.stop="menuItem.action"
+        >
+          <v-icon v-text="menuItem.icon"></v-icon> </v-btn
+      ></v-row>
+      <!--Customize icons-->
+      <v-row class="ma-3 flex-grow-0">
         <v-container class="flex-grow-0 ma-0 pa-0" fluid>
           <v-row no-gutters class="align-center justify-center">
-            <v-btn class="mx-2" fab dark small color="primary">
-              <v-icon v-text="'mdi-tshirt-crew'"></v-icon>
-            </v-btn>
-            <v-btn class="mx-2" fab dark small color="primary">
-              <v-icon v-text="'mdi-tshirt-crew'"></v-icon>
-            </v-btn>
-            <v-btn class="mx-2" fab dark small color="primary">
-              <v-icon v-text="'mdi-tshirt-crew'"></v-icon>
-            </v-btn>
-            <v-btn class="mx-2" fab dark small color="primary">
-              <v-icon v-text="'mdi-tshirt-crew'"></v-icon>
-            </v-btn>
-            <v-btn class="mx-2" fab dark small color="primary">
-              <v-icon v-text="'mdi-tshirt-crew'"></v-icon>
+            <v-btn
+              class="mx-2"
+              fab
+              dark
+              color="primary"
+              v-for="(customItem, i) in customItemList"
+              :key="i"
+              @click.stop="customItem.action"
+            >
+              <v-icon v-text="customItem.icon"></v-icon>
             </v-btn> </v-row
         ></v-container>
       </v-row>
     </v-col>
+    <v-col width="20px" class="pa-0" style="overflow: hidden;"> </v-col>
 
     <!-- Je sais pas-->
     <select-pop-up ref="selectPopUp"></select-pop-up>
@@ -167,10 +178,12 @@ export default class ErgonomIOAvatarsContainer extends Vue {
 
   selectedMenuItem = -1
   menuItemList: MenuItem[] = []
+  customItemList: MenuItem[] = []
   menuCollapse = false
   viewer: ModelViewer2 | null = null
 
   inputField: InputFieldPopUp | null = null
+  selectedBodyPart = 'body'
 
   Hello (): void {
     console.log('Hello')
@@ -230,12 +243,37 @@ export default class ErgonomIOAvatarsContainer extends Vue {
     )
   }
 
+  // Used to generate icons comportment for body selection
+  createCustom (): void {
+    this.customItemList.push(
+      new MenuItem('body', 'mdi-tshirt-crew', () => {
+        this.selectedBodyPart = 'body'
+      })
+    )
+    this.customItemList.push(
+      new MenuItem('hair', 'mdi-tshirt-crew', () => {
+        this.selectedBodyPart = 'hair'
+      })
+    )
+    this.customItemList.push(
+      new MenuItem('pants', 'mdi-tshirt-crew', () => {
+        this.selectedBodyPart = 'pants'
+      })
+    )
+    this.customItemList.push(
+      new MenuItem('shoes', 'mdi-shoe-formal', () => {
+        this.selectedBodyPart = 'shoes'
+      })
+    )
+  }
+
   mounted (): void {
     this.inputField = this.$refs.inputFieldPopUp as InputFieldPopUp
     this.$root.$on('changeDarkMode', () => {
       this.updateTheme()
     })
     this.createMenu()
+    this.createCustom()
   }
 }
 </script>
