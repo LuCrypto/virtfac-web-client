@@ -79,6 +79,7 @@ class MenuItem {
 }
 
 @Component({
+  name: 'DrawingShopComponent',
   components: {
     BlueprintEditor,
     InputFieldPopUp,
@@ -86,6 +87,8 @@ class MenuItem {
     PopUp
   }
 })
+// @vuese
+// @group COMPONENTS
 export default class DrawingShopComponent extends Vue {
   selectedMenuItem = -1
   nodeViewer: BlueprintEditor | null = null

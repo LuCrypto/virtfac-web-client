@@ -299,11 +299,14 @@ class messageAsset {
 }
 
 @Component({
+  name: 'ErgonomIOAssets',
   components: {
     PopUp,
     AssetInfo
   }
 })
+// @vuese
+// @group VIEWS
 export default class ErgonomIOAssets extends Vue {
   // Initialisation
   assets: CardModel[] = []

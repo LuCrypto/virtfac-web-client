@@ -76,11 +76,14 @@ import { MatrixUtils } from '@/utils/matrixUtils'
 import Component from 'vue-class-component'
 
 @Component({
+  name: 'BlueprintEditor',
   props: {
     graph: Graph
     // placementFunction: Function as PropType<(g: Graph) => void>
   }
 })
+// @vuese
+// @group COMPONENTS
 export default class BlueprintEditor extends Vue {
   private container: Element | null = null
   private mode:

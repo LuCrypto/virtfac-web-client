@@ -49,7 +49,11 @@ class ViewerTheme {
   }
 }
 
-@Component
+@Component({
+  name: 'NodeViewer'
+})
+// @vuese
+// @group COMPONENTS
 export default class NodeViewer extends Vue {
   context: CanvasRenderingContext2D | null = null
   scale = 1

@@ -15,6 +15,10 @@
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator'
 
-@Component
+@Component({
+  name: 'ErgonomIOAvatars'
+})
+// @vuese
+// @group VIEWS
 export default class ErgonomIOAvatars extends Vue {}
 </script>

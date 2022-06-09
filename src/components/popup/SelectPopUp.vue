@@ -96,7 +96,11 @@ class MenuItem {
   }
 }
 
-@Component
+@Component({
+  name: 'SelectPopUp'
+})
+// @vuese
+// @group COMPONENTS
 export default class SelectPopUp extends Vue {
   menuItemList: MenuItem[] = []
   isMenuActive = false

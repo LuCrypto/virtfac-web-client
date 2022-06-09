@@ -27,10 +27,13 @@ import ModelViewerStats from '@/components/ModelViewerStats.vue'
 // import AVATAR from '@/utils/avatar'
 
 @Component({
+  name: 'ModelViewer2',
   components: {
     ModelViewerStats
   }
 })
+// @vuese
+// @group COMPONENTS
 export default class ModelViewer2 extends Vue {
   @Prop({ default: () => false }) private displayInspector!: boolean
   @Prop({ default: () => false }) private displayFog!: boolean

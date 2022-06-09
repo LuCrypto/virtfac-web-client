@@ -238,6 +238,7 @@ class DataFrame {
 }
 
 @Component({
+  name: 'AvatarAnimationComponent',
   components: {
     ModelViewer2,
     OpenFile,
@@ -245,6 +246,8 @@ class DataFrame {
     GraphChart
   }
 })
+// @vuese
+// @group VIEWS
 export default class AvatarAnimationComponent extends Vue {
   selectedMenuItem = -1
   menuCollapse = true

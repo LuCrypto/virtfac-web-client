@@ -57,7 +57,11 @@ import { Component, Vue } from 'vue-property-decorator'
 import API from '@/utils/api'
 import { APIDatabaseTable } from '@/utils/models'
 
-@Component
+@Component({
+  name: 'DatabaseViewer'
+})
+// @vuese
+// @group VIEWS
 export default class DatabaseViewer extends Vue {
   tablesTypes = new Map<string, APIDatabaseTable[]>()
   tables: APIDatabaseTable[] = []

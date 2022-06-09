@@ -22,10 +22,13 @@ interface Page {
 }
 
 @Component({
+  name: 'HelpEditor',
   components: {
     pdf
   }
 })
+// @vuese
+// @group VIEWS
 export default class HelpEditor extends Vue {
   pdfJSWrapper: pdf | null = null
 

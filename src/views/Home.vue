@@ -9,7 +9,11 @@
 import { Component, Vue } from 'vue-property-decorator'
 import VueRouter from 'vue-router'
 
-@Component
+@Component({
+  name: 'Home'
+})
+// @vuese
+// @group VIEWS
 export default class Home extends Vue {
   base = 'http://10.244.77.203/'
   page: string | (string | null)[] = ''

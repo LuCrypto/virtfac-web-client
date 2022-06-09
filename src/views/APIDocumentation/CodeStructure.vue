@@ -11,7 +11,11 @@
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator'
 
-@Component
+@Component({
+  name: 'CodeStructure'
+})
+// @vuese
+// @group VIEWS
 export default class CodeStructure extends Vue {
   iframe: HTMLIFrameElement | null = null
   iframeDefaultHead = ''

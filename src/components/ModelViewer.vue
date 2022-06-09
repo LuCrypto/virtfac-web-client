@@ -207,11 +207,14 @@ import { UndoManager, Action } from '@/utils/undoManager'
 // import AVATAR from '@/utils/avatar'
 
 @Component({
+  name: 'ModelViewer',
   components: {
     TreeExplorer,
     ModelViewerStats
   }
 })
+// @vuese
+// @group COMPONENTS
 export default class ModelViewer extends Vue {
   @Prop({ default: () => false }) private displayInspector!: boolean
 

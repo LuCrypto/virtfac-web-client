@@ -9,17 +9,16 @@
 </template>
 
 <script lang="ts">
-import AvatarAnimationComponent from '@/components/ErgonomicsAnalysisComponent.vue'
 import ErgonomIOAssetContainer from '@/components/ErgonomIOAssetContainer.vue'
 import { Component, Vue } from 'vue-property-decorator'
 @Component({
+  name: 'ErgonomIOAsset',
   components: {
     ErgonomIOAssetContainer
   }
 })
-export default class ErgonomIOAsset extends Vue {
-  mounted (): void {
-    console.log('Ergonom.io asset view.')
-  }
-}
+
+// @vuese
+// @group VIEWS
+export default class ErgonomIOAsset extends Vue {}
 </script>

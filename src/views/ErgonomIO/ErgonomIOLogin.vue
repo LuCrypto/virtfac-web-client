@@ -11,11 +11,14 @@ import Login from '@/components/Login.vue'
 import Account from '@/components/Account.vue'
 import { Session, User } from '@/utils/session'
 @Component({
+  name: 'ErgonomIOLogin',
   components: {
     Login,
     Account
   }
 })
+// @vuese
+// @group VIEWS
 export default class ErgonomIOLogin extends Vue {
   user: User | null = null
   mounted (): void {

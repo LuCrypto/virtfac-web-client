@@ -64,8 +64,10 @@ import { Session, User } from '@/utils/session'
 import Unreal from '@/utils/unreal'
 
 @Component({
-  components: {}
+  name: 'Account'
 })
+// @vuese
+// @group COMPONENTS
 export default class Account extends Vue {
   user: User | null = null
   unreal = Unreal

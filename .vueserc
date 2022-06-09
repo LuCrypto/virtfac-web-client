@@ -1,7 +1,17 @@
 {
+    "title": "VIRTFac Web client documentation",
     "include": [
-        "**/src/**/*.vue"
+        "src/**/*.vue",
+        "*.ts"
     ],
     "outDir": "public/doc",
-    "markdownDir": "components"
+    "markdownDir": "components",
+    "babelParserPlugins": {
+        "objectRestSpread": true,
+        "dynamicImport": true,
+        "decorators-legacy": true,
+        "classProperties": true,
+        "typescript": true,
+        "jsx": true
+    }
 }

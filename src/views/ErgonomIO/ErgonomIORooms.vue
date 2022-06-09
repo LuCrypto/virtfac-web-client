@@ -111,8 +111,12 @@ class messageUnreal {
   }
 }
 
-@Component
-export default class ErgonomIOAssets extends Vue {
+@Component({
+  name: 'ErgonomIORooms'
+})
+// @vuese
+// @group VIEWS
+export default class ErgonomIORooms extends Vue {
   rooms: Room[] = []
 
   // Begin

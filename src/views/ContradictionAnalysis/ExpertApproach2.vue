@@ -15,9 +15,12 @@ import { Component, Vue } from 'vue-property-decorator'
 import ContradictionExpert from '@/components/ContradictionExpert.vue'
 
 @Component({
+  name: 'ContradictionAnalysisGraph',
   components: {
     ContradictionExpert
   }
 })
+// @vuese
+// @group VIEWS
 export default class ContradictionAnalysisGraph extends Vue {}
 </script>

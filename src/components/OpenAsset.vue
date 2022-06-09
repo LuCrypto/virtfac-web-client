@@ -311,7 +311,11 @@ class DataTableHeaderSelector {
   }
 }
 
-@Component
+@Component({
+  name: 'OpenAssetPopUp'
+})
+// @vuese
+// @group COMPONENTS
 export default class OpenAssetPopUp extends Vue {
   @Prop({ default: () => 'all' }) private application!: string
   @Prop({ default: () => true }) private singleSelect!: boolean

@@ -91,7 +91,11 @@ export class ActionCallbackData {
   }
 }
 
-@Component
+@Component({
+  name: 'ActionContainer'
+})
+// @vuese
+// @group COMPONENTS
 export default class ActionContainer extends Vue {
   cursor: ActionCursorEvent = new ActionCursorEvent()
   touch: ActionTouchEvent = new ActionTouchEvent()

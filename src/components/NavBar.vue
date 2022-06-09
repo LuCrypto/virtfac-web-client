@@ -108,12 +108,15 @@ import PopUp from '@/components/PopUp.vue'
 import Home from '../views/Home.vue'
 
 @Component({
+  name: 'NavBar',
   components: {
     PopUp,
     Login,
     Account
   }
 })
+// @vuese
+// @group COMPONENTS
 export default class NavBar extends Vue {
   drawer = false
   categories: Map<string, Route[]> = new Map()

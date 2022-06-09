@@ -24,7 +24,11 @@
 <script lang="ts">
 import { Component, Prop, Vue, Watch } from 'vue-property-decorator'
 
-@Component
+@Component({
+  name: 'FormatPreview'
+})
+// @vuese
+// @group COMPONENTS
 export default class FormatPreview extends Vue {
   @Prop({ default: () => 'aaaaa aaaaa aaaaa aaaaa aaaaa aaaaa' })
   private shapes!: string
