@@ -1,5 +1,29 @@
 <template>
+  <!--v-card de la fenêtre-->
   <v-card elevation="3" height="700px" class="d-flex flex-row pa-0 ma-0">
+    <!--Open avatar profile pop-up-->
+    <pop-up ref="openFilePopUp">
+      <open-avatar
+        @close="$refs.openFilePopUp.close()"
+        application="ERGONOM_IO"
+        accept=".obj, .fbx, .stl, .wrl, .glb"
+        :uploadPipeline="onFileUpload"
+        :singleSelect="true"
+        :openFile="true"
+        @fileInput="onFileInput"
+      ></open-avatar>
+    </pop-up>
+
+    <!--Save avatar pop-up-->
+    <pop-up ref="avatarInfo">
+      <avatar-info
+        ref="avatarInfoComponent"
+        @close="$refs.avatarInfo.close()"
+      ></avatar-info>
+    </pop-up>
+    <!--TODO : Compléter  la liste des pops up possibles-->
+
+    <!--Barre de navigation des labels à gauche-->
     <v-navigation-drawer stateless permanent :mini-variant="menuCollapse">
       <v-list
         nav
@@ -7,6 +31,7 @@
         class="d-flex flex-column justify-start;"
         style="height: 100%"
       >
+        <!--item list of navigation page-->
         <v-list-item-group v-model="selectedMenuItem" color="primary">
           <v-list-item
             v-for="(menuItem, i) in menuItemList"
@@ -22,6 +47,7 @@
             </v-list-item-content>
           </v-list-item>
         </v-list-item-group>
+
         <v-list-item-group class="mt-auto">
           <v-list-item
             class="justify-start"
@@ -38,13 +64,20 @@
         </v-list-item-group>
       </v-list>
     </v-navigation-drawer>
+    <!--Rendu three.js-->
     <v-container
       fluid
       style="width: auto; margin: 0; flex-grow: 1;"
       class="pa-0 ma-0"
     >
-      <model-viewer ref="viewer" :displayInspector="true"></model-viewer>
+      <model-viewer-avatar
+        ref="viewer"
+        :displayInspector="false"
+        :displayStats="false"
+      ></model-viewer-avatar>
     </v-container>
+
+    <!-- Je sais pas-->
     <select-pop-up ref="selectPopUp"></select-pop-up>
     <input-field-pop-up ref="inputFieldPopUp"></input-field-pop-up>
   </v-card>
@@ -56,11 +89,11 @@ import Component from 'vue-class-component'
 import ActionContainer from '@/components/ActionContainer.vue'
 import { APIAsset } from '@/utils/models'
 
+// Usefull for PopUp windows
 import SelectPopUp from '@/components/popup/SelectPopUp.vue'
 import InputFieldPopUp from '@/components/popup/InputFieldPopUp.vue'
-import ModelViewer from '@/components/ModelViewer.vue'
+import ModelViewerAvatar from '@/components/ModelViewerAvatar.vue'
 
-import { GLTFExporter } from 'three/examples/jsm/exporters/GLTFExporter'
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader'
 import { VRMLLoader } from 'three/examples/jsm/loaders/VRMLLoader'
 import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader'
@@ -81,10 +114,11 @@ import {
   Vector3
 } from 'three'
 import { Session } from '@/utils/session'
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
 import PopUp from './PopUp.vue'
 import OpenAsset from '@/components/OpenAsset.vue'
+import OpenAvatar from '@/components/OpenAvatar.vue'
 import AssetInfo from '@/components/AssetInfo.vue'
+import AvatarInfo from '@/components/AvatarInfo.vue'
 import API from '@/utils/api'
 
 class MenuItem {
@@ -103,10 +137,12 @@ class MenuItem {
     ActionContainer,
     SelectPopUp,
     InputFieldPopUp,
-    ModelViewer,
+    ModelViewerAvatar,
     PopUp,
     OpenAsset,
-    AssetInfo
+    OpenAvatar,
+    AssetInfo,
+    AvatarInfo
   }
 })
 export default class ErgonomIOAvatarsContainer extends Vue {
@@ -117,12 +153,26 @@ export default class ErgonomIOAvatarsContainer extends Vue {
   selectedMenuItem = -1
   menuItemList: MenuItem[] = []
   menuCollapse = false
-  viewer: ModelViewer | null = null
+  viewer: ModelViewerAvatar | null = null
 
   inputField: InputFieldPopUp | null = null
 
   Hello (): void {
     console.log('Hello')
+  }
+
+  inputFile (): void {
+    const input = this.$refs.inputFile as HTMLInputElement
+    input.value = ''
+    input.click()
+  }
+
+  onFileUploaded (event: Event): void {
+    console.log('Hello')
+  }
+
+  onFileUpload (file: File): void {
+    console.log('yo')
   }
 
   updateTheme (): void {
@@ -137,16 +187,20 @@ export default class ErgonomIOAvatarsContainer extends Vue {
     }
   }
 
+  onFileInput (files: APIAsset[]): void {
+    console.log('Hello')
+  }
+
   // Used to set up management options
   createMenu (): void {
     this.menuItemList.push(
-      new MenuItem('Load Avatar Profile', 'mdi-axis-arrow', () => {
-        this.Hello()
+      new MenuItem('Open Avatar Profile', 'mdi-account', () => {
+        (this.$refs.openFilePopUp as PopUp).open()
       })
     )
     this.menuItemList.push(
-      new MenuItem('Save Avatar Profile', 'mdi-axis-arrow', () => {
-        this.Hello()
+      new MenuItem('Save Avatar Profile', 'mdi-content-save-edit', () => {
+        (this.$refs.avatarInfo as PopUp).open()
       })
     )
     this.menuItemList.push(
