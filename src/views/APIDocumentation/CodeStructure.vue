@@ -2,7 +2,7 @@
   <iframe
     style="display: block;"
     ref="iframe"
-    src="./doc/index.html"
+    src="./doc/index.html#/components/OpenFilePopUp"
     @load="frameLoaded"
     frameborder="0"
   />

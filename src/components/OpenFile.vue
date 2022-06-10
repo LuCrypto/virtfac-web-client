@@ -683,9 +683,11 @@ export default class OpenFilePopUp extends Vue {
 
   cancel (): void {
     // Open file action is cancelled
+    // @arg No arguments required
     this.$emit('cancel')
 
     // Close the parent popup (if it exists)
+    // @arg No arguments required
     this.$emit('close')
   }
 

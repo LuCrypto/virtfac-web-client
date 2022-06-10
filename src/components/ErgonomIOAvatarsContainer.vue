@@ -21,9 +21,9 @@
         @close="$refs.avatarInfo.close()"
       ></avatar-info>
     </pop-up>
-    <!--TODO : Compléter  la liste des pops up possibles-->
+    <!--TODO : Complete Pop-Up list-->
 
-    <!--Barre de navigation des labels à gauche-->
+    <!--Left Menu Labels-->
     <v-navigation-drawer stateless permanent :mini-variant="menuCollapse">
       <v-list
         nav
@@ -65,10 +65,16 @@
       </v-list>
     </v-navigation-drawer>
 
-    <v-col class="pa-0 d-flex flex-column" style="overflow: hidden;">
-      <!--Rendu three.js-->
-      <v-row class="ma-0 flex-grow-1">
-        <model-viewer-2 :displayFog="true" ref="viewer"></model-viewer-2>
+    <!--Main Components-->
+    <v-col class="pa-0 d-flex flex-column">
+      <!--Three.js render-->
+      <v-row no-gutters class="pa-0 d-flex flex-row">
+        <v-col class="pa-0 d-flex flex-column">
+          <v-row class="ma-0 flex-grow-1">
+            <model-viewer-2 :displayFog="true" ref="viewer"></model-viewer-2>
+          </v-row>
+        </v-col>
+        <v-col class="pa-0 d-flex flex-column"></v-col>
       </v-row>
       <!--clothes list defined by Customize icons (list of haire, pants etc...)-->
       <v-row class="ma-3 flex-grow-0 align-center justify-center">
@@ -81,12 +87,12 @@
           :key="i"
           @click.stop="menuItem.action"
         >
-          <v-icon v-text="menuItem.icon"></v-icon> </v-btn
+          <v-icon v-text="menuItem.icon" class="black--text"></v-icon> </v-btn
       ></v-row>
       <!--Customize icons-->
-      <v-row class="ma-3 flex-grow-0">
+      <v-row class="ma-3 flex-grow-0 align-center justify-center">
         <v-container class="flex-grow-0 ma-0 pa-0" fluid>
-          <v-row no-gutters class="align-center justify-center">
+          <v-row no-gutters class="align-center justify-center black--text">
             <v-btn
               class="mx-2"
               fab
@@ -96,14 +102,13 @@
               :key="i"
               @click.stop="customItem.action"
             >
-              <v-icon v-text="customItem.icon"></v-icon>
+              <v-icon v-text="customItem.icon" class="black--text"></v-icon>
             </v-btn> </v-row
         ></v-container>
       </v-row>
     </v-col>
-    <v-col width="20px" class="pa-0" style="overflow: hidden;"> </v-col>
 
-    <!-- Je sais pas-->
+    <!--Unknown-->
     <select-pop-up ref="selectPopUp"></select-pop-up>
     <input-field-pop-up ref="inputFieldPopUp"></input-field-pop-up>
   </v-card>
