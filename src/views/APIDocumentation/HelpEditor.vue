@@ -4,47 +4,81 @@
     class="d-flex flex-wrap pt-6 pl-6"
     style="max-height: 100%; overflow: auto;"
   >
-    <pdf
+    <!-- <pdf
       ref="pdf"
       src="Guide3_AvecLien.pdf"
-      @loaded="loaded"
+      @load="loaded"
       @link-clicked="linkIsClicked"
+    ></pdf> -->
+    <pdf
+      src="Guide3_AvecLien.pdf"
+      :page="1"
+      ref="pdf"
+      :annotation="true"
+      @link-clicked="handlePdfLink"
     ></pdf>
   </v-container>
 </template>
 
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator'
-import pdf from 'vue-pdf'
+// import pdf from 'vue-pdf'
+import pdfvuer from 'pdfvuer'
+import { nextTick } from 'vue/types/umd'
 
-interface Page {
-  objs: unknown
+interface PDF {
+  numPages: number
 }
 
 @Component({
   name: 'HelpEditor',
   components: {
-    pdf
+    pdf: pdfvuer
   }
 })
 // @vuese
 // @group VIEWS
 export default class HelpEditor extends Vue {
-  pdfJSWrapper: pdf | null = null
+  pdfData: Promise<PDF> | undefined = undefined
+  isLoaded = false
+  tick = 0
 
   mounted (): void {
-    this.pdfJSWrapper = this.$refs.pdf as pdf
     console.log('mounted')
+    this.parseLinksOnceLoaded()
   }
 
-  linkIsClicked (n: number): void {
-    console.log('link is clicked : ', n)
-  }
-
-  loaded () {
-    if (this.pdfJSWrapper) {
-      this.pdfJSWrapper.pdf.forEachPage((page: Page) => console.log(page))
+  parseLinksOnceLoaded () {
+    const pdf = this.$refs.pdf as pdfvuer
+    if (pdf) {
+      const links = [
+        ...this.$el.querySelectorAll('.page a')
+      ] as HTMLLinkElement[]
+      if (links.length) {
+        this.parsePDFLinks(links)
+        return
+      }
     }
+    if (this.tick++ < 1000) {
+      requestAnimationFrame(() => this.parseLinksOnceLoaded())
+    }
+  }
+
+  parsePDFLinks (links: HTMLLinkElement[]) {
+    console.log(links)
+    links
+      .filter(link => !link.classList.contains('internalLink'))
+      .filter(link => {
+        const url = new URL(link.href)
+        console.log(url)
+        return true
+      })
+
+    // TODO : Disable link action and replace it by function
+  }
+
+  handlePdfLink (param: unknown) {
+    console.log('link', param)
   }
 }
 </script>
