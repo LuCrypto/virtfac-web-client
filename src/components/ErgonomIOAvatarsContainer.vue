@@ -267,6 +267,16 @@ export default class ErgonomIOAvatarsContainer extends Vue {
     )
   }
 
+  // createItemArray (): void {
+  //   for (let i = 0; i < this.customItemList.length; i++) {
+  //     var tmpArray = []
+  //     for (let j = 0; j < i; j++) {
+  //       tmpArray.push()
+  //     }
+  //     this.itemArray.push(tmpArray)
+  //   }
+  // }
+
   mounted (): void {
     this.inputField = this.$refs.inputFieldPopUp as InputFieldPopUp
     this.$root.$on('changeDarkMode', () => {
