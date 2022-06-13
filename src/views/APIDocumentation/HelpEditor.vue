@@ -65,16 +65,19 @@ export default class HelpEditor extends Vue {
   }
 
   parsePDFLinks (links: HTMLLinkElement[]) {
-    console.log(links)
     links
       .filter(link => !link.classList.contains('internalLink'))
       .filter(link => {
         const url = new URL(link.href)
-        console.log(url)
-        return true
+        return url.origin === 'http://localhost'
       })
-
-    // TODO : Disable link action and replace it by function
+      .forEach((link: HTMLLinkElement) => {
+        const action = link.href
+        link.href = '#'
+        link.setAttribute('target', '')
+        // TODO : Disable link action and replace it by function
+        link.onclick = () => console.log('Action :', action)
+      })
   }
 
   handlePdfLink (param: unknown) {
