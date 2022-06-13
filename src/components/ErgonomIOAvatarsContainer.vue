@@ -1,6 +1,7 @@
 <template>
   <!--v-card de la fenêtre-->
   <v-card elevation="3" height="700px" class="d-flex flex-row pa-0 ma-0">
+    <!-- Popup windows-->
     <!--Open avatar profile pop-up-->
     <pop-up ref="openFilePopUp">
       <open-avatar
@@ -74,22 +75,37 @@
             <model-viewer-2 :displayFog="true" ref="viewer"></model-viewer-2>
           </v-row>
         </v-col>
-        <v-col class="pa-0 d-flex flex-column"></v-col>
+        <v-col
+          width="100px"
+          style="background-color: red"
+          class="ma-3 flex-grow-1 d-flex flex-column justify-center"
+        >
+          <v-color-picker
+            class="align-self-center"
+            v-model="color"
+            hide-canvas
+            hide-sliders
+            show-swatches
+            :swatches="skinColors"
+            hide-inputs
+          ></v-color-picker
+        ></v-col>
       </v-row>
-      <!--clothes list defined by Customize icons (list of haire, pants etc...)-->
+      <!--clothes list defined by Customize icons (list of hair, shirt, pants etc...)-->
       <v-row class="ma-3 flex-grow-0 align-center justify-center">
         <v-btn
           class="mx-2"
           fab
           dark
           color="primary"
-          v-for="(menuItem, i) in menuItemList"
+          v-for="(menuItem, i) in itemArray[selectedBodyPart]"
           :key="i"
           @click.stop="menuItem.action"
         >
           <v-icon v-text="menuItem.icon" class="black--text"></v-icon> </v-btn
       ></v-row>
-      <!--Customize icons-->
+
+      <!--Button row to switch between customization -->
       <v-row class="ma-3 flex-grow-0 align-center justify-center">
         <v-container class="flex-grow-0 ma-0 pa-0" fluid>
           <v-row no-gutters class="align-center justify-center black--text">
@@ -124,6 +140,8 @@ import { APIAsset } from '@/utils/models'
 import SelectPopUp from '@/components/popup/SelectPopUp.vue'
 import InputFieldPopUp from '@/components/popup/InputFieldPopUp.vue'
 import ModelViewer2 from '@/components/ModelViewer2.vue'
+
+import * as THREE from 'three'
 
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader'
 import { VRMLLoader } from 'three/examples/jsm/loaders/VRMLLoader'
@@ -164,6 +182,7 @@ class MenuItem {
 }
 
 @Component({
+  name: 'ErgonomioAvatarsContainer',
   components: {
     ActionContainer,
     SelectPopUp,
@@ -176,6 +195,12 @@ class MenuItem {
     AvatarInfo
   }
 })
+// @vuese
+// @group COMPONENTS
+// Component to manage the Avatar customization elements.
+// A user can create a new Avatar, or modify an existing one.
+// Several customization parameters are available, for the aesthetic
+// and the morph customs.
 export default class ErgonomIOAvatarsContainer extends Vue {
   defaultMaterial = new MeshLambertMaterial({
     color: 0xaaaaaa
@@ -184,11 +209,23 @@ export default class ErgonomIOAvatarsContainer extends Vue {
   selectedMenuItem = -1
   menuItemList: MenuItem[] = []
   customItemList: MenuItem[] = []
-  menuCollapse = false
+  menuCollapse = true
+  itemArray: [number[]] = [[]]
+  skinColors = [
+    ['#FF0000', '#AA0000', '#550000'],
+    ['#FFFF00', '#AAAA00', '#555500'],
+    ['#00FF00', '#00AA00', '#005500'],
+    ['#00FFFF', '#00AAAA', '#005555'],
+    ['#0000FF', '#0000AA', '#000055']
+  ]
+
+  color = '#FF0000'
+
+  /* ThreeJS view */
   viewer: ModelViewer2 | null = null
 
   inputField: InputFieldPopUp | null = null
-  selectedBodyPart = 'body'
+  selectedBodyPart = 1
 
   Hello (): void {
     console.log('Hello')
@@ -200,12 +237,37 @@ export default class ErgonomIOAvatarsContainer extends Vue {
     input.click()
   }
 
-  onFileUploaded (event: Event): void {
-    console.log('Hello')
-  }
-
   onFileUpload (file: File): void {
     console.log('yo')
+  }
+
+  initAvatar (): void {
+    if (this.viewer == null) return
+    const viewer = this.viewer
+    const material = new THREE.MeshStandardMaterial({
+      color: 0x683e00, // Burned orange
+      metalness: 0,
+      roughness: 1
+    })
+    this.viewer
+      .loadGLTFFromPath('./avatar.gltf')
+      .then((gltf) => {
+        gltf.scene.children[0].position.set(0, 0, 0)
+        gltf.scene.traverse((child) => {
+          if (child instanceof THREE.Mesh) {
+            child.material = material
+          }
+
+          if (child instanceof THREE.Bone && child.name === 'mixamorig1Hips') {
+            const helper = new THREE.SkeletonHelper(child)
+            const mat = helper.material as THREE.LineBasicMaterial
+            mat.linewidth = 3
+            helper.visible = true
+            viewer.scene.add(helper)
+          }
+        })
+      })
+      .catch((e) => console.error('Cannot load GLTF', e))
   }
 
   updateTheme (): void {
@@ -252,43 +314,56 @@ export default class ErgonomIOAvatarsContainer extends Vue {
   createCustom (): void {
     this.customItemList.push(
       new MenuItem('body', 'mdi-tshirt-crew', () => {
-        this.selectedBodyPart = 'body'
+        this.selectedBodyPart = 1
       })
     )
     this.customItemList.push(
       new MenuItem('hair', 'mdi-tshirt-crew', () => {
-        this.selectedBodyPart = 'hair'
+        this.selectedBodyPart = 2
       })
     )
     this.customItemList.push(
       new MenuItem('pants', 'mdi-tshirt-crew', () => {
-        this.selectedBodyPart = 'pants'
+        this.selectedBodyPart = 3
       })
     )
     this.customItemList.push(
       new MenuItem('shoes', 'mdi-shoe-formal', () => {
-        this.selectedBodyPart = 'shoes'
+        this.selectedBodyPart = 4
       })
     )
   }
 
-  // createItemArray (): void {
-  //   for (let i = 0; i < this.customItemList.length; i++) {
-  //     var tmpArray = []
-  //     for (let j = 0; j < i; j++) {
-  //       tmpArray.push()
-  //     }
-  //     this.itemArray.push(tmpArray)
-  //   }
-  // }
+  createItemArray (): void {
+    for (let i = 0; i < this.customItemList.length; i++) {
+      var myArray = []
+      for (let j = 0; j < i + 1; j++) {
+        myArray.push(j)
+      }
+      this.itemArray.push(myArray)
+    }
+  }
 
+  onSwitchEvent (): void {
+    console.log(this.itemArray[this.selectedBodyPart].length)
+  }
+
+  // @vuese
+  // Mounted function
+  // @arg No arguments required
   mounted (): void {
     this.inputField = this.$refs.inputFieldPopUp as InputFieldPopUp
     this.$root.$on('changeDarkMode', () => {
       this.updateTheme()
     })
+
+    this.viewer = this.$refs.viewer as ModelViewer2
+    this.viewer.setFogActive(false)
+
     this.createMenu()
     this.createCustom()
+    this.createItemArray()
+    this.initAvatar()
   }
 }
 </script>
