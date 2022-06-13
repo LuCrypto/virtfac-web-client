@@ -1,16 +1,23 @@
 import Vue, { ComponentOptions, AsyncComponent } from 'vue'
 import VueRouter, { RouteConfig } from 'vue-router'
+
+// Home
 import Home from '../views/Home.vue'
 
 // Contradiction analysis
 import AboutContradictionAnalysis from '@/views/ContradictionAnalysis/AboutContradictionAnalysis.vue'
-
-import AboutRoutingAnalysis from '@/views/RoutingAnalysis/AboutRoutingAnalysis.vue'
-import DrawingShop from '@/views/RoutingAnalysis/RoutingAnalysis.vue'
-// import ContradictionAnalysisExpert from '@/views/ContradictionAnalysis/ExpertApproach.vue'
 import ContradictionAnalysisSimulation from '@/views/ContradictionAnalysis/SimulationApproach2.vue'
 import ContradictionAnalysisGraph from '@/views/ContradictionAnalysis/ExpertApproach2.vue'
 
+// Routing Analysis
+import AboutRoutingAnalysis from '@/views/RoutingAnalysis/AboutRoutingAnalysis.vue'
+import DrawingShop from '@/views/RoutingAnalysis/RoutingAnalysis.vue'
+
+// Dynamics Analysis
+import DynamicsInput from '@/views/Dynamics/DynamicsInput.vue'
+import DynamicsOutput from '@/views/Dynamics/DynamicsOutput.vue'
+
+// Ergonomio
 import AboutErgonomIO from '@/views/ErgonomIO/AboutErgonomIO.vue'
 import ErgonomIO from '@/views/ErgonomIO/ErgonomIO.vue'
 import ErgonomIOAnalysis from '@/views/ErgonomIO/ErgonomIOAnalysis.vue'
@@ -21,10 +28,11 @@ import ErgonomIORooms from '@/views/ErgonomIO/ErgonomIORooms.vue'
 import ErgonomIOAvatars from '@/views/ErgonomIO/ErgonomIOAvatars.vue'
 import ErgonomIOLogin from '@/views/ErgonomIO/ErgonomIOLogin.vue'
 import ErgonomioMainMenu from '@/components/ergonomio_ui/ErgonomioMainMenu.vue'
+
+// Documentation
 import DatabaseViewer from '@/views/APIDocumentation/DatabaseViewer.vue'
 import APIDocumentation from '@/views/APIDocumentation/APIDocumentation.vue'
 import HelpEditor from '@/views/APIDocumentation/HelpEditor.vue'
-
 import CodeStructure from '@/views/APIDocumentation/CodeStructure.vue'
 
 Vue.use(VueRouter)
@@ -113,6 +121,25 @@ export const routes: Array<Route> = [
     path: '/routing-analysis',
     category: 'Routing  Analysis',
     component: DrawingShop
+  }),
+
+  // Dynamics analysis
+  new Route({
+    icon: 'mdi-share-variant',
+    name: 'Input',
+    subname: 'Share dynamics files',
+    path: '/dynamics-input',
+    category: 'Dynamics Analysis',
+    restricted: false,
+    component: DynamicsInput
+  }),
+  new Route({
+    icon: 'mdi-chart-box',
+    name: 'Output',
+    subname: 'Dynamics analysis',
+    path: '/dynamics-output',
+    category: 'Dynamics Analysis',
+    component: DynamicsOutput
   }),
 
   // Ergonom.io
