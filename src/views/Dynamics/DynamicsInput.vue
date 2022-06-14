@@ -13,7 +13,7 @@
     <v-col class="flex-grow-1" style="overflow-y: auto;">
       <open-file
         style="height: 100%;"
-        application="ERGONOM_IO"
+        application="ERGONOM_IO_ANALYSIS"
         :header="false"
       ></open-file
     ></v-col>
