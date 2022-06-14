@@ -1,7 +1,7 @@
 <template>
-  <v-card>
+  <v-card flat>
     <!-- Header -->
-    <v-toolbar color="primary" flat>
+    <v-toolbar color="primary" flat v-if="this.header">
       <v-toolbar-title class="black--text">
         <v-icon left v-text="'mdi-file-document'"></v-icon>
         {{ openFile ? 'Open files' : 'Files manager' }}
@@ -9,7 +9,7 @@
     </v-toolbar>
 
     <!-- Popup content -->
-    <v-card :height="this.isMobileView ? 470 : undefined">
+    <v-card :height="this.isMobileView && this.header ? 470 : undefined" flat>
       <v-container
         fluid
         style="height: 100%; max-height: 100%"
@@ -333,6 +333,15 @@ export default class OpenFilePopUp extends Vue {
   // @vuese
   // Middleware callback executed before file uploading on API
   @Prop({ default: () => null }) private uploadPipeline!: Pipeline
+  // @vuese
+  // Defines if multiple files can be selected or not
+  @Prop({ default: () => true }) private singleSelect!: boolean
+  // @vuese
+  // Defines whether a file can be opened
+  @Prop({ default: () => false }) private openFile!: boolean
+  // @vuese
+  // Display or not the "File Manager" header.
+  @Prop({ default: () => true }) private header!: boolean
 
   waitingTasks = 3
 
