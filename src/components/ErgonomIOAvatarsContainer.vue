@@ -1,5 +1,11 @@
+<style scoped>
+.selected {
+  outline: solid #ff7f00;
+}
+</style>
+
 <template>
-  <!--v-card de la fenêtre-->
+  <!--v-card of component-->
   <v-card elevation="3" height="700px" class="d-flex flex-row pa-0 ma-0">
     <!-- Popup windows-->
     <!--Open avatar profile pop-up-->
@@ -77,50 +83,56 @@
         </v-col>
         <v-col
           width="100px"
-          style="background-color: red"
-          class="ma-3 flex-grow-1 d-flex flex-column justify-center"
+          class="ma-3 flex-grow-1 d-flex flex-column align-center justify-center"
         >
-          <v-color-picker
-            class="align-self-center"
-            v-model="color"
-            hide-canvas
-            hide-sliders
-            show-swatches
-            :swatches="skinColors"
-            hide-inputs
-          ></v-color-picker
-        ></v-col>
+          MorphCustom Sliders
+        </v-col>
       </v-row>
-      <!--clothes list defined by Customize icons (list of hair, shirt, pants etc...)-->
+      <!--Row list of bodypart modifiers -->
       <v-row class="ma-3 flex-grow-0 align-center justify-center">
         <v-btn
-          class="mx-2"
+          v-for="(childMenu, childIndex) in mainMenu.items[mainMenu.selected]
+            .items"
+          :key="childIndex"
+          class="mx-2 black--text"
           fab
-          dark
-          color="primary"
-          v-for="(menuItem, i) in itemArray[selectedBodyPart]"
-          :key="i"
-          @click.stop="menuItem.action"
+          :color="childMenu.type === 'COLOR' ? childMenu.value : 'primary'"
+          :class="
+            mainMenu.items[mainMenu.selected].selected === childIndex
+              ? 'selected'
+              : ''
+          "
+          @click="
+            mainMenu.items[mainMenu.selected].selected = childIndex
+            update()
+          "
         >
-          <v-icon v-text="menuItem.icon" class="black--text"></v-icon> </v-btn
-      ></v-row>
+          <v-icon dark>
+            {{ childMenu.type === 'ICON' ? childMenu.value : '' }}
+          </v-icon>
+        </v-btn>
+      </v-row>
 
-      <!--Button row to switch between customization -->
+      <!--Row of buttons to switch between bodyPart list-->
       <v-row class="ma-3 flex-grow-0 align-center justify-center">
-        <v-container class="flex-grow-0 ma-0 pa-0" fluid>
-          <v-row no-gutters class="align-center justify-center black--text">
-            <v-btn
-              class="mx-2"
-              fab
-              dark
-              color="primary"
-              v-for="(customItem, i) in customItemList"
-              :key="i"
-              @click.stop="customItem.action"
-            >
-              <v-icon v-text="customItem.icon" class="black--text"></v-icon>
-            </v-btn> </v-row
-        ></v-container>
+        <v-row no-gutters class="align-center justify-center black--text">
+          <v-btn
+            v-for="(parentMenu, parentIndex) in mainMenu.items"
+            :key="parentIndex"
+            class="mx-2 black--text"
+            fab
+            :color="parentMenu.type === 'COLOR' ? parentMenu.value : 'primary'"
+            :class="mainMenu.selected === parentIndex ? 'selected' : ''"
+            @click="
+              mainMenu.selected = parentIndex
+              update()
+            "
+          >
+            <v-icon dark>
+              {{ parentMenu.type === 'ICON' ? parentMenu.value : '' }}
+            </v-icon>
+          </v-btn>
+        </v-row>
       </v-row>
     </v-col>
 
@@ -142,15 +154,6 @@ import InputFieldPopUp from '@/components/popup/InputFieldPopUp.vue'
 import ModelViewer2 from '@/components/ModelViewer2.vue'
 
 import * as THREE from 'three'
-
-import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader'
-import { VRMLLoader } from 'three/examples/jsm/loaders/VRMLLoader'
-import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader'
-import { STLLoader } from 'three/examples/jsm/loaders/STLLoader'
-import { VTKLoader } from 'three/examples/jsm/loaders/VTKLoader'
-import { Rhino3dmLoader } from 'three/examples/jsm/loaders/3DMLoader'
-import { PLYLoader } from 'three/examples/jsm/loaders/PLYLoader'
-import { TDSLoader } from 'three/examples/jsm/loaders/TDSLoader'
 
 import {
   BufferGeometry,
@@ -178,6 +181,43 @@ class MenuItem {
     this.text = text
     this.icon = icon
     this.action = action
+  }
+}
+
+type MenuItemType = 'ICON' | 'COLOR'
+
+class MenuItem2 {
+  selected = 0
+  type: MenuItemType = 'ICON'
+  value = ''
+  items: MenuItem2[] = []
+
+  constructor (
+    value = '',
+    type: MenuItemType = 'ICON',
+    items: MenuItem2[] = []
+  ) {
+    this.type = type
+    this.items = items
+    this.value = value
+  }
+}
+
+class CustomItem {
+  text: string
+  icon: string
+  action: () => void
+  color: string
+  constructor (
+    text: string,
+    icon: string,
+    action: () => void,
+    color: string | null
+  ) {
+    this.text = text
+    this.icon = icon
+    this.action = action
+    this.color = color || 'primary'
   }
 }
 
@@ -210,22 +250,33 @@ export default class ErgonomIOAvatarsContainer extends Vue {
   menuItemList: MenuItem[] = []
   customItemList: MenuItem[] = []
   menuCollapse = true
-  itemArray: [number[]] = [[]]
+  itemArray: [any[]] = [[]]
+  selectedBodyPart = 1
   skinColors = [
-    ['#FF0000', '#AA0000', '#550000'],
-    ['#FFFF00', '#AAAA00', '#555500'],
-    ['#00FF00', '#00AA00', '#005500'],
-    ['#00FFFF', '#00AAAA', '#005555'],
-    ['#0000FF', '#0000AA', '#000055']
+    '#e19e83',
+    '#d9967b',
+    '#d18e73',
+    '#c9866b',
+    '#c17e63',
+    '#b16e53',
+    '#8f5943',
+    '#7f4e3b',
+    '#6e4433',
+    '#5d3a2b',
+    '#4d2f24'
   ]
 
-  color = '#FF0000'
+  // var mainMenu needs to be init with an items before calling createItems
+  mainMenu: MenuItem2 = new MenuItem2('', 'ICON', [new MenuItem2()])
+
+  currentSkinId = 0
+
+  showPlayerDataSettings = false
 
   /* ThreeJS view */
   viewer: ModelViewer2 | null = null
 
   inputField: InputFieldPopUp | null = null
-  selectedBodyPart = 1
 
   Hello (): void {
     console.log('Hello')
@@ -286,6 +337,132 @@ export default class ErgonomIOAvatarsContainer extends Vue {
     console.log('Hello')
   }
 
+  createItemArray (): void {
+    // SkinColors array
+    var skinArray = []
+    for (let i = 0; i < this.skinColors.length; i++) {
+      var myItem = new CustomItem(
+        'color',
+        '',
+        () => {
+          this.changeSkin(this.skinColors[i])
+        },
+        this.skinColors[i]
+      )
+      skinArray.push(myItem)
+    }
+    this.itemArray.push(skinArray)
+
+    // Body parts array, "empty" for now
+    for (let i = 0; i < this.customItemList.length; i++) {
+      var myArray = []
+      for (let j = 0; j < i + 1; j++) {
+        myArray.push(j)
+      }
+      this.itemArray.push(myArray)
+    }
+  }
+
+  changeSkin (color: string): void {
+    console.log('New skin color hex:', color)
+  }
+
+  createItems (): void {
+    var skinArray = []
+    for (let i = 0; i < this.skinColors.length; i++) {
+      skinArray.push(new MenuItem2(this.skinColors[i], 'COLOR'))
+    }
+    this.mainMenu = new MenuItem2('', 'ICON', [
+      new MenuItem2('skin', 'ICON', skinArray),
+      new MenuItem2('shirt', 'ICON', [
+        new MenuItem2('mdi-cellphone-off'),
+        new MenuItem2('mdi-sim-alert'),
+        new MenuItem2('mdi-airplane-plus')
+      ]),
+      new MenuItem2('hair', 'ICON', [
+        new MenuItem2('mdi-car-settings'),
+        new MenuItem2('mdi-file-import-outline'),
+        new MenuItem2('mdi-pliers'),
+        new MenuItem2('mdi-shark-fin'),
+        new MenuItem2('mdi-card-account-details-star-outline')
+      ]),
+      new MenuItem2('beard', 'ICON', [
+        new MenuItem2('mdi-folder'),
+        new MenuItem2('mdi-moped-electric'),
+        new MenuItem2('mdi-checkbox-blank-circle'),
+        new MenuItem2('mdi-checkerboard'),
+        new MenuItem2('mdi-solid'),
+        new MenuItem2('mdi-checkbox-marked'),
+        new MenuItem2('mdi-glass-wine'),
+        new MenuItem2('mdi-tag-arrow-left'),
+        new MenuItem2('mdi-arrow-right-top-bold')
+      ]),
+      new MenuItem2('pants', 'ICON', [
+        new MenuItem2('mdi-cellphone-off'),
+        new MenuItem2('mdi-sim-alert'),
+        new MenuItem2('mdi-airplane-plus')
+      ]),
+      new MenuItem2('shoes', 'ICON', [
+        new MenuItem2('mdi-car-settings'),
+        new MenuItem2('mdi-file-import-outline'),
+        new MenuItem2('mdi-pliers'),
+        new MenuItem2('mdi-shark-fin'),
+        new MenuItem2('mdi-card-account-details-star-outline')
+      ]),
+      new MenuItem2('hand', 'ICON', [
+        new MenuItem2('mdi-folder'),
+        new MenuItem2('mdi-moped-electric'),
+        new MenuItem2('mdi-checkbox-blank-circle'),
+        new MenuItem2('mdi-checkerboard'),
+        new MenuItem2('mdi-solid'),
+        new MenuItem2('mdi-checkbox-marked'),
+        new MenuItem2('mdi-glass-wine'),
+        new MenuItem2('mdi-tag-arrow-left'),
+        new MenuItem2('mdi-arrow-right-top-bold')
+      ]),
+      new MenuItem2('hat', 'ICON', [
+        new MenuItem2('mdi-cellphone-off'),
+        new MenuItem2('mdi-sim-alert'),
+        new MenuItem2('mdi-airplane-plus')
+      ]),
+      new MenuItem2('settings', 'ICON', [
+        new MenuItem2('mdi-car-settings'),
+        new MenuItem2('mdi-file-import-outline'),
+        new MenuItem2('mdi-pliers'),
+        new MenuItem2('mdi-shark-fin'),
+        new MenuItem2('mdi-card-account-details-star-outline')
+      ])
+    ])
+
+    console.log(this.mainMenu.selected)
+    console.log(this.mainMenu.items.length)
+    console.log('hello')
+  }
+
+  // @vuese
+  // Mounted function
+  // @arg No arguments required
+  mounted (): void {
+    this.inputField = this.$refs.inputFieldPopUp as InputFieldPopUp
+    this.$root.$on('changeDarkMode', () => {
+      this.updateTheme()
+    })
+
+    this.viewer = this.$refs.viewer as ModelViewer2
+    this.viewer.setFogActive(false)
+
+    this.createMenu()
+    this.createCustom()
+    this.createItemArray()
+    this.createItems()
+    this.initAvatar()
+    console.log('hello')
+  }
+
+  update () {
+    console.log('Main menu is updated.')
+  }
+
   // Used to set up management options
   createMenu (): void {
     this.menuItemList.push(
@@ -313,57 +490,51 @@ export default class ErgonomIOAvatarsContainer extends Vue {
   // Used to generate icons comportment for body selection
   createCustom (): void {
     this.customItemList.push(
-      new MenuItem('body', 'mdi-tshirt-crew', () => {
+      new MenuItem('skin', 'mdi-tshirt-crew', () => {
         this.selectedBodyPart = 1
       })
     )
     this.customItemList.push(
-      new MenuItem('hair', 'mdi-tshirt-crew', () => {
+      new MenuItem('shirt', 'mdi-tshirt-crew', () => {
         this.selectedBodyPart = 2
       })
     )
     this.customItemList.push(
-      new MenuItem('pants', 'mdi-tshirt-crew', () => {
+      new MenuItem('hair', 'mdi-tshirt-crew', () => {
         this.selectedBodyPart = 3
       })
     )
     this.customItemList.push(
-      new MenuItem('shoes', 'mdi-shoe-formal', () => {
+      new MenuItem('beard', 'mdi-tshirt-crew', () => {
         this.selectedBodyPart = 4
       })
     )
-  }
-
-  createItemArray (): void {
-    for (let i = 0; i < this.customItemList.length; i++) {
-      var myArray = []
-      for (let j = 0; j < i + 1; j++) {
-        myArray.push(j)
-      }
-      this.itemArray.push(myArray)
-    }
-  }
-
-  onSwitchEvent (): void {
-    console.log(this.itemArray[this.selectedBodyPart].length)
-  }
-
-  // @vuese
-  // Mounted function
-  // @arg No arguments required
-  mounted (): void {
-    this.inputField = this.$refs.inputFieldPopUp as InputFieldPopUp
-    this.$root.$on('changeDarkMode', () => {
-      this.updateTheme()
-    })
-
-    this.viewer = this.$refs.viewer as ModelViewer2
-    this.viewer.setFogActive(false)
-
-    this.createMenu()
-    this.createCustom()
-    this.createItemArray()
-    this.initAvatar()
+    this.customItemList.push(
+      new MenuItem('pants', 'mdi-tshirt-crew', () => {
+        this.selectedBodyPart = 5
+      })
+    )
+    this.customItemList.push(
+      new MenuItem('shoes', 'mdi-shoe-formal', () => {
+        this.selectedBodyPart = 6
+      })
+    )
+    this.customItemList.push(
+      new MenuItem('hand', 'mdi-shoe-formal', () => {
+        this.selectedBodyPart = 7
+      })
+    )
+    this.customItemList.push(
+      new MenuItem('hat', 'mdi-shoe-formal', () => {
+        this.selectedBodyPart = 8
+      })
+    )
+    this.customItemList.push(
+      new MenuItem('settings', 'mdi-shoe-formal', () => {
+        this.showPlayerDataSettings = true
+        this.selectedBodyPart = 0
+      })
+    )
   }
 }
 </script>
