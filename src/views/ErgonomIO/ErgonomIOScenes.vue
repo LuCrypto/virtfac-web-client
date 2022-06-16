@@ -29,7 +29,7 @@
             >
               <v-img height="200" :src="scene.picture">
                 <v-btn
-                  @click="editNameScene(scene)"
+                  @click="editNameScene(scene, $event)"
                   class="ma-2"
                   fab
                   dark
@@ -60,14 +60,19 @@
               </v-card-subtitle>
               <v-card-text>
                 {{ scene.formatedCreationDate }}, nombre assets :
-                {{ scene.assetsNumber }}, id : {{ scene.id }}
+                {{ scene.assetsNumber }}, id : {{ scene.id }}, owner :
+                {{ scene.idUserOwner }}
               </v-card-text>
 
               <v-card-actions class="flex-wrap">
                 <v-container fluid class="pa-0">
                   <v-col class="pa-0">
                     <v-row no-gutters>
-                      <v-btn color="primary" text @click="ergonomioLayout()">
+                      <v-btn
+                        color="primary"
+                        text
+                        @click="ergonomioLayout($event)"
+                      >
                         Open in layout
                       </v-btn>
                     </v-row>
@@ -75,7 +80,7 @@
                       <v-btn
                         color="primary"
                         text
-                        @click="ergonomioVirtualTwin()"
+                        @click="ergonomioVirtualTwin($event)"
                       >
                         Open in virtual twin
                       </v-btn>
@@ -85,16 +90,16 @@
                       justify="space-between"
                       class="pt-3 flex-wrap"
                     >
-                      <v-btn @click="downloadScene(scene)" icon>
+                      <v-btn @click="downloadScene(scene, $event)" icon>
                         <v-icon v-text="'mdi-download'"></v-icon>
                       </v-btn>
-                      <v-btn @click="outline(scene)" icon>
+                      <v-btn @click="outline(scene, $event)" icon>
                         <v-icon v-text="'mdi-eye'"></v-icon>
                       </v-btn>
-                      <v-btn @click="clickScene(scene)" icon>
+                      <v-btn @click="clickScene(scene, $event)" icon>
                         <v-icon v-text="'mdi-information'"></v-icon>
                       </v-btn>
-                      <v-btn @click="deleteObjet(scene)" icon>
+                      <v-btn @click="deleteObjet(scene, $event)" icon>
                         <v-icon v-text="'mdi-delete'"></v-icon>
                       </v-btn>
                     </v-row>
@@ -322,6 +327,9 @@ class CardModel {
   idProject = 0
   idUserOwner = 0
   modificationDate = 0
+  spawnX = 0
+  spawnY = 0
+  spawnZ = 0
 
   parsedData: any = null
   parsedTags: string[] = []
@@ -362,6 +370,9 @@ class SceneRecue {
 class SceneInfo {
   nombreAssets = 0
   idScene = 0
+  spawnX = 0
+  spawnY = 0
+  spawnZ = 0
 
   constructor () {
     Object.assign(this)
@@ -434,7 +445,7 @@ export default class ErgonomIOAssets extends Vue {
     this.requeteAPI()
 
     // TODO : remove this
-    this.scenes.push(this.haguenauExample)
+    // this.scenes.push(this.haguenauExample)
 
     // Permet de récupérer la réponse d'Unreal
     Unreal.callback.$on('unreal-message', (data: unknown) => {
@@ -488,11 +499,13 @@ export default class ErgonomIOAssets extends Vue {
   }
 
   // Boutons scènes scenes
-  ergonomioLayout (): void {
+  ergonomioLayout (event: Event): void {
+    event.stopPropagation()
     console.log('ergonomioLayout !')
   }
 
-  ergonomioVirtualTwin (): void {
+  ergonomioVirtualTwin (event: Event): void {
+    event.stopPropagation()
     console.log('ergonomioVirtualTwin !')
   }
 
@@ -522,6 +535,9 @@ export default class ErgonomIOAssets extends Vue {
         modificationDate: scene.modificationDate,
         name: scene.name,
         picture: scene.picture,
+        spawnX: scene.spawnX,
+        spawnY: scene.spawnY,
+        spawnZ: scene.spawnZ,
         tags: JSON.stringify(scene.parsedTags)
       })
     ).then((response: Response) => {
@@ -585,7 +601,8 @@ export default class ErgonomIOAssets extends Vue {
   }
 
   // Permet de supprimer la scène en question
-  deleteObjet (scene: CardModel): void {
+  deleteObjet (scene: CardModel, event: Event): void {
+    event.stopPropagation()
     console.log('Supprimer objet ')
 
     const index2 = this.scenes.indexOf(scene, 0)
@@ -601,7 +618,8 @@ export default class ErgonomIOAssets extends Vue {
   }
 
   // Permet d'afficher dans une popup des informations sur la scene
-  clickScene (scene: CardModel): void {
+  clickScene (scene: CardModel, event: Event): void {
+    event.stopPropagation()
     console.log('clickScene : ', scene.id)
     this.popup = true
     this.titlePopup = scene.name
@@ -611,19 +629,22 @@ export default class ErgonomIOAssets extends Vue {
   }
 
   // Aymeric todo
-  outline (scene: CardModel): void {
+  outline (scene: CardModel, event: Event): void {
+    event.stopPropagation()
     console.log('Aymeric todo !')
   }
 
   // Permet de modifier le nom d'une scène
-  editNameScene (scene: CardModel): void {
+  editNameScene (scene: CardModel, event: Event): void {
+    event.stopPropagation()
     console.log('editNameScene ')
     this.modifyScene = true
     this.sceneChoose = scene
   }
 
   // Permet de télécharger une scène
-  downloadScene (scene: CardModel): void {
+  downloadScene (scene: CardModel, event: Event): void {
+    event.stopPropagation()
     console.log('downloadScene ! ')
 
     const data = JSON.stringify(scene)
@@ -708,7 +729,8 @@ export default class ErgonomIOAssets extends Vue {
   }
 
   refreshScenes (): void {
-    this.scenes = [this.haguenauExample]
+    // this.scenes = [this.haguenauExample]
+    this.scenes = []
 
     this.requeteAPI()
   }

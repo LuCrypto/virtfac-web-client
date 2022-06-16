@@ -351,6 +351,8 @@ export default class ErgonomIOAssets extends Vue {
 
   // Begin
   mounted (): void {
+    // Envoie un message à unreal pour dire d'afficher le menu
+
     this.requeteAPI()
 
     Unreal.callback.$on('unreal-message', (data: unknown) => {

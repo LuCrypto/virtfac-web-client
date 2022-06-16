@@ -585,7 +585,7 @@ export default class ErgonomIOAssetContainer extends Vue {
   }
 
   onFileUpload (file: File): Promise<File> {
-    return new Promise<File>((resolve) => {
+    return new Promise<File>(resolve => {
       const extension = (file.name.split('.').pop() as string).toLowerCase()
       this.loadObjectAsync(
         URL.createObjectURL(file),

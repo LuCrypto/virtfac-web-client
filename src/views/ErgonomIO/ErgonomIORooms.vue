@@ -1,84 +1,99 @@
 <template>
   <v-container fluid>
     <!-- Titre -->
-    <v-container fluid class="text-h3 text-center py-8">
+    <v-container v-if="!this.fullpage" fluid class="text-h3 text-center py-8">
       Collaborative sessions
     </v-container>
     <!-- Milieu de page : les différentes cartes de scènes -->
     <template>
-      <v-row dense class="pa-2">
-        <v-alert dense color="primary" class="flex-grow-1">
-          <v-row align="center">
-            <v-col class="grow black--text">
-              <v-icon left color="black">mdi-account-supervisor-circle</v-icon>
-              Current session : None
-            </v-col>
-            <v-col class="shrink">
-              <v-btn @click="leaveSession">Leave session</v-btn>
-            </v-col>
-          </v-row>
-        </v-alert>
-      </v-row>
-
       <!-- Les différentes rooms -->
-      <v-card
-        class="overflow-y-auto d-flex flex-row flex-wrap"
-        width="100%"
-        height="660"
+      <v-row
+        no-gutters
+        class="overflow-y-auto flex-grow-1 ma-4 black"
+        style="max-height: 800px;"
       >
+        <v-row no-gutters dense class="pa-2">
+          <v-alert
+            dense
+            :rounded="unrealContext.check() ? 'xl' : 'md'"
+            color="primary"
+            class="flex-grow-1"
+          >
+            <v-row align="center">
+              <v-col class="grow black--text">
+                <v-icon left color="black"
+                  >mdi-account-supervisor-circle</v-icon
+                >
+                Current session : None
+              </v-col>
+              <v-col class="shrink">
+                <v-btn @click="leaveSession">Leave session</v-btn>
+              </v-col>
+            </v-row>
+          </v-alert>
+        </v-row>
         <v-card
-          :key="indexRoom"
-          v-for="(room, indexRoom) in rooms"
-          height="455"
-          width="30%"
-          class="ma-3"
-          elevation="5"
-          v-on:click="selectionRoom(room)"
+          class="overflow-y-auto d-flex flex-row flex-wrap"
+          width="100%"
+          height="600"
+          :rounded="unrealContext.check() ? 'xl' : 'md'"
         >
-          <!-- <v-img height="270" :src="room.picture"> </v-img> -->
-          <!-- <v-sheet height="4" :color="`#${room.color.toString(16)}`"> </v-sheet> -->
-          <v-card-title> {{ room.nom }} </v-card-title>
-          <v-card-subtitle>
-            <!-- <v-chip
+          <v-card
+            :key="indexRoom"
+            v-for="(room, indexRoom) in rooms"
+            height="455"
+            width="30%"
+            class="ma-3"
+            elevation="5"
+            v-on:click="selectionRoom(room)"
+            :rounded="unrealContext.check() ? 'xl' : 'md'"
+          >
+            <!-- <v-img height="270" :src="room.picture"> </v-img> -->
+            <!-- <v-sheet height="4" :color="`#${room.color.toString(16)}`"> </v-sheet> -->
+            <v-card-title> {{ room.nom }} </v-card-title>
+            <v-card-subtitle>
+              <!-- <v-chip
               :key="indexTag"
               v-for="(tag, indexTag) in room.tags"
               class="mr-2 overflow-y-auto"
             >
               {{ tag }}
             </v-chip> -->
-          </v-card-subtitle>
-          <v-card-text>
-            {{ room.dateCreation }}, nombre de joueurs : {{ room.joueurs }}
-          </v-card-text>
+            </v-card-subtitle>
+            <v-card-text>
+              {{ room.dateCreation }}, nombre de joueurs : {{ room.joueurs }}
+            </v-card-text>
 
-          <v-card-actions>
-            <v-spacer></v-spacer>
+            <v-card-actions>
+              <v-spacer></v-spacer>
+              <v-btn
+                v-on:click="() => joinSession(room)"
+                class="primary black--text"
+                large
+                elevation="2"
+              >
+                Join
+              </v-btn>
+            </v-card-actions>
+          </v-card>
+        </v-card>
+
+        <!-- Les différents boutons -->
+        <v-layout justify-center class="py-4">
+          <v-flex class="flex-grow-0 mx-5">
+            <!-- Permet de créer une room -->
             <v-btn
-              v-on:click="() => joinSession(room)"
+              v-on:click="createSession"
               class="primary black--text"
               large
               elevation="2"
             >
-              Join
+              Create new session
             </v-btn>
-          </v-card-actions>
-        </v-card>
-      </v-card>
+          </v-flex>
+        </v-layout>
+      </v-row>
     </template>
-    <!-- Les différents boutons -->
-    <v-layout justify-center class="py-4">
-      <v-flex class="flex-grow-0 mx-5">
-        <!-- Permet de créer une room -->
-        <v-btn
-          v-on:click="createSession"
-          class="primary black--text"
-          large
-          elevation="2"
-        >
-          Create new session
-        </v-btn>
-      </v-flex>
-    </v-layout>
   </v-container>
 </template>
 
@@ -86,7 +101,7 @@
 import { Component, Vue } from 'vue-property-decorator'
 import API from '@/utils/api'
 import Unreal from '@/utils/unreal'
-import { RouterMode } from 'vue-router'
+import VueRouter, { RouterMode } from 'vue-router'
 
 class Room {
   nom = 'room'
@@ -114,6 +129,12 @@ class messageUnreal {
 @Component
 export default class ErgonomIOAssets extends Vue {
   rooms: Room[] = []
+
+  router: VueRouter = this.$router
+  query = this.router.currentRoute.query
+  fullpage: boolean = this.query.fullpage === 'true'
+
+  unrealContext = Unreal
 
   // Begin
   mounted (): void {
@@ -158,6 +179,7 @@ export default class ErgonomIOAssets extends Vue {
     this.rooms = rooms
   }
 
+  // ???
   refreshRoomActuelle () {
     this.rooms = []
   }

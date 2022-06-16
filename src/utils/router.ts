@@ -18,6 +18,7 @@ import ErgonomIOAsset from '@/views/ErgonomIO/ErgonomIOAsset.vue'
 import ErgonomIOAssets from '@/views/ErgonomIO/ErgonomIOAssets.vue'
 import ErgonomIOScenes from '@/views/ErgonomIO/ErgonomIOScenes.vue'
 import ErgonomIORooms from '@/views/ErgonomIO/ErgonomIORooms.vue'
+import ErgonomIODynamicsObjects from '@/views/ErgonomIO/ErgonomIODynamicsObjects.vue'
 import ErgonomIOAvatars from '@/views/ErgonomIO/ErgonomIOAvatars.vue'
 import ErgonomIOLogin from '@/views/ErgonomIO/ErgonomIOLogin.vue'
 import ErgonomioMainMenu from '@/components/ergonomio_ui/ErgonomioMainMenu.vue'
@@ -41,6 +42,7 @@ export class Route {
 
   replace = false
   component: Component | undefined = undefined
+
   constructor (attributes?: Partial<Route>) {
     Object.assign(this, attributes)
   }
@@ -169,6 +171,14 @@ export const routes: Array<Route> = [
     path: '/ergonom-io-rooms',
     category: 'Ergonom.io',
     component: ErgonomIORooms
+  }),
+  new Route({
+    icon: 'mdi-account-supervisor-circle',
+    name: 'Dynamics objetcs',
+    subname: 'OPC UA',
+    path: '/ergonom-io-opcua',
+    category: 'Ergonom.io',
+    component: ErgonomIODynamicsObjects
   }),
   new Route({
     icon: 'mdi-human',
