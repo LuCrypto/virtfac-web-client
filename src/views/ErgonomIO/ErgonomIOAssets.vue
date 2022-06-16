@@ -1,5 +1,5 @@
 <template>
-  <v-container fluid style="max-height: 100%; overflow: auto;">
+  <v-container fluid style="max-height: 100%; overflow: auto">
     <pop-up ref="assetInfo">
       <asset-info
         ref="assetInfoComponent"
@@ -30,9 +30,7 @@
             <v-container fluid>
               <v-row>
                 <v-col cols="3">
-                  <v-card-text>
-                    Nouveau titre :
-                  </v-card-text>
+                  <v-card-text> Nouveau titre : </v-card-text>
                 </v-col>
 
                 <v-col cols="4">
@@ -45,9 +43,7 @@
             <v-container fluid>
               <v-row>
                 <v-col cols="3">
-                  <v-card-text>
-                    Nouveau tag :
-                  </v-card-text>
+                  <v-card-text> Nouveau tag : </v-card-text>
                 </v-col>
 
                 <v-col cols="4">
@@ -137,7 +133,7 @@
               item-key="id"
               activatable
               open-on-click
-              @update:active="values => scrollOnElement(values)"
+              @update:active="(values) => scrollOnElement(values)"
             >
               <template v-slot:prepend="{ open }">
                 <v-icon :class="open ? 'primary--text' : ''">
@@ -366,9 +362,9 @@ export default class ErgonomIOAssets extends Vue {
           where: [{ id: monObjet.id }]
         })
       ).then((response: Response) => {
-        const monAssetTableau = ((response as unknown) as Array<
-          Partial<CardModel>
-        >).map((asset: Partial<CardModel>) => new CardModel(asset))
+        const monAssetTableau = (
+          response as unknown as Array<Partial<CardModel>>
+        ).map((asset: Partial<CardModel>) => new CardModel(asset))
 
         const monAsset = monAssetTableau[0]
 
@@ -441,7 +437,7 @@ export default class ErgonomIOAssets extends Vue {
       JSON.stringify({ select: ['name', 'picture', 'id', 'tags'] })
     ).then((response: Response) => {
       console.log('response ', response)
-      this.assets2 = ((response as unknown) as Array<Partial<CardModel>>).map(
+      this.assets2 = (response as unknown as Array<Partial<CardModel>>).map(
         (asset: Partial<CardModel>) => new CardModel(asset)
       )
 
@@ -494,10 +490,10 @@ export default class ErgonomIOAssets extends Vue {
       '/resources/assets/' + asset.id,
       JSON.stringify(apiFile.toJSON())
     )
-      .then(res => {
+      .then((res) => {
         console.log(res)
       })
-      .catch(err => {
+      .catch((err) => {
         console.log(err)
       })
   }
@@ -515,7 +511,7 @@ export default class ErgonomIOAssets extends Vue {
     if (e.target == null) return
     const target = e.target as HTMLInputElement
     if (target.files != null && target.files.length > 0) {
-      [...target.files].forEach(file => {
+      [...target.files].forEach((file) => {
         const reader = new FileReader()
         reader.onload = () => {
           const fileString = reader.result as string
@@ -523,7 +519,7 @@ export default class ErgonomIOAssets extends Vue {
           this.newImage = fileString
           console.log('fileString : ', fileString)
         }
-        reader.onerror = error => {
+        reader.onerror = (error) => {
           console.error(error)
           this.$root.$emit('bottom-message', 'Sorry, we cannot read this file.')
         }
@@ -590,9 +586,9 @@ export default class ErgonomIOAssets extends Vue {
     if (e.target == null) return
     const target = e.target as HTMLInputElement
     if (target.files != null && target.files.length > 0) {
-      [...target.files].forEach(file => {
+      [...target.files].forEach((file) => {
         const reader = new FileReader()
-        reader.onload = e => {
+        reader.onload = (e) => {
           console.log(reader.result)
           console.log('============')
           console.log('============')
@@ -606,7 +602,7 @@ export default class ErgonomIOAssets extends Vue {
           console.log('test name : ', test.name)
         }
 
-        reader.onerror = error => {
+        reader.onerror = (error) => {
           console.error(error)
           this.$root.$emit('bottom-message', 'Sorry, we cannot read this file.')
         }
@@ -662,7 +658,7 @@ export default class ErgonomIOAssets extends Vue {
     for (let i = 0; i < this.assets.length; i++) {
       var asset = this.assets[i]
 
-      if (asset.parsedTags.some(cat => cat === categorie)) {
+      if (asset.parsedTags.some((cat) => cat === categorie)) {
         this.cardsSort.push(asset)
       }
     }
@@ -721,9 +717,9 @@ export default class ErgonomIOAssets extends Vue {
         where: [{ id: asset.id }]
       })
     ).then((response: Response) => {
-      const monAssetTableau = ((response as unknown) as Array<
-        Partial<CardModel>
-      >).map((asset: Partial<CardModel>) => new CardModel(asset))
+      const monAssetTableau = (
+        response as unknown as Array<Partial<CardModel>>
+      ).map((asset: Partial<CardModel>) => new CardModel(asset))
 
       const monAsset = monAssetTableau[0]
 

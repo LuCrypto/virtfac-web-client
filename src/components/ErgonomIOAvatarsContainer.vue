@@ -1,6 +1,47 @@
 <style scoped>
 .selected {
-  outline: solid #ff7f00;
+  box-shadow: inset 0 0 0 3px white;
+}
+
+.slidecontainer {
+  width: 100%; /* Width of the outside container */
+}
+
+/* The slider itself */
+.slider {
+  -webkit-appearance: none; /* Override default CSS styles */
+  appearance: none;
+  width: 100%; /* Full-width */
+  height: 25px; /* Specified height */
+  background: #d3d3d3; /* Grey background */
+  outline: none; /* Remove outline */
+  opacity: 1; /* Set transparency (for mouse-over effects on hover) */
+  -webkit-transition: 0.2s; /* 0.2 seconds transition on hover */
+  transition: opacity 0.2s;
+  border-radius: 5px;
+}
+
+/* Mouse-over effects */
+.slider:hover {
+  opacity: 1; /* Fully shown on mouse-over */
+}
+
+/* The slider handle (use -webkit- (Chrome, Opera, Safari, Edge) and -moz- (Firefox) to override default look) */
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none; /* Override default look */
+  appearance: none;
+  width: 30px; /* Set a specific slider handle width */
+  height: 30px; /* Slider handle height */
+  background: #f5a406; /* Green background */
+  cursor: pointer; /* Cursor on hover */
+  border-radius: 50%;
+}
+
+.slider::-moz-range-thumb {
+  width: 25px; /* Set a specific slider handle width */
+  height: 25px; /* Slider handle height */
+  background: #04aa6d; /* Green background */
+  cursor: pointer; /* Cursor on hover */
 }
 </style>
 
@@ -83,56 +124,90 @@
         </v-col>
         <v-col
           width="100px"
-          class="ma-3 flex-grow-1 d-flex flex-column align-center justify-center"
+          class="ma-3 flex-grow-1 d-flex flex-column justify-center"
+          v-if="mainMenu.selected === 8"
         >
-          MorphCustom Sliders
+          <v-row class="flex-grow-1 justify-center"> Customization </v-row>
+          <v-container class="flex-grow-1 justify-center overflow-y-auto">
+            <v-row
+              v-for="(morphItem, morphIndex) in morphList"
+              :key="morphIndex"
+            >
+              {{ morphItem.name }}
+              <div class="slidecontainer">
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  v-model="morphItem.value"
+                  class="slider"
+                  id="myRange"
+                  @input="updateSlide(morphItem.value)"
+                />
+              </div>
+            </v-row>
+          </v-container>
         </v-col>
       </v-row>
       <!--Row list of bodypart modifiers -->
       <v-row class="ma-3 flex-grow-0 align-center justify-center">
-        <v-btn
-          v-for="(childMenu, childIndex) in mainMenu.items[mainMenu.selected]
-            .items"
-          :key="childIndex"
-          class="mx-2 black--text"
-          fab
-          :color="childMenu.type === 'COLOR' ? childMenu.value : 'primary'"
-          :class="
-            mainMenu.items[mainMenu.selected].selected === childIndex
-              ? 'selected'
-              : ''
-          "
-          @click="
-            mainMenu.items[mainMenu.selected].selected = childIndex
-            update()
-          "
-        >
-          <v-icon dark>
-            {{ childMenu.type === 'ICON' ? childMenu.value : '' }}
-          </v-icon>
-        </v-btn>
+        <v-slide-group show-arrows center-active>
+          <v-slide-item
+            v-for="(childMenu, childIndex) in mainMenu.items[mainMenu.selected]
+              .items"
+            :key="childIndex"
+            v-slot="{ toggle }"
+          >
+            <v-btn
+              :color="childMenu.type === 'COLOR' ? childMenu.value : 'primary'"
+              class="mx-2 black--text"
+              fab
+              :class="
+                mainMenu.items[mainMenu.selected].selected === childIndex
+                  ? 'selected'
+                  : ''
+              "
+              @click="
+                toggle(
+                  (mainMenu.items[mainMenu.selected].selected = childIndex)
+                ),
+                  update()
+              "
+            >
+              <v-icon dark>
+                {{ childMenu.type === 'ICON' ? childMenu.value : '' }}
+              </v-icon>
+            </v-btn>
+          </v-slide-item>
+        </v-slide-group>
       </v-row>
 
       <!--Row of buttons to switch between bodyPart list-->
       <v-row class="ma-3 flex-grow-0 align-center justify-center">
-        <v-row no-gutters class="align-center justify-center black--text">
-          <v-btn
+        <v-slide-group show-arrows center-active>
+          <v-slide-item
             v-for="(parentMenu, parentIndex) in mainMenu.items"
             :key="parentIndex"
-            class="mx-2 black--text"
-            fab
-            :color="parentMenu.type === 'COLOR' ? parentMenu.value : 'primary'"
-            :class="mainMenu.selected === parentIndex ? 'selected' : ''"
-            @click="
-              mainMenu.selected = parentIndex
-              update()
-            "
+            v-slot="{ toggle }"
           >
-            <v-icon dark>
-              {{ parentMenu.type === 'ICON' ? parentMenu.value : '' }}
-            </v-icon>
-          </v-btn>
-        </v-row>
+            <v-btn
+              class="mx-2 black--text"
+              fab
+              :color="
+                parentMenu.type === 'COLOR' ? parentMenu.value : 'primary'
+              "
+              :class="mainMenu.selected === parentIndex ? 'selected' : ''"
+              @click="
+                toggle((mainMenu.selected = parentIndex))
+                update()
+              "
+            >
+              <v-icon dark>
+                {{ parentMenu.type === 'ICON' ? parentMenu.value : '' }}
+              </v-icon>
+            </v-btn>
+          </v-slide-item>
+        </v-slide-group>
       </v-row>
     </v-col>
 
@@ -203,6 +278,15 @@ class MenuItem2 {
   }
 }
 
+class MorphItem {
+  name: string
+  value = 0
+  constructor (name: string, value: number) {
+    this.value = value
+    this.name = name
+  }
+}
+
 class CustomItem {
   text: string
   icon: string
@@ -246,6 +330,7 @@ export default class ErgonomIOAvatarsContainer extends Vue {
     color: 0xaaaaaa
   })
 
+  value = 0
   selectedMenuItem = -1
   menuItemList: MenuItem[] = []
   customItemList: MenuItem[] = []
@@ -266,6 +351,7 @@ export default class ErgonomIOAvatarsContainer extends Vue {
     '#4d2f24'
   ]
 
+  morphList: MorphItem[] = []
   // var mainMenu needs to be init with an items before calling createItems
   mainMenu: MenuItem2 = new MenuItem2('', 'ICON', [new MenuItem2()])
 
@@ -367,6 +453,10 @@ export default class ErgonomIOAvatarsContainer extends Vue {
     console.log('New skin color hex:', color)
   }
 
+  updateSlide (value: number): void {
+    console.log(value)
+  }
+
   createItems (): void {
     var skinArray = []
     for (let i = 0; i < this.skinColors.length; i++) {
@@ -418,6 +508,15 @@ export default class ErgonomIOAvatarsContainer extends Vue {
         new MenuItem2('mdi-checkbox-marked'),
         new MenuItem2('mdi-glass-wine'),
         new MenuItem2('mdi-tag-arrow-left'),
+        new MenuItem2('mdi-arrow-right-top-bold'),
+        new MenuItem2('mdi-folder'),
+        new MenuItem2('mdi-moped-electric'),
+        new MenuItem2('mdi-checkbox-blank-circle'),
+        new MenuItem2('mdi-checkerboard'),
+        new MenuItem2('mdi-solid'),
+        new MenuItem2('mdi-checkbox-marked'),
+        new MenuItem2('mdi-glass-wine'),
+        new MenuItem2('mdi-tag-arrow-left'),
         new MenuItem2('mdi-arrow-right-top-bold')
       ]),
       new MenuItem2('hat', 'ICON', [
@@ -425,18 +524,26 @@ export default class ErgonomIOAvatarsContainer extends Vue {
         new MenuItem2('mdi-sim-alert'),
         new MenuItem2('mdi-airplane-plus')
       ]),
-      new MenuItem2('settings', 'ICON', [
-        new MenuItem2('mdi-car-settings'),
-        new MenuItem2('mdi-file-import-outline'),
-        new MenuItem2('mdi-pliers'),
-        new MenuItem2('mdi-shark-fin'),
-        new MenuItem2('mdi-card-account-details-star-outline')
-      ])
+      new MenuItem2('morph', 'ICON', []),
+      new MenuItem2('settings', 'ICON', [])
     ])
 
     console.log(this.mainMenu.selected)
     console.log(this.mainMenu.items.length)
     console.log('hello')
+  }
+
+  initMorphArray (): void {
+    this.morphList.push(new MorphItem('female_face', 0))
+    this.morphList.push(new MorphItem('eyes_closed', 0))
+    this.morphList.push(new MorphItem('mouth_open', 0))
+    this.morphList.push(new MorphItem('arm_size', 0))
+    this.morphList.push(new MorphItem('breast_size', 0))
+    this.morphList.push(new MorphItem('belly_size', 0))
+    this.morphList.push(new MorphItem('lower_back_size', 0))
+    this.morphList.push(new MorphItem('hip_size', 0))
+    this.morphList.push(new MorphItem('buttock_size', 0))
+    this.morphList.push(new MorphItem('leg_size', 0))
   }
 
   // @vuese
@@ -452,11 +559,10 @@ export default class ErgonomIOAvatarsContainer extends Vue {
     this.viewer.setFogActive(false)
 
     this.createMenu()
-    this.createCustom()
     this.createItemArray()
     this.createItems()
     this.initAvatar()
-    console.log('hello')
+    this.initMorphArray()
   }
 
   update () {
@@ -483,56 +589,6 @@ export default class ErgonomIOAvatarsContainer extends Vue {
     this.menuItemList.push(
       new MenuItem('Customize Body', 'mdi-axis-arrow', () => {
         this.Hello()
-      })
-    )
-  }
-
-  // Used to generate icons comportment for body selection
-  createCustom (): void {
-    this.customItemList.push(
-      new MenuItem('skin', 'mdi-tshirt-crew', () => {
-        this.selectedBodyPart = 1
-      })
-    )
-    this.customItemList.push(
-      new MenuItem('shirt', 'mdi-tshirt-crew', () => {
-        this.selectedBodyPart = 2
-      })
-    )
-    this.customItemList.push(
-      new MenuItem('hair', 'mdi-tshirt-crew', () => {
-        this.selectedBodyPart = 3
-      })
-    )
-    this.customItemList.push(
-      new MenuItem('beard', 'mdi-tshirt-crew', () => {
-        this.selectedBodyPart = 4
-      })
-    )
-    this.customItemList.push(
-      new MenuItem('pants', 'mdi-tshirt-crew', () => {
-        this.selectedBodyPart = 5
-      })
-    )
-    this.customItemList.push(
-      new MenuItem('shoes', 'mdi-shoe-formal', () => {
-        this.selectedBodyPart = 6
-      })
-    )
-    this.customItemList.push(
-      new MenuItem('hand', 'mdi-shoe-formal', () => {
-        this.selectedBodyPart = 7
-      })
-    )
-    this.customItemList.push(
-      new MenuItem('hat', 'mdi-shoe-formal', () => {
-        this.selectedBodyPart = 8
-      })
-    )
-    this.customItemList.push(
-      new MenuItem('settings', 'mdi-shoe-formal', () => {
-        this.showPlayerDataSettings = true
-        this.selectedBodyPart = 0
       })
     )
   }
