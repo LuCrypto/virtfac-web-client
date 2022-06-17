@@ -122,6 +122,7 @@
             <model-viewer-2 :displayFog="true" ref="viewer"></model-viewer-2>
           </v-row>
         </v-col>
+        <!-- Morph Custom item, visible when entering Morph menu -->
         <v-col
           width="100px"
           class="ma-3 flex-grow-1 d-flex flex-column justify-center"
@@ -147,6 +148,46 @@
               </div>
             </v-row>
           </v-container>
+        </v-col>
+
+        <!-- PlayerData set item, wisible when entering settings menu -->
+        <v-col
+          width="100px"
+          class="ma-3 flex-grow-1 d-flex flex-column justify-center"
+          v-if="mainMenu.selected === 9"
+        >
+          <v-row class="flex-grow-1 justify-center">
+            Player Data Settings
+          </v-row>
+          <v-row class="flex-grow-1 justify-center">
+            <v-text-field
+              label="Name"
+              :placeholder="this.playerData.name"
+              v-model="playerData.name"
+              class="mr-5 ml-5"
+              dense
+              :value="this.playerData.name"
+            ></v-text-field>
+          </v-row>
+          <v-row class="flex-grow-1 justify-center">
+            <div
+              v-for="(playerDataItem, itemIndex) in playerData.items"
+              :key="itemIndex"
+            >
+              <v-text-field
+                :label="playerDataItem.name"
+                :placeholder="playerDataItem.name"
+                v-model="playerDataItem.value"
+                :value="playerDataItem.value"
+                type="number"
+                class="mr-2"
+              >
+              </v-text-field>
+            </div>
+          </v-row>
+          <v-btn color="primary" @click="loadPlayerData()"
+            >Load Data (XML/JSon)</v-btn
+          >
         </v-col>
       </v-row>
       <!--Row list of bodypart modifiers -->
@@ -202,7 +243,7 @@
                 update()
               "
             >
-              <v-icon dark>
+              <v-icon size="30" dark>
                 {{ parentMenu.type === 'ICON' ? parentMenu.value : '' }}
               </v-icon>
             </v-btn>
@@ -287,6 +328,24 @@ class MorphItem {
   }
 }
 
+class PlayerDataItem {
+  name: string
+  value = 0
+  constructor (name: string, value: number) {
+    this.value = value
+    this.name = name
+  }
+}
+
+class PlayerData {
+  name: string
+  items: PlayerDataItem[] = []
+  constructor (name = '', items: PlayerDataItem[] = []) {
+    this.name = name
+    this.items = items
+  }
+}
+
 class CustomItem {
   text: string
   icon: string
@@ -350,6 +409,8 @@ export default class ErgonomIOAvatarsContainer extends Vue {
     '#5d3a2b',
     '#4d2f24'
   ]
+
+  playerData: PlayerData = new PlayerData()
 
   morphList: MorphItem[] = []
   // var mainMenu needs to be init with an items before calling createItems
@@ -464,19 +525,19 @@ export default class ErgonomIOAvatarsContainer extends Vue {
     }
     this.mainMenu = new MenuItem2('', 'ICON', [
       new MenuItem2('skin', 'ICON', skinArray),
-      new MenuItem2('shirt', 'ICON', [
+      new MenuItem2('$vuetify.icons.shirt', 'ICON', [
         new MenuItem2('mdi-cellphone-off'),
         new MenuItem2('mdi-sim-alert'),
         new MenuItem2('mdi-airplane-plus')
       ]),
-      new MenuItem2('hair', 'ICON', [
+      new MenuItem2('$vuetify.icons.hair', 'ICON', [
         new MenuItem2('mdi-car-settings'),
         new MenuItem2('mdi-file-import-outline'),
         new MenuItem2('mdi-pliers'),
         new MenuItem2('mdi-shark-fin'),
         new MenuItem2('mdi-card-account-details-star-outline')
       ]),
-      new MenuItem2('beard', 'ICON', [
+      new MenuItem2('$vuetify.icons.beard', 'ICON', [
         new MenuItem2('mdi-folder'),
         new MenuItem2('mdi-moped-electric'),
         new MenuItem2('mdi-checkbox-blank-circle'),
@@ -487,19 +548,19 @@ export default class ErgonomIOAvatarsContainer extends Vue {
         new MenuItem2('mdi-tag-arrow-left'),
         new MenuItem2('mdi-arrow-right-top-bold')
       ]),
-      new MenuItem2('pants', 'ICON', [
+      new MenuItem2('$vuetify.icons.pants', 'ICON', [
         new MenuItem2('mdi-cellphone-off'),
         new MenuItem2('mdi-sim-alert'),
         new MenuItem2('mdi-airplane-plus')
       ]),
-      new MenuItem2('shoes', 'ICON', [
+      new MenuItem2('$vuetify.icons.shoes', 'ICON', [
         new MenuItem2('mdi-car-settings'),
         new MenuItem2('mdi-file-import-outline'),
         new MenuItem2('mdi-pliers'),
         new MenuItem2('mdi-shark-fin'),
         new MenuItem2('mdi-card-account-details-star-outline')
       ]),
-      new MenuItem2('hand', 'ICON', [
+      new MenuItem2('$vuetify.icons.hand', 'ICON', [
         new MenuItem2('mdi-folder'),
         new MenuItem2('mdi-moped-electric'),
         new MenuItem2('mdi-checkbox-blank-circle'),
@@ -519,7 +580,7 @@ export default class ErgonomIOAvatarsContainer extends Vue {
         new MenuItem2('mdi-tag-arrow-left'),
         new MenuItem2('mdi-arrow-right-top-bold')
       ]),
-      new MenuItem2('hat', 'ICON', [
+      new MenuItem2('$vuetify.icons.hat', 'ICON', [
         new MenuItem2('mdi-cellphone-off'),
         new MenuItem2('mdi-sim-alert'),
         new MenuItem2('mdi-airplane-plus')
@@ -533,7 +594,7 @@ export default class ErgonomIOAvatarsContainer extends Vue {
     console.log('hello')
   }
 
-  initMorphArray (): void {
+  initMorphData (): void {
     this.morphList.push(new MorphItem('female_face', 0))
     this.morphList.push(new MorphItem('eyes_closed', 0))
     this.morphList.push(new MorphItem('mouth_open', 0))
@@ -544,6 +605,27 @@ export default class ErgonomIOAvatarsContainer extends Vue {
     this.morphList.push(new MorphItem('hip_size', 0))
     this.morphList.push(new MorphItem('buttock_size', 0))
     this.morphList.push(new MorphItem('leg_size', 0))
+  }
+
+  initPlayerData (): void {
+    var playerDataItemList: PlayerDataItem[] = []
+    playerDataItemList.push(new PlayerDataItem('Hip width', 0))
+    playerDataItemList.push(new PlayerDataItem('Body', 0))
+    playerDataItemList.push(new PlayerDataItem('Neck', 0))
+    playerDataItemList.push(new PlayerDataItem('Head', 0))
+    playerDataItemList.push(new PlayerDataItem('Shoulder width', 0))
+    playerDataItemList.push(new PlayerDataItem('Upper arm', 0))
+    playerDataItemList.push(new PlayerDataItem('Forearm ', 0))
+    playerDataItemList.push(new PlayerDataItem('Palm', 0))
+    playerDataItemList.push(new PlayerDataItem('Upper leg', 0))
+    playerDataItemList.push(new PlayerDataItem('Lower leg', 0))
+    playerDataItemList.push(new PlayerDataItem('Heel height', 0))
+
+    this.playerData = new PlayerData('Player', playerDataItemList)
+  }
+
+  loadPlayerData (): void {
+    console.log('TODO : Load Player Data from XML/JSon')
   }
 
   // @vuese
@@ -562,7 +644,8 @@ export default class ErgonomIOAvatarsContainer extends Vue {
     this.createItemArray()
     this.createItems()
     this.initAvatar()
-    this.initMorphArray()
+    this.initMorphData()
+    this.initPlayerData()
   }
 
   update () {

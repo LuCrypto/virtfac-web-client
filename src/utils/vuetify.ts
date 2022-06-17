@@ -2,6 +2,15 @@ import Vue from 'vue'
 import Vuetify from 'vuetify/lib/framework'
 import colors from 'vuetify/es5/util/colors'
 import { Session } from './session'
+import icon from '@/components/icon.vue'
+
+import IconHand from '@/components/icons/IconHand.vue'
+import IconHair from '@/components/icons/IconHair.vue'
+import IconHat from '@/components/icons/IconHat.vue'
+import IconPants from '@/components/icons/IconPants.vue'
+import IconShoes from '@/components/icons/IconShoes.vue'
+import IconBeard from '@/components/icons/IconBeard.vue'
+import IconShirt from '@/components/icons/IconShirt.vue'
 
 class Themes {
   static themes = {
@@ -72,5 +81,18 @@ export default new Vuetify({
     },
     dark: Session.getTheme() === 'dark',
     themes: Themes.themes
+  },
+
+  icons: {
+    values: {
+      /* name of our custom icon */
+      hand: { component: IconHand /* our custom component */ },
+      hair: { component: IconHair },
+      hat: { component: IconHat },
+      pants: { component: IconPants },
+      shirt: { component: IconShirt },
+      beard: { component: IconBeard },
+      shoes: { component: IconShoes }
+    }
   }
 })
