@@ -17,7 +17,7 @@ export class GraphLayout {
     stepSize: number,
     positionField = 'position'
   ) {
-    GraphUtils.hierarchization(graph, 'hierarchy')
+    GraphUtils.hierarchization(graph, 'h', 'hierarchy')
 
     graph.foreachNode(n => {
       n.setData<Vec2>(
@@ -41,7 +41,7 @@ export class GraphLayout {
     stepSize: number,
     positionField = 'position'
   ) {
-    GraphUtils.hierarchization(graph, 'hierarchy')
+    GraphUtils.hierarchization(graph, 'h', 'hierarchy')
 
     graph.foreachNode(n => {
       n.setData<Vec2>(
