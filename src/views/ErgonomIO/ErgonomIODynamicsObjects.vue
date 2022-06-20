@@ -1,5 +1,5 @@
 <template>
-  <v-container>
+  <v-container class="black rounded-lg">
     <!-- Pour affecter une position à un évènement -->
     <v-dialog v-model="modifierPositionBooleen">
       <v-container class="d-flex flex-wrap flex-nowrap">
@@ -101,19 +101,32 @@
         <v-list-item v-for="child in item.items" :key="child.title">
           <v-btn
             color="primary"
-            class="black--text"
+            class="black--text pa-5"
+            small
             @click="moveToEvent(child)"
           >
             {{ child.evenement }}
             <br />
             Position :
             {{ child.position }}
+            Rotation :
+            {{ child.rotation }}
             <!-- Permet de pouvoir modifier la position de l'évènement -->
-            <v-btn icon>
+            <!-- <v-btn icon>
               <v-icon
                 @click="modifierPosition($event, child)"
                 class="ml-2 black--text"
                 v-text="'mdi-pencil'"
+                left
+              ></v-icon>
+            </v-btn> -->
+            <!-- Permet de définir la position de l'évènement
+             avec la position de l'objet sélectionné -->
+            <v-btn icon>
+              <v-icon
+                @click="modifierPositionWithObject($event, child)"
+                class="ml-2 black--text"
+                v-text="'mdi-map-marker'"
                 left
               ></v-icon>
             </v-btn>
@@ -134,6 +147,28 @@
             elevation="2"
           >
             Démarrer le profil
+          </v-btn>
+        </v-col>
+        <!-- Permet de supprimer le profil actif -->
+        <v-col align="center">
+          <v-btn
+            class="primary black--text my-2"
+            @click="supprimerProfil()"
+            large
+            elevation="2"
+          >
+            Supprimer le profil
+          </v-btn>
+        </v-col>
+        <!-- Permet d'attacher un objet à un autre -->
+        <v-col align="center">
+          <v-btn
+            class="primary black--text my-2"
+            @click="attacherObjet()"
+            large
+            elevation="2"
+          >
+            Attacher un objet
           </v-btn>
         </v-col>
         <!-- Permet d'écouter sur le serveur -->
@@ -169,6 +204,41 @@ class evenementClass {
   }
 }
 
+class evenementPosition {
+  evenement = ''
+}
+
+class message {
+  message = ''
+  object: any
+
+  constructor () {
+    Object.assign(this)
+  }
+}
+
+// Classe pour les assets
+class OpcuaModel {
+  // Initialisation
+  name = 'Asset1.json'
+  id = 0
+  creationDate = 0
+  idProject = 0
+  idUserOwner = 0
+  modificationDate = 0
+  events = ''
+
+  // Permet de récupérer une date en format string
+  get formatedCreationDate (): string {
+    return new Date(this.creationDate).toLocaleString()
+  }
+
+  // Permet de construire un asset
+  constructor (params: Partial<OpcuaModel>) {
+    Object.assign(this, params)
+  }
+}
+
 @Component
 export default class ErgonomIOAssets extends Vue {
   // Default
@@ -191,31 +261,34 @@ export default class ErgonomIOAssets extends Vue {
   profils = [
     {
       action: 'mdi-calendar-search',
-      items: [{ evenement: 'Evenement 1', position: new Vector3(0, 0, 0) }],
-      title: 'Profil 1',
-      active: false
-    },
-    {
-      action: 'mdi-calendar-search',
       items: [
-        { evenement: 'Evenement 1', position: new Vector3(0, 0, 0) },
-        { evenement: 'Evenement 2', position: new Vector3(0, 0, 0) },
-        { evenement: 'Evenement 3', position: new Vector3(0, 0, 0) }
+        {
+          evenement: 'Evenement 1',
+          position: new Vector3(0.0, 0.0, 0.0),
+          rotation: new Vector3(0.0, 0.0, 0.0),
+          idParent: -1
+        },
+        {
+          evenement: 'Evenement 2',
+          position: new Vector3(100.0, 0.0, 0.0),
+          rotation: new Vector3(0.0, 0.0, 0.0),
+          idParent: -1
+        },
+        {
+          evenement: 'Evenement 3',
+          position: new Vector3(0.0, 100.0, 0.0),
+          rotation: new Vector3(0.0, 0.0, 0.0),
+          idParent: -1
+        }
       ],
-      title: 'Profil 2',
-      active: false
-    },
-    {
-      action: 'mdi-calendar-search',
-      items: [{ evenement: 'Evenement 1', position: new Vector3(0, 0, 0) }],
-      title: 'Profil 3',
+      title: 'Profil 1',
       active: false
     }
   ]
 
   // Begin
   mounted (): void {
-    this.ajouterProfil()
+    this.getProfils()
 
     Unreal.callback.$on('unreal-message', (data: unknown) => {
       try {
@@ -224,29 +297,114 @@ export default class ErgonomIOAssets extends Vue {
         Unreal.send('PROBLEME : ')
       }
 
-      const test = data as evenementClass
+      const test = data as message
+      // Quand on recoit un nouveau évènement
+      if (test.message === 'envoieEvenement') {
+        const test2 = test.object as evenementClass
+        Unreal.send(test2)
 
-      Unreal.send(data as evenementClass)
+        this.profils[this.profils.length - 1].items.push({
+          evenement: test2.evenement,
+          position: new Vector3(0, 0, 0),
+          rotation: new Vector3(0.0, 0.0, 0.0),
+          idParent: -1
+        })
+      } else if (test.message === 'envoiePosition') {
+        Unreal.send('Bien recu position')
+        Unreal.send(test.object)
 
-      // Unreal.send(data as evenementClass)
+        const indiceProfil = 0
+        for (let i = 0; i < this.profils[indiceProfil].items.length; i++) {
+          const element = this.profils[indiceProfil].items[i]
+          // Element trouvé
+          if (element.evenement === test.object.name) {
+            // Position
+            element.position = new Vector3(
+              test.object.position[0],
+              test.object.position[1],
+              test.object.position[2]
+            )
+            // Rotation
+            element.rotation = new Vector3(
+              test.object.rotation[0],
+              test.object.rotation[1],
+              test.object.rotation[2]
+            )
+          }
+        }
+      }
+    })
+  }
 
-      // this.ajouterProfil()
-      this.profils[this.profils.length - 1].items.push({
-        evenement: test.evenement,
-        position: new Vector3(0, 0, 0)
+  // API : récupérer les profils
+  getProfils (): void {
+    console.log('getProfils')
+
+    API.post(
+      this,
+      '/resources/dynamics-object-profiles',
+      JSON.stringify({
+        select: [],
+        where: []
       })
+    ).then((response: Response) => {
+      console.log('response : ', response)
+      const monAssetTableau = ((response as unknown) as Array<
+        Partial<OpcuaModel>
+      >).map((opcua: Partial<OpcuaModel>) => new OpcuaModel(opcua))
+      const monOpcua = monAssetTableau[0]
 
-      // Unreal.send(data)
+      for (let i = 0; i < monAssetTableau.length; i++) {
+        const element = monAssetTableau[i]
 
-      // var monObjet = data as messageAsset
-      // Unreal.send(monObjet.message)
+        var monTableau = []
+        const monJson = JSON.parse(element.events)
+
+        for (let j = 0; j < monJson.length; j++) {
+          const elementObjet = monJson[j]
+          const objet = {
+            evenement: elementObjet.name,
+            position: elementObjet.values.position,
+            rotation: elementObjet.values.rotation,
+            idParent: elementObjet.idParent
+          }
+
+          monTableau.push(objet)
+        }
+        console.log('monJson : ', monJson)
+
+        this.ajouterProfil(element.name, monTableau)
+      }
+
+      // console.log('events : ', monOpcua.events)
+      // var objectAsset = {
+      //   action: 'aRecup',
+      //   name: monAsset.name,
+      //   id: monAsset.id,
+      //   uri: monAsset.uri,
+      //   position: monObjet.position,
+      //   rotation: monObjet.rotation,
+      //   scale: monObjet.scale
+      // }
+      // var object = {
+      //   menu: 'asset',
+      //   objet: objectAsset
+      // }
+      // Unreal.send(object)
     })
   }
 
   // Permet de démarrer la simulation du profil
   demarreProfil (): void {
+    let trouver = -1
+    for (let i = 0; i < this.profils.length; i++) {
+      const element = this.profils[i].active
+      if (element) trouver = i
+    }
+
     var objectOpcua = {
-      action: 'demarreProfil'
+      action: 'demarreProfil',
+      profil: this.profils[trouver]
     }
 
     var object = {
@@ -256,6 +414,25 @@ export default class ErgonomIOAssets extends Vue {
 
     // On envoie le profil
     Unreal.send(object)
+  }
+
+  // Permet de supprimer le profil actif
+  supprimerProfil (): void {
+    let trouver = -1
+    for (let i = 0; i < this.profils.length; i++) {
+      if (this.profils[i].active) {
+        trouver = i
+        break
+      }
+    }
+
+    console.log('trouver : ', trouver)
+    console.log('this.profils : ', this.profils)
+
+    this.profils.splice(trouver, 1)
+    console.log('this.profils : ', this.profils)
+
+    // Faire requete api
   }
 
   // ???
@@ -310,11 +487,48 @@ export default class ErgonomIOAssets extends Vue {
     this.modifierPositionBooleen = true
   }
 
+  // Permet d'attacher un objet à un autre
+  attacherObjet (): void {
+    console.log('attacherObjet')
+
+    var objectOpcua = {
+      action: 'attacherObjet'
+    }
+
+    var object = {
+      menu: 'opcua',
+      objet: objectOpcua
+    }
+
+    // On envoie le profil
+    Unreal.send(object)
+  }
+
+  // Permet de définir la position de l'évènement
+  // avec la position de l'objet sélectionné
+  modifierPositionWithObject (event: Event, child: any): void {
+    // Consume l'event
+    event.stopPropagation()
+
+    var objectOpcua = {
+      action: 'envoiePositionObjetSelectionne',
+      childevenement: child
+    }
+
+    var object = {
+      menu: 'opcua',
+      objet: objectOpcua
+    }
+
+    // On envoie le profil
+    Unreal.send(object)
+  }
+
   // Permet d'ajouter un profil permettant de stocker une liste d'profils
-  ajouterProfil (): void {
+  ajouterProfil (nomEvenement: string, itemsTableau: any): void {
     const objet = {
       action: 'mdi-calendar-search',
-      items: [{ evenement: 'Evenement 1', position: new Vector3(0, 0, 0) }],
+      items: itemsTableau,
       title: 'Profil 4',
       active: false
     }

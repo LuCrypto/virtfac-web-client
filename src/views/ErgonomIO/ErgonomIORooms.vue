@@ -9,8 +9,8 @@
       <!-- Les différentes rooms -->
       <v-row
         no-gutters
-        class="overflow-y-auto flex-grow-1 ma-4 black"
-        style="max-height: 800px;"
+        class="overflow-y-auto flex-grow-1 ma-4 rounded-lg"
+        style="max-height: 800px;background-color: rgb(30,30,30);"
       >
         <v-row no-gutters dense class="pa-2">
           <v-alert

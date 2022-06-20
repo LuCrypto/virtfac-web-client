@@ -1,5 +1,9 @@
 <template>
-  <v-container fluid style="max-height: 100%; overflow: auto;">
+  <v-container
+    fluid
+    style="max-height: 100%; overflow: auto;"
+    class="rounded-lg"
+  >
     <pop-up ref="assetInfo">
       <asset-info
         ref="assetInfoComponent"
