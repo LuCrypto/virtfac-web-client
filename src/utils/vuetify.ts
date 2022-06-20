@@ -11,6 +11,10 @@ import IconPants from '@/components/icons/IconPants.vue'
 import IconShoes from '@/components/icons/IconShoes.vue'
 import IconBeard from '@/components/icons/IconBeard.vue'
 import IconShirt from '@/components/icons/IconShirt.vue'
+import IconMorph from '@/components/icons/IconMorph.vue'
+import IconPlayerData from '@/components/icons/IconPlayerData.vue'
+import IconSettings from '@/components/icons/IconSettings.vue'
+import IconColours from '@/components/icons/IconColours.vue'
 
 class Themes {
   static themes = {
@@ -22,13 +26,6 @@ class Themes {
       warning: colors.brown.base,
       info: colors.teal.base,
       success: colors.lightGreen.base
-      // customs: {
-      //   value: 1,
-      //   backgroundColor: 'transparent',
-      //   gridColor: 'black',
-      //   nodeColor: 'orange',
-      //   linkColor: 'white'
-      // }
     },
     light: {
       primary: '#f5a406',
@@ -38,13 +35,6 @@ class Themes {
       warning: colors.brown.base,
       info: colors.teal.base,
       success: colors.lightGreen.base
-      // customs: {
-      //   value: 1,
-      //   backgroundColor: 'transparent',
-      //   gridColor: 'black',
-      //   nodeColor: 'orange',
-      //   linkColor: 'white'
-      // }
     }
   }
 
@@ -63,13 +53,6 @@ class Themes {
 Vue.use(Vuetify)
 Vue.use(Themes)
 Vue.prototype.$globals = new Map()
-// Vue.mixin({
-//   data: () => {
-//     return {
-//       message: 'Hello World'
-//     }
-//   }
-// })
 
 /**
  * Global instantiation of Vuetify components
@@ -92,7 +75,11 @@ export default new Vuetify({
       pants: { component: IconPants },
       shirt: { component: IconShirt },
       beard: { component: IconBeard },
-      shoes: { component: IconShoes }
+      shoes: { component: IconShoes },
+      morph: { component: IconMorph },
+      settings: { component: IconSettings },
+      playerData: { component: IconPlayerData },
+      colours: { component: IconColours }
     }
   }
 })

@@ -23,10 +23,13 @@
   </svg>
 </template>
 
-<script>
-export default {
+<script lang="ts">
+import { Component, Vue } from 'vue-property-decorator'
+
+@Component({
   name: 'icon-pants'
-}
+})
+export default class IconPants extends Vue {}
 </script>
 
 <style scoped></style>

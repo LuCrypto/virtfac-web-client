@@ -12,7 +12,7 @@
   -webkit-appearance: none; /* Override default CSS styles */
   appearance: none;
   width: 100%; /* Full-width */
-  height: 25px; /* Specified height */
+  height: 2px; /* Specified height */
   background: #d3d3d3; /* Grey background */
   outline: none; /* Remove outline */
   opacity: 1; /* Set transparency (for mouse-over effects on hover) */
@@ -47,7 +47,7 @@
 
 <template>
   <!--v-card of component-->
-  <v-card elevation="3" height="700px" class="d-flex flex-row pa-0 ma-0">
+  <v-card elevation="3" height="700" class="d-flex flex-row pa-0 ma-0">
     <!-- Popup windows-->
     <!--Open avatar profile pop-up-->
     <pop-up ref="openFilePopUp">
@@ -115,7 +115,7 @@
 
     <!--Main Components-->
     <v-col class="pa-0 d-flex flex-column">
-      <!--Three.js render-->
+      <!--Three.js View-->
       <v-row no-gutters class="pa-0 d-flex flex-row">
         <v-col class="pa-0 d-flex flex-column">
           <v-row class="ma-0 flex-grow-1">
@@ -150,15 +150,9 @@
           </v-container>
         </v-col>
 
-        <!-- PlayerData set item, wisible when entering settings menu -->
-        <v-col
-          width="100px"
-          class="ma-3 flex-grow-1 d-flex flex-column justify-center"
-          v-if="mainMenu.selected === 9"
-        >
-          <v-row class="flex-grow-1 justify-center">
-            Player Data Settings
-          </v-row>
+        <!-- PlayerData set item, wisible when entering Settings menu -->
+        <v-col class="ma-3 d-flex flex-column" v-if="mainMenu.selected === 9">
+          <v-row class="justify-center"> Player Data Settings </v-row>
           <v-row class="flex-grow-1 justify-center">
             <v-text-field
               label="Name"
@@ -185,9 +179,9 @@
               </v-text-field>
             </div>
           </v-row>
-          <v-btn color="primary" @click="loadPlayerData()"
-            >Load Data (XML/JSon)</v-btn
-          >
+          <v-btn color="primary" @click="loadPlayerData()">
+            Load Data (XML/JSon)
+          </v-btn>
         </v-col>
       </v-row>
       <!--Row list of bodypart modifiers -->
@@ -215,7 +209,7 @@
                   update()
               "
             >
-              <v-icon dark>
+              <v-icon color="red">
                 {{ childMenu.type === 'ICON' ? childMenu.value : '' }}
               </v-icon>
             </v-btn>
@@ -243,7 +237,7 @@
                 update()
               "
             >
-              <v-icon size="30" dark>
+              <v-icon size="30" class="icon">
                 {{ parentMenu.type === 'ICON' ? parentMenu.value : '' }}
               </v-icon>
             </v-btn>
@@ -257,6 +251,12 @@
     <input-field-pop-up ref="inputFieldPopUp"></input-field-pop-up>
   </v-card>
 </template>
+
+<style scoped>
+* >>> .icon * {
+  fill: #101010;
+}
+</style>
 
 <script lang="ts">
 import Vue from 'vue'
@@ -410,6 +410,9 @@ export default class ErgonomIOAvatarsContainer extends Vue {
     '#4d2f24'
   ]
 
+  hairMesh: Group | null = null
+  beardMesh: Group | null = null
+
   playerData: PlayerData = new PlayerData()
 
   morphList: MorphItem[] = []
@@ -468,6 +471,20 @@ export default class ErgonomIOAvatarsContainer extends Vue {
       .catch((e) => console.error('Cannot load GLTF', e))
   }
 
+  loadBodyPart (filePath: string, callback: (fbx: THREE.Group) => void): void {
+    if (this.viewer == null) return
+
+    this.viewer
+      .loadFBXFromPath(filePath)
+      .then((fbx) => {
+        fbx.position.set(0, 0, 0)
+        fbx.scale.set(0.01, 0.01, 0.01)
+
+        callback(fbx)
+      })
+      .catch((e) => console.error('Cannot load FBX', e))
+  }
+
   updateTheme (): void {
     if (this.viewer !== null) {
       if (Session.getTheme() === 'dark') {
@@ -482,6 +499,36 @@ export default class ErgonomIOAvatarsContainer extends Vue {
 
   onFileInput (files: APIAsset[]): void {
     console.log('Hello')
+  }
+
+  loadBeard (filePath: string) {
+    if (this.beardMesh != null) this.beardMesh.clear()
+    this.loadBodyPart(filePath, (fbx: THREE.Group) => this.changeBeard(fbx))
+  }
+
+  changeBeard (fbx: THREE.Group) {
+    if (this.beardMesh !== null) this.beardMesh.clear()
+    this.beardMesh = fbx
+  }
+
+  changeShoes () {
+    console.log('TODO: Change Beard')
+  }
+
+  changeShirt () {
+    console.log('TODO: Change Beard')
+  }
+
+  changePants () {
+    console.log('TODO: Change Beard')
+  }
+
+  changeHat () {
+    console.log('TODO: Change Beard')
+  }
+
+  changeHand () {
+    console.log('TODO: Change Beard')
   }
 
   createItemArray (): void {
@@ -524,7 +571,7 @@ export default class ErgonomIOAvatarsContainer extends Vue {
       skinArray.push(new MenuItem2(this.skinColors[i], 'COLOR'))
     }
     this.mainMenu = new MenuItem2('', 'ICON', [
-      new MenuItem2('skin', 'ICON', skinArray),
+      new MenuItem2('$vuetify.icons.colours', 'ICON', skinArray),
       new MenuItem2('$vuetify.icons.shirt', 'ICON', [
         new MenuItem2('mdi-cellphone-off'),
         new MenuItem2('mdi-sim-alert'),
@@ -585,8 +632,8 @@ export default class ErgonomIOAvatarsContainer extends Vue {
         new MenuItem2('mdi-sim-alert'),
         new MenuItem2('mdi-airplane-plus')
       ]),
-      new MenuItem2('morph', 'ICON', []),
-      new MenuItem2('settings', 'ICON', [])
+      new MenuItem2('$vuetify.icons.settings', 'ICON', []),
+      new MenuItem2('$vuetify.icons.morph', 'ICON', [])
     ])
 
     console.log(this.mainMenu.selected)
@@ -643,13 +690,26 @@ export default class ErgonomIOAvatarsContainer extends Vue {
     this.createMenu()
     this.createItemArray()
     this.createItems()
-    this.initAvatar()
+    this.loadBeard('./Avatars/Beard/Beard.000.fbx')
+    // this.loadBodyPart('./Avatars/Beard/Beard.000.fbx')
+    // this.loadBodyPart('./Avatars/Hairs/Hair.000.fbx')
+    // this.loadBodyPart('./Avatars/Head/Head.000.fbx')
+    // this.loadBodyPart('./Avatars/Shirt/Shirt.000.fbx')
+    // this.loadBodyPart('./Avatars/Pants/Pants.000.fbx')
+    // this.loadBodyPart('./Avatars/Shoes/Shoes.000.fbx')
     this.initMorphData()
     this.initPlayerData()
   }
 
   update () {
     console.log('Main menu is updated.')
+    if (this.mainMenu.items[3].selected === 0) {
+      console.log('First hair selected')
+      this.loadBeard('./Avatars/Beard/Beard.000.fbx')
+    }
+    if (this.mainMenu.items[3].selected === 1) {
+      this.loadBeard('./Avatars/Beard/Beard.001.fbx')
+    }
   }
 
   // Used to set up management options

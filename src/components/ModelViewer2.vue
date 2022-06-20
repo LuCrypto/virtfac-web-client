@@ -2,7 +2,7 @@
   <v-container
     class="pa-0 ma-0"
     ref="container"
-    style="max-width: 100%; max-height: 100%; position: relative;"
+    style="max-width: 100%; max-height: 100%; position: relative"
   >
     <model-viewer-stats ref="stats" :pannelIds="[0, 1, 2]"></model-viewer-stats>
   </v-container>
@@ -19,6 +19,7 @@ import { studioEnvMap } from '@/utils/imageData'
 
 // Loaders
 import { GLTFLoader, GLTF } from 'three/examples/jsm/loaders/GLTFLoader'
+import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader'
 import { BVHLoader, BVH } from 'three/examples/jsm/loaders/BVHLoader'
 import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader'
 
@@ -40,8 +41,6 @@ export default class ModelViewer2 extends Vue {
 
   container: HTMLElement | null = null
 
-  selectedMenuItem = -1
-  menuCollapse = false
   size: V = new V(0, 0)
   controls: OrbitControls
   mixer: THREE.AnimationMixer | null = null
@@ -215,8 +214,8 @@ export default class ModelViewer2 extends Vue {
     return new Promise((resolve, reject) =>
       loader.load(
         path,
-        object => {
-          object.scene.traverse(child => {
+        (object) => {
+          object.scene.traverse((child) => {
             if (child instanceof THREE.Mesh) {
               child.castShadow = true
               child.receiveShadow = true
@@ -226,7 +225,22 @@ export default class ModelViewer2 extends Vue {
           resolve(object)
         },
         undefined,
-        error => reject(error)
+        (error) => reject(error)
+      )
+    )
+  }
+
+  loadFBXFromPath (path: string): Promise<THREE.Group> {
+    const fbxLoader = new FBXLoader()
+    return new Promise((resolve, reject) =>
+      fbxLoader.load(
+        path,
+        (object) => {
+          if (this.scene != null) this.scene.add(object)
+          resolve(object)
+        },
+        undefined,
+        (error) => reject(error)
       )
     )
   }
