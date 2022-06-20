@@ -73,6 +73,8 @@ import { Node } from '@/utils/graph/node'
 import { Link } from '@/utils/graph/link'
 import { Vec2, Vector2 } from '@/utils/graph/Vec'
 import { GraphUtils } from '@/utils/graph/graphUtils'
+import { GraphLayout } from '@/utils/graph/graphLayout'
+import { MatrixUtils } from '@/utils/matrixUtils'
 
 class MenuItem {
   text: string
@@ -103,7 +105,8 @@ export default class RoutingAnalysisComponent extends Vue {
 
   graphViewer: RoutingGraphViewer | null = null
 
-  sourceGraph: Graph | null = null
+  postPostGraph: Graph | null = null
+  articlePostGraph: Graph | null = null
 
   mounted (): void {
     this.actionContainer = this.$refs.actionContainer as ActionContainer
@@ -120,8 +123,8 @@ export default class RoutingAnalysisComponent extends Vue {
         (this.$refs.loadGammeFile as HTMLInputElement).click()
       }),
       new MenuItem('Remove feedback link', 'mdi-file-document', () => {
-        if (this.sourceGraph !== null) {
-          this.sourceGraph.foreachNode(n => {
+        if (this.postPostGraph !== null) {
+          this.postPostGraph.foreachNode(n => {
             n.foreachLink(l => {
               if (l.getDataOrDefault<boolean>('goBack', false)) {
                 n.removeLink(l.getNode())
@@ -131,9 +134,11 @@ export default class RoutingAnalysisComponent extends Vue {
         }
       }),
       new MenuItem('Show transitive link', 'mdi-file-document', () => {
-        if (this.sourceGraph !== null) {
-          const transitiveSet = GraphUtils.getTransitiveLinks(this.sourceGraph)
-          const linkMap = this.sourceGraph.getData<Map<Link, Array<Node>>>(
+        if (this.postPostGraph !== null) {
+          const transitiveSet = GraphUtils.getTransitiveLinks(
+            this.postPostGraph
+          )
+          const linkMap = this.postPostGraph.getData<Map<Link, Array<Node>>>(
             'attachedNodes'
           )
           transitiveSet.forEach(l => {
@@ -147,32 +152,165 @@ export default class RoutingAnalysisComponent extends Vue {
         }
       }),
       new MenuItem('Remove transitive link', 'mdi-file-document', () => {
-        if (this.sourceGraph !== null) {
-          const transitiveSet = GraphUtils.getTransitiveLinks(this.sourceGraph)
+        if (this.postPostGraph !== null) {
+          const transitiveSet = GraphUtils.getTransitiveLinks(
+            this.postPostGraph
+          )
           transitiveSet.forEach(l => {
             l.getOriginNode().removeLink(l.getNode())
           })
         }
       }),
       new MenuItem('Level layout', 'mdi-file-document', () => {
-        if (this.sourceGraph !== null && this.graphViewer !== null) {
-          const nbLevel = GraphUtils.computeLevels(this.sourceGraph, 'level')
+        if (this.postPostGraph !== null && this.graphViewer !== null) {
+          const nbLevel = GraphUtils.computeLevels(this.postPostGraph, 'level')
+          /*
           const nodeArray = new Array<number>(nbLevel)
           for (let i = 0; i < nbLevel; i++) {
             nodeArray[i] = 0
           }
-          this.sourceGraph.foreachNode(n => {
+          this.postPostGraph.foreachNode(n => {
             const level = n.getData<number>('level')
             nodeArray[level]++
             n.getData<Vec2>('position').x = level * 100
             n.getData<Vec2>('position').y = nodeArray[level] * 200
           })
-          this.sourceGraph.foreachNode(n => {
+          this.postPostGraph.foreachNode(n => {
             n.foreachLink(l => {
               l.setData<boolean>('visible', true)
             })
           })
-          this.graphViewer.setGraph(this.sourceGraph)
+          this.graphViewer.setGraph(this.postPostGraph)
+          */
+          GraphLayout.levelLayout(
+            this.postPostGraph,
+            'level',
+            'position',
+            100,
+            200
+          )
+          this.postPostGraph.foreachNode(n => {
+            n.foreachLink(l => {
+              l.setData<boolean>('visible', true)
+            })
+          })
+          this.graphViewer.setGraph(this.postPostGraph)
+        }
+      }),
+      new MenuItem('Show Article/Poste matrix', 'mdi-file-document', () => {
+        if (this.articlePostGraph !== null) {
+          const m = MatrixUtils.matrixFromBipartiGraph(
+            this.articlePostGraph,
+            'matCelltype',
+            'index'
+          )
+          m.printMat()
+        }
+      }),
+      new MenuItem('Classification Article/Poste', 'mdi-file-document', () => {
+        if (this.articlePostGraph !== null) {
+          const m = MatrixUtils.matrixFromBipartiGraph(
+            this.articlePostGraph,
+            'matCelltype',
+            'index'
+          )
+          const classif = MatrixUtils.blockDiagonalisation(m)
+          m.printMat()
+
+          const colorMap = new Map<string, string>()
+          const colArray: string[] = [
+            '#9B59B6',
+            '#2980B9',
+            '#A93226',
+            '#6C3483',
+            '#1F618D',
+            '#117A65',
+            '#B9770E',
+            '#616A6B',
+            '#283747',
+            '#E67E22'
+          ]
+          const notAssignedColor = '#212F3C'
+
+          this.articlePostGraph.foreachNode(n => {
+            if (n.getData<'row' | 'col'>('matCelltype') === 'col') {
+              const group = classif.colAssignment.get(
+                n.getData<number>('index')
+              ) as number
+              if (group === -1) {
+                colorMap.set(n.getData<string>('name'), notAssignedColor)
+              } else {
+                colorMap.set(
+                  n.getData<string>('name'),
+                  colArray[group % colArray.length]
+                )
+              }
+            }
+          })
+
+          if (this.postPostGraph !== null) {
+            this.postPostGraph.foreachNode(n => {
+              const color = colorMap.get(n.getData<string>('name'))
+              if (color !== undefined) {
+                n.setData<string>('color', color)
+              }
+            })
+          }
+
+          if (this.graphViewer !== null) {
+            this.graphViewer.setGraph(this.postPostGraph)
+          }
+        }
+      }),
+      new MenuItem('Classification Article/Poste', 'mdi-file-document', () => {
+        if (this.postPostGraph !== null) {
+          const m = MatrixUtils.matrixFromGraph(this.postPostGraph, 'index')
+          m.printMat()
+          const classif = MatrixUtils.symetricBlockDiagonalisation(m)
+          m.printMat()
+
+          const colorMap = new Map<string, string>()
+          const colArray: string[] = [
+            '#9B59B6',
+            '#2980B9',
+            '#A93226',
+            '#6C3483',
+            '#1F618D',
+            '#117A65',
+            '#B9770E',
+            '#616A6B',
+            '#283747'
+          ]
+          const notAssignedColor = '#BDC3C7'
+
+          this.postPostGraph.foreachNode(n => {
+            if (n.getData<'row' | 'col'>('matCelltype') === 'col') {
+              const group = classif.assigns.get(
+                n.getData<number>('index')
+              ) as number
+              if (group === -1) {
+                colorMap.set(n.getData<string>('name'), notAssignedColor)
+              } else {
+                colorMap.set(
+                  n.getData<string>('name'),
+                  colArray[group % colArray.length]
+                )
+              }
+            }
+          })
+
+          if (this.postPostGraph !== null) {
+            this.postPostGraph.foreachNode(n => {
+              const color = colorMap.get(n.getData<string>('name'))
+              if (color !== undefined) {
+                n.setData<string>('color', color)
+              }
+            })
+          }
+
+          if (this.graphViewer !== null) {
+            this.graphViewer.setGraph(this.postPostGraph)
+          }
         }
       })
     )
@@ -244,9 +382,12 @@ export default class RoutingAnalysisComponent extends Vue {
 
           if (nodeValue === undefined) return
           const posteMap = new Map<string, Node>()
+          const posteMapforArticle = new Map<string, Node>()
+          const articleMap = new Map<string, Node>()
 
           const orderGraph = GraphUtils.genOrderGraph()
-          this.sourceGraph = orderGraph.graph
+          this.postPostGraph = orderGraph.graph
+          this.articlePostGraph = new Graph()
 
           posteMap.set(
             nodeValue,
@@ -270,7 +411,30 @@ export default class RoutingAnalysisComponent extends Vue {
                     new Node().setData<string>('name', nextNode) as Node
                   )
                 )
+                posteMapforArticle.set(
+                  nextNode,
+                  this.articlePostGraph.addNode(
+                    new Node()
+                      .setData<string>('name', nextNode)
+                      .setData<'row' | 'col'>('matCelltype', 'col') as Node
+                  )
+                )
               }
+              const nextArticle = sheet[nameOf(0, row)].v
+              if (!articleMap.has(nextArticle)) {
+                articleMap.set(
+                  nextArticle,
+                  this.articlePostGraph.addNode(
+                    new Node()
+                      .setData<string>('name', nextArticle)
+                      .setData<'row' | 'col'>('matCelltype', 'row') as Node
+                  )
+                )
+              }
+              (articleMap.get(nextArticle) as Node).addLink(
+                posteMapforArticle.get(nextNode) as Node
+              )
+
               if (nextPhase > phaseValue) {
                 const n1 = posteMap.get(nodeValue) as Node
                 const n2 = posteMap.get(nextNode) as Node

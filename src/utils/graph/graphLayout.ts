@@ -249,4 +249,68 @@ export class GraphLayout {
       n.setData('__fixed', undefined)
     })
   }
+
+  public static levelLayout (
+    graph: Graph,
+    levelField: string,
+    positionField: string,
+    xSpacing: number,
+    ySpacing: number,
+    transform?: { (v: Vec2): Vec2 } | undefined
+  ) {
+    const sources = new Array<Node>()
+
+    let maxLevel = 0
+    graph.foreachNode(n => {
+      const level = n.getData<number>(levelField)
+      if (level > maxLevel) maxLevel = level
+      if (level === 0) {
+        sources.push(n)
+      }
+    })
+
+    let maxOffset = 0
+    let maxOffsetOfLevel = new Array<number>(maxLevel)
+    for (let i = 0; i < maxLevel; i++) {
+      maxOffsetOfLevel[i] = 0
+    }
+
+    const __fixed = '__fixed'
+    sources.forEach(n => {
+      const toTravel = new Array<Node>()
+      n.setData<Vec2>(
+        positionField,
+        new Vector2(0, maxOffsetOfLevel[0]++ * ySpacing)
+      )
+      if (maxOffsetOfLevel[0] > maxOffset) maxOffset = maxOffsetOfLevel[0]
+      n.foreachLink(l => {
+        if (!l.getNode().getDataOrDefault<boolean>(__fixed, false)) {
+          toTravel.push(l.getNode())
+          l.getNode().setData<boolean>(__fixed, true)
+        }
+      })
+
+      while (toTravel.length > 0) {
+        const node = toTravel.shift() as Node
+        const level = node.getData<number>(levelField)
+        node.setData<Vec2>(
+          positionField,
+          new Vector2(level * xSpacing, maxOffsetOfLevel[level]++ * ySpacing)
+        )
+        if (maxOffsetOfLevel[level] > maxOffset) {
+          maxOffset = maxOffsetOfLevel[level]
+        }
+        node.foreachLink(l => {
+          if (!l.getNode().getDataOrDefault<boolean>(__fixed, false)) {
+            toTravel.unshift(l.getNode())
+            l.getNode().setData<boolean>(__fixed, true)
+          }
+        })
+      }
+
+      maxOffsetOfLevel = maxOffsetOfLevel.map(() => {
+        return maxOffset
+      })
+    })
+  }
 }
