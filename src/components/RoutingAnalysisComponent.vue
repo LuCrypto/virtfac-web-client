@@ -57,6 +57,9 @@
         @fileInput="handleFile"
       ></open-file>
     </pop-up>
+    <pop-up ref="matrixEditor">
+      <matrix-viewer ref="matrixViewer"></matrix-viewer>
+    </pop-up>
   </v-card>
 </template>
 
@@ -74,7 +77,8 @@ import { Link } from '@/utils/graph/link'
 import { Vec2, Vector2 } from '@/utils/graph/Vec'
 import { GraphUtils } from '@/utils/graph/graphUtils'
 import { GraphLayout } from '@/utils/graph/graphLayout'
-import { MatrixUtils } from '@/utils/matrixUtils'
+import { MatrixUtils, Matrix } from '@/utils/matrixUtils'
+import MatrixViewer from '@/components/MatrixViewer.vue'
 
 class MenuItem {
   text: string
@@ -92,7 +96,8 @@ class MenuItem {
   components: {
     RoutingGraphViewer,
     OpenFile,
-    PopUp
+    PopUp,
+    MatrixViewer
   }
 })
 // @vuese
@@ -107,6 +112,8 @@ export default class RoutingAnalysisComponent extends Vue {
 
   postPostGraph: Graph | null = null
   articlePostGraph: Graph | null = null
+
+  articlePostMatrix: Matrix | null = null
 
   mounted (): void {
     this.actionContainer = this.$refs.actionContainer as ActionContainer
@@ -197,25 +204,19 @@ export default class RoutingAnalysisComponent extends Vue {
           this.graphViewer.setGraph(this.postPostGraph)
         }
       }),
-      new MenuItem('Show Article/Poste matrix', 'mdi-file-document', () => {
-        if (this.articlePostGraph !== null) {
-          const m = MatrixUtils.matrixFromBipartiGraph(
-            this.articlePostGraph,
-            'matCelltype',
-            'index'
-          )
-          m.printMat()
-        }
-      }),
       new MenuItem('Classification Article/Poste', 'mdi-file-document', () => {
         if (this.articlePostGraph !== null) {
-          const m = MatrixUtils.matrixFromBipartiGraph(
-            this.articlePostGraph,
-            'matCelltype',
-            'index'
+          if (this.articlePostMatrix === null) {
+            this.articlePostMatrix = MatrixUtils.matrixFromBipartiGraph(
+              this.articlePostGraph,
+              'matCelltype',
+              'index'
+            )
+          }
+          const classif = MatrixUtils.blockDiagonalisation(
+            this.articlePostMatrix
           )
-          const classif = MatrixUtils.blockDiagonalisation(m)
-          m.printMat()
+          this.articlePostMatrix.printMat()
 
           const colorMap = new Map<string, string>()
           const colArray: string[] = [
@@ -225,12 +226,9 @@ export default class RoutingAnalysisComponent extends Vue {
             '#6C3483',
             '#1F618D',
             '#117A65',
-            '#B9770E',
-            '#616A6B',
-            '#283747',
-            '#E67E22'
+            '#2ECC71'
           ]
-          const notAssignedColor = '#212F3C'
+          const notAssignedColor = '#f5a406'
 
           this.articlePostGraph.foreachNode(n => {
             if (n.getData<'row' | 'col'>('matCelltype') === 'col') {
@@ -262,7 +260,7 @@ export default class RoutingAnalysisComponent extends Vue {
           }
         }
       }),
-      new MenuItem('Classification Article/Poste', 'mdi-file-document', () => {
+      new MenuItem('Classification Poste/Poste', 'mdi-file-document', () => {
         if (this.postPostGraph !== null) {
           const m = MatrixUtils.matrixFromGraph(this.postPostGraph, 'index')
           m.printMat()
@@ -276,12 +274,9 @@ export default class RoutingAnalysisComponent extends Vue {
             '#A93226',
             '#6C3483',
             '#1F618D',
-            '#117A65',
-            '#B9770E',
-            '#616A6B',
-            '#283747'
+            '#117A65'
           ]
-          const notAssignedColor = '#BDC3C7'
+          const notAssignedColor = '#f5a406'
 
           this.postPostGraph.foreachNode(n => {
             if (n.getData<'row' | 'col'>('matCelltype') === 'col') {
@@ -312,6 +307,37 @@ export default class RoutingAnalysisComponent extends Vue {
             this.graphViewer.setGraph(this.postPostGraph)
           }
         }
+      }),
+      new MenuItem('Show matrix', 'mdi-file-document', () => {
+        (this.$refs.matrixEditor as PopUp).open()
+        requestAnimationFrame(() => {
+          if (this.articlePostGraph !== null) {
+            if (this.articlePostMatrix === null) {
+              this.articlePostMatrix = MatrixUtils.matrixFromBipartiGraph(
+                this.articlePostGraph,
+                'matCelltype',
+                'index'
+              )
+            }
+            const rowNames = new Array<string>(this.articlePostMatrix.nbRow)
+            const colNames = new Array<string>(this.articlePostMatrix.nbColumn)
+            this.articlePostGraph.foreachNode(n => {
+              if (n.getData<'row' | 'col'>('matCelltype') === 'col') {
+                colNames[n.getData<number>('index')] = n.getData<string>('name')
+              } else {
+                rowNames[n.getData<number>('index')] = n.getData<string>('name')
+              }
+            })
+            ;(this.$refs.matrixViewer as MatrixViewer).setMatrix(
+              this.articlePostMatrix,
+              rowNames,
+              colNames,
+              v => {
+                return v === 0 ? '' : '' + v
+              }
+            )
+          }
+        })
       })
     )
   }
@@ -395,6 +421,28 @@ export default class RoutingAnalysisComponent extends Vue {
               new Node().setData<string>('name', nodeValue) as Node
             )
           )
+          posteMapforArticle.set(
+            nodeValue,
+            this.articlePostGraph.addNode(
+              new Node()
+                .setData<string>('name', nodeValue)
+                .setData<'row' | 'col'>('matCelltype', 'col') as Node
+            )
+          )
+          console.log(nodeValue)
+
+          const article = sheet[nameOf(0, 1)].v
+          articleMap.set(
+            article,
+            this.articlePostGraph.addNode(
+              new Node()
+                .setData<string>('name', article)
+                .setData<'row' | 'col'>('matCelltype', 'row') as Node
+            )
+          )
+          ;(articleMap.get(article) as Node).addLink(
+            posteMapforArticle.get(nodeValue) as Node
+          )
 
           do {
             row++
@@ -457,6 +505,7 @@ export default class RoutingAnalysisComponent extends Vue {
             }
           } while (nodeValue !== undefined)
 
+          console.log(posteMap.get('P6'))
           console.log('loading ' + posteMap.size + ' postes')
           console.log('out')
           const nbNode = posteMap.size

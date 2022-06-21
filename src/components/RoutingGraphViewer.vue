@@ -41,7 +41,7 @@ export default class RoutingGraphViewer extends Vue {
   private forgroundNodeLayer: NvEl | null = null
   private forgroundinkLayer: NvEl | null = null
 
-  private nodeMap = new Map<Node, NvEl>()
+  private nodeMap = new Map<Node, Array<NvEl>>()
   private linkMap = new Map<Link, NvEl>()
 
   private displayedGraph: Graph | null = null
@@ -204,19 +204,34 @@ export default class RoutingGraphViewer extends Vue {
       fill: n.getDataOrDefault<string>('color', this.theme.defaultNodeColor),
       transform: `translate(${p.x}px, ${p.y}px)`
     })
+    let name = n.getData<string>('name')
     if (n.getDataOrDefault<boolean>('visible', true)) {
       this.nodeLayer.appendChild(el)
     }
-    this.nodeMap.set(n, el)
+    if (name === undefined) {
+      name = ''
+    }
+    const nameEl = new NvEl('text')
+    nameEl.getDom().innerHTML = name
+    nameEl.setStyle({
+      'font-size': 'x-small'
+    })
+    this.nodeLayer.appendChild(nameEl)
+    const rect = nameEl.getDom().getBoundingClientRect()
+    nameEl.setStyle({
+      transform: `translate(${p.x - rect.width / this.size / 2}px, ${p.y +
+        rect.height / this.size / 4}px)`
+    })
+    this.nodeMap.set(n, [el, nameEl])
   }
 
   private removeNode (n: Node): void {
     if (this.nodeLayer === null) throw new Error('null nodeLayer')
 
     if (n.getDataOrDefault<boolean>('visible', true)) {
-      this.nodeLayer
-        .getDom()
-        .removeChild((this.nodeMap.get(n) as NvEl).getDom())
+      (this.nodeMap.get(n) as Array<NvEl>).forEach(el => {
+        (this.nodeLayer as NvEl).getDom().removeChild(el.getDom())
+      })
     }
     this.nodeMap.delete(n)
   }
@@ -336,9 +351,11 @@ export default class RoutingGraphViewer extends Vue {
     }
 
     this.nodeMap.forEach(value => {
-      if (value.getDom().parentNode !== null) {
-        (value.getDom().parentNode as HTMLElement).removeChild(value.getDom())
-      }
+      value.forEach(el => {
+        if (el.getDom().parentNode !== null) {
+          (el.getDom().parentNode as HTMLElement).removeChild(el.getDom())
+        }
+      })
     })
     this.linkMap.forEach(value => {
       if (value.getDom().parentNode !== null) {

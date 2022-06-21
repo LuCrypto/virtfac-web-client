@@ -196,6 +196,9 @@ export class GraphUtils {
         'cannot complete level computation due to cycle in the graph'
       )
     }
+    graph.foreachNode(n => {
+      n.setData<undefined>(targetedByField, undefined)
+    })
     return level
   }
 

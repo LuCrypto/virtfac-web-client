@@ -608,7 +608,7 @@ export class MatrixUtils {
                 alpha,
                 i
               )
-              if (score < optimalChoice.score) {
+              if (score <= optimalChoice.score) {
                 colGroups.set(j, -1)
                 rowGroups.set(i, optimalChoice.group)
               } else {
@@ -683,7 +683,7 @@ export class MatrixUtils {
                 alpha,
                 j
               )
-              if (score < optimalChoice.score) {
+              if (score <= optimalChoice.score) {
                 colGroups.set(j, optimalChoice.group)
                 rowGroups.set(i, -1)
               } else {

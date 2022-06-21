@@ -270,8 +270,8 @@ export class GraphLayout {
     })
 
     let maxOffset = 0
-    let maxOffsetOfLevel = new Array<number>(maxLevel)
-    for (let i = 0; i < maxLevel; i++) {
+    let maxOffsetOfLevel = new Array<number>(maxLevel + 1)
+    for (let i = 0; i < maxLevel + 1; i++) {
       maxOffsetOfLevel[i] = 0
     }
 
@@ -311,6 +311,10 @@ export class GraphLayout {
       maxOffsetOfLevel = maxOffsetOfLevel.map(() => {
         return maxOffset
       })
+    })
+
+    graph.foreachNode(n => {
+      n.setData<undefined>(__fixed)
     })
   }
 }
