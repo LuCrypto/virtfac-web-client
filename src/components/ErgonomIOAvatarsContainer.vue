@@ -143,7 +143,7 @@
                   v-model="morphItem.value"
                   class="slider"
                   id="myRange"
-                  @input="updateSlide(morphItem.value)"
+                  @input="updateMorph(morphIndex)"
                 />
               </div>
             </v-row>
@@ -270,6 +270,9 @@ import InputFieldPopUp from '@/components/popup/InputFieldPopUp.vue'
 import ModelViewer2 from '@/components/ModelViewer2.vue'
 
 import * as THREE from 'three'
+import * as fs from 'fs'
+import * as path from 'path'
+import { promises as fsPromises } from 'fs'
 
 import {
   BufferGeometry,
@@ -410,8 +413,74 @@ export default class ErgonomIOAvatarsContainer extends Vue {
     '#4d2f24'
   ]
 
-  hairMesh: Group | null = null
-  beardMesh: Group | null = null
+  beardNamesArray = [
+    'Beard.000.fbx',
+    'Beard.001.fbx',
+    'Beard.002.fbx',
+    'Beard.003.fbx',
+    'Beard.004.fbx'
+  ]
+
+  hairNamesArray = [
+    'Hair.000.fbx',
+    'Hair.001.fbx',
+    'Hair.002.fbx',
+    'Hair.003.fbx',
+    'Hair.004.fbx',
+    'Hair.005.fbx',
+    'Hair.006.fbx',
+    'Hair.007.fbx',
+    'Hair.008.fbx',
+    'Hair.009.fbx',
+    'Hair.010.fbx',
+    'Hair.011.fbx',
+    'Hair.012.fbx',
+    'Hair.013.fbx',
+    'Hair.014.fbx',
+    'Hair.015.fbx',
+    'Hair.016.fbx',
+    'Hair.017.fbx',
+    'Hair.018.fbx',
+    'Hair.019.fbx',
+    'Hair.020.fbx',
+    'Hair.021.fbx',
+    'Hair.022.fbx',
+    'Hair.023.fbx',
+    'Hair.024.fbx',
+    'Hair.025.fbx',
+    'Hair.026.fbx',
+    'Hair.027.fbx',
+    'Hair.028.fbx',
+    'Hair.029.fbx',
+    'Hair.030.fbx',
+    'Hair.031.fbx',
+    'Hair.032.fbx',
+    'Hair.033.fbx',
+    'Hair.034.fbx',
+    'Hair.035.fbx',
+    'Hair.036.fbx',
+    'Hair.037.fbx',
+    'Hair.038.fbx',
+    'Hair.039.fbx',
+    'Hair.040.fbx',
+    'Hair.041.fbx',
+    'Hair.042.fbx',
+    'Hair.043.fbx',
+    'Hair.044.fbx',
+    'Hair.045.fbx',
+    'Hair.046.fbx',
+    'Hair.047.fbx',
+    'Hair.049.fbx',
+    'Hair.050.fbx',
+    'Hair.051.fbx',
+    'Hair.052.fbx',
+    'Hair.053.fbx',
+    'Hair.054.fbx'
+  ]
+
+  hairMesh: Group = new Group()
+  beardMesh: Group = new Group()
+  shirtMesh: Group = new Group()
 
   playerData: PlayerData = new PlayerData()
 
@@ -442,35 +511,6 @@ export default class ErgonomIOAvatarsContainer extends Vue {
     console.log('yo')
   }
 
-  initAvatar (): void {
-    if (this.viewer == null) return
-    const viewer = this.viewer
-    const material = new THREE.MeshStandardMaterial({
-      color: 0x683e00, // Burned orange
-      metalness: 0,
-      roughness: 1
-    })
-    this.viewer
-      .loadGLTFFromPath('./avatar.gltf')
-      .then((gltf) => {
-        gltf.scene.children[0].position.set(0, 0, 0)
-        gltf.scene.traverse((child) => {
-          if (child instanceof THREE.Mesh) {
-            child.material = material
-          }
-
-          if (child instanceof THREE.Bone && child.name === 'mixamorig1Hips') {
-            const helper = new THREE.SkeletonHelper(child)
-            const mat = helper.material as THREE.LineBasicMaterial
-            mat.linewidth = 3
-            helper.visible = true
-            viewer.scene.add(helper)
-          }
-        })
-      })
-      .catch((e) => console.error('Cannot load GLTF', e))
-  }
-
   loadBodyPart (filePath: string, callback: (fbx: THREE.Group) => void): void {
     if (this.viewer == null) return
 
@@ -488,11 +528,11 @@ export default class ErgonomIOAvatarsContainer extends Vue {
   updateTheme (): void {
     if (this.viewer !== null) {
       if (Session.getTheme() === 'dark') {
-        this.viewer.setFogActive(false, 0x1e1e1e)
-        this.viewer.setGrid(100, 100, 0x555555, 0x1e1e1e, 0xeeeeee)
+        this.viewer.setFogActive(true, 0xff4c4c)
+        this.viewer.setGrid(100, 1, 0x555555, 0x1e1e1e, 0xeeeeee)
       } else {
-        this.viewer.setFogActive(false, 0xfefefe)
-        this.viewer.setGrid(100, 100, 0xaaaaaa, 0xfefefe, 0x111111)
+        this.viewer.setFogActive(true, 0xfefefe)
+        this.viewer.setGrid(100, 1, 0xaaaaaa, 0xfefefe, 0x111111)
       }
     }
   }
@@ -501,34 +541,52 @@ export default class ErgonomIOAvatarsContainer extends Vue {
     console.log('Hello')
   }
 
-  loadBeard (filePath: string) {
-    if (this.beardMesh != null) this.beardMesh.clear()
-    this.loadBodyPart(filePath, (fbx: THREE.Group) => this.changeBeard(fbx))
+  loadMesh (filePath: string, id: number) {
+    this.loadBodyPart(filePath, (fbx: THREE.Group) => this.changeMesh(fbx, id))
   }
 
-  changeBeard (fbx: THREE.Group) {
-    if (this.beardMesh !== null) this.beardMesh.clear()
-    this.beardMesh = fbx
-  }
+  changeMesh (fbx: THREE.Group, id: number) {
+    fbx.castShadow = true
+    switch (id) {
+      case 1: {
+        /* Shirt */
+        if (this.shirtMesh != null) this.shirtMesh.clear()
+        this.shirtMesh = fbx
+        break
+      }
+      case 2: {
+        /* Hair */
+        if (this.hairMesh != null) this.hairMesh.clear()
+        this.hairMesh = fbx
+        break
+      }
+      case 3: {
+        /* Beard */
+        if (this.beardMesh != null) this.beardMesh.clear()
+        this.beardMesh = fbx
+        break
+      }
+      case 4: {
+        /* Pants */
 
-  changeShoes () {
-    console.log('TODO: Change Beard')
-  }
-
-  changeShirt () {
-    console.log('TODO: Change Beard')
-  }
-
-  changePants () {
-    console.log('TODO: Change Beard')
-  }
-
-  changeHat () {
-    console.log('TODO: Change Beard')
-  }
-
-  changeHand () {
-    console.log('TODO: Change Beard')
+        break
+      }
+      case 5: {
+        /* Shoes */
+        break
+      }
+      case 6: {
+        /* Hand */
+        break
+      }
+      case 7: {
+        /* Hat */
+        break
+      }
+      default: {
+        break
+      }
+    }
   }
 
   createItemArray (): void {
@@ -561,14 +619,31 @@ export default class ErgonomIOAvatarsContainer extends Vue {
     console.log('New skin color hex:', color)
   }
 
-  updateSlide (value: number): void {
-    console.log(value)
+  updateMorph (index: number): void {
+    var morphItem = this.morphList[index]
+    var meshArray: THREE.Mesh[] = []
+    meshArray.push(this.shirtMesh.children[0] as THREE.Mesh)
+    meshArray.push(this.beardMesh.children[0] as THREE.Mesh)
+    meshArray.push(this.hairMesh.children[0] as THREE.Mesh)
+
+    var test = this.shirtMesh.children[0] as THREE.Mesh
+    for (var meshItem in meshArray) {
+      test.morphTargetInfluences[index] = morphItem.value / 100
+    }
   }
 
   createItems (): void {
     var skinArray = []
     for (let i = 0; i < this.skinColors.length; i++) {
       skinArray.push(new MenuItem2(this.skinColors[i], 'COLOR'))
+    }
+    var hairMenuArray = []
+    for (let i = 0; i < this.hairNamesArray.length; i++) {
+      hairMenuArray.push(new MenuItem2('$vuetify.icons.hair', 'ICON'))
+    }
+    var beardMenuArray = []
+    for (let i = 0; i < this.beardNamesArray.length; i++) {
+      beardMenuArray.push(new MenuItem2('$vuetify.icons.beard', 'ICON'))
     }
     this.mainMenu = new MenuItem2('', 'ICON', [
       new MenuItem2('$vuetify.icons.colours', 'ICON', skinArray),
@@ -577,24 +652,8 @@ export default class ErgonomIOAvatarsContainer extends Vue {
         new MenuItem2('mdi-sim-alert'),
         new MenuItem2('mdi-airplane-plus')
       ]),
-      new MenuItem2('$vuetify.icons.hair', 'ICON', [
-        new MenuItem2('mdi-car-settings'),
-        new MenuItem2('mdi-file-import-outline'),
-        new MenuItem2('mdi-pliers'),
-        new MenuItem2('mdi-shark-fin'),
-        new MenuItem2('mdi-card-account-details-star-outline')
-      ]),
-      new MenuItem2('$vuetify.icons.beard', 'ICON', [
-        new MenuItem2('mdi-folder'),
-        new MenuItem2('mdi-moped-electric'),
-        new MenuItem2('mdi-checkbox-blank-circle'),
-        new MenuItem2('mdi-checkerboard'),
-        new MenuItem2('mdi-solid'),
-        new MenuItem2('mdi-checkbox-marked'),
-        new MenuItem2('mdi-glass-wine'),
-        new MenuItem2('mdi-tag-arrow-left'),
-        new MenuItem2('mdi-arrow-right-top-bold')
-      ]),
+      new MenuItem2('$vuetify.icons.hair', 'ICON', hairMenuArray),
+      new MenuItem2('$vuetify.icons.beard', 'ICON', beardMenuArray),
       new MenuItem2('$vuetify.icons.pants', 'ICON', [
         new MenuItem2('mdi-cellphone-off'),
         new MenuItem2('mdi-sim-alert'),
@@ -635,10 +694,6 @@ export default class ErgonomIOAvatarsContainer extends Vue {
       new MenuItem2('$vuetify.icons.settings', 'ICON', []),
       new MenuItem2('$vuetify.icons.morph', 'ICON', [])
     ])
-
-    console.log(this.mainMenu.selected)
-    console.log(this.mainMenu.items.length)
-    console.log('hello')
   }
 
   initMorphData (): void {
@@ -685,30 +740,39 @@ export default class ErgonomIOAvatarsContainer extends Vue {
     })
 
     this.viewer = this.$refs.viewer as ModelViewer2
-    this.viewer.setFogActive(false)
+    this.viewer.setFogActive(true)
+
+    this.updateTheme()
 
     this.createMenu()
     this.createItemArray()
     this.createItems()
-    this.loadBeard('./Avatars/Beard/Beard.000.fbx')
-    // this.loadBodyPart('./Avatars/Beard/Beard.000.fbx')
-    // this.loadBodyPart('./Avatars/Hairs/Hair.000.fbx')
-    // this.loadBodyPart('./Avatars/Head/Head.000.fbx')
-    // this.loadBodyPart('./Avatars/Shirt/Shirt.000.fbx')
-    // this.loadBodyPart('./Avatars/Pants/Pants.000.fbx')
-    // this.loadBodyPart('./Avatars/Shoes/Shoes.000.fbx')
+    this.loadMesh('./Avatars/Shirt/Shirt.000.fbx', 1)
+    this.loadMesh('./Avatars/Hairs/Hair.000.fbx', 2)
+    this.loadMesh('./Avatars/Beard/Beard.000.fbx', 3)
+    this.loadMesh('./Avatars/Pants/Pants.000.fbx', 4)
+    this.loadMesh('./Avatars/Shoes/Shoes.000.fbx', 5)
+    this.loadMesh('./Avatars/Head/Head.000.fbx', 6)
+
     this.initMorphData()
     this.initPlayerData()
   }
 
   update () {
     console.log('Main menu is updated.')
-    if (this.mainMenu.items[3].selected === 0) {
-      console.log('First hair selected')
-      this.loadBeard('./Avatars/Beard/Beard.000.fbx')
+    if (this.mainMenu.selected === 3) {
+      this.loadMesh(
+        './Avatars/Beard/' +
+          this.beardNamesArray[this.mainMenu.items[3].selected],
+        3
+      )
     }
-    if (this.mainMenu.items[3].selected === 1) {
-      this.loadBeard('./Avatars/Beard/Beard.001.fbx')
+    if (this.mainMenu.selected === 2) {
+      this.loadMesh(
+        './Avatars/Hairs/' +
+          this.hairNamesArray[this.mainMenu.items[2].selected],
+        2
+      )
     }
   }
 

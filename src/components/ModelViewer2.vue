@@ -38,6 +38,7 @@ import ModelViewerStats from '@/components/ModelViewerStats.vue'
 export default class ModelViewer2 extends Vue {
   @Prop({ default: () => false }) private displayInspector!: boolean
   @Prop({ default: () => false }) private displayFog!: boolean
+  @Prop({ default: () => false }) private displayGrid!: boolean
 
   container: HTMLElement | null = null
 
@@ -143,7 +144,6 @@ export default class ModelViewer2 extends Vue {
     // const sunHelper = new THREE.DirectionalLightHelper(sun, 4, 0xffb000)
     // this.scene.add(sunHelper)
     this.setGrid(100, 100, 0xaaaaaa, 0xfefefe)
-
     this.setEnvMap(studioEnvMap, 'HDR')
 
     if (this.displayFog) {
