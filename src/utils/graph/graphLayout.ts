@@ -314,7 +314,7 @@ export class GraphLayout {
     })
 
     graph.foreachNode(n => {
-      n.setData<undefined>(__fixed)
+      n.setData<undefined>(__fixed, undefined)
     })
   }
 }
