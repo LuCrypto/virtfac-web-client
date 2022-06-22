@@ -60,6 +60,7 @@
     <pop-up ref="matrixEditor">
       <matrix-viewer ref="matrixViewer"></matrix-viewer>
     </pop-up>
+    <select-pop-up ref="selectPopUp"></select-pop-up>
   </v-card>
 </template>
 
@@ -79,6 +80,7 @@ import { GraphUtils } from '@/utils/graph/graphUtils'
 import { GraphLayout } from '@/utils/graph/graphLayout'
 import { MatrixUtils, Matrix } from '@/utils/matrixUtils'
 import MatrixViewer from '@/components/MatrixViewer.vue'
+import SelectPopUp from './popup/SelectPopUp.vue'
 
 class MenuItem {
   text: string
@@ -97,7 +99,8 @@ class MenuItem {
     RoutingGraphViewer,
     OpenFile,
     PopUp,
-    MatrixViewer
+    MatrixViewer,
+    SelectPopUp
   }
 })
 // @vuese
@@ -126,8 +129,90 @@ export default class RoutingAnalysisComponent extends Vue {
       new MenuItem('Open File', 'mdi-file-document', () => {
         (this.$refs.filePopUp as PopUp).open()
       }),
-      new MenuItem('Open Gamme File', 'mdi-file-document', () => {
-        (this.$refs.loadGammeFile as HTMLInputElement).click()
+      new MenuItem('Import', 'mdi-application-import', () => {
+        (this.$refs.selectPopUp as SelectPopUp).open(
+          [
+            {
+              text: 'Import file type',
+              value: 'txt',
+              align: 'left',
+              sortable: false,
+              sort: (a, b) => {
+                return 0
+              }
+            }
+          ],
+          [
+            {
+              txt: 'Gamme file',
+              callback: () => {
+                // console.log('Article/Poste Matrix')
+                const input = document.createElement('input')
+                input.type = 'file'
+                input.accept = '.xls, .xlsx'
+                input.oninput = this.loadGammeFile
+                input.click()
+              }
+            },
+            {
+              txt: 'Article/Poste Matrix',
+              callback: () => {
+                // console.log('Article/Poste Matrix')
+                const input = document.createElement('input')
+                input.type = 'file'
+                input.accept = '.xls, .xlsx'
+                input.oninput = this.loadArticlePosteMatrix
+                input.click()
+              }
+            },
+            {
+              txt: 'Poste/Poste Matrix',
+              callback: () => {
+                // console.log('Article/Poste Matrix')
+                const input = document.createElement('input')
+                input.type = 'file'
+                input.accept = '.xls, .xlsx'
+                input.oninput = this.loadPostePosteMatrix
+                input.click()
+              }
+            }
+          ],
+          item => {
+            ((item as Record<string, unknown>).callback as { (): void })()
+          }
+        )
+      }),
+      new MenuItem('Export', 'mdi-application-export', () => {
+        (this.$refs.selectPopUp as SelectPopUp).open(
+          [
+            {
+              text: 'Import file type',
+              value: 'txt',
+              align: 'left',
+              sortable: false,
+              sort: (a, b) => {
+                return 0
+              }
+            }
+          ],
+          [
+            {
+              txt: 'Article/Poste Matrix',
+              callback: () => {
+                // console.log('Article/Poste Matrix')
+              }
+            },
+            {
+              txt: 'Poste/Poste Matrix',
+              callback: () => {
+                // console.log('Article/Poste Matrix')
+              }
+            }
+          ],
+          item => {
+            ((item as Record<string, unknown>).callback as { (): void })()
+          }
+        )
       }),
       new MenuItem('Remove feedback link', 'mdi-file-document', () => {
         if (this.postPostGraph !== null) {
@@ -213,8 +298,39 @@ export default class RoutingAnalysisComponent extends Vue {
               'index'
             )
           }
+          const solutions = new Array<{
+            matrix: Matrix
+            interclassRatio: number
+            nbClass: number
+            alpha: number
+          }>()
+          const pas = 0.1
+          for (let i = pas; i < 1; i += pas) {
+            const copy = this.articlePostMatrix.clone()
+            const classif = MatrixUtils.blockDiagonalisation(copy, i)
+            const interclassRatio = MatrixUtils.computeInterclassRatio(
+              copy,
+              classif.rowAssignment,
+              classif.colAssignment
+            )
+            solutions.push({
+              matrix: copy,
+              interclassRatio: interclassRatio,
+              nbClass: 0,
+              alpha: i
+            })
+          }
+
+          console.log(solutions)
           const classif = MatrixUtils.blockDiagonalisation(
             this.articlePostMatrix
+          )
+          console.log(
+            MatrixUtils.computeInterclassRatio(
+              this.articlePostMatrix,
+              classif.rowAssignment,
+              classif.colAssignment
+            )
           )
           this.articlePostMatrix.printMat()
 
@@ -256,7 +372,7 @@ export default class RoutingAnalysisComponent extends Vue {
           }
 
           if (this.graphViewer !== null) {
-            this.graphViewer.setGraph(this.postPostGraph)
+            this.graphViewer.setGraph(this.graphViewer.getGraph())
           }
         }
       }),
@@ -379,6 +495,14 @@ export default class RoutingAnalysisComponent extends Vue {
     // console.log(workbook);
   }
 
+  loadArticlePosteMatrix (event: Event) {
+    console.log('hello')
+  }
+
+  loadPostePosteMatrix (event: Event) {
+    //
+  }
+
   loadGammeFile (event: Event) {
     console.log('file uploaded')
     if (event != null && event.target != null) {
@@ -488,11 +612,26 @@ export default class RoutingAnalysisComponent extends Vue {
                 const n2 = posteMap.get(nextNode) as Node
                 let link = n1.getLink(n2)
                 if (link === undefined) {
-                  link = n1.addLink(n2)
+                  link = n1
+                    .addLink(n2)
+                    .setData<Map<string, number>>(
+                      'articleWeight',
+                      new Map<string, number>()
+                    ) as Link
                 }
                 link.setData<number>(
                   'weight',
                   link.getDataOrDefault<number>('weight', 0) + 1
+                )
+                const articleWeightMap = link.getData<Map<string, number>>(
+                  'articleWeight'
+                )
+                if (!articleWeightMap.has(nextArticle)) {
+                  articleWeightMap.set(nextArticle, 0)
+                }
+                articleWeightMap.set(
+                  nextArticle,
+                  (articleWeightMap.get(nextArticle) as number) + 1
                 )
               } else {
                 // console.log('link ignored')

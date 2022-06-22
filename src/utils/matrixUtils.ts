@@ -748,6 +748,27 @@ export class MatrixUtils {
       }
     })
 
+    const resRow = new Map<number, number>()
+    const resCol = new Map<number, number>()
+
+    const map = new Map<number, number>()
+    map.set(-1, -1)
+
+    bestRowGroups.forEach((value, key) => {
+      if (!map.has(value)) {
+        map.set(value, map.size)
+      }
+      bestRowGroups.set(key, map.get(value) as number)
+      resRow.set(a.getRowLabel(key), map.get(value) as number)
+    })
+    bestColGroups.forEach((value, key) => {
+      if (!map.has(value)) {
+        map.set(value, map.size)
+      }
+      bestColGroups.set(key, map.get(value) as number)
+      resCol.set(a.getColLabel(key), map.get(value) as number)
+    })
+
     // const v = MatrixUtils.groupConcordance(a, rowGroups, colGroups, alpha)
     const rg = new Array<number>()
     const cg = new Array<number>()
@@ -758,26 +779,10 @@ export class MatrixUtils {
     a.reorderRows(rg)
     a.reorderColumns(cg)
 
-    const map = new Map<number, number>()
-    map.set(-1, -1)
-
-    bestRowGroups.forEach((value, key) => {
-      if (!map.has(value)) {
-        map.set(value, map.size)
-      }
-      bestRowGroups.set(key, map.get(value) as number)
-    })
-    bestColGroups.forEach((value, key) => {
-      if (!map.has(value)) {
-        map.set(value, map.size)
-      }
-      bestColGroups.set(key, map.get(value) as number)
-    })
-
     return {
       score: oldScore,
-      rowAssignment: bestRowGroups,
-      colAssignment: bestColGroups
+      rowAssignment: resRow,
+      colAssignment: resCol
     }
   }
 
@@ -940,5 +945,31 @@ export class MatrixUtils {
     })
 
     return matrix
+  }
+
+  public static computeInterclassRatio (
+    matrix: Matrix,
+    rowClasses: Map<number, number>,
+    colClasses: Map<number, number>
+  ): number {
+    let nbInterclass = 0
+    let nbTotal = 0
+    for (let i = 0; i < matrix.nbRow; i++) {
+      for (let j = 0; j < matrix.nbColumn; j++) {
+        const v = matrix.get(i, j)
+        if (v !== 0) {
+          nbTotal += v
+          if (
+            (rowClasses.get(matrix.getRowLabel(i)) as number) !==
+              (colClasses.get(matrix.getColLabel(j)) as number) ||
+            rowClasses.get(matrix.getRowLabel(i)) === -1
+          ) {
+            nbInterclass += v
+          }
+        }
+      }
+    }
+
+    return nbInterclass / nbTotal
   }
 }

@@ -336,6 +336,10 @@ export default class RoutingGraphViewer extends Vue {
     this.linkMap.delete(l)
   }
 
+  public getGraph (): Graph | null {
+    return this.displayedGraph
+  }
+
   public setGraph (graph: Graph | null): void {
     if (this.displayedGraph !== null) {
       [
