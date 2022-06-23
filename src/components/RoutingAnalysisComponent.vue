@@ -104,6 +104,19 @@ class MenuItem {
   }
 }
 
+interface ClassifSolution {
+  matrix: Matrix
+  classif: {
+    score: number
+    rowAssignment: Map<number, number>
+    colAssignment: Map<number, number>
+    nbClass: number
+  }
+  interclassRatio: number
+  nbClass: number
+  alpha: number
+}
+
 @Component({
   name: 'RoutingAnalysisComponent',
   components: {
@@ -311,12 +324,7 @@ export default class RoutingAnalysisComponent extends Vue {
               'index'
             )
           }
-          const solutions = new Array<{
-            matrix: Matrix
-            interclassRatio: number
-            nbClass: number
-            alpha: number
-          }>()
+          const solutions = new Array<ClassifSolution>()
           const pas = 0.1
           for (let i = pas; i < 1; i += pas) {
             const copy = this.articlePostMatrix.clone()
@@ -328,12 +336,14 @@ export default class RoutingAnalysisComponent extends Vue {
             )
             solutions.push({
               matrix: copy,
-              interclassRatio: interclassRatio,
-              nbClass: 0,
-              alpha: i
+              classif: classif,
+              interclassRatio: Math.round(interclassRatio * 1000) / 10,
+              nbClass: classif.nbClass,
+              alpha: Math.round(i * 100) / 100
             })
           }
 
+          /*
           console.log(solutions)
           const classif = MatrixUtils.blockDiagonalisation(
             this.articlePostMatrix
@@ -346,47 +356,66 @@ export default class RoutingAnalysisComponent extends Vue {
             )
           )
           this.articlePostMatrix.printMat()
+          */
 
-          const colorMap = new Map<string, string>()
-          const colArray: string[] = [
-            '#9B59B6',
-            '#2980B9',
-            '#A93226',
-            '#6C3483',
-            '#1F618D',
-            '#117A65',
-            '#2ECC71'
-          ]
-          const notAssignedColor = '#f5a406'
+          const applyClassif = (classif: ClassifSolution) => {
+            this.articlePostMatrix = classif.matrix
+            const colorMap = new Map<string, string>()
+            const colArray: string[] = [
+              '#9B59B6',
+              '#2980B9',
+              '#A93226',
+              '#6C3483',
+              '#1F618D',
+              '#117A65',
+              '#2ECC71'
+            ]
+            const notAssignedColor = '#f5a406'
+            if (this.articlePostGraph !== null) {
+              this.articlePostGraph.foreachNode(n => {
+                if (n.getData<'row' | 'col'>('matCelltype') === 'col') {
+                  const group = classif.classif.colAssignment.get(
+                    n.getData<number>('index')
+                  ) as number
+                  if (group === -1) {
+                    colorMap.set(n.getData<string>('name'), notAssignedColor)
+                  } else {
+                    colorMap.set(
+                      n.getData<string>('name'),
+                      colArray[group % colArray.length]
+                    )
+                  }
+                }
+              })
 
-          this.articlePostGraph.foreachNode(n => {
-            if (n.getData<'row' | 'col'>('matCelltype') === 'col') {
-              const group = classif.colAssignment.get(
-                n.getData<number>('index')
-              ) as number
-              if (group === -1) {
-                colorMap.set(n.getData<string>('name'), notAssignedColor)
-              } else {
-                colorMap.set(
-                  n.getData<string>('name'),
-                  colArray[group % colArray.length]
-                )
+              if (this.postPostGraph !== null) {
+                this.postPostGraph.foreachNode(n => {
+                  const color = colorMap.get(n.getData<string>('name'))
+                  if (color !== undefined) {
+                    n.setData<string>('color', color)
+                  }
+                })
+              }
+
+              if (this.graphViewer !== null) {
+                this.graphViewer.setGraph(this.graphViewer.getGraph())
               }
             }
-          })
-
-          if (this.postPostGraph !== null) {
-            this.postPostGraph.foreachNode(n => {
-              const color = colorMap.get(n.getData<string>('name'))
-              if (color !== undefined) {
-                n.setData<string>('color', color)
-              }
-            })
           }
-
-          if (this.graphViewer !== null) {
-            this.graphViewer.setGraph(this.graphViewer.getGraph())
-          }
+          ;(this.$refs.selectPopUp as SelectPopUp).open(
+            [
+              SelectPopUp.createNumberHeader('Alpha', 'alpha'),
+              SelectPopUp.createNumberHeader(
+                'Interclass ratio (%)',
+                'interclassRatio'
+              ),
+              SelectPopUp.createNumberHeader('Nb Class', 'nbClass')
+            ],
+            solutions,
+            item => {
+              if (item !== null) applyClassif(item as ClassifSolution)
+            }
+          )
         }
       }),
       new MenuItem('Classification Poste/Poste', 'mdi-matrix', () => {

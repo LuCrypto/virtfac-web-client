@@ -122,6 +122,24 @@ export default class SelectPopUp extends Vue {
     this.show = false
   }
 
+  public static createNumberHeader (
+    text: string,
+    value: string,
+    align = 'left',
+    sortable = true,
+    sort = (a: unknown, b: unknown) => {
+      return (a as number) - (b as number)
+    }
+  ) {
+    return {
+      text: text,
+      value: value,
+      align: align,
+      sortable: sortable,
+      sort: sort
+    }
+  }
+
   public open (
     headers: {
       text: string

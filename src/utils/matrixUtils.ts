@@ -499,6 +499,7 @@ export class MatrixUtils {
     score: number
     rowAssignment: Map<number, number>
     colAssignment: Map<number, number>
+    nbClass: number
   } {
     const bestColGroups = new Map<number, number>()
     const bestRowGroups = new Map<number, number>()
@@ -782,7 +783,8 @@ export class MatrixUtils {
     return {
       score: oldScore,
       rowAssignment: resRow,
-      colAssignment: resCol
+      colAssignment: resCol,
+      nbClass: map.size - 1
     }
   }
 
