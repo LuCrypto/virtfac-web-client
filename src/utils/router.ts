@@ -12,6 +12,7 @@ import ContradictionAnalysisGraph from '@/views/ContradictionAnalysis/ExpertAppr
 // Routing Analysis
 import AboutRoutingAnalysis from '@/views/RoutingAnalysis/AboutRoutingAnalysis.vue'
 import DrawingShop from '@/views/RoutingAnalysis/RoutingAnalysis.vue'
+import BlueprintDrawer from '@/views/RoutingAnalysis/BlueprintDrawer.vue'
 
 // Dynamics Analysis
 import DynamicsInput from '@/views/Dynamics/DynamicsInput.vue'
@@ -121,6 +122,14 @@ export const routes: Array<Route> = [
     path: '/routing-analysis',
     category: 'Routing  Analysis',
     component: DrawingShop
+  }),
+  new Route({
+    icon: 'mdi-floor-plan',
+    name: 'Blueprint Editor',
+    subname: 'a.k.a. Drawing Shop',
+    path: '/blueprint-editor',
+    category: 'Routing  Analysis',
+    component: BlueprintDrawer
   }),
 
   // Dynamics analysis

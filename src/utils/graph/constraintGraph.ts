@@ -1190,7 +1190,7 @@ export class ConstraintGraph {
       n.setData<Vec2>('position', sourcePosition.get(n) as Vec2)
     })
 
-    GraphUtils.hierarchization(this.localGraph, 'hierarchy')
+    GraphUtils.hierarchization(this.localGraph, 'h', 'hierarchy')
 
     this.localGraph.foreachNode(n => {
       n.setData<Vec2>(
