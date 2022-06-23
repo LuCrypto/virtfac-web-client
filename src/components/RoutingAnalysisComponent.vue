@@ -69,7 +69,7 @@ import Vue from 'vue'
 import Component from 'vue-class-component'
 import ActionContainer from '@/components/ActionContainer.vue'
 import OpenFile from '@/components/OpenFile.vue'
-import * as XLSX from 'ts-xlsx'
+import * as XLSX from 'xlsx'
 import PopUp from '@/components/PopUp.vue'
 import RoutingGraphViewer from './RoutingGraphViewer.vue'
 import { Graph } from '@/utils/graph/graph'
@@ -81,6 +81,17 @@ import { GraphLayout } from '@/utils/graph/graphLayout'
 import { MatrixUtils, Matrix } from '@/utils/matrixUtils'
 import MatrixViewer from '@/components/MatrixViewer.vue'
 import SelectPopUp from './popup/SelectPopUp.vue'
+import { VAlert } from 'vuetify/lib'
+
+class Poste {
+  name: string
+  public postPostNode: Node | null = null
+  public articlePostNode: Node | null = null
+
+  constructor (name: string) {
+    this.name = name
+  }
+}
 
 class MenuItem {
   text: string
@@ -112,6 +123,8 @@ export default class RoutingAnalysisComponent extends Vue {
   menuItemList: MenuItem[] = []
 
   graphViewer: RoutingGraphViewer | null = null
+
+  private posteMap = new Map<string, Poste>()
 
   postPostGraph: Graph | null = null
   articlePostGraph: Graph | null = null
@@ -186,7 +199,7 @@ export default class RoutingAnalysisComponent extends Vue {
         (this.$refs.selectPopUp as SelectPopUp).open(
           [
             {
-              text: 'Import file type',
+              text: 'Export file type',
               value: 'txt',
               align: 'left',
               sortable: false,
@@ -205,7 +218,7 @@ export default class RoutingAnalysisComponent extends Vue {
             {
               txt: 'Poste/Poste Matrix',
               callback: () => {
-                // console.log('Article/Poste Matrix')
+                this.savePostePosteMatrix()
               }
             }
           ],
@@ -214,7 +227,7 @@ export default class RoutingAnalysisComponent extends Vue {
           }
         )
       }),
-      new MenuItem('Remove feedback link', 'mdi-file-document', () => {
+      new MenuItem('Remove feedback link', 'mdi-backspace', () => {
         if (this.postPostGraph !== null) {
           this.postPostGraph.foreachNode(n => {
             n.foreachLink(l => {
@@ -225,7 +238,7 @@ export default class RoutingAnalysisComponent extends Vue {
           })
         }
       }),
-      new MenuItem('Show transitive link', 'mdi-file-document', () => {
+      new MenuItem('Show transitive link', 'mdi-chart-sankey-variant', () => {
         if (this.postPostGraph !== null) {
           const transitiveSet = GraphUtils.getTransitiveLinks(
             this.postPostGraph
@@ -243,7 +256,7 @@ export default class RoutingAnalysisComponent extends Vue {
           })
         }
       }),
-      new MenuItem('Remove transitive link', 'mdi-file-document', () => {
+      new MenuItem('Remove transitive link', 'mdi-chart-sankey-variant', () => {
         if (this.postPostGraph !== null) {
           const transitiveSet = GraphUtils.getTransitiveLinks(
             this.postPostGraph
@@ -253,7 +266,7 @@ export default class RoutingAnalysisComponent extends Vue {
           })
         }
       }),
-      new MenuItem('Level layout', 'mdi-file-document', () => {
+      new MenuItem('Level layout', 'mdi-file-tree', () => {
         if (this.postPostGraph !== null && this.graphViewer !== null) {
           const nbLevel = GraphUtils.computeLevels(this.postPostGraph, 'level')
           /*
@@ -289,7 +302,7 @@ export default class RoutingAnalysisComponent extends Vue {
           this.graphViewer.setGraph(this.postPostGraph)
         }
       }),
-      new MenuItem('Classification Article/Poste', 'mdi-file-document', () => {
+      new MenuItem('Classification Article/Poste', 'mdi-matrix', () => {
         if (this.articlePostGraph !== null) {
           if (this.articlePostMatrix === null) {
             this.articlePostMatrix = MatrixUtils.matrixFromBipartiGraph(
@@ -376,7 +389,7 @@ export default class RoutingAnalysisComponent extends Vue {
           }
         }
       }),
-      new MenuItem('Classification Poste/Poste', 'mdi-file-document', () => {
+      new MenuItem('Classification Poste/Poste', 'mdi-matrix', () => {
         if (this.postPostGraph !== null) {
           const m = MatrixUtils.matrixFromGraph(this.postPostGraph, 'index')
           m.printMat()
@@ -424,7 +437,7 @@ export default class RoutingAnalysisComponent extends Vue {
           }
         }
       }),
-      new MenuItem('Show matrix', 'mdi-file-document', () => {
+      new MenuItem('Show matrix', 'mdi-database', () => {
         (this.$refs.matrixEditor as PopUp).open()
         requestAnimationFrame(() => {
           if (this.articlePostGraph !== null) {
@@ -495,12 +508,172 @@ export default class RoutingAnalysisComponent extends Vue {
     // console.log(workbook);
   }
 
+  savePostePosteMatrix () {
+    if (this.postPostGraph !== null) {
+      const data = new Array<Array<unknown>>()
+      let nbNode = 1
+      this.postPostGraph.foreachNode(n => {
+        n.setData<number>('__index', nbNode)
+        nbNode++
+      })
+      for (let i = 0; i < nbNode; i++) {
+        data.push(new Array(nbNode).fill(0))
+      }
+
+      this.postPostGraph.foreachNode(n => {
+        const index = n.getData<number>('__index')
+        const name = n.getData<string>('name')
+        data[0][index] = name
+        data[index][0] = name
+        n.foreachLink(l => {
+          data[index][
+            l.getNode().getData<number>('__index')
+          ] = l.getDataOrDefault<number>('weight', 1)
+        })
+      })
+
+      data[0][0] = 'names'
+      const ws = XLSX.utils.aoa_to_sheet(data)
+      const wb = XLSX.utils.book_new()
+
+      wb.SheetNames = ['Poste Matrix']
+
+      wb.Sheets['Poste Matrix'] = ws
+      console.log(wb)
+
+      const uri = XLSX.write(wb, { bookType: 'xlsx', type: 'binary' })
+      const buf = new ArrayBuffer(uri.length)
+      const view = new Uint8Array(buf)
+      for (let i = 0; i < uri.length; i++) view[i] = uri.charCodeAt(i) & 0xff
+      const a = document.createElement('a')
+      const blob = new Blob([buf], {
+        type:
+          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      })
+      const file = new File([blob], 'poste matrix.xlsx')
+      a.href = URL.createObjectURL(file)
+      a.download = 'poste matrix.xlsx'
+      a.click()
+    }
+  }
+
   loadArticlePosteMatrix (event: Event) {
     console.log('hello')
   }
 
   loadPostePosteMatrix (event: Event) {
-    //
+    if (event != null && event.target != null) {
+      const f: File = ((event.target as HTMLInputElement).files as FileList)[0]
+      if (f != null) {
+        if (this.postPostGraph !== null) {
+          this.articlePostGraph = null
+          this.articlePostMatrix = null
+          this.posteMap = new Map<string, Poste>()
+        }
+
+        const order = GraphUtils.genOrderGraph()
+        this.postPostGraph = order.graph
+
+        let array: any
+        const fileReader = new FileReader()
+        fileReader.onload = e => {
+          array = fileReader.result
+          const data = new Uint8Array(array)
+          var arr = []
+          for (let i = 0; i !== data.length; ++i) {
+            arr[i] = String.fromCharCode(data[i])
+          }
+          const wb = XLSX.read(arr.join(''), { type: 'binary' })
+
+          const sheet = wb.Sheets[wb.SheetNames[0]]
+
+          console.log(sheet)
+          const nameOf: { (x: number, y: number): string } = (x, y) => {
+            return XLSX.utils.encode_cell({ c: x, r: y })
+          }
+
+          let value = sheet[nameOf(1, 0)]
+          let i = 1
+          const colArray = new Array<string>('name')
+          const rowArray = new Array<string>('name')
+          while (value !== undefined) {
+            colArray.push(value.v)
+            if (!this.posteMap.has(value.v)) {
+              this.posteMap.set(value.v, new Poste(value.v))
+              if (this.postPostGraph !== null) {
+                const node = new Node().setData<string>('name', value.v) as Node
+                this.postPostGraph.addNode(node)
+                ;(this.posteMap.get(value.v) as Poste).postPostNode = node
+              }
+            }
+            i++
+            value = sheet[nameOf(i, 0)]
+          }
+
+          i = 1
+          value = sheet[nameOf(0, 1)]
+          while (value !== undefined) {
+            colArray.push(value.v)
+            rowArray.push(value.v)
+            console.log(value.v)
+            if (!this.posteMap.has(value.v)) {
+              this.posteMap.set(value.v, new Poste(value.v))
+              if (this.postPostGraph !== null) {
+                const node = new Node().setData<string>('name', value.v) as Node
+                this.postPostGraph.addNode(node)
+                ;(this.posteMap.get(value.v) as Poste).postPostNode = node
+              }
+            }
+            i++
+            value = sheet[nameOf(0, i)]
+          }
+
+          for (let x = 1; x < colArray.length; x++) {
+            for (let y = 1; y < rowArray.length; y++) {
+              const value = sheet[nameOf(x, y)]
+              const w = value ? +value.v : 0
+              if (w > 0) {
+                const link = ((this.posteMap.get(rowArray[y]) as Poste)
+                  .postPostNode as Node).addLink(
+                  (this.posteMap.get(colArray[x]) as Poste).postPostNode as Node
+                )
+                link.setData<number>('weight', w)
+              }
+            }
+          }
+          const nbNode = this.posteMap.size
+          const xSpread = nbNode * 60
+          const xOffset = -xSpread / 2
+
+          let linkCount = 0
+
+          order.graph.setData<number>('fasScore', 0)
+          order.graph.foreachNode(n => {
+            n.foreachLink(l => {
+              linkCount++
+              if (l.getDataOrDefault<boolean>('goBack', false)) {
+                order.graph.setData<number>(
+                  'fasScore',
+                  order.graph.getData<number>('fasScore') +
+                    l.getDataOrDefault<number>('weight', 1)
+                )
+              }
+            })
+          })
+
+          GraphUtils.orderAlgo(
+            order.graph,
+            nbNode,
+            xSpread,
+            xOffset,
+            linkCount / nbNode
+          )
+          ;(this.graphViewer as RoutingGraphViewer).setGraph(order.displayGraph)
+        }
+
+        fileReader.readAsArrayBuffer(f)
+      }
+    }
   }
 
   loadGammeFile (event: Event) {
@@ -519,7 +692,7 @@ export default class RoutingAnalysisComponent extends Vue {
           }
           const wb = XLSX.read(arr.join(''), { type: 'binary' })
 
-          const sheet: XLSX.IWorkSheet = wb.Sheets[wb.SheetNames[0]]
+          const sheet = wb.Sheets[wb.SheetNames[0]]
 
           console.log(sheet)
           const nameOf: { (x: number, y: number): string } = (x, y) => {
@@ -644,9 +817,6 @@ export default class RoutingAnalysisComponent extends Vue {
             }
           } while (nodeValue !== undefined)
 
-          console.log(posteMap.get('P6'))
-          console.log('loading ' + posteMap.size + ' postes')
-          console.log('out')
           const nbNode = posteMap.size
           const xSpread = nbNode * 60
           const xOffset = -xSpread / 2
