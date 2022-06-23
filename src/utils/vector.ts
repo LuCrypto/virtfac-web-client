@@ -161,7 +161,7 @@ export default class V {
    * * @param separator - Separator between x an y (space by default)
    * @returns - New string with format <x><separator><y>
    */
-  toString (separator: string = ' '): string {
+  toString (separator = ' '): string {
     return `${this.x}${separator}${this.y}`
   }
 }

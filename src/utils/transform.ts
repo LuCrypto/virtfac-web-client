@@ -74,7 +74,17 @@ export default class T {
    * * @param separator - Separator between each values (space by default)
    * @returns - New string with format <position.x><separator><position.y><separator><size.x><separator><size.y>
    */
-   toString (separator: string = ' '): string {
-    return `${this.position.toString(separator)}${separator}${this.size.toString(separator)}`
+  toString (separator = ' '): string {
+    return `${this.position.toString(
+      separator
+    )}${separator}${this.size.toString(separator)}`
+  }
+
+  /**
+   * Get middle coordinate of transform
+   * @returns - V, the position of the middle (position + size / 2)
+   */
+  getMiddle (): V {
+    return this.position.addV(this.size.divN(2))
   }
 }
