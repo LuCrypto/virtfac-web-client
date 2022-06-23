@@ -68,4 +68,13 @@ export default class T {
 
     return this
   }
+
+  /**
+   * Convert transform to string
+   * * @param separator - Separator between each values (space by default)
+   * @returns - New string with format <position.x><separator><position.y><separator><size.x><separator><size.y>
+   */
+   toString (separator: string = ' '): string {
+    return `${this.position.toString(separator)}${separator}${this.size.toString(separator)}`
+  }
 }

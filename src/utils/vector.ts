@@ -155,4 +155,13 @@ export default class V {
   ceil (): V {
     return new V(Math.ceil(this.x), Math.ceil(this.y))
   }
+
+  /**
+   * Convert vector to string
+   * * @param separator - Separator between x an y (space by default)
+   * @returns - New string with format <x><separator><y>
+   */
+  toString (separator: string = ' '): string {
+    return `${this.x}${separator}${this.y}`
+  }
 }
