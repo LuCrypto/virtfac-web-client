@@ -194,7 +194,9 @@
             v-slot="{ toggle }"
           >
             <v-btn
-              :color="childMenu.type === 'COLOR' ? childMenu.value : 'primary'"
+              :color="
+                childMenu.type === 'COLOR' ? '#' + childMenu.value : 'primary'
+              "
               class="mx-2 black--text"
               fab
               :class="
@@ -270,14 +272,12 @@ import InputFieldPopUp from '@/components/popup/InputFieldPopUp.vue'
 import ModelViewer2 from '@/components/ModelViewer2.vue'
 
 import * as THREE from 'three'
-import * as fs from 'fs'
-import * as path from 'path'
-import { promises as fsPromises } from 'fs'
 
 import {
   BufferGeometry,
   Group,
   Loader,
+  Material,
   Matrix4,
   Mesh,
   MeshLambertMaterial,
@@ -349,24 +349,6 @@ class PlayerData {
   }
 }
 
-class CustomItem {
-  text: string
-  icon: string
-  action: () => void
-  color: string
-  constructor (
-    text: string,
-    icon: string,
-    action: () => void,
-    color: string | null
-  ) {
-    this.text = text
-    this.icon = icon
-    this.action = action
-    this.color = color || 'primary'
-  }
-}
-
 @Component({
   name: 'ErgonomioAvatarsContainer',
   components: {
@@ -381,6 +363,7 @@ class CustomItem {
     AvatarInfo
   }
 })
+
 // @vuese
 // @group COMPONENTS
 // Component to manage the Avatar customization elements.
@@ -388,29 +371,30 @@ class CustomItem {
 // Several customization parameters are available, for the aesthetic
 // and the morph customs.
 export default class ErgonomIOAvatarsContainer extends Vue {
-  defaultMaterial = new MeshLambertMaterial({
-    color: 0xaaaaaa
+  skinMaterial = new MeshLambertMaterial({
+    color: 13207147
   })
+
+  fs = require('fs')
 
   value = 0
   selectedMenuItem = -1
   menuItemList: MenuItem[] = []
   customItemList: MenuItem[] = []
   menuCollapse = true
-  itemArray: [any[]] = [[]]
   selectedBodyPart = 1
   skinColors = [
-    '#e19e83',
-    '#d9967b',
-    '#d18e73',
-    '#c9866b',
-    '#c17e63',
-    '#b16e53',
-    '#8f5943',
-    '#7f4e3b',
-    '#6e4433',
-    '#5d3a2b',
-    '#4d2f24'
+    'e19e83',
+    'd9967b',
+    'd18e73',
+    'c9866b',
+    'c17e63',
+    'b16e53',
+    '8f5943',
+    '7f4e3b',
+    '6e4433',
+    '5d3a2b',
+    '4d2f24'
   ]
 
   beardNamesArray = [
@@ -481,6 +465,9 @@ export default class ErgonomIOAvatarsContainer extends Vue {
   hairMesh: Group = new Group()
   beardMesh: Group = new Group()
   shirtMesh: Group = new Group()
+  pantsMesh: Group = new Group()
+  shoesMesh: Group = new Group()
+  headMesh: Group = new Group()
 
   playerData: PlayerData = new PlayerData()
 
@@ -496,10 +483,6 @@ export default class ErgonomIOAvatarsContainer extends Vue {
   viewer: ModelViewer2 | null = null
 
   inputField: InputFieldPopUp | null = null
-
-  Hello (): void {
-    console.log('Hello')
-  }
 
   inputFile (): void {
     const input = this.$refs.inputFile as HTMLInputElement
@@ -525,6 +508,9 @@ export default class ErgonomIOAvatarsContainer extends Vue {
       .catch((e) => console.error('Cannot load FBX', e))
   }
 
+  // @vuese
+  // Called when switching between light and dark mode
+  // @arg No arguments required
   updateTheme (): void {
     if (this.viewer !== null) {
       if (Session.getTheme() === 'dark') {
@@ -541,42 +527,56 @@ export default class ErgonomIOAvatarsContainer extends Vue {
     console.log('Hello')
   }
 
-  loadMesh (filePath: string, id: number) {
+  // @vuese
+  // Used to load a mesh part of the Avatar
+  // @arg filePath to the bodyPart mesh fbx, and the id of the body section (head, hairs, hand etc...)
+  loadMesh (filePath: string, id: number): void {
     this.loadBodyPart(filePath, (fbx: THREE.Group) => this.changeMesh(fbx, id))
   }
 
-  changeMesh (fbx: THREE.Group, id: number) {
+  // @vuese
+  // Called by loadMesh function with a callback once the mesh is loaded
+  // Replace the previous body mesh section by the new one
+  // @arg filePath to the bodyPart mesh fbx, and the id of the body section (head, hairs, hand etc...)
+  changeMesh (fbx: THREE.Group, id: number): void {
     fbx.castShadow = true
     switch (id) {
       case 1: {
         /* Shirt */
-        if (this.shirtMesh != null) this.shirtMesh.clear()
+        this.shirtMesh.clear()
         this.shirtMesh = fbx
         break
       }
       case 2: {
         /* Hair */
-        if (this.hairMesh != null) this.hairMesh.clear()
+        this.hairMesh.clear()
         this.hairMesh = fbx
         break
       }
       case 3: {
         /* Beard */
-        if (this.beardMesh != null) this.beardMesh.clear()
+        this.beardMesh.clear()
         this.beardMesh = fbx
         break
       }
       case 4: {
         /* Pants */
-
+        this.pantsMesh.clear()
+        this.pantsMesh = fbx
         break
       }
       case 5: {
         /* Shoes */
+        this.shoesMesh.clear()
+        this.shoesMesh = fbx
         break
       }
       case 6: {
         /* Hand */
+        this.headMesh.clear()
+        this.headMesh = fbx
+        var mesh = this.headMesh.children[0] as THREE.Mesh
+        mesh.material = this.skinMaterial
         break
       }
       case 7: {
@@ -589,46 +589,23 @@ export default class ErgonomIOAvatarsContainer extends Vue {
     }
   }
 
-  createItemArray (): void {
-    // SkinColors array
-    var skinArray = []
-    for (let i = 0; i < this.skinColors.length; i++) {
-      var myItem = new CustomItem(
-        'color',
-        '',
-        () => {
-          this.changeSkin(this.skinColors[i])
-        },
-        this.skinColors[i]
-      )
-      skinArray.push(myItem)
-    }
-    this.itemArray.push(skinArray)
-
-    // Body parts array, "empty" for now
-    for (let i = 0; i < this.customItemList.length; i++) {
-      var myArray = []
-      for (let j = 0; j < i + 1; j++) {
-        myArray.push(j)
-      }
-      this.itemArray.push(myArray)
-    }
-  }
-
-  changeSkin (color: string): void {
-    console.log('New skin color hex:', color)
-  }
-
+  // @vuese
+  // Used to load a mesh part of the Avatar
+  // @arg filePath to the bodyPart mesh fbx, and the id of the body section (head, hairs, hand etc...)
   updateMorph (index: number): void {
     var morphItem = this.morphList[index]
     var meshArray: THREE.Mesh[] = []
     meshArray.push(this.shirtMesh.children[0] as THREE.Mesh)
     meshArray.push(this.beardMesh.children[0] as THREE.Mesh)
     meshArray.push(this.hairMesh.children[0] as THREE.Mesh)
+    meshArray.push(this.pantsMesh.children[0] as THREE.Mesh)
+    meshArray.push(this.headMesh.children[0] as THREE.Mesh)
+    meshArray.push(this.shoesMesh.children[0] as THREE.Mesh)
 
-    var test = this.shirtMesh.children[0] as THREE.Mesh
-    for (var meshItem in meshArray) {
-      test.morphTargetInfluences[index] = morphItem.value / 100
+    for (var meshItem of meshArray) {
+      if (meshItem.isMesh && meshItem.morphTargetInfluences) {
+        meshItem.morphTargetInfluences[index] = morphItem.value / 100
+      }
     }
   }
 
@@ -745,7 +722,6 @@ export default class ErgonomIOAvatarsContainer extends Vue {
     this.updateTheme()
 
     this.createMenu()
-    this.createItemArray()
     this.createItems()
     this.loadMesh('./Avatars/Shirt/Shirt.000.fbx', 1)
     this.loadMesh('./Avatars/Hairs/Hair.000.fbx', 2)
@@ -758,7 +734,7 @@ export default class ErgonomIOAvatarsContainer extends Vue {
     this.initPlayerData()
   }
 
-  update () {
+  update (): void {
     console.log('Main menu is updated.')
     if (this.mainMenu.selected === 3) {
       this.loadMesh(
@@ -772,6 +748,15 @@ export default class ErgonomIOAvatarsContainer extends Vue {
         './Avatars/Hairs/' +
           this.hairNamesArray[this.mainMenu.items[2].selected],
         2
+      )
+    }
+    // Skin Menu :  Change the skin body color by the new selected one
+    if (this.mainMenu.selected === 0) {
+      this.skinMaterial.color.setHex(
+        parseInt(
+          '0x' +
+            this.mainMenu.items[0].items[this.mainMenu.items[0].selected].value
+        )
       )
     }
   }
@@ -788,16 +773,10 @@ export default class ErgonomIOAvatarsContainer extends Vue {
         (this.$refs.avatarInfo as PopUp).open()
       })
     )
-    this.menuItemList.push(
-      new MenuItem('Set Player Data', 'mdi-axis-arrow', () => {
-        this.Hello()
-      })
-    )
-    this.menuItemList.push(
-      new MenuItem('Customize Body', 'mdi-axis-arrow', () => {
-        this.Hello()
-      })
-    )
+  }
+
+  saveAvatar (): void {
+    console.log('test')
   }
 }
 </script>
