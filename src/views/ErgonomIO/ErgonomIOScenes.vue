@@ -491,6 +491,7 @@ export default class ErgonomIOAssets extends Vue {
       this.scenes2 = ((response as unknown) as Array<Partial<CardModel>>).map(
         (scene: Partial<CardModel>) => new CardModel(scene)
       )
+      console.log('Scenes : ', this.scenes)
       for (let i = 0; i < this.scenes2.length; i++) {
         this.scenes.push(this.scenes2[i])
       }
@@ -842,7 +843,9 @@ export default class ErgonomIOAssets extends Vue {
       assetsNumber: scene.assetsNumber,
       assets: JSON.parse(scene.data),
       idScene: scene.id,
-      action: 'chargerScene'
+      action: 'chargerScene',
+      nomRoom: '',
+      creerRoom: 0
     }
 
     var object = {

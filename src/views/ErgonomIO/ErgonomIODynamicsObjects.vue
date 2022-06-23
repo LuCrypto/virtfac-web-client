@@ -102,8 +102,9 @@
           <v-btn
             color="primary"
             class="black--text pa-5"
+            min-width="80%"
             small
-            @click="moveToEvent(child)"
+            @click="modifierPositionWithObject(child)"
           >
             {{ child.evenement }}
             <br />
@@ -122,14 +123,14 @@
             </v-btn> -->
             <!-- Permet de définir la position de l'évènement
              avec la position de l'objet sélectionné -->
-            <v-btn icon>
-              <v-icon
-                @click="modifierPositionWithObject($event, child)"
-                class="ml-2 black--text"
-                v-text="'mdi-map-marker'"
-                left
-              ></v-icon>
-            </v-btn>
+          </v-btn>
+          <v-btn icon>
+            <v-icon
+              @click="moveToEvent(child)"
+              class="ml-2"
+              v-text="'mdi-map-marker'"
+              left
+            ></v-icon>
           </v-btn>
         </v-list-item>
       </v-list-group>
@@ -288,6 +289,7 @@ export default class ErgonomIOAssets extends Vue {
 
   // Begin
   mounted (): void {
+    this.profils = []
     this.getProfils()
 
     Unreal.callback.$on('unreal-message', (data: unknown) => {
@@ -506,10 +508,7 @@ export default class ErgonomIOAssets extends Vue {
 
   // Permet de définir la position de l'évènement
   // avec la position de l'objet sélectionné
-  modifierPositionWithObject (event: Event, child: any): void {
-    // Consume l'event
-    event.stopPropagation()
-
+  modifierPositionWithObject (child: any): void {
     var objectOpcua = {
       action: 'envoiePositionObjetSelectionne',
       childevenement: child
