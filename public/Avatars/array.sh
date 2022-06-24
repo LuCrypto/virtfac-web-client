@@ -4,18 +4,21 @@ var=$(command)
 var=$(echo 'hi')    #store hi into var
 
 directoryNamesArray=("Beard" "Hairs" "Pants" "Shirt" "Shoes" "Head")
-resultArrayNames=("beardNamesArray" "HairdNamesArray" "pantsNamesArray" "shirtNamesArray" "shoesdNamesArray" "headNamesArray")
+resultArrayNames=("beardNamesArray" "hairNamesArray" "pantsNamesArray" "shirtNamesArray" "shoesNamesArray" "headNamesArray")
 
+
+#Reset result file
+echo "" > meshNamesArray.txt
 
 #iterate 
 for((i=0;i<${#directoryNamesArray[@]};i++)); do
 arr=($(ls ${directoryNamesArray[$i]}))   #store list of files into array
 
 # iterate through array using a counter
-echo "${resultArrayNames[$i]} = ["
+echo "${resultArrayNames[$i]} = [" >> meshNamesArray.txt
 for ((j=0; j<${#arr[@]}; j++)); do
     #do something to each element of array
-    echo "\"${arr[$j]}\","
+    echo "\"${arr[$j]}\"," >> meshNamesArray.txt
 done
-echo "]"
+echo "]" >> meshNamesArray.txt
 done

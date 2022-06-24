@@ -61,7 +61,13 @@
         @fileInput="onFileInput"
       ></open-avatar>
     </pop-up>
-
+    <input
+      ref="playerDataUpload"
+      type="file"
+      accept=".json"
+      hidden
+      @change="onPlayerDataUpload"
+    />
     <!--Save avatar pop-up-->
     <pop-up ref="avatarInfo">
       <avatar-info
@@ -179,9 +185,18 @@
               </v-text-field>
             </div>
           </v-row>
-          <v-btn color="primary" @click="loadPlayerData()">
-            Load Data (XML/JSon)
-          </v-btn>
+          <v-row>
+            <v-col>
+              <v-btn color="primary" @click="loadPlayerData()">
+                Load Data (XML/JSon)
+              </v-btn></v-col
+            >
+            <v-col>
+              <v-btn color="primary" @click="saveProfile()">
+                Save Profile
+              </v-btn></v-col
+            ></v-row
+          >
         </v-col>
       </v-row>
       <!--Row list of bodypart modifiers -->
@@ -291,6 +306,7 @@ import OpenAvatar from '@/components/OpenAvatar.vue'
 import AssetInfo from '@/components/AssetInfo.vue'
 import AvatarInfo from '@/components/AvatarInfo.vue'
 import API from '@/utils/api'
+import { join } from 'path'
 
 class MenuItem {
   text: string
@@ -349,6 +365,44 @@ class PlayerData {
   }
 }
 
+class Avatar {
+  // Name
+  name = ''
+  // Meshes names
+  hairMeshName = ''
+  pantsMeshName = ''
+  shirtMeshName = ''
+  headMeshName = ''
+  shoesMeshName = ''
+  beardMeshName = ''
+  // Player Data values
+  hipWidth = 0
+  body = 0
+  neck = 0
+  head = 0
+  shoulderWidth = 0
+  upperArm = 0
+  forearm = 0
+  palm = 0
+  upperLeg = 0
+  lowerLeg = 0
+  footLength = 0
+  heelHeight = 0
+  // morph Values
+  femaleFace = 0
+  armSize = 0
+  breastSize = 0
+  bellySize = 0
+  lowerBackSize = 0
+  hipSize = 0
+  buttockSize = 0
+  legSize = 0
+  // Colors Values
+  skinColor = 0
+  hairColor = 0
+  beardColor = 0
+}
+
 @Component({
   name: 'ErgonomioAvatarsContainer',
   components: {
@@ -373,6 +427,15 @@ class PlayerData {
 export default class ErgonomIOAvatarsContainer extends Vue {
   skinMaterial = new MeshLambertMaterial({
     color: 13207147
+  })
+
+  bodyMaterialArray: MeshLambertMaterial[] = []
+
+  shirtMaterialArray: MeshLambertMaterial[] = []
+  pantsMaterialArray: MeshLambertMaterial[] = []
+  shoesMaterialArray: MeshLambertMaterial[] = []
+  eyesMaterial = new MeshLambertMaterial({
+    color: 0x000000
   })
 
   fs = require('fs')
@@ -462,6 +525,13 @@ export default class ErgonomIOAvatarsContainer extends Vue {
     'Hair.054.fbx'
   ]
 
+  pantsNamesArray = ['Pants.000.fbx']
+  shirtNamesArray = ['Shirt.000.fbx']
+  shoesNamesArray = ['Shoes.000.fbx']
+  headNamesArray = ['Head.000.fbx']
+
+  primaryColor = this.$vuetify.theme.themes.dark.primary
+
   hairMesh: Group = new Group()
   beardMesh: Group = new Group()
   shirtMesh: Group = new Group()
@@ -514,10 +584,10 @@ export default class ErgonomIOAvatarsContainer extends Vue {
   updateTheme (): void {
     if (this.viewer !== null) {
       if (Session.getTheme() === 'dark') {
-        this.viewer.setFogActive(true, 0xff4c4c)
+        this.viewer.setFogActive(true, 0xf5a406)
         this.viewer.setGrid(100, 1, 0x555555, 0x1e1e1e, 0xeeeeee)
       } else {
-        this.viewer.setFogActive(true, 0xfefefe)
+        this.viewer.setFogActive(true, 0xf5a406)
         this.viewer.setGrid(100, 1, 0xaaaaaa, 0xfefefe, 0x111111)
       }
     }
@@ -540,11 +610,14 @@ export default class ErgonomIOAvatarsContainer extends Vue {
   // @arg filePath to the bodyPart mesh fbx, and the id of the body section (head, hairs, hand etc...)
   changeMesh (fbx: THREE.Group, id: number): void {
     fbx.castShadow = true
+    var mesh
     switch (id) {
       case 1: {
         /* Shirt */
         this.shirtMesh.clear()
         this.shirtMesh = fbx
+        mesh = this.shirtMesh.children[0] as THREE.Mesh
+        mesh.material = this.shirtMaterialArray
         break
       }
       case 2: {
@@ -563,20 +636,24 @@ export default class ErgonomIOAvatarsContainer extends Vue {
         /* Pants */
         this.pantsMesh.clear()
         this.pantsMesh = fbx
+        mesh = this.pantsMesh.children[0] as THREE.Mesh
+        mesh.material = this.pantsMaterialArray
         break
       }
       case 5: {
         /* Shoes */
         this.shoesMesh.clear()
         this.shoesMesh = fbx
+        mesh = this.shoesMesh.children[0] as THREE.Mesh
+        mesh.material = this.shoesMaterialArray
         break
       }
       case 6: {
         /* Hand */
         this.headMesh.clear()
         this.headMesh = fbx
-        var mesh = this.headMesh.children[0] as THREE.Mesh
-        mesh.material = this.skinMaterial
+        mesh = this.headMesh.children[0] as THREE.Mesh
+        mesh.material = this.bodyMaterialArray
         break
       }
       case 7: {
@@ -603,8 +680,14 @@ export default class ErgonomIOAvatarsContainer extends Vue {
     meshArray.push(this.shoesMesh.children[0] as THREE.Mesh)
 
     for (var meshItem of meshArray) {
-      if (meshItem.isMesh && meshItem.morphTargetInfluences) {
-        meshItem.morphTargetInfluences[index] = morphItem.value / 100
+      if (
+        meshItem.isMesh &&
+        meshItem.morphTargetInfluences &&
+        meshItem.morphTargetDictionary
+      ) {
+        meshItem.morphTargetInfluences[
+          meshItem.morphTargetDictionary[morphItem.name]
+        ] = morphItem.value / 100
       }
     }
   }
@@ -622,47 +705,31 @@ export default class ErgonomIOAvatarsContainer extends Vue {
     for (let i = 0; i < this.beardNamesArray.length; i++) {
       beardMenuArray.push(new MenuItem2('$vuetify.icons.beard', 'ICON'))
     }
+    var pantsMenuArray = []
+    for (let i = 0; i < this.pantsNamesArray.length; i++) {
+      pantsMenuArray.push(new MenuItem2('$vuetify.icons.pants', 'ICON'))
+    }
+    var shirtMenuArray = []
+    for (let i = 0; i < this.shirtNamesArray.length; i++) {
+      shirtMenuArray.push(new MenuItem2('$vuetify.icons.shirt', 'ICON'))
+    }
+    var headMenuArray = []
+    for (let i = 0; i < this.headNamesArray.length; i++) {
+      headMenuArray.push(new MenuItem2('$vuetify.icons.pants', 'ICON'))
+    }
+    var shoesMenuArray = []
+    for (let i = 0; i < this.shoesNamesArray.length; i++) {
+      shoesMenuArray.push(new MenuItem2('$vuetify.icons.shoes', 'ICON'))
+    }
+
     this.mainMenu = new MenuItem2('', 'ICON', [
       new MenuItem2('$vuetify.icons.colours', 'ICON', skinArray),
-      new MenuItem2('$vuetify.icons.shirt', 'ICON', [
-        new MenuItem2('mdi-cellphone-off'),
-        new MenuItem2('mdi-sim-alert'),
-        new MenuItem2('mdi-airplane-plus')
-      ]),
+      new MenuItem2('$vuetify.icons.shirt', 'ICON', shirtMenuArray),
       new MenuItem2('$vuetify.icons.hair', 'ICON', hairMenuArray),
       new MenuItem2('$vuetify.icons.beard', 'ICON', beardMenuArray),
-      new MenuItem2('$vuetify.icons.pants', 'ICON', [
-        new MenuItem2('mdi-cellphone-off'),
-        new MenuItem2('mdi-sim-alert'),
-        new MenuItem2('mdi-airplane-plus')
-      ]),
-      new MenuItem2('$vuetify.icons.shoes', 'ICON', [
-        new MenuItem2('mdi-car-settings'),
-        new MenuItem2('mdi-file-import-outline'),
-        new MenuItem2('mdi-pliers'),
-        new MenuItem2('mdi-shark-fin'),
-        new MenuItem2('mdi-card-account-details-star-outline')
-      ]),
-      new MenuItem2('$vuetify.icons.hand', 'ICON', [
-        new MenuItem2('mdi-folder'),
-        new MenuItem2('mdi-moped-electric'),
-        new MenuItem2('mdi-checkbox-blank-circle'),
-        new MenuItem2('mdi-checkerboard'),
-        new MenuItem2('mdi-solid'),
-        new MenuItem2('mdi-checkbox-marked'),
-        new MenuItem2('mdi-glass-wine'),
-        new MenuItem2('mdi-tag-arrow-left'),
-        new MenuItem2('mdi-arrow-right-top-bold'),
-        new MenuItem2('mdi-folder'),
-        new MenuItem2('mdi-moped-electric'),
-        new MenuItem2('mdi-checkbox-blank-circle'),
-        new MenuItem2('mdi-checkerboard'),
-        new MenuItem2('mdi-solid'),
-        new MenuItem2('mdi-checkbox-marked'),
-        new MenuItem2('mdi-glass-wine'),
-        new MenuItem2('mdi-tag-arrow-left'),
-        new MenuItem2('mdi-arrow-right-top-bold')
-      ]),
+      new MenuItem2('$vuetify.icons.pants', 'ICON', pantsMenuArray),
+      new MenuItem2('$vuetify.icons.shoes', 'ICON', shoesMenuArray),
+      new MenuItem2('$vuetify.icons.hand', 'ICON', headMenuArray),
       new MenuItem2('$vuetify.icons.hat', 'ICON', [
         new MenuItem2('mdi-cellphone-off'),
         new MenuItem2('mdi-sim-alert'),
@@ -675,8 +742,6 @@ export default class ErgonomIOAvatarsContainer extends Vue {
 
   initMorphData (): void {
     this.morphList.push(new MorphItem('female_face', 0))
-    this.morphList.push(new MorphItem('eyes_closed', 0))
-    this.morphList.push(new MorphItem('mouth_open', 0))
     this.morphList.push(new MorphItem('arm_size', 0))
     this.morphList.push(new MorphItem('breast_size', 0))
     this.morphList.push(new MorphItem('belly_size', 0))
@@ -688,23 +753,66 @@ export default class ErgonomIOAvatarsContainer extends Vue {
 
   initPlayerData (): void {
     var playerDataItemList: PlayerDataItem[] = []
-    playerDataItemList.push(new PlayerDataItem('Hip width', 0))
-    playerDataItemList.push(new PlayerDataItem('Body', 0))
-    playerDataItemList.push(new PlayerDataItem('Neck', 0))
-    playerDataItemList.push(new PlayerDataItem('Head', 0))
-    playerDataItemList.push(new PlayerDataItem('Shoulder width', 0))
-    playerDataItemList.push(new PlayerDataItem('Upper arm', 0))
-    playerDataItemList.push(new PlayerDataItem('Forearm ', 0))
-    playerDataItemList.push(new PlayerDataItem('Palm', 0))
-    playerDataItemList.push(new PlayerDataItem('Upper leg', 0))
-    playerDataItemList.push(new PlayerDataItem('Lower leg', 0))
-    playerDataItemList.push(new PlayerDataItem('Heel height', 0))
+    playerDataItemList.push(new PlayerDataItem('Hip width', 23.82))
+    playerDataItemList.push(new PlayerDataItem('Body', 61.08))
+    playerDataItemList.push(new PlayerDataItem('Neck', 9.91))
+    playerDataItemList.push(new PlayerDataItem('Head', 18.16))
+    playerDataItemList.push(new PlayerDataItem('Shoulder width', 34.94))
+    playerDataItemList.push(new PlayerDataItem('Upper arm', 23.29))
+    playerDataItemList.push(new PlayerDataItem('Forearm ', 25.41))
+    playerDataItemList.push(new PlayerDataItem('Palm', 18.53))
+    playerDataItemList.push(new PlayerDataItem('Upper leg', 44.02))
+    playerDataItemList.push(new PlayerDataItem('Lower leg', 41.83))
+    playerDataItemList.push(new PlayerDataItem('Foot Length', 25.94))
+    playerDataItemList.push(new PlayerDataItem('Heel height', 7.98))
 
     this.playerData = new PlayerData('Player', playerDataItemList)
   }
 
+  initMaterials (): void {
+    // TODO : For now, each body part need to have the same material array, but this will change with several mat for shirt or pants
+    // Donc on triche un peu
+    for (let i = 0; i < 6; i++) {
+      this.shirtMaterialArray.push(
+        new MeshLambertMaterial({
+          color: 0x0047ab
+        })
+      )
+      this.pantsMaterialArray.push(
+        new MeshLambertMaterial({
+          color: 0x8b4513
+        })
+      )
+      this.shoesMaterialArray.push(
+        new MeshLambertMaterial({
+          color: 0x000000
+        })
+      )
+    }
+
+    // bodyMaterials
+    this.bodyMaterialArray.push(
+      // Eyes
+      new MeshLambertMaterial({
+        color: 0xffffff
+      })
+    )
+    this.bodyMaterialArray.push(
+      // Skin
+      new MeshLambertMaterial({
+        color: 13207147
+      })
+    )
+    this.bodyMaterialArray.push(
+      // Teeth
+      new MeshLambertMaterial({
+        color: 0xffffff
+      })
+    )
+  }
+
   loadPlayerData (): void {
-    console.log('TODO : Load Player Data from XML/JSon')
+    (this.$refs.playerDataUpload as HTMLElement).click()
   }
 
   // @vuese
@@ -720,7 +828,7 @@ export default class ErgonomIOAvatarsContainer extends Vue {
     this.viewer.setFogActive(true)
 
     this.updateTheme()
-
+    this.initMaterials()
     this.createMenu()
     this.createItems()
     this.loadMesh('./Avatars/Shirt/Shirt.000.fbx', 1)
@@ -736,11 +844,20 @@ export default class ErgonomIOAvatarsContainer extends Vue {
 
   update (): void {
     console.log('Main menu is updated.')
-    if (this.mainMenu.selected === 3) {
+    // Skin Menu :  Change the skin body color by the new selected one
+    if (this.mainMenu.selected === 0) {
+      this.bodyMaterialArray[1].color.setHex(
+        parseInt(
+          '0x' +
+            this.mainMenu.items[0].items[this.mainMenu.items[0].selected].value
+        )
+      )
+    }
+    if (this.mainMenu.selected === 1) {
       this.loadMesh(
-        './Avatars/Beard/' +
-          this.beardNamesArray[this.mainMenu.items[3].selected],
-        3
+        './Avatars/Shirt/' +
+          this.shirtNamesArray[this.mainMenu.items[1].selected],
+        1
       )
     }
     if (this.mainMenu.selected === 2) {
@@ -750,13 +867,32 @@ export default class ErgonomIOAvatarsContainer extends Vue {
         2
       )
     }
-    // Skin Menu :  Change the skin body color by the new selected one
-    if (this.mainMenu.selected === 0) {
-      this.skinMaterial.color.setHex(
-        parseInt(
-          '0x' +
-            this.mainMenu.items[0].items[this.mainMenu.items[0].selected].value
-        )
+    if (this.mainMenu.selected === 3) {
+      this.loadMesh(
+        './Avatars/Beard/' +
+          this.beardNamesArray[this.mainMenu.items[3].selected],
+        3
+      )
+    }
+    if (this.mainMenu.selected === 4) {
+      this.loadMesh(
+        './Avatars/Pants/' +
+          this.pantsNamesArray[this.mainMenu.items[4].selected],
+        4
+      )
+    }
+    if (this.mainMenu.selected === 5) {
+      this.loadMesh(
+        './Avatars/Shoes/' +
+          this.shoesNamesArray[this.mainMenu.items[5].selected],
+        5
+      )
+    }
+    if (this.mainMenu.selected === 6) {
+      this.loadMesh(
+        './Avatars/Head/' +
+          this.headNamesArray[this.mainMenu.items[6].selected],
+        6
       )
     }
   }
@@ -775,8 +911,69 @@ export default class ErgonomIOAvatarsContainer extends Vue {
     )
   }
 
-  saveAvatar (): void {
-    console.log('test')
+  onPlayerDataUpload (event: Event): void {
+    console.log('JSon uploaded')
+    if (event != null && event.target != null) {
+      const f: File = ((event.target as HTMLInputElement).files as FileList)[0]
+      if (f != null) {
+        console.log((event.target as HTMLInputElement).files)
+        console.log(f.stream)
+        // JSON.parse(f.text)
+      }
+    }
+  }
+
+  saveProfile (): void {
+    var profile = new Avatar()
+    profile.name = this.playerData.name
+    profile.hairMeshName = this.hairNamesArray[this.mainMenu.items[2].selected]
+    profile.pantsMeshName =
+      this.pantsNamesArray[this.mainMenu.items[3].selected]
+    profile.shirtMeshName =
+      this.shirtNamesArray[this.mainMenu.items[4].selected]
+    profile.headMeshName = this.headNamesArray[this.mainMenu.items[6].selected]
+    profile.shoesMeshName =
+      this.shoesNamesArray[this.mainMenu.items[5].selected]
+    profile.beardMeshName =
+      this.beardNamesArray[this.mainMenu.items[3].selected]
+
+    // PlayerData values
+    profile.hipWidth = this.playerData.items[0].value
+    profile.body = this.playerData.items[1].value
+    profile.neck = this.playerData.items[2].value
+    profile.head = this.playerData.items[3].value
+    profile.shoulderWidth = this.playerData.items[4].value
+    profile.upperArm = this.playerData.items[5].value
+    profile.forearm = this.playerData.items[6].value
+    profile.palm = this.playerData.items[7].value
+    profile.upperLeg = this.playerData.items[8].value
+    profile.lowerLeg = this.playerData.items[9].value
+    profile.footLength = this.playerData.items[10].value
+    profile.heelHeight = this.playerData.items[11].value
+
+    // Morph values
+    profile.femaleFace = this.morphList[0].value / 100
+    profile.armSize = this.morphList[1].value / 100
+    profile.breastSize = this.morphList[2].value / 100
+    profile.bellySize = this.morphList[3].value / 100
+    profile.lowerBackSize = this.morphList[4].value / 100
+    profile.hipSize = this.morphList[5].value / 100
+    profile.buttockSize = this.morphList[6].value / 100
+    profile.legSize = this.morphList[7].value / 100
+
+    // Color values
+    profile.skinColor = parseInt(
+      '0x' + this.mainMenu.items[0].items[this.mainMenu.items[0].selected].value
+    )
+    profile.hairColor = 0x000000
+    profile.beardColor = 0x000000
+
+    const json = JSON.stringify(profile)
+    console.log(json)
+  }
+
+  loadProfile (): void {
+    console.log('Load Profile')
   }
 }
 </script>

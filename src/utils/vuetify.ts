@@ -2,7 +2,6 @@ import Vue from 'vue'
 import Vuetify from 'vuetify/lib/framework'
 import colors from 'vuetify/es5/util/colors'
 import { Session } from './session'
-import icon from '@/components/icon.vue'
 
 import IconHand from '@/components/icons/IconHand.vue'
 import IconHair from '@/components/icons/IconHair.vue'
