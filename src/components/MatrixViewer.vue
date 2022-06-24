@@ -116,6 +116,16 @@ export default class MatrixViewer extends Vue {
       this.oldOveredCoord = null
     }
   }
+
+  public foreachElement (func: {
+    (x: number, y: number, element: HTMLElement): void
+  }) {
+    for (let i = 1; i <= this.nbRow; i++) {
+      for (let j = 1; j <= this.nbCol; j++) {
+        func(j, i, document.getElementById(i + '-' + j) as HTMLElement)
+      }
+    }
+  }
 }
 </script>
 
