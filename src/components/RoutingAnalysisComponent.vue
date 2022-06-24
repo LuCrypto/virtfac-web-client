@@ -698,7 +698,93 @@ export default class RoutingAnalysisComponent extends Vue {
   }
 
   loadArticlePosteMatrix (event: Event) {
-    console.log('hello')
+    if (event != null && event.target != null) {
+      const f: File = ((event.target as HTMLInputElement).files as FileList)[0]
+      if (f != null) {
+        if (this.articlePostGraph !== null) {
+          this.postPostGraph = null
+          this.posteMap = new Map<string, Poste>()
+        }
+
+        this.articlePostGraph = new Graph()
+
+        let array: any
+        const fileReader = new FileReader()
+        fileReader.onload = e => {
+          array = fileReader.result
+          const data = new Uint8Array(array)
+          var arr = []
+          for (let i = 0; i !== data.length; ++i) {
+            arr[i] = String.fromCharCode(data[i])
+          }
+          const wb = XLSX.read(arr.join(''), {
+            type: 'binary',
+            cellStyles: true
+          })
+
+          const sheet = wb.Sheets[wb.SheetNames[0]]
+          console.log(sheet.B2)
+
+          console.log(sheet)
+          const nameOf: { (x: number, y: number): string } = (x, y) => {
+            return XLSX.utils.encode_cell({ c: x, r: y })
+          }
+
+          let value = sheet[nameOf(1, 0)]
+          let i = 1
+          const colArray = new Array<string>('name')
+          const rowArray = new Array<Node>(new Node())
+          while (value !== undefined) {
+            colArray.push(value.v)
+
+            let poste: Poste | null = null
+            if (!this.posteMap.has(value.v)) {
+              this.posteMap.set(value.v, new Poste(value.v))
+            }
+            poste = this.posteMap.get(value.v) as Poste
+            if (this.articlePostGraph !== null) {
+              const node = new Node()
+                .setData<string>('name', value.v)
+                .setData<'row' | 'col'>('matCelltype', 'col') as Node
+              this.articlePostGraph.addNode(node)
+              poste.articlePostNode = node
+            }
+            i++
+            value = sheet[nameOf(i, 0)]
+          }
+
+          i = 1
+          value = sheet[nameOf(0, 1)]
+          while (value !== undefined) {
+            if (this.articlePostGraph !== null) {
+              const node = new Node()
+                .setData<string>('name', value.v)
+                .setData<'row' | 'col'>('matCelltype', 'row') as Node
+              this.articlePostGraph.addNode(node)
+              rowArray.push(node)
+            }
+            i++
+            value = sheet[nameOf(0, i)]
+          }
+
+          for (let x = 1; x < colArray.length; x++) {
+            for (let y = 1; y < rowArray.length; y++) {
+              const value = sheet[nameOf(x, y)]
+              const w = value ? +value.v : 0
+              if (w > 0) {
+                const link = rowArray[y].addLink(
+                  (this.posteMap.get(colArray[x]) as Poste)
+                    .articlePostNode as Node
+                )
+                link.setData<number>('weight', w)
+              }
+            }
+          }
+        }
+
+        fileReader.readAsArrayBuffer(f)
+      }
+    }
   }
 
   loadPostePosteMatrix (event: Event) {
@@ -742,13 +828,15 @@ export default class RoutingAnalysisComponent extends Vue {
           const rowArray = new Array<string>('name')
           while (value !== undefined) {
             colArray.push(value.v)
+            let poste: Poste | null = null
             if (!this.posteMap.has(value.v)) {
               this.posteMap.set(value.v, new Poste(value.v))
-              if (this.postPostGraph !== null) {
-                const node = new Node().setData<string>('name', value.v) as Node
-                this.postPostGraph.addNode(node)
-                ;(this.posteMap.get(value.v) as Poste).postPostNode = node
-              }
+            }
+            poste = this.posteMap.get(value.v) as Poste
+            if (this.postPostGraph !== null) {
+              const node = new Node().setData<string>('name', value.v) as Node
+              this.postPostGraph.addNode(node)
+              poste.postPostNode = node
             }
             i++
             value = sheet[nameOf(i, 0)]
@@ -757,16 +845,19 @@ export default class RoutingAnalysisComponent extends Vue {
           i = 1
           value = sheet[nameOf(0, 1)]
           while (value !== undefined) {
-            colArray.push(value.v)
+            // colArray.push(value.v)
             rowArray.push(value.v)
             console.log(value.v)
+
+            let poste: Poste | null = null
             if (!this.posteMap.has(value.v)) {
               this.posteMap.set(value.v, new Poste(value.v))
-              if (this.postPostGraph !== null) {
-                const node = new Node().setData<string>('name', value.v) as Node
-                this.postPostGraph.addNode(node)
-                ;(this.posteMap.get(value.v) as Poste).postPostNode = node
-              }
+            }
+            poste = this.posteMap.get(value.v) as Poste
+            if (poste.postPostNode === null && this.postPostGraph !== null) {
+              const node = new Node().setData<string>('name', value.v) as Node
+              this.postPostGraph.addNode(node)
+              poste.postPostNode = node
             }
             i++
             value = sheet[nameOf(0, i)]
