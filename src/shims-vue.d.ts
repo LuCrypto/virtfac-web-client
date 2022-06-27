@@ -3,6 +3,6 @@ declare module '*.vue' {
   export default Vue
 }
 
-declare module 'vue-pdf' {
+declare module 'pdfvuer' {
   export default pdf
 }

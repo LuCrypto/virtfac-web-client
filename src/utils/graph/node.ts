@@ -51,10 +51,7 @@ export class Node extends MetaData {
   }
 
   public removeLink (node: Node): void {
-    (this.links
-      .get(node) as Link)
-      .onDataChanged()
-      .removeListener(this)
+    (this.links.get(node) as Link).onDataChanged().removeListener(this)
     this.linkRemoved.notify(this.links.get(node) as Link)
     this.links.delete(node)
   }
@@ -68,5 +65,11 @@ export class Node extends MetaData {
   constructor () {
     super()
     this.links = new Map<Node, Link>()
+  }
+
+  public clone (): Node {
+    const n = new Node()
+    n.copyAllData(this)
+    return n
   }
 }
