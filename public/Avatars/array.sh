@@ -18,7 +18,7 @@ arr=($(ls ${directoryNamesArray[$i]}))   #store list of files into array
 echo "${resultArrayNames[$i]} = [" >> meshNamesArray.txt
 for ((j=0; j<${#arr[@]}; j++)); do
     #do something to each element of array
-    echo "\"${arr[$j]}\"," >> meshNamesArray.txt
+    echo "'${arr[$j]}'," >> meshNamesArray.txt
 done
 echo "]" >> meshNamesArray.txt
 done

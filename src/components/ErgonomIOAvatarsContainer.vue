@@ -149,7 +149,7 @@
                   v-model="morphItem.value"
                   class="slider"
                   id="myRange"
-                  @input="updateMorph(morphIndex)"
+                  @input="updateMorph()"
                 />
               </div>
             </v-row>
@@ -330,11 +330,13 @@ class MenuItem2 {
   constructor (
     value = '',
     type: MenuItemType = 'ICON',
-    items: MenuItem2[] = []
+    items: MenuItem2[] = [],
+    selected = 0
   ) {
     this.type = type
     this.items = items
     this.value = value
+    this.selected = selected
   }
 }
 
@@ -425,20 +427,17 @@ class Avatar {
 // Several customization parameters are available, for the aesthetic
 // and the morph customs.
 export default class ErgonomIOAvatarsContainer extends Vue {
-  skinMaterial = new MeshLambertMaterial({
-    color: 13207147
-  })
-
+  // Deprecated
   bodyMaterialArray: MeshLambertMaterial[] = []
-
   shirtMaterialArray: MeshLambertMaterial[] = []
   pantsMaterialArray: MeshLambertMaterial[] = []
   shoesMaterialArray: MeshLambertMaterial[] = []
-  eyesMaterial = new MeshLambertMaterial({
-    color: 0x000000
-  })
 
-  fs = require('fs')
+  materialArray: MeshLambertMaterial[] = []
+
+  hairMaterial: MeshLambertMaterial = new MeshLambertMaterial({
+    color: 0xe19e83
+  })
 
   value = 0
   selectedMenuItem = -1
@@ -525,10 +524,10 @@ export default class ErgonomIOAvatarsContainer extends Vue {
     'Hair.054.fbx'
   ]
 
-  pantsNamesArray = ['Pants.000.fbx']
-  shirtNamesArray = ['Shirt.000.fbx']
-  shoesNamesArray = ['Shoes.000.fbx']
-  headNamesArray = ['Head.000.fbx']
+  pantsNamesArray = ['pants.fbx']
+  shirtNamesArray = ['shirt.fbx']
+  shoesNamesArray = ['shoes.fbx']
+  headNamesArray = ['skin.fbx']
 
   primaryColor = this.$vuetify.theme.themes.dark.primary
 
@@ -569,13 +568,13 @@ export default class ErgonomIOAvatarsContainer extends Vue {
 
     this.viewer
       .loadFBXFromPath(filePath)
-      .then((fbx) => {
+      .then(fbx => {
         fbx.position.set(0, 0, 0)
         fbx.scale.set(0.01, 0.01, 0.01)
 
         callback(fbx)
       })
-      .catch((e) => console.error('Cannot load FBX', e))
+      .catch(e => console.error('Cannot load FBX', e))
   }
 
   // @vuese
@@ -617,13 +616,16 @@ export default class ErgonomIOAvatarsContainer extends Vue {
         this.shirtMesh.clear()
         this.shirtMesh = fbx
         mesh = this.shirtMesh.children[0] as THREE.Mesh
-        mesh.material = this.shirtMaterialArray
+        mesh.material = this.materialArray
         break
       }
       case 2: {
         /* Hair */
         this.hairMesh.clear()
         this.hairMesh = fbx
+        mesh = this.hairMesh.children[0] as THREE.Mesh
+
+        mesh.material = this.hairMaterial
         break
       }
       case 3: {
@@ -637,7 +639,7 @@ export default class ErgonomIOAvatarsContainer extends Vue {
         this.pantsMesh.clear()
         this.pantsMesh = fbx
         mesh = this.pantsMesh.children[0] as THREE.Mesh
-        mesh.material = this.pantsMaterialArray
+        mesh.material = this.materialArray
         break
       }
       case 5: {
@@ -645,7 +647,7 @@ export default class ErgonomIOAvatarsContainer extends Vue {
         this.shoesMesh.clear()
         this.shoesMesh = fbx
         mesh = this.shoesMesh.children[0] as THREE.Mesh
-        mesh.material = this.shoesMaterialArray
+        mesh.material = this.materialArray
         break
       }
       case 6: {
@@ -653,7 +655,7 @@ export default class ErgonomIOAvatarsContainer extends Vue {
         this.headMesh.clear()
         this.headMesh = fbx
         mesh = this.headMesh.children[0] as THREE.Mesh
-        mesh.material = this.bodyMaterialArray
+        mesh.material = this.materialArray
         break
       }
       case 7: {
@@ -664,30 +666,32 @@ export default class ErgonomIOAvatarsContainer extends Vue {
         break
       }
     }
+    this.updateMorph()
   }
 
   // @vuese
   // Used to load a mesh part of the Avatar
   // @arg filePath to the bodyPart mesh fbx, and the id of the body section (head, hairs, hand etc...)
-  updateMorph (index: number): void {
-    var morphItem = this.morphList[index]
+  updateMorph (): void {
     var meshArray: THREE.Mesh[] = []
     meshArray.push(this.shirtMesh.children[0] as THREE.Mesh)
-    meshArray.push(this.beardMesh.children[0] as THREE.Mesh)
-    meshArray.push(this.hairMesh.children[0] as THREE.Mesh)
+    // meshArray.push(this.beardMesh.children[0] as THREE.Mesh)
+    // meshArray.push(this.hairMesh.children[0] as THREE.Mesh)
     meshArray.push(this.pantsMesh.children[0] as THREE.Mesh)
     meshArray.push(this.headMesh.children[0] as THREE.Mesh)
     meshArray.push(this.shoesMesh.children[0] as THREE.Mesh)
 
-    for (var meshItem of meshArray) {
-      if (
-        meshItem.isMesh &&
-        meshItem.morphTargetInfluences &&
-        meshItem.morphTargetDictionary
-      ) {
-        meshItem.morphTargetInfluences[
-          meshItem.morphTargetDictionary[morphItem.name]
-        ] = morphItem.value / 100
+    for (var morphItem of this.morphList) {
+      for (var meshItem of meshArray) {
+        if (
+          meshItem.isMesh &&
+          meshItem.morphTargetInfluences &&
+          meshItem.morphTargetDictionary
+        ) {
+          meshItem.morphTargetInfluences[
+            meshItem.morphTargetDictionary[morphItem.name]
+          ] = morphItem.value / 100
+        }
       }
     }
   }
@@ -698,10 +702,13 @@ export default class ErgonomIOAvatarsContainer extends Vue {
       skinArray.push(new MenuItem2(this.skinColors[i], 'COLOR'))
     }
     var hairMenuArray = []
+    hairMenuArray.push(new MenuItem2('$vuetify.icons.hair', 'ICON'))
     for (let i = 0; i < this.hairNamesArray.length; i++) {
       hairMenuArray.push(new MenuItem2('$vuetify.icons.hair', 'ICON'))
     }
     var beardMenuArray = []
+    beardMenuArray.push(new MenuItem2('$vuetify.icons.beard', 'ICON'))
+
     for (let i = 0; i < this.beardNamesArray.length; i++) {
       beardMenuArray.push(new MenuItem2('$vuetify.icons.beard', 'ICON'))
     }
@@ -715,7 +722,7 @@ export default class ErgonomIOAvatarsContainer extends Vue {
     }
     var headMenuArray = []
     for (let i = 0; i < this.headNamesArray.length; i++) {
-      headMenuArray.push(new MenuItem2('$vuetify.icons.pants', 'ICON'))
+      headMenuArray.push(new MenuItem2('$vuetify.icons.hand', 'ICON'))
     }
     var shoesMenuArray = []
     for (let i = 0; i < this.shoesNamesArray.length; i++) {
@@ -725,8 +732,8 @@ export default class ErgonomIOAvatarsContainer extends Vue {
     this.mainMenu = new MenuItem2('', 'ICON', [
       new MenuItem2('$vuetify.icons.colours', 'ICON', skinArray),
       new MenuItem2('$vuetify.icons.shirt', 'ICON', shirtMenuArray),
-      new MenuItem2('$vuetify.icons.hair', 'ICON', hairMenuArray),
-      new MenuItem2('$vuetify.icons.beard', 'ICON', beardMenuArray),
+      new MenuItem2('$vuetify.icons.hair', 'ICON', hairMenuArray, 1),
+      new MenuItem2('$vuetify.icons.beard', 'ICON', beardMenuArray, 1),
       new MenuItem2('$vuetify.icons.pants', 'ICON', pantsMenuArray),
       new MenuItem2('$vuetify.icons.shoes', 'ICON', shoesMenuArray),
       new MenuItem2('$vuetify.icons.hand', 'ICON', headMenuArray),
@@ -771,6 +778,44 @@ export default class ErgonomIOAvatarsContainer extends Vue {
 
   initMaterials (): void {
     // TODO : For now, each body part need to have the same material array, but this will change with several mat for shirt or pants
+    // eyes Material
+    this.materialArray.push(
+      new MeshLambertMaterial({
+        color: 0xffffff
+      })
+    )
+    // Skin Material
+    this.materialArray.push(
+      new MeshLambertMaterial({
+        color: 13207147
+      })
+    )
+    // Shirt Material
+    this.materialArray.push(
+      new MeshLambertMaterial({
+        color: 0x0047ab
+      })
+    )
+    // Pants Material
+    this.materialArray.push(
+      new MeshLambertMaterial({
+        color: 0x8b4513
+      })
+    )
+    // Teeth Material
+    this.materialArray.push(
+      new MeshLambertMaterial({
+        color: 0xffffff
+      })
+    )
+    // Shoes Material
+    this.materialArray.push(
+      new MeshLambertMaterial({
+        color: 0x161616
+      })
+    )
+
+    // TODO : For now, each body part need to have the same material array, but this will change with several mat for shirt or pants
     // Donc on triche un peu
     for (let i = 0; i < 6; i++) {
       this.shirtMaterialArray.push(
@@ -785,7 +830,7 @@ export default class ErgonomIOAvatarsContainer extends Vue {
       )
       this.shoesMaterialArray.push(
         new MeshLambertMaterial({
-          color: 0x000000
+          color: 0x161616
         })
       )
     }
@@ -831,12 +876,12 @@ export default class ErgonomIOAvatarsContainer extends Vue {
     this.initMaterials()
     this.createMenu()
     this.createItems()
-    this.loadMesh('./Avatars/Shirt/Shirt.000.fbx', 1)
+    this.loadMesh('./Avatars/Shirt/shirt.fbx', 1)
     this.loadMesh('./Avatars/Hairs/Hair.000.fbx', 2)
     this.loadMesh('./Avatars/Beard/Beard.000.fbx', 3)
-    this.loadMesh('./Avatars/Pants/Pants.000.fbx', 4)
-    this.loadMesh('./Avatars/Shoes/Shoes.000.fbx', 5)
-    this.loadMesh('./Avatars/Head/Head.000.fbx', 6)
+    this.loadMesh('./Avatars/Pants/pants.fbx', 4)
+    this.loadMesh('./Avatars/Shoes/shoes.fbx', 5)
+    this.loadMesh('./Avatars/Head/skin.fbx', 6)
 
     this.initMorphData()
     this.initPlayerData()
@@ -846,7 +891,7 @@ export default class ErgonomIOAvatarsContainer extends Vue {
     console.log('Main menu is updated.')
     // Skin Menu :  Change the skin body color by the new selected one
     if (this.mainMenu.selected === 0) {
-      this.bodyMaterialArray[1].color.setHex(
+      this.materialArray[1].color.setHex(
         parseInt(
           '0x' +
             this.mainMenu.items[0].items[this.mainMenu.items[0].selected].value
@@ -860,19 +905,29 @@ export default class ErgonomIOAvatarsContainer extends Vue {
         1
       )
     }
+    // Hair Menu : Change the hair Mesh depending of selected component : Special case 0 : no hair
     if (this.mainMenu.selected === 2) {
-      this.loadMesh(
-        './Avatars/Hairs/' +
-          this.hairNamesArray[this.mainMenu.items[2].selected],
-        2
-      )
+      if (this.mainMenu.items[2].selected === 0) {
+        this.hairMesh.clear()
+      } else {
+        this.loadMesh(
+          './Avatars/Hairs/' +
+            this.hairNamesArray[this.mainMenu.items[2].selected - 1],
+          2
+        )
+      }
     }
+    // Beard Menu : Change the beard Mesh depending of selected component : Special case 0 : no beard
     if (this.mainMenu.selected === 3) {
-      this.loadMesh(
-        './Avatars/Beard/' +
-          this.beardNamesArray[this.mainMenu.items[3].selected],
-        3
-      )
+      if (this.mainMenu.items[3].selected === 0) {
+        this.beardMesh.clear()
+      } else {
+        this.loadMesh(
+          './Avatars/Beard/' +
+            this.beardNamesArray[this.mainMenu.items[3].selected - 1],
+          3
+        )
+      }
     }
     if (this.mainMenu.selected === 4) {
       this.loadMesh(
@@ -926,16 +981,32 @@ export default class ErgonomIOAvatarsContainer extends Vue {
   saveProfile (): void {
     var profile = new Avatar()
     profile.name = this.playerData.name
-    profile.hairMeshName = this.hairNamesArray[this.mainMenu.items[2].selected]
-    profile.pantsMeshName =
-      this.pantsNamesArray[this.mainMenu.items[3].selected]
-    profile.shirtMeshName =
-      this.shirtNamesArray[this.mainMenu.items[4].selected]
+    // Hair Mesh Case
+    if (this.mainMenu.items[2].selected === 0) {
+      profile.hairMeshName = ''
+    } else {
+      profile.hairMeshName = this.hairNamesArray[
+        this.mainMenu.items[2].selected - 1
+      ]
+    }
+    profile.pantsMeshName = this.pantsNamesArray[
+      this.mainMenu.items[3].selected
+    ]
+    profile.shirtMeshName = this.shirtNamesArray[
+      this.mainMenu.items[4].selected
+    ]
     profile.headMeshName = this.headNamesArray[this.mainMenu.items[6].selected]
-    profile.shoesMeshName =
-      this.shoesNamesArray[this.mainMenu.items[5].selected]
-    profile.beardMeshName =
-      this.beardNamesArray[this.mainMenu.items[3].selected]
+    profile.shoesMeshName = this.shoesNamesArray[
+      this.mainMenu.items[5].selected
+    ]
+    // Beard mesh case
+    if (this.mainMenu.items[3].selected === 0) {
+      profile.beardMeshName = ''
+    } else {
+      profile.beardMeshName = this.beardNamesArray[
+        this.mainMenu.items[3].selected - 1
+      ]
+    }
 
     // PlayerData values
     profile.hipWidth = this.playerData.items[0].value
