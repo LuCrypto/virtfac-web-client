@@ -87,6 +87,10 @@ export class Graph extends MetaData {
     this.nodes.forEach(func)
   }
 
+  public foreachLink (func: { (link: Link): void }): void {
+    this.nodes.forEach(n => n.foreachLink(func))
+  }
+
   public addNode (node: Node): Node {
     node.onDataChanged().addListener(arg => {
       this.nodeDataChanged.notify({
