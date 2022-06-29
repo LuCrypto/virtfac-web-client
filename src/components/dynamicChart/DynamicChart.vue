@@ -9,32 +9,12 @@
   display: block;
   cursor: grab;
   user-select: none;
+  position: absolute;
+  z-index: 1;
 }
 
 .dynamic-chart svg:active {
   cursor: grabbing;
-}
-
-.point * {
-  transition-duration: 0.2s;
-}
-
-.point {
-  cursor: pointer;
-  .shadow {
-    opacity: 0;
-  }
-  .coordinates {
-    opacity: 0;
-  }
-}
-.point:hover {
-  .shadow {
-    opacity: 0.2;
-  }
-  .coordinates {
-    opacity: 1 !important;
-  }
 }
 
 .controls {
@@ -43,6 +23,26 @@
   right: 0;
   gap: 20px;
   display: flex;
+  z-index: 5;
+}
+
+.coordinatesX {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 50px;
+  width: 100%;
+  background-color: red;
+  z-index: 3;
+}
+.coordinatesY {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 50px;
+  background-color: green;
+  z-index: 2;
 }
 </style>
 <template>
@@ -55,46 +55,29 @@
         <v-icon>mdi-download</v-icon>
       </v-btn>
     </div>
+    <div class="coordinatesX"></div>
+    <div class="coordinatesY"></div>
     <svg
       xmlns="http://www.w3.org/2000/svg"
       xmlns:xlink="http://www.w3.org/1999/xlink"
       version="1.1"
-      :viewBox="`${this.box.view.toString()}`"
-      :style="{ backgroundColor: theme.backgroundColorOut }"
+      :viewBox="`${box.context.toString()}`"
+      :width="`${box.context.size.x}`"
+      :height="`${box.context.size.y}`"
+      :style="{
+        backgroundColor: theme.current.backgroundColorOut,
+        left: box.view.position.x,
+        top: box.view.position.y
+      }"
     >
-      <defs>
-        <!-- Draw alpha mask for corner -->
-        <mask id="corner-mask-bottom">
-          <rect
-            :x="box.view.position.x"
-            :y="box.view.position.y"
-            :width="box.view.size.x"
-            :height="
-              Math.max(0, box.view.size.y - fontSize - 2 * coordinateMargin)
-            "
-            fill="white"
-          ></rect>
-        </mask>
-      </defs>
-      <!-- Draw bounding box -->
-      <rect
-        :x="this.box.data.position.x"
-        :y="this.box.data.position.y"
-        :width="this.box.data.size.x"
-        :height="this.box.data.size.y"
-        rx="20"
-        ry="20"
-        :fill="theme.backgroundColorIn"
-      ></rect>
-
       <!-- Draw X (vertical) grid -->
       <line
         v-for="(x, xi) in Math.floor(box.grid.size.divV(step).x)"
         :key="`x-${xi}`"
         :stroke="
           box.grid.position.x + x * step.x === 0
-            ? theme.gridColorY
-            : theme.gridColor
+            ? theme.current.gridColorY
+            : theme.current.gridColor
         "
         :x1="box.grid.position.x + x * step.x"
         :y1="box.context.position.y"
@@ -108,8 +91,8 @@
         :key="`y-${yi}`"
         :stroke="
           box.grid.position.y + y * step.y === 0
-            ? theme.gridColorX
-            : theme.gridColor
+            ? theme.current.gridColorX
+            : theme.current.gridColor
         "
         :x1="box.context.position.x"
         :y1="box.grid.position.y + y * step.y"
@@ -117,37 +100,10 @@
         :y2="box.grid.position.y + y * step.y"
       ></line>
 
-      <!-- Draw X (horizontal) coordinates -->
-
-      <text
-        v-for="(x, txi) in Math.floor(box.grid.size.divV(step).x)"
-        :key="`tx-${txi}`"
-        :fill="theme.axisValues"
-        font-family="Montserrat"
-        :font-size="fontSize"
-        alignment-baseline="end"
-        text-anchor="middle"
-        :x="box.grid.position.x + x * step.x"
-        :y="box.view.position.y + box.view.size.y - coordinateMargin"
-      >
-        {{ Math.round((box.grid.position.x + x * step.x) * 100) / 100 }}
-      </text>
-
-      <!-- Draw Y (vertical) coordinates -->
-      <text
-        mask="url(#corner-mask-bottom)"
-        v-for="(y, tyi) in Math.floor(box.grid.size.divV(step).y)"
-        :key="`ty-${tyi}`"
-        :fill="theme.axisValues"
-        font-family="Montserrat"
-        :font-size="fontSize"
-        alignment-baseline="central"
-        text-anchor="start"
-        :x="box.view.position.x + coordinateMargin"
-        :y="box.grid.position.y + y * step.y"
-      >
-        {{ Math.round((box.grid.position.y + y * step.y) * 100) / 100 }}
-      </text>
+      <!-- Draw data -->
+      <g ref="dynamicChartDataContainer">
+        <slot name="data"></slot>
+      </g>
     </svg>
   </div>
 </template>
@@ -156,6 +112,9 @@
 import { Component, Vue, Prop } from 'vue-property-decorator'
 import V from '@/utils/vector'
 import T from '@/utils/transform'
+import DynamicChartData from '@/components/dynamicChart/DynamicChartData'
+import DynamicChartThemes from '@/components/dynamicChart/DynamicChartThemes'
+import { VNode } from 'vue'
 
 @Component({
   name: 'DynamicChart'
@@ -163,14 +122,6 @@ import T from '@/utils/transform'
 // @vuese
 // @group COMPONENTS
 export default class DynamicChart extends Vue {
-  @Prop({
-    default: () =>
-      '.......'
-        .split('')
-        .map((v, i) => new V(i + Math.random(), Math.random() * 10).multN(100))
-  })
-  private data!: V[]
-
   @Prop({ default: () => new V(50, 50) })
   private step!: V
 
@@ -182,34 +133,17 @@ export default class DynamicChart extends Vue {
   private labels!: { x: string; y: string }
 
   private container: HTMLElement | null = null
+  private dynamicChartDataContainer: SVGGElement | null = null
+  private dynamicChartData: DynamicChartData | null = null
   private onDrag = false
   private coordinateMargin = 15
   private fontSize = 14
 
-  private themes = {
-    dark: {
-      backgroundColorOut: '#303030',
-      backgroundColorIn: '#1e1e1e',
-      gridColor: '#282828',
-      gridColorX: '#bb0000',
-      gridColorY: '#009900',
-      axisValues: '#eeeeee'
-    },
-    light: {
-      backgroundColorOut: '#efefef',
-      backgroundColorIn: '#fbfbfb',
-      gridColor: '#dddddd',
-      gridColorX: '#ee5555',
-      gridColorY: '#55ee55',
-      axisValues: '#202020'
-    }
-  }
-
-  private theme = this.themes.dark
+  private theme = new DynamicChartThemes(this)
 
   private box = {
     context: new T(),
-    data: new T(),
+    data: new T(new V(-100, -100), new V(200, 200)),
     view: new T(),
     grid: new T()
   }
@@ -217,14 +151,22 @@ export default class DynamicChart extends Vue {
   mounted (): void {
     this.container = this.$refs.container as HTMLElement
 
-    if (!this.container) {
+    const node = this.$slots.data
+    let dataNode = null
+    if (node && node[0]) {
+      dataNode = node[0]
+    }
+
+    if (!dataNode || !dataNode.componentOptions) {
       return
     }
 
+    console.log('SLOT', dataNode.componentOptions)
+
     this.$nextTick(() => {
-      this.updateBoxSizes()
+      this.updateBoxSizes(this.box.data)
       this.updatePosition(
-        this.box.data.getMiddle().subV(this.box.view.size.divN(2))
+        this.box.context.getMiddle().subV(this.box.view.size.divN(2))
       )
     })
 
@@ -234,13 +176,6 @@ export default class DynamicChart extends Vue {
     this.container.addEventListener('mousedown', e => this.beginDrag(e))
     this.container.addEventListener('mousemove', e => this.updateDrag(e))
     document.addEventListener('mouseup', e => this.endDrag(e))
-
-    this.$root.$on('changeDarkMode', () => this.updateTheme())
-    this.updateTheme()
-  }
-
-  updateTheme (): void {
-    this.theme = this.$vuetify.theme.dark ? this.themes.dark : this.themes.light
   }
 
   // Event listeners
@@ -251,7 +186,7 @@ export default class DynamicChart extends Vue {
 
   updateDrag (e: MouseEvent): void {
     if (this.onDrag) {
-      const movement = new V(-e.movementX, -e.movementY)
+      const movement = new V(e.movementX, e.movementY)
       this.updatePosition(this.box.view.position.addV(movement))
     }
   }
@@ -281,33 +216,21 @@ export default class DynamicChart extends Vue {
     this.box.view.position = position
   }
 
-  updateBoxSizes (): void {
-    if (!this.container) {
-      return
-    }
+  updateBoxSizes2 (dataBox: T): void {
+    console.log('event : ', dataBox)
+    this.updateBoxSizes(dataBox)
+  }
+
+  updateBoxSizes (dataBox: T): void {
+    // Save data box
+    this.box.data = dataBox
 
     // Compute view box
+    if (!this.container) return
     const rect = this.container.getBoundingClientRect()
-
     const size = new V(rect.width, rect.height)
-    if (size.equal(this.box.view.size)) {
-      return
-    }
-
+    if (size.equal(this.box.view.size)) return
     this.box.view.size = size
-
-    // Compute data box
-    const min = new V(Infinity, Infinity)
-    const max = new V(-Infinity, -Infinity)
-    this.data.forEach(v => {
-      min.x = v.x < min.x ? v.x : min.x
-      min.y = v.y < min.y ? v.y : min.y
-      max.x = v.x > max.x ? v.x : max.x
-      max.y = v.y > max.y ? v.y : max.y
-    })
-
-    this.box.data.position = min
-    this.box.data.size = max.subV(min)
 
     // Compute context box
     this.box.context.position = this.box.data.position.subV(this.box.view.size)
@@ -328,7 +251,7 @@ export default class DynamicChart extends Vue {
   }
 
   updateLoop () {
-    this.updateBoxSizes()
+    this.updateBoxSizes(this.box.data)
     requestAnimationFrame(() => this.updateLoop())
   }
 }
