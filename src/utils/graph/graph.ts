@@ -87,6 +87,10 @@ export class Graph extends MetaData {
     this.nodes.forEach(func)
   }
 
+  public foreachLink (func: { (link: Link): void }): void {
+    this.nodes.forEach(n => n.foreachLink(func))
+  }
+
   public addNode (node: Node): Node {
     node.onDataChanged().addListener(arg => {
       this.nodeDataChanged.notify({
@@ -120,7 +124,7 @@ export class Graph extends MetaData {
     this.nodeRemoved.notify({ graph: this, node: node })
   }
 
-  public nodeCount () : number {
+  public nodeCount (): number {
     return this.nodes.size
   }
 
@@ -209,6 +213,44 @@ export class Graph extends MetaData {
   }
   // #endregion
   ///
+
+  public clone (): Graph {
+    const g = new Graph()
+
+    g.copyAllData(this)
+
+    const nodeMap = new Map<Node, Node>()
+    this.foreachNode(n => {
+      nodeMap.set(n, n.clone())
+    })
+
+    this.foreachNode(n => {
+      n.foreachLink(l => {
+        const linkCopy = (nodeMap.get(l.getOriginNode()) as Node).addLink(
+          nodeMap.get(l.getNode()) as Node
+        )
+        linkCopy.copyAllData(l)
+      })
+    })
+
+    return g
+  }
+
+  public copyTopology (graph: Graph) {
+    const nodeMap = new Map<Node, Node>()
+    this.foreachNode(n => {
+      nodeMap.set(n, this.addNode(n.clone()))
+    })
+
+    this.foreachNode(n => {
+      n.foreachLink(l => {
+        const linkCopy = (nodeMap.get(l.getOriginNode()) as Node).addLink(
+          nodeMap.get(l.getNode()) as Node
+        )
+        linkCopy.copyAllData(l)
+      })
+    })
+  }
 
   constructor () {
     super()

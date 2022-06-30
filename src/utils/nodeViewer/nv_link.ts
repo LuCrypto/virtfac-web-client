@@ -53,6 +53,26 @@ export class NvLink {
           .getDom()
           .setAttribute('stroke-width', (arg.value as number) * 2 + '')
       })
+      this.link.onDataChanged().addMappedListener('visible', arg => {
+        if (arg.value) {
+          if (this.path.getDom().parentNode === null) {
+            this.root
+              .getBackground()
+              .appendChild(this.path, this.pointerEventPath)
+          }
+        } else {
+          if (this.path.getDom().parentNode !== null) {
+            this.root
+              .getBackground()
+              .getDom()
+              .removeChild(this.path.getDom())
+            this.root
+              .getBackground()
+              .getDom()
+              .removeChild(this.pointerEventPath.getDom())
+          }
+        }
+      })
     }
   }
 

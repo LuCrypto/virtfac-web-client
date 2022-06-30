@@ -7,18 +7,18 @@
         management.</v-card-subtitle
       >
     </v-card>
-    <drawing-shop-component></drawing-shop-component>
+    <routing-analysis-component></routing-analysis-component>
   </v-container>
 </template>
 
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator'
-import DrawingShopComponent from '@/components/DrawingShopComponent.vue'
+import RoutingAnalysisComponent from '@/components/RoutingAnalysisComponent.vue'
 
 @Component({
   name: 'DrawingShop',
   components: {
-    DrawingShopComponent
+    RoutingAnalysisComponent
   }
 })
 // @vuese
