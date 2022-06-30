@@ -38,7 +38,101 @@
         </v-list-item-group>
       </v-list>
     </v-navigation-drawer>
-    <v-container class="pa-0" style="width: auto; margin: 0; flex-grow: 1;">
+    <v-container
+      class="pa-0"
+      style="width: auto; margin: 0; flex-grow: 1; position: relative;"
+    >
+      <v-card
+        v-if="showFilter"
+        style="position: absolute; z-index: 1; left: 5px; top: 5px; width: 250px;"
+      >
+        <v-toolbar color="primary" flat dense>
+          <v-toolbar-title class="black--text" style="padding-left: 50px;">
+            Filters
+          </v-toolbar-title>
+        </v-toolbar>
+
+        <v-card-text class="pt-0 pb-0 mt-4">
+          <v-row>
+            <v-col class="px-2">
+              <v-range-slider
+                dense
+                v-model="filterRange"
+                :max="filterBorder[1]"
+                :min="filterBorder[0]"
+                hint="Link weight filter"
+                persistent-hint
+                class="align-center"
+                @change="refreshFilters"
+              >
+                <template v-slot:prepend>
+                  <v-text-field
+                    dense
+                    :value="filterRange[0]"
+                    class="mt-0 pt-0"
+                    hide-details
+                    single-line
+                    type="number"
+                    style="width: 40px"
+                    @change="$set(filterRange, 0, $event)"
+                  ></v-text-field>
+                </template>
+                <template v-slot:append>
+                  <v-text-field
+                    dense
+                    readonly
+                    :value="filterRange[1]"
+                    class="mt-0 pt-0"
+                    hide-details
+                    single-line
+                    type="number"
+                    style="width: 40px"
+                    @change="$set(filterRange, 1, $event)"
+                  ></v-text-field>
+                </template>
+              </v-range-slider>
+            </v-col>
+          </v-row>
+          <v-row>
+            <v-col>
+              <v-switch
+                dense
+                v-model="reverseFilter"
+                :label="`${reverseFilter ? 'Show' : 'Hide'} interval`"
+                inset
+                @change="refreshFilters"
+              >
+              </v-switch>
+            </v-col>
+          </v-row>
+        </v-card-text>
+      </v-card>
+      <v-btn
+        v-if="showFilter"
+        @click="
+          () => {
+            showFilter = !showFilter
+          }
+        "
+        outlined
+        icon
+        style="position: absolute; z-index: 2; left: 11px; top: 11px;"
+        ><v-icon v-text="'mdi-filter-minus'"></v-icon
+      ></v-btn>
+      <v-btn
+        v-else
+        outlined
+        icon
+        style="position: absolute; z-index: 2; left: 11px; top: 11px;"
+        color="primary"
+        @click="
+          () => {
+            showFilter = !showFilter
+          }
+        "
+        ><v-icon v-text="'mdi-filter-plus'"></v-icon
+      ></v-btn>
+
       <NV ref="nodeViewer" :graph="getGraph()" />
     </v-container>
     <pop-up ref="filePopUp">
@@ -95,6 +189,40 @@ class ConstraintProject {
   }
 }
 
+class Range {
+  private _min = 0
+  private _max = 0
+  public onChange: { (sender: Range): void } | null = null
+
+  public get min (): number {
+    return this._min
+  }
+
+  public set min (value) {
+    this._min = value
+    if (this.onChange !== null) this.onChange(this)
+  }
+
+  public get max (): number {
+    return this._max
+  }
+
+  public set max (value) {
+    this._max = value
+    if (this.onChange !== null) this.onChange(this)
+  }
+
+  constructor (
+    min: number,
+    max: number,
+    onChange: { (sender: Range): void } | null = null
+  ) {
+    this._min = min
+    this._max = max
+    this.onChange = onChange
+  }
+}
+
 interface SettingItem {
   id: number
   idApplication: number
@@ -127,6 +255,10 @@ export default class ContradictionExpert extends Vue {
   fileName = ''
   openedFile: APIFile | null = null
   openedProject: ConstraintProject | null = null
+  showFilter = false
+  filterRange = [-10, 10]
+  filterBorder = [-10, 10]
+  reverseFilter = true
 
   getGraph (): Graph {
     return (this.constraintGraph as ConstraintGraph).getRawGraph()
@@ -215,6 +347,17 @@ export default class ContradictionExpert extends Vue {
       this.constraintGraph.loadXLSX(workbook as IWorkBook)
       this.fileName = files[0].name
       // this.projectId = files[0].idProject
+      this.filterBorder = [0, 0]
+      this.constraintGraph.getGraph().foreachLink(l => {
+        const w = l.getDataOrDefault<number>('weight', 0)
+        if (w > this.filterBorder[1]) {
+          this.filterBorder[1] = w
+        }
+        if (w < this.filterBorder[0]) {
+          this.filterBorder[0] = w
+        }
+      })
+      this.filterRange = [this.filterBorder[0], this.filterBorder[1]]
     }
   }
 
@@ -431,6 +574,17 @@ export default class ContradictionExpert extends Vue {
     console.log(workbook)
     // this.$refs.excel.active = true;
     // console.log(workbook);
+  }
+
+  refreshFilters () {
+    this.constraintGraph.getGraph().foreachLink(l => {
+      const w = l.getDataOrDefault<number>('weight', 0)
+      const inInterval = w <= this.filterRange[1] && w >= this.filterRange[0]
+      l.setData<boolean>(
+        'visible',
+        this.reverseFilter ? inInterval : !inInterval
+      )
+    })
   }
 }
 </script>

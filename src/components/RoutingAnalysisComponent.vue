@@ -104,6 +104,19 @@ class MenuItem {
   }
 }
 
+interface ClassifSolution {
+  matrix: Matrix
+  classif: {
+    score: number
+    rowAssignment: Map<number, number>
+    colAssignment: Map<number, number>
+    nbClass: number
+  }
+  interclassRatio: number
+  nbClass: number
+  alpha: number
+}
+
 @Component({
   name: 'RoutingAnalysisComponent',
   components: {
@@ -126,9 +139,12 @@ export default class RoutingAnalysisComponent extends Vue {
 
   private posteMap = new Map<string, Poste>()
 
-  postPostGraph: Graph | null = null
-  articlePostGraph: Graph | null = null
+  private filterTransitiveLinksVisible = true
 
+  postPostGraph: Graph | null = null
+  postPostMatrix: Matrix | null = null
+
+  articlePostGraph: Graph | null = null
   articlePostMatrix: Matrix | null = null
 
   mounted (): void {
@@ -188,6 +204,16 @@ export default class RoutingAnalysisComponent extends Vue {
                 input.oninput = this.loadPostePosteMatrix
                 input.click()
               }
+            },
+            {
+              txt: 'Classification',
+              callback: () => {
+                const input = document.createElement('input')
+                input.type = 'file'
+                input.accept = '.xls, .xlsx'
+                input.oninput = this.loadClassification
+                input.click()
+              }
             }
           ],
           item => {
@@ -212,13 +238,19 @@ export default class RoutingAnalysisComponent extends Vue {
             {
               txt: 'Article/Poste Matrix',
               callback: () => {
-                // console.log('Article/Poste Matrix')
+                this.saveArticlePosteMatrix()
               }
             },
             {
               txt: 'Poste/Poste Matrix',
               callback: () => {
                 this.savePostePosteMatrix()
+              }
+            },
+            {
+              txt: 'Classification',
+              callback: () => {
+                this.saveClassification()
               }
             }
           ],
@@ -238,55 +270,50 @@ export default class RoutingAnalysisComponent extends Vue {
           })
         }
       }),
-      new MenuItem('Show transitive link', 'mdi-chart-sankey-variant', () => {
-        if (this.postPostGraph !== null) {
-          const transitiveSet = GraphUtils.getTransitiveLinks(
-            this.postPostGraph
-          )
-          const linkMap = this.postPostGraph.getData<Map<Link, Array<Node>>>(
-            'attachedNodes'
-          )
-          transitiveSet.forEach(l => {
-            (linkMap.get(l) as Array<Node>).forEach(n => {
-              n.foreachLink(displayedLink => {
-                displayedLink.setData<string>('stroke-dasharray', '5')
-                displayedLink.setData<string>('color', '#F1C40F')
+      new MenuItem(
+        'Show/Hide transitive link',
+        'mdi-chart-sankey-variant',
+        () => {
+          if (this.postPostGraph !== null) {
+            const transitiveSet = GraphUtils.getTransitiveLinks(
+              this.postPostGraph
+            )
+            const linkMap = this.postPostGraph.getData<Map<Link, Array<Node>>>(
+              'attachedNodes'
+            )
+            this.filterTransitiveLinksVisible = !this
+              .filterTransitiveLinksVisible
+
+            transitiveSet.forEach(l => {
+              l.setData<boolean>('isTransitive', true)
+              if (this.graphViewer !== null) {
+                if (this.graphViewer.getGraph() === this.postPostGraph) {
+                  l.setData<boolean>(
+                    'visible',
+                    this.filterTransitiveLinksVisible
+                  )
+                }
+              }
+              (linkMap.get(l) as Array<Node>).forEach(n => {
+                n.foreachLink(displayedLink => {
+                  // displayedLink.setData<string>('stroke-dasharray', '5')
+                  // displayedLink.setData<string>('color', '#F1C40F')
+                  displayedLink.setData<boolean>(
+                    'visible',
+                    this.filterTransitiveLinksVisible
+                  )
+                })
               })
             })
-          })
+          }
+          if (this.graphViewer !== null) {
+            this.graphViewer.setGraph(this.graphViewer.getGraph())
+          }
         }
-      }),
-      new MenuItem('Remove transitive link', 'mdi-chart-sankey-variant', () => {
-        if (this.postPostGraph !== null) {
-          const transitiveSet = GraphUtils.getTransitiveLinks(
-            this.postPostGraph
-          )
-          transitiveSet.forEach(l => {
-            l.getOriginNode().removeLink(l.getNode())
-          })
-        }
-      }),
+      ),
       new MenuItem('Level layout', 'mdi-file-tree', () => {
         if (this.postPostGraph !== null && this.graphViewer !== null) {
           const nbLevel = GraphUtils.computeLevels(this.postPostGraph, 'level')
-          /*
-          const nodeArray = new Array<number>(nbLevel)
-          for (let i = 0; i < nbLevel; i++) {
-            nodeArray[i] = 0
-          }
-          this.postPostGraph.foreachNode(n => {
-            const level = n.getData<number>('level')
-            nodeArray[level]++
-            n.getData<Vec2>('position').x = level * 100
-            n.getData<Vec2>('position').y = nodeArray[level] * 200
-          })
-          this.postPostGraph.foreachNode(n => {
-            n.foreachLink(l => {
-              l.setData<boolean>('visible', true)
-            })
-          })
-          this.graphViewer.setGraph(this.postPostGraph)
-          */
           GraphLayout.levelLayout(
             this.postPostGraph,
             'level',
@@ -296,7 +323,11 @@ export default class RoutingAnalysisComponent extends Vue {
           )
           this.postPostGraph.foreachNode(n => {
             n.foreachLink(l => {
-              l.setData<boolean>('visible', true)
+              l.setData<boolean>(
+                'visible',
+                this.filterTransitiveLinksVisible ||
+                  !l.getDataOrDefault<boolean>('isTransitive', false)
+              )
             })
           })
           this.graphViewer.setGraph(this.postPostGraph)
@@ -311,12 +342,7 @@ export default class RoutingAnalysisComponent extends Vue {
               'index'
             )
           }
-          const solutions = new Array<{
-            matrix: Matrix
-            interclassRatio: number
-            nbClass: number
-            alpha: number
-          }>()
+          const solutions = new Array<ClassifSolution>()
           const pas = 0.1
           for (let i = pas; i < 1; i += pas) {
             const copy = this.articlePostMatrix.clone()
@@ -328,65 +354,85 @@ export default class RoutingAnalysisComponent extends Vue {
             )
             solutions.push({
               matrix: copy,
-              interclassRatio: interclassRatio,
-              nbClass: 0,
-              alpha: i
+              classif: classif,
+              interclassRatio: Math.round(interclassRatio * 1000) / 10,
+              nbClass: classif.nbClass,
+              alpha: Math.round(i * 100) / 100
             })
           }
 
-          console.log(solutions)
-          const classif = MatrixUtils.blockDiagonalisation(
-            this.articlePostMatrix
-          )
-          console.log(
-            MatrixUtils.computeInterclassRatio(
-              this.articlePostMatrix,
-              classif.rowAssignment,
-              classif.colAssignment
-            )
-          )
-          this.articlePostMatrix.printMat()
+          const applyClassif = (classif: ClassifSolution) => {
+            this.articlePostMatrix = classif.matrix
+            const colorMap = new Map<string, string>()
+            const groupMap = new Map<string, number>()
+            const colArray: string[] = [
+              '#9B59B6',
+              '#2980B9',
+              '#A93226',
+              '#6C3483',
+              '#1F618D',
+              '#117A65',
+              '#2ECC71'
+            ]
+            const notAssignedColor = '#f5a406'
+            if (this.articlePostGraph !== null) {
+              this.articlePostGraph.foreachNode(n => {
+                let group = 0
+                if (n.getData<'row' | 'col'>('matCelltype') === 'col') {
+                  group = classif.classif.colAssignment.get(
+                    n.getData<number>('index')
+                  ) as number
+                } else {
+                  group = classif.classif.rowAssignment.get(
+                    n.getData<number>('index')
+                  ) as number
+                }
+                n.setData<number>('classifGroup', group)
+                groupMap.set(n.getData<string>('name'), group)
+                if (group === -1) {
+                  colorMap.set(n.getData<string>('name'), notAssignedColor)
+                  n.setData<string>('color', notAssignedColor)
+                } else {
+                  colorMap.set(
+                    n.getData<string>('name'),
+                    colArray[group % colArray.length]
+                  )
+                  n.setData<string>('color', colArray[group % colArray.length])
+                }
+              })
 
-          const colorMap = new Map<string, string>()
-          const colArray: string[] = [
-            '#9B59B6',
-            '#2980B9',
-            '#A93226',
-            '#6C3483',
-            '#1F618D',
-            '#117A65',
-            '#2ECC71'
-          ]
-          const notAssignedColor = '#f5a406'
+              if (this.postPostGraph !== null) {
+                this.postPostGraph.foreachNode(n => {
+                  const color = colorMap.get(n.getData<string>('name'))
+                  if (color !== undefined) {
+                    n.setData<string>('color', color)
+                    n.setData<number>(
+                      'classifGroup',
+                      groupMap.get(n.getData<string>('name')) as number
+                    )
+                  }
+                })
+              }
 
-          this.articlePostGraph.foreachNode(n => {
-            if (n.getData<'row' | 'col'>('matCelltype') === 'col') {
-              const group = classif.colAssignment.get(
-                n.getData<number>('index')
-              ) as number
-              if (group === -1) {
-                colorMap.set(n.getData<string>('name'), notAssignedColor)
-              } else {
-                colorMap.set(
-                  n.getData<string>('name'),
-                  colArray[group % colArray.length]
-                )
+              if (this.graphViewer !== null) {
+                this.graphViewer.setGraph(this.graphViewer.getGraph())
               }
             }
-          })
-
-          if (this.postPostGraph !== null) {
-            this.postPostGraph.foreachNode(n => {
-              const color = colorMap.get(n.getData<string>('name'))
-              if (color !== undefined) {
-                n.setData<string>('color', color)
-              }
-            })
           }
-
-          if (this.graphViewer !== null) {
-            this.graphViewer.setGraph(this.graphViewer.getGraph())
-          }
+          ;(this.$refs.selectPopUp as SelectPopUp).open(
+            [
+              SelectPopUp.createNumberHeader('Alpha', 'alpha'),
+              SelectPopUp.createNumberHeader(
+                'Interclass ratio (%)',
+                'interclassRatio'
+              ),
+              SelectPopUp.createNumberHeader('Nb Class', 'nbClass')
+            ],
+            solutions,
+            item => {
+              if (item !== null) applyClassif(item as ClassifSolution)
+            }
+          )
         }
       }),
       new MenuItem('Classification Poste/Poste', 'mdi-matrix', () => {
@@ -396,77 +442,157 @@ export default class RoutingAnalysisComponent extends Vue {
           const classif = MatrixUtils.symetricBlockDiagonalisation(m)
           m.printMat()
 
-          const colorMap = new Map<string, string>()
-          const colArray: string[] = [
-            '#9B59B6',
-            '#2980B9',
-            '#A93226',
-            '#6C3483',
-            '#1F618D',
-            '#117A65'
-          ]
-          const notAssignedColor = '#f5a406'
-
-          this.postPostGraph.foreachNode(n => {
-            if (n.getData<'row' | 'col'>('matCelltype') === 'col') {
-              const group = classif.assigns.get(
-                n.getData<number>('index')
-              ) as number
-              if (group === -1) {
-                colorMap.set(n.getData<string>('name'), notAssignedColor)
-              } else {
-                colorMap.set(
-                  n.getData<string>('name'),
-                  colArray[group % colArray.length]
-                )
-              }
-            }
-          })
-
-          if (this.postPostGraph !== null) {
-            this.postPostGraph.foreachNode(n => {
-              const color = colorMap.get(n.getData<string>('name'))
-              if (color !== undefined) {
-                n.setData<string>('color', color)
-              }
+          if (this.postPostMatrix === null) {
+            this.postPostMatrix = MatrixUtils.matrixFromGraph(
+              this.postPostGraph,
+              'index'
+            )
+          }
+          const solutions = new Array<ClassifSolution>()
+          const pas = 0.1
+          for (let i = pas; i < 1; i += pas) {
+            const copy = this.postPostMatrix.clone()
+            const classif = MatrixUtils.symetricBlockDiagonalisation(copy, i)
+            const interclassRatio = MatrixUtils.computeInterclassRatio(
+              copy,
+              classif.assigns,
+              classif.assigns
+            )
+            solutions.push({
+              matrix: copy,
+              classif: {
+                score: classif.score,
+                rowAssignment: classif.assigns,
+                colAssignment: classif.assigns,
+                nbClass: classif.nbClass
+              },
+              interclassRatio: Math.round(interclassRatio * 1000) / 10,
+              nbClass: classif.nbClass,
+              alpha: Math.round(i * 100) / 100
             })
           }
 
-          if (this.graphViewer !== null) {
-            this.graphViewer.setGraph(this.postPostGraph)
+          const applyClassif = (classif: {
+            matrix: Matrix
+            assignment: Map<number, number>
+          }) => {
+            this.postPostMatrix = classif.matrix
+            const colArray: string[] = [
+              '#9B59B6',
+              '#2980B9',
+              '#A93226',
+              '#6C3483',
+              '#1F618D',
+              '#117A65',
+              '#2ECC71'
+            ]
+            const notAssignedColor = '#f5a406'
+            if (this.postPostGraph !== null) {
+              this.postPostGraph.foreachNode(n => {
+                const group = classif.assignment.get(
+                  n.getData<number>('index')
+                ) as number
+                n.setData<number>('classifGroup', group)
+                if (group === -1) {
+                  n.setData<string>('color', notAssignedColor)
+                } else {
+                  n.setData<string>('color', colArray[group % colArray.length])
+                  console.log(group)
+                }
+              })
+
+              if (this.graphViewer !== null) {
+                this.graphViewer.setGraph(this.graphViewer.getGraph())
+              }
+            }
           }
+          ;(this.$refs.selectPopUp as SelectPopUp).open(
+            [
+              SelectPopUp.createNumberHeader('Alpha', 'alpha'),
+              SelectPopUp.createNumberHeader(
+                'Interclass ratio (%)',
+                'interclassRatio'
+              ),
+              SelectPopUp.createNumberHeader('Nb Class', 'nbClass')
+            ],
+            solutions,
+            item => {
+              const it = item as ClassifSolution
+              if (item !== null) {
+                applyClassif({
+                  matrix: it.matrix,
+                  assignment: it.classif.rowAssignment
+                })
+              }
+            }
+          )
         }
       }),
       new MenuItem('Show matrix', 'mdi-database', () => {
-        (this.$refs.matrixEditor as PopUp).open()
-        requestAnimationFrame(() => {
-          if (this.articlePostGraph !== null) {
-            if (this.articlePostMatrix === null) {
-              this.articlePostMatrix = MatrixUtils.matrixFromBipartiGraph(
-                this.articlePostGraph,
-                'matCelltype',
-                'index'
-              )
-            }
-            const rowNames = new Array<string>(this.articlePostMatrix.nbRow)
-            const colNames = new Array<string>(this.articlePostMatrix.nbColumn)
-            this.articlePostGraph.foreachNode(n => {
-              if (n.getData<'row' | 'col'>('matCelltype') === 'col') {
-                colNames[n.getData<number>('index')] = n.getData<string>('name')
-              } else {
-                rowNames[n.getData<number>('index')] = n.getData<string>('name')
-              }
-            })
-            ;(this.$refs.matrixViewer as MatrixViewer).setMatrix(
-              this.articlePostMatrix,
-              rowNames,
-              colNames,
-              v => {
-                return v === 0 ? '' : '' + v
-              }
+        const choices = new Array<Record<string, unknown>>()
+        if (this.postPostGraph !== null) {
+          if (this.postPostMatrix === null) {
+            this.postPostMatrix = MatrixUtils.matrixFromGraph(
+              this.postPostGraph,
+              'index'
             )
           }
-        })
+          choices.push({
+            txt: 'Poste/Poste Matrix',
+            callback: () => {
+              (this.$refs.matrixEditor as PopUp).open()
+              this.displayClassifMatrix(
+                this.postPostMatrix as Matrix,
+                this.postPostGraph as Graph,
+                'classifGroup'
+              )
+            }
+          })
+        }
+        if (this.articlePostGraph !== null) {
+          if (this.articlePostMatrix === null) {
+            this.articlePostMatrix = MatrixUtils.matrixFromBipartiGraph(
+              this.articlePostGraph,
+              'matCelltype',
+              'index'
+            )
+          }
+          choices.push({
+            txt: 'Article/Poste Matrix',
+            callback: () => {
+              (this.$refs.matrixEditor as PopUp).open()
+              this.displayClassifMatrix(
+                this.articlePostMatrix as Matrix,
+                this.articlePostGraph as Graph,
+                'classifGroup',
+                'matCelltype'
+              )
+            }
+          })
+        }
+
+        if (choices.length === 1) {
+          (choices[0].callback as { (): void })()
+        } else if (choices.length > 1) {
+          (this.$refs.selectPopUp as SelectPopUp).open(
+            [
+              {
+                text: 'Import file type',
+                value: 'txt',
+                align: 'left',
+                sortable: false,
+                sort: (a, b) => {
+                  return 0
+                }
+              }
+            ],
+            choices,
+            item => {
+              const it = item as Record<string, unknown>
+              ;(it.callback as { (): void })()
+            }
+          )
+        }
       })
     )
   }
@@ -502,10 +628,71 @@ export default class RoutingAnalysisComponent extends Vue {
     }
   }
 
-  selectSheetPopUp (workbook: Record<string, unknown>): void {
-    console.log(workbook)
-    // this.$refs.excel.active = true;
-    // console.log(workbook);
+  saveArticlePosteMatrix () {
+    if (this.articlePostGraph !== null) {
+      if (this.articlePostMatrix === null) {
+        this.articlePostMatrix = MatrixUtils.matrixFromBipartiGraph(
+          this.articlePostGraph,
+          'matCelltype',
+          'index'
+        )
+      }
+
+      const rowNodeIndexMap = new Map<number, Node>()
+      const colNodeIndexMap = new Map<number, Node>()
+      this.articlePostGraph.foreachNode(n => {
+        if (n.getData<'col' | 'row'>('matCelltype') === 'col') {
+          colNodeIndexMap.set(n.getData<number>('index'), n)
+        } else {
+          rowNodeIndexMap.set(n.getData<number>('index'), n)
+        }
+      })
+
+      const data = new Array<Array<unknown>>()
+      for (let i = 0; i < this.articlePostMatrix.nbRow + 1; i++) {
+        data.push(
+          new Array<unknown>(this.articlePostMatrix.nbColumn + 1).fill('')
+        )
+      }
+      data[0][0] = 'names'
+
+      for (let i = 0; i < this.articlePostMatrix.nbRow; i++) {
+        data[i + 1][0] = (rowNodeIndexMap.get(
+          this.articlePostMatrix.getRowLabel(i)
+        ) as Node).getData<string>('name')
+      }
+      for (let i = 0; i < this.articlePostMatrix.nbColumn; i++) {
+        data[0][i + 1] = (colNodeIndexMap.get(
+          this.articlePostMatrix.getColLabel(i)
+        ) as Node).getData<string>('name')
+      }
+      for (let i = 0; i < this.articlePostMatrix.nbRow; i++) {
+        for (let j = 0; j < this.articlePostMatrix.nbColumn; j++) {
+          data[i + 1][j + 1] = this.articlePostMatrix.get(i, j)
+        }
+      }
+
+      const ws = XLSX.utils.aoa_to_sheet(data)
+      const wb = XLSX.utils.book_new()
+
+      wb.SheetNames = ['Article Poste Matrix']
+
+      wb.Sheets['Article Poste Matrix'] = ws
+
+      const uri = XLSX.write(wb, { bookType: 'xlsx', type: 'binary' })
+      const buf = new ArrayBuffer(uri.length)
+      const view = new Uint8Array(buf)
+      for (let i = 0; i < uri.length; i++) view[i] = uri.charCodeAt(i) & 0xff
+      const a = document.createElement('a')
+      const blob = new Blob([buf], {
+        type:
+          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      })
+      const file = new File([blob], 'poste matrix.xlsx')
+      a.href = URL.createObjectURL(file)
+      a.download = 'article/poste matrix.xlsx'
+      a.click()
+    }
   }
 
   savePostePosteMatrix () {
@@ -536,10 +723,19 @@ export default class RoutingAnalysisComponent extends Vue {
       const ws = XLSX.utils.aoa_to_sheet(data)
       const wb = XLSX.utils.book_new()
 
+      /*
+      ws.B2.s = {
+        fill: {
+          patternType: 'solid',
+          fgColor: { rgb: 'F5F4ED', theme: 3, tint: 0.3999755851924192 },
+          bgColor: { indexed: 64 }
+        }
+      }
+      */
+
       wb.SheetNames = ['Poste Matrix']
 
       wb.Sheets['Poste Matrix'] = ws
-      console.log(wb)
 
       const uri = XLSX.write(wb, { bookType: 'xlsx', type: 'binary' })
       const buf = new ArrayBuffer(uri.length)
@@ -557,8 +753,223 @@ export default class RoutingAnalysisComponent extends Vue {
     }
   }
 
+  saveClassification () {
+    const data = new Array<Array<unknown>>()
+    const savedSet = new Set<string>()
+
+    data.push(['Element Name', 'Group id (-1 = no group)'])
+    if (this.postPostGraph !== null) {
+      this.postPostGraph.foreachNode(n => {
+        data.push([
+          n.getData<string>('name'),
+          n.getData<number>('classifGroup')
+        ])
+        savedSet.add(n.getData<string>('name'))
+      })
+    }
+    if (this.articlePostGraph !== null) {
+      this.articlePostGraph.foreachNode(n => {
+        if (!savedSet.has(n.getData<string>('name'))) {
+          data.push([
+            n.getData<string>('name'),
+            n.getData<number>('classifGroup')
+          ])
+          savedSet.add(n.getData<string>('name'))
+        }
+      })
+    }
+    const ws = XLSX.utils.aoa_to_sheet(data)
+    const wb = XLSX.utils.book_new()
+
+    wb.SheetNames = ['Classification']
+
+    wb.Sheets.Classification = ws
+
+    const uri = XLSX.write(wb, { bookType: 'xlsx', type: 'binary' })
+    const buf = new ArrayBuffer(uri.length)
+    const view = new Uint8Array(buf)
+    for (let i = 0; i < uri.length; i++) view[i] = uri.charCodeAt(i) & 0xff
+    const a = document.createElement('a')
+    const blob = new Blob([buf], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    })
+    const file = new File([blob], 'Classification.xlsx')
+    a.href = URL.createObjectURL(file)
+    a.download = 'Classification.xlsx'
+    a.click()
+  }
+
+  loadClassification (event: Event) {
+    if (event != null && event.target != null) {
+      const f: File = ((event.target as HTMLInputElement).files as FileList)[0]
+      if (f != null) {
+        let array: any
+        const fileReader = new FileReader()
+        fileReader.onload = e => {
+          array = fileReader.result
+          const data = new Uint8Array(array)
+          var arr = []
+          for (let i = 0; i !== data.length; ++i) {
+            arr[i] = String.fromCharCode(data[i])
+          }
+          const wb = XLSX.read(arr.join(''), {
+            type: 'binary',
+            cellStyles: true
+          })
+
+          const sheet = wb.Sheets[wb.SheetNames[0]]
+
+          const nameOf: { (x: number, y: number): string } = (x, y) => {
+            return XLSX.utils.encode_cell({ c: x, r: y })
+          }
+
+          const groupMap = new Map<string, number>()
+
+          let i = 1
+          let name = sheet[nameOf(0, i)]
+          while (name !== undefined) {
+            const g = +sheet[nameOf(1, i)].v
+            groupMap.set(name.v, g)
+            i++
+            name = sheet[nameOf(0, i)]
+          }
+
+          const colArray: string[] = [
+            '#9B59B6',
+            '#2980B9',
+            '#A93226',
+            '#6C3483',
+            '#1F618D',
+            '#117A65',
+            '#2ECC71'
+          ]
+          const notAssignedColor = '#f5a406'
+
+          if (this.postPostGraph !== null) {
+            this.postPostGraph.foreachNode(n => {
+              const group = groupMap.get(n.getData<string>('name'))
+              n.setData<number | undefined>('classifGroup', group)
+              if (group === undefined) {
+                n.setData<undefined>('color', undefined)
+              } else if (group === -1) {
+                n.setData<string>('color', notAssignedColor)
+              } else {
+                n.setData<string>('color', colArray[group % colArray.length])
+              }
+            })
+          }
+
+          if (this.articlePostGraph !== null) {
+            this.articlePostGraph.foreachNode(n => {
+              const group = groupMap.get(n.getData<string>('name'))
+              n.setData<number | undefined>('classifGroup', group)
+              if (group === undefined) {
+                n.setData<undefined>('color', undefined)
+              } else if (group === -1) {
+                n.setData<string>('color', notAssignedColor)
+              } else {
+                n.setData<string>('color', colArray[group % colArray.length])
+              }
+            })
+          }
+
+          if (this.graphViewer !== null) {
+            this.graphViewer.setGraph(this.graphViewer.getGraph())
+          }
+        }
+        fileReader.readAsArrayBuffer(f)
+      }
+    }
+  }
+
   loadArticlePosteMatrix (event: Event) {
-    console.log('hello')
+    if (event != null && event.target != null) {
+      const f: File = ((event.target as HTMLInputElement).files as FileList)[0]
+      if (f != null) {
+        if (this.articlePostGraph !== null) {
+          this.postPostGraph = null
+          this.posteMap = new Map<string, Poste>()
+        }
+
+        this.articlePostGraph = new Graph()
+
+        let array: any
+        const fileReader = new FileReader()
+        fileReader.onload = e => {
+          array = fileReader.result
+          const data = new Uint8Array(array)
+          var arr = []
+          for (let i = 0; i !== data.length; ++i) {
+            arr[i] = String.fromCharCode(data[i])
+          }
+          const wb = XLSX.read(arr.join(''), {
+            type: 'binary',
+            cellStyles: true
+          })
+
+          const sheet = wb.Sheets[wb.SheetNames[0]]
+          console.log(sheet.B2)
+
+          console.log(sheet)
+          const nameOf: { (x: number, y: number): string } = (x, y) => {
+            return XLSX.utils.encode_cell({ c: x, r: y })
+          }
+
+          let value = sheet[nameOf(1, 0)]
+          let i = 1
+          const colArray = new Array<string>('name')
+          const rowArray = new Array<Node>(new Node())
+          while (value !== undefined) {
+            colArray.push(value.v)
+
+            let poste: Poste | null = null
+            if (!this.posteMap.has(value.v)) {
+              this.posteMap.set(value.v, new Poste(value.v))
+            }
+            poste = this.posteMap.get(value.v) as Poste
+            if (this.articlePostGraph !== null) {
+              const node = new Node()
+                .setData<string>('name', value.v)
+                .setData<'row' | 'col'>('matCelltype', 'col') as Node
+              this.articlePostGraph.addNode(node)
+              poste.articlePostNode = node
+            }
+            i++
+            value = sheet[nameOf(i, 0)]
+          }
+
+          i = 1
+          value = sheet[nameOf(0, 1)]
+          while (value !== undefined) {
+            if (this.articlePostGraph !== null) {
+              const node = new Node()
+                .setData<string>('name', value.v)
+                .setData<'row' | 'col'>('matCelltype', 'row') as Node
+              this.articlePostGraph.addNode(node)
+              rowArray.push(node)
+            }
+            i++
+            value = sheet[nameOf(0, i)]
+          }
+
+          for (let x = 1; x < colArray.length; x++) {
+            for (let y = 1; y < rowArray.length; y++) {
+              const value = sheet[nameOf(x, y)]
+              const w = value ? +value.v : 0
+              if (w > 0) {
+                const link = rowArray[y].addLink(
+                  (this.posteMap.get(colArray[x]) as Poste)
+                    .articlePostNode as Node
+                )
+                link.setData<number>('weight', w)
+              }
+            }
+          }
+        }
+
+        fileReader.readAsArrayBuffer(f)
+      }
+    }
   }
 
   loadPostePosteMatrix (event: Event) {
@@ -583,9 +994,13 @@ export default class RoutingAnalysisComponent extends Vue {
           for (let i = 0; i !== data.length; ++i) {
             arr[i] = String.fromCharCode(data[i])
           }
-          const wb = XLSX.read(arr.join(''), { type: 'binary' })
+          const wb = XLSX.read(arr.join(''), {
+            type: 'binary',
+            cellStyles: true
+          })
 
           const sheet = wb.Sheets[wb.SheetNames[0]]
+          console.log(sheet.B2)
 
           console.log(sheet)
           const nameOf: { (x: number, y: number): string } = (x, y) => {
@@ -598,13 +1013,15 @@ export default class RoutingAnalysisComponent extends Vue {
           const rowArray = new Array<string>('name')
           while (value !== undefined) {
             colArray.push(value.v)
+            let poste: Poste | null = null
             if (!this.posteMap.has(value.v)) {
               this.posteMap.set(value.v, new Poste(value.v))
-              if (this.postPostGraph !== null) {
-                const node = new Node().setData<string>('name', value.v) as Node
-                this.postPostGraph.addNode(node)
-                ;(this.posteMap.get(value.v) as Poste).postPostNode = node
-              }
+            }
+            poste = this.posteMap.get(value.v) as Poste
+            if (this.postPostGraph !== null) {
+              const node = new Node().setData<string>('name', value.v) as Node
+              this.postPostGraph.addNode(node)
+              poste.postPostNode = node
             }
             i++
             value = sheet[nameOf(i, 0)]
@@ -613,16 +1030,19 @@ export default class RoutingAnalysisComponent extends Vue {
           i = 1
           value = sheet[nameOf(0, 1)]
           while (value !== undefined) {
-            colArray.push(value.v)
+            // colArray.push(value.v)
             rowArray.push(value.v)
             console.log(value.v)
+
+            let poste: Poste | null = null
             if (!this.posteMap.has(value.v)) {
               this.posteMap.set(value.v, new Poste(value.v))
-              if (this.postPostGraph !== null) {
-                const node = new Node().setData<string>('name', value.v) as Node
-                this.postPostGraph.addNode(node)
-                ;(this.posteMap.get(value.v) as Poste).postPostNode = node
-              }
+            }
+            poste = this.posteMap.get(value.v) as Poste
+            if (poste.postPostNode === null && this.postPostGraph !== null) {
+              const node = new Node().setData<string>('name', value.v) as Node
+              this.postPostGraph.addNode(node)
+              poste.postPostNode = node
             }
             i++
             value = sheet[nameOf(0, i)]
@@ -852,6 +1272,108 @@ export default class RoutingAnalysisComponent extends Vue {
         fileReader.readAsArrayBuffer(f)
       }
     }
+  }
+
+  private displayClassifMatrix (
+    matrix: Matrix,
+    attachedGraph: Graph,
+    classifField: string,
+    nodeTypeField?: string | undefined
+  ) {
+    requestAnimationFrame(() => {
+      matrix.printMat()
+
+      /*
+      const rowNodes = new Array<Node>(matrix.nbRow)
+      const colNodes = new Array<Node>(matrix.nbColumn)
+      const rowNames = new Array<string>(matrix.nbRow)
+      const colNames = new Array<string>(matrix.nbColumn)
+      if (nodeTypeField === undefined) {
+        attachedGraph.foreachNode(n => {
+          colNames[n.getData<number>('index')] = n.getData<string>('name')
+          colNodes[n.getData<number>('index')] = n
+          rowNames[n.getData<number>('index')] = n.getData<string>('name')
+          rowNodes[n.getData<number>('index')] = n
+        })
+      } else {
+        attachedGraph.foreachNode(n => {
+          if (n.getData<'row' | 'col'>('matCelltype') === 'col') {
+            colNames[n.getData<number>('index')] = n.getData<string>('name')
+            colNodes[n.getData<number>('index')] = n
+          } else {
+            rowNames[n.getData<number>('index')] = n.getData<string>('name')
+            rowNodes[n.getData<number>('index')] = n
+          }
+        })
+      }
+      console.log(colNames)
+      */
+
+      const rowNodeIndexMap = new Map<number, Node>()
+      const colNodeIndexMap = new Map<number, Node>()
+      if (nodeTypeField === undefined) {
+        attachedGraph.foreachNode(n => {
+          colNodeIndexMap.set(n.getData<number>('index'), n)
+          rowNodeIndexMap.set(n.getData<number>('index'), n)
+        })
+      } else {
+        attachedGraph.foreachNode(n => {
+          if (n.getData<'col' | 'row'>(nodeTypeField) === 'col') {
+            colNodeIndexMap.set(n.getData<number>('index'), n)
+          } else {
+            rowNodeIndexMap.set(n.getData<number>('index'), n)
+          }
+        })
+      }
+      (this.$refs.matrixViewer as MatrixViewer).setMatrix(
+        matrix,
+        new Array<string>(matrix.nbRow).fill('').map((v, index) => {
+          return (rowNodeIndexMap.get(
+            matrix.getRowLabel(index)
+          ) as Node).getData<string>('name')
+        }),
+        new Array<string>(matrix.nbColumn).fill('').map((v, index) => {
+          return (colNodeIndexMap.get(
+            matrix.getColLabel(index)
+          ) as Node).getData<string>('name')
+        }),
+        v => {
+          return v === 0 ? '' : '' + v
+        }
+      )
+      requestAnimationFrame(() => {
+        const rnode = (index: number) => {
+          return rowNodeIndexMap.get(index) as Node
+        }
+        const cnode = (index: number) => {
+          return colNodeIndexMap.get(index) as Node
+        }
+        ;(this.$refs.matrixViewer as MatrixViewer).foreachElement(
+          (x, y, el) => {
+            if (x >= 2 && y >= 2) {
+              if (
+                rnode(matrix.getRowLabel(y - 2)).getData<number>(
+                  classifField
+                ) ===
+                  cnode(matrix.getColLabel(x - 2)).getData<number>(
+                    classifField
+                  ) &&
+                cnode(matrix.getColLabel(x - 2)).getDataOrDefault<number>(
+                  classifField,
+                  -1
+                ) !== -1
+              ) {
+                el.style.backgroundColor = cnode(
+                  matrix.getColLabel(x - 2)
+                ).getData<string>('color')
+              } else {
+                el.style.backgroundColor = ''
+              }
+            }
+          }
+        )
+      })
+    })
   }
 }
 </script>

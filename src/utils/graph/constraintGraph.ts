@@ -350,7 +350,7 @@ export class ConstraintGraph {
         if (
           Vector2.norm(Vector2.minus(link.getData<Vec2>('position'), p)) > 0.01
         ) {
-          link.setData<boolean>('visible', true)
+          // link.setData<boolean>('visible', true)
           angles.push({
             angle: Vector2.angle(
               Vector2.minus(link.getData<Vec2>('position'), p)
@@ -476,8 +476,8 @@ export class ConstraintGraph {
           Array.from(links.values())
         )
         links.forEach(l => {
-          (l.getLink(node) as Link).setData<boolean>('visible', true)
-          ;(l.getLink(node) as Link).setData<Node | undefined>(
+          // (l.getLink(node) as Link).setData<boolean>('visible', true)
+          (l.getLink(node) as Link).setData<Node | undefined>(
             'desplayedNode',
             undefined
           )
@@ -761,7 +761,7 @@ export class ConstraintGraph {
                 )
                 // console.log(path[i].pos);
                 n.setData<number>('size', 0)
-                n.setData<boolean>('visible', false)
+                // n.setData<boolean>('visible', false)
                 n.addLink(lastNodes.get(path[i].links[j]) as Node)
                   .copyData('color', path[i].links[j])
                   .setData<number>('width', 2)
@@ -789,16 +789,16 @@ export class ConstraintGraph {
                 )
                 ;(nodePaths.get(path[i].linkOut as Node) as Vec2[]).push(pos)
                 n.setData<number>('size', 0)
-                n.setData<boolean>('visible', false)
+                // n.setData<boolean>('visible', false)
                 n.addLink(lastNodes.get(path[i].linkOut as Node) as Node)
                   .copyData('color', path[i].linkOut as Node)
                   .setData<number>('width', 2)
                 n.addLink(path[i].linkOut as Node)
                   .copyData('color', path[i].linkOut as Node)
                   .setData<boolean>('in', true)
-                ;((path[i].linkOut as Node).getLink(node) as Link).setData<
+                /* ;((path[i].linkOut as Node).getLink(node) as Link).setData<
                   boolean
-                >('visible', false)
+                >('visible', false) */
                 ;((path[i].linkOut as Node).getLink(node) as Link).setData<
                   Node
                 >('displayedNode', n)
@@ -820,24 +820,26 @@ export class ConstraintGraph {
                     )
                   ) as Node
                 n.setData<number>('size', 0)
-                n.setData<boolean>('visible', false)
+                // n.setData<boolean>('visible', false)
                 n.addLink(lastNodes.get(path[i].links[0] as Node) as Node)
                   .copyData('color', path[i].links[0] as Node)
                   .setData<number>('width', 2)
                 n.addLink(path[i].links[0] as Node)
                   .copyData('color', path[i].links[0] as Node)
                   .setData<boolean>('in', true)
-                ;((path[i].links[0] as Node).getLink(node) as Link).setData<
+                /* ;((path[i].links[0] as Node).getLink(node) as Link).setData<
                   boolean
-                >('visible', false)
+                >('visible', false) */
               }
             }
+            /*
             if (path[path.length - 1].links[0] !== undefined) {
               // lastNode.addLink(path[path.length-1].links[0]).copyData("color", path[path.length-1].links[0]).setData<boolean>("in", true);
               ((path[path.length - 1].links[0] as Node).getLink(
                 node
               ) as Link).setData<boolean>('visible', false)
             }
+            */
 
             nodePaths.forEach((value: Vec2[], key: Node) => {
               (key.getLink(node) as Link).setData<Vec2[]>('path', value)
@@ -1085,6 +1087,7 @@ export class ConstraintGraph {
     const link = (this.source.get(sourceName) as Source).addLink(
       this.contrainte.get(contraintName) as Constraint
     ) as Link
+    link.setData<number>('weight', strength)
     link.setData<number>('width', Math.abs(strength))
     link.setData<number>('strength', strength)
     link.setData<boolean>('usePhysics', true)
@@ -1115,6 +1118,7 @@ export class ConstraintGraph {
     const link = (this.source.get(fromSourceName) as Source).addLink(
       this.source.get(toSourceName) as Source
     ) as Link
+    link.setData<number>('weight', strength)
     link.setData<number>('width', Math.abs(strength))
     link.setData<number>('strength', strength)
     link.setData<boolean>('usePhysics', true)
