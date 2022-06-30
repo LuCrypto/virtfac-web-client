@@ -8,15 +8,26 @@
         method. This method, in contrast to the "expert" approach, allows for
         faster processing of complex analysis cases.</v-card-subtitle
       >
-      <v-card-text>
+      <v-card-text style="gap: 16px; display: flex; flex-direction: row;">
         <v-btn
           depressed
+          outlined
           color="primary"
           class="black--text"
           href="https://seafile.unistra.fr/f/ba6913e0805e4304aaa5/?dl=1"
           download
         >
           Download Contradiction Analysis
+        </v-btn>
+
+        <v-btn
+          depressed
+          color="primary"
+          class="black--text"
+          href="https://seafile.unistra.fr/f/9fa04647f6fc455191eb/?dl=1"
+          download
+        >
+          Download Contradiction Analysis New Version
         </v-btn>
       </v-card-text>
     </v-card>
