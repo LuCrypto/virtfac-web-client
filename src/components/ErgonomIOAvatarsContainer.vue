@@ -30,8 +30,8 @@
 .slider::-webkit-slider-thumb {
   -webkit-appearance: none; /* Override default look */
   appearance: none;
-  width: 30px; /* Set a specific slider handle width */
-  height: 30px; /* Slider handle height */
+  width: 25px; /* Set a specific slider handle width */
+  height: 25px; /* Slider handle height */
   background: #f5a406; /* Green background */
   cursor: pointer; /* Cursor on hover */
   border-radius: 50%;
@@ -141,7 +141,7 @@
               :key="morphIndex"
             >
               {{ morphItem.name }}
-              <div class="slidecontainer">
+              <div class="slidecontainer mb-4">
                 <input
                   type="range"
                   min="0"
@@ -371,12 +371,12 @@ class Avatar {
   // Name
   name = ''
   // Meshes names
-  hairMeshName = ''
-  pantsMeshName = ''
-  shirtMeshName = ''
-  headMeshName = ''
-  shoesMeshName = ''
-  beardMeshName = ''
+  beardName = ''
+  hairName = ''
+  shirtName = ''
+  pantName = ''
+  headName = ''
+  shoesName = ''
   // Player Data values
   hipWidth = 0
   body = 0
@@ -384,7 +384,7 @@ class Avatar {
   head = 0
   shoulderWidth = 0
   upperArm = 0
-  forearm = 0
+  foreArm = 0
   palm = 0
   upperLeg = 0
   lowerLeg = 0
@@ -400,9 +400,9 @@ class Avatar {
   buttockSize = 0
   legSize = 0
   // Colors Values
-  skinColor = 0
-  hairColor = 0
-  beardColor = 0
+  skinHexColor = 0
+  hairHexColor = 0
+  beardHexColor = 0
 }
 
 @Component({
@@ -436,7 +436,11 @@ export default class ErgonomIOAvatarsContainer extends Vue {
   materialArray: MeshLambertMaterial[] = []
 
   hairMaterial: MeshLambertMaterial = new MeshLambertMaterial({
-    color: 0xe19e83
+    color: 0x90542f
+  })
+
+  beardMaterial: MeshLambertMaterial = new MeshLambertMaterial({
+    color: 0x90542f
   })
 
   value = 0
@@ -624,7 +628,6 @@ export default class ErgonomIOAvatarsContainer extends Vue {
         this.hairMesh.clear()
         this.hairMesh = fbx
         mesh = this.hairMesh.children[0] as THREE.Mesh
-
         mesh.material = this.hairMaterial
         break
       }
@@ -632,6 +635,8 @@ export default class ErgonomIOAvatarsContainer extends Vue {
         /* Beard */
         this.beardMesh.clear()
         this.beardMesh = fbx
+        mesh = this.beardMesh.children[0] as THREE.Mesh
+        mesh.material = this.beardMaterial
         break
       }
       case 4: {
@@ -983,27 +988,21 @@ export default class ErgonomIOAvatarsContainer extends Vue {
     profile.name = this.playerData.name
     // Hair Mesh Case
     if (this.mainMenu.items[2].selected === 0) {
-      profile.hairMeshName = ''
+      profile.hairName = ''
     } else {
-      profile.hairMeshName = this.hairNamesArray[
+      profile.hairName = this.hairNamesArray[
         this.mainMenu.items[2].selected - 1
       ]
     }
-    profile.pantsMeshName = this.pantsNamesArray[
-      this.mainMenu.items[3].selected
-    ]
-    profile.shirtMeshName = this.shirtNamesArray[
-      this.mainMenu.items[4].selected
-    ]
-    profile.headMeshName = this.headNamesArray[this.mainMenu.items[6].selected]
-    profile.shoesMeshName = this.shoesNamesArray[
-      this.mainMenu.items[5].selected
-    ]
+    profile.pantName = this.pantsNamesArray[this.mainMenu.items[3].selected]
+    profile.shirtName = this.shirtNamesArray[this.mainMenu.items[4].selected]
+    profile.headName = this.headNamesArray[this.mainMenu.items[6].selected]
+    profile.shoesName = this.shoesNamesArray[this.mainMenu.items[5].selected]
     // Beard mesh case
     if (this.mainMenu.items[3].selected === 0) {
-      profile.beardMeshName = ''
+      profile.beardName = ''
     } else {
-      profile.beardMeshName = this.beardNamesArray[
+      profile.beardName = this.beardNamesArray[
         this.mainMenu.items[3].selected - 1
       ]
     }
@@ -1015,7 +1014,7 @@ export default class ErgonomIOAvatarsContainer extends Vue {
     profile.head = this.playerData.items[3].value
     profile.shoulderWidth = this.playerData.items[4].value
     profile.upperArm = this.playerData.items[5].value
-    profile.forearm = this.playerData.items[6].value
+    profile.foreArm = this.playerData.items[6].value
     profile.palm = this.playerData.items[7].value
     profile.upperLeg = this.playerData.items[8].value
     profile.lowerLeg = this.playerData.items[9].value
@@ -1033,11 +1032,11 @@ export default class ErgonomIOAvatarsContainer extends Vue {
     profile.legSize = this.morphList[7].value / 100
 
     // Color values
-    profile.skinColor = parseInt(
+    profile.skinHexColor = parseInt(
       '0x' + this.mainMenu.items[0].items[this.mainMenu.items[0].selected].value
     )
-    profile.hairColor = 0x000000
-    profile.beardColor = 0x000000
+    profile.hairHexColor = 0x000000
+    profile.beardHexColor = 0x000000
 
     const json = JSON.stringify(profile)
     console.log(json)
