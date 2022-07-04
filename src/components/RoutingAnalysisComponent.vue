@@ -1112,16 +1112,55 @@ export default class RoutingAnalysisComponent extends Vue {
           }
           const wb = XLSX.read(arr.join(''), { type: 'binary' })
 
-          const sheet = wb.Sheets[wb.SheetNames[0]]
+          const searchSheet = (source: string, name: string) => {
+            return source.includes(name) && source.includes('data')
+          }
 
-          console.log(sheet)
+          const itemSheet =
+            wb.Sheets[
+              wb.SheetNames.find(value => {
+                return searchSheet(value.toLowerCase(), 'item')
+              }) as string
+            ]
+          const posteSheet =
+            wb.Sheets[
+              wb.SheetNames.find(value => {
+                return searchSheet(value.toLowerCase(), 'poste')
+              }) as string
+            ]
+          const gammeSheet =
+            wb.Sheets[
+              wb.SheetNames.find(value => {
+                return searchSheet(value.toLowerCase(), 'gamme')
+              }) as string
+            ]
+
+          console.log(gammeSheet)
           const nameOf: { (x: number, y: number): string } = (x, y) => {
             return XLSX.utils.encode_cell({ c: x, r: y })
           }
+          console.log(nameOf(0, 2))
 
-          let phaseValue = +sheet[nameOf(2, 1)].v
+          const itemRefMap = new Map<string, string>()
+          const posteRefMap = new Map<string, string>()
+
+          let i = 1
+          while (itemSheet[nameOf(0, i)] !== undefined) {
+            itemRefMap.set(itemSheet[nameOf(0, i)].v, itemSheet[nameOf(1, i)].v)
+            i++
+          }
+          i = 1
+          while (posteSheet[nameOf(0, i)] !== undefined) {
+            posteRefMap.set(
+              posteSheet[nameOf(0, i)].v,
+              posteSheet[nameOf(1, i)].v
+            )
+            i++
+          }
+
+          let phaseValue = +gammeSheet[nameOf(1, 1)].v
           let row = 1
-          let nodeValue = sheet[nameOf(1, 1)].v
+          let nodeValue = gammeSheet[nameOf(2, 1)].v
 
           if (nodeValue === undefined) return
           const posteMap = new Map<string, Node>()
@@ -1135,25 +1174,28 @@ export default class RoutingAnalysisComponent extends Vue {
           posteMap.set(
             nodeValue,
             orderGraph.graph.addNode(
-              new Node().setData<string>('name', nodeValue) as Node
+              new Node().setData<string>(
+                'name',
+                posteRefMap.get(nodeValue) as string
+              ) as Node
             )
           )
           posteMapforArticle.set(
             nodeValue,
             this.articlePostGraph.addNode(
               new Node()
-                .setData<string>('name', nodeValue)
+                .setData<string>('name', posteRefMap.get(nodeValue) as string)
                 .setData<'row' | 'col'>('matCelltype', 'col') as Node
             )
           )
-          console.log(nodeValue)
+          console.log(posteRefMap.get(nodeValue) as string)
 
-          const article = sheet[nameOf(0, 1)].v
+          let article = gammeSheet[nameOf(0, 1)].v
           articleMap.set(
             article,
             this.articlePostGraph.addNode(
               new Node()
-                .setData<string>('name', article)
+                .setData<string>('name', itemRefMap.get(article) as string)
                 .setData<'row' | 'col'>('matCelltype', 'row') as Node
             )
           )
@@ -1163,35 +1205,47 @@ export default class RoutingAnalysisComponent extends Vue {
 
           do {
             row++
+            console.log(row)
             // console.log(nodeValue + " : " + phaseValue);
-            const next = sheet[nameOf(1, row)]
+            const next = gammeSheet[nameOf(2, row)]
             if (next !== undefined) {
               const nextNode = next.v
-              const nextPhase = +sheet[nameOf(2, row)].v
+              const nextPhase = +gammeSheet[nameOf(1, row)].v
               if (!posteMap.has(nextNode)) {
-                console.log('add Node : ' + nextNode)
+                console.log(
+                  ('add Node : ' + posteRefMap.get(nextNode)) as string
+                )
                 posteMap.set(
                   nextNode,
                   orderGraph.graph.addNode(
-                    new Node().setData<string>('name', nextNode) as Node
+                    new Node().setData<string>(
+                      'name',
+                      posteRefMap.get(nextNode) as string
+                    ) as Node
                   )
                 )
                 posteMapforArticle.set(
                   nextNode,
                   this.articlePostGraph.addNode(
                     new Node()
-                      .setData<string>('name', nextNode)
+                      .setData<string>(
+                        'name',
+                        posteRefMap.get(nextNode) as string
+                      )
                       .setData<'row' | 'col'>('matCelltype', 'col') as Node
                   )
                 )
               }
-              const nextArticle = sheet[nameOf(0, row)].v
+              const nextArticle = gammeSheet[nameOf(0, row)].v
               if (!articleMap.has(nextArticle)) {
                 articleMap.set(
                   nextArticle,
                   this.articlePostGraph.addNode(
                     new Node()
-                      .setData<string>('name', nextArticle)
+                      .setData<string>(
+                        'name',
+                        itemRefMap.get(nextArticle) as string
+                      )
                       .setData<'row' | 'col'>('matCelltype', 'row') as Node
                   )
                 )
@@ -1200,7 +1254,7 @@ export default class RoutingAnalysisComponent extends Vue {
                 posteMapforArticle.get(nextNode) as Node
               )
 
-              if (nextPhase > phaseValue) {
+              if (article === nextArticle) {
                 const n1 = posteMap.get(nodeValue) as Node
                 const n2 = posteMap.get(nextNode) as Node
                 let link = n1.getLink(n2)
@@ -1226,12 +1280,11 @@ export default class RoutingAnalysisComponent extends Vue {
                   nextArticle,
                   (articleWeightMap.get(nextArticle) as number) + 1
                 )
-              } else {
-                // console.log('link ignored')
               }
 
               phaseValue = nextPhase
               nodeValue = nextNode
+              article = nextArticle
             } else {
               nodeValue = undefined
             }
