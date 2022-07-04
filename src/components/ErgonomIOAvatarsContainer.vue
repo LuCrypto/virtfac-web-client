@@ -400,9 +400,9 @@ class Avatar {
   buttockSize = 0
   legSize = 0
   // Colors Values
-  skinHexColor = 0
-  hairHexColor = 0
-  beardHexColor = 0
+  skinHexColor = ''
+  hairHexColor = ''
+  beardHexColor = ''
 }
 
 @Component({
@@ -464,68 +464,68 @@ export default class ErgonomIOAvatarsContainer extends Vue {
   ]
 
   beardNamesArray = [
-    'Beard.000.fbx',
-    'Beard.001.fbx',
-    'Beard.002.fbx',
-    'Beard.003.fbx',
-    'Beard.004.fbx'
+    'Beard_000.fbx',
+    'Beard_001.fbx',
+    'Beard_002.fbx',
+    'Beard_003.fbx',
+    'Beard_004.fbx'
   ]
 
   hairNamesArray = [
-    'Hair.000.fbx',
-    'Hair.001.fbx',
-    'Hair.002.fbx',
-    'Hair.003.fbx',
-    'Hair.004.fbx',
-    'Hair.005.fbx',
-    'Hair.006.fbx',
-    'Hair.007.fbx',
-    'Hair.008.fbx',
-    'Hair.009.fbx',
-    'Hair.010.fbx',
-    'Hair.011.fbx',
-    'Hair.012.fbx',
-    'Hair.013.fbx',
-    'Hair.014.fbx',
-    'Hair.015.fbx',
-    'Hair.016.fbx',
-    'Hair.017.fbx',
-    'Hair.018.fbx',
-    'Hair.019.fbx',
-    'Hair.020.fbx',
-    'Hair.021.fbx',
-    'Hair.022.fbx',
-    'Hair.023.fbx',
-    'Hair.024.fbx',
-    'Hair.025.fbx',
-    'Hair.026.fbx',
-    'Hair.027.fbx',
-    'Hair.028.fbx',
-    'Hair.029.fbx',
-    'Hair.030.fbx',
-    'Hair.031.fbx',
-    'Hair.032.fbx',
-    'Hair.033.fbx',
-    'Hair.034.fbx',
-    'Hair.035.fbx',
-    'Hair.036.fbx',
-    'Hair.037.fbx',
-    'Hair.038.fbx',
-    'Hair.039.fbx',
-    'Hair.040.fbx',
-    'Hair.041.fbx',
-    'Hair.042.fbx',
-    'Hair.043.fbx',
-    'Hair.044.fbx',
-    'Hair.045.fbx',
-    'Hair.046.fbx',
-    'Hair.047.fbx',
-    'Hair.049.fbx',
-    'Hair.050.fbx',
-    'Hair.051.fbx',
-    'Hair.052.fbx',
-    'Hair.053.fbx',
-    'Hair.054.fbx'
+    'Hair_000.fbx',
+    'Hair_001.fbx',
+    'Hair_002.fbx',
+    'Hair_003.fbx',
+    'Hair_004.fbx',
+    'Hair_005.fbx',
+    'Hair_006.fbx',
+    'Hair_007.fbx',
+    'Hair_008.fbx',
+    'Hair_009.fbx',
+    'Hair_010.fbx',
+    'Hair_011.fbx',
+    'Hair_012.fbx',
+    'Hair_013.fbx',
+    'Hair_014.fbx',
+    'Hair_015.fbx',
+    'Hair_016.fbx',
+    'Hair_017.fbx',
+    'Hair_018.fbx',
+    'Hair_019.fbx',
+    'Hair_020.fbx',
+    'Hair_021.fbx',
+    'Hair_022.fbx',
+    'Hair_023.fbx',
+    'Hair_024.fbx',
+    'Hair_025.fbx',
+    'Hair_026.fbx',
+    'Hair_027.fbx',
+    'Hair_028.fbx',
+    'Hair_029.fbx',
+    'Hair_030.fbx',
+    'Hair_031.fbx',
+    'Hair_032.fbx',
+    'Hair_033.fbx',
+    'Hair_034.fbx',
+    'Hair_035.fbx',
+    'Hair_036.fbx',
+    'Hair_037.fbx',
+    'Hair_038.fbx',
+    'Hair_039.fbx',
+    'Hair_040.fbx',
+    'Hair_041.fbx',
+    'Hair_042.fbx',
+    'Hair_043.fbx',
+    'Hair_044.fbx',
+    'Hair_045.fbx',
+    'Hair_046.fbx',
+    'Hair_047.fbx',
+    'Hair_049.fbx',
+    'Hair_050.fbx',
+    'Hair_051.fbx',
+    'Hair_052.fbx',
+    'Hair_053.fbx',
+    'Hair_054.fbx'
   ]
 
   pantsNamesArray = ['pants.fbx']
@@ -882,8 +882,8 @@ export default class ErgonomIOAvatarsContainer extends Vue {
     this.createMenu()
     this.createItems()
     this.loadMesh('./Avatars/Shirt/shirt.fbx', 1)
-    this.loadMesh('./Avatars/Hairs/Hair.000.fbx', 2)
-    this.loadMesh('./Avatars/Beard/Beard.000.fbx', 3)
+    this.loadMesh('./Avatars/Hairs/Hair_000.fbx', 2)
+    this.loadMesh('./Avatars/Beard/Beard_000.fbx', 3)
     this.loadMesh('./Avatars/Pants/pants.fbx', 4)
     this.loadMesh('./Avatars/Shoes/shoes.fbx', 5)
     this.loadMesh('./Avatars/Head/skin.fbx', 6)
@@ -992,19 +992,30 @@ export default class ErgonomIOAvatarsContainer extends Vue {
     } else {
       profile.hairName = this.hairNamesArray[
         this.mainMenu.items[2].selected - 1
-      ]
+      ].split('.fbx')[0]
     }
-    profile.pantName = this.pantsNamesArray[this.mainMenu.items[3].selected]
-    profile.shirtName = this.shirtNamesArray[this.mainMenu.items[4].selected]
-    profile.headName = this.headNamesArray[this.mainMenu.items[6].selected]
-    profile.shoesName = this.shoesNamesArray[this.mainMenu.items[5].selected]
+    profile.shirtName = this.shirtNamesArray[
+      this.mainMenu.items[4].selected
+    ].split('.fbx')[0]
+    profile.shirtName = profile.shirtName.split('fbx')[0]
+
+    profile.pantName = this.pantsNamesArray[
+      this.mainMenu.items[4].selected
+    ].split('.fbx')[0]
+
+    profile.headName = this.headNamesArray[
+      this.mainMenu.items[6].selected
+    ].split('.fbx')[0]
+    profile.shoesName = this.shoesNamesArray[
+      this.mainMenu.items[5].selected
+    ].split('.fbx')[0]
     // Beard mesh case
     if (this.mainMenu.items[3].selected === 0) {
       profile.beardName = ''
     } else {
       profile.beardName = this.beardNamesArray[
         this.mainMenu.items[3].selected - 1
-      ]
+      ].split('.fbx')[0]
     }
 
     // PlayerData values
@@ -1032,11 +1043,13 @@ export default class ErgonomIOAvatarsContainer extends Vue {
     profile.legSize = this.morphList[7].value / 100
 
     // Color values
-    profile.skinHexColor = parseInt(
-      '0x' + this.mainMenu.items[0].items[this.mainMenu.items[0].selected].value
-    )
-    profile.hairHexColor = 0x000000
-    profile.beardHexColor = 0x000000
+    // profile.skinHexColor = parseInt(
+    //   '0x' + this.mainMenu.items[0].items[this.mainMenu.items[0].selected].value
+    // )
+    profile.skinHexColor =
+      '#' + this.mainMenu.items[0].items[this.mainMenu.items[0].selected].value
+    profile.hairHexColor = '#000000'
+    profile.beardHexColor = '#000000'
 
     const json = JSON.stringify(profile)
     console.log(json)
