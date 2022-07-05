@@ -61,7 +61,7 @@
               <v-card-text>
                 {{ scene.formatedCreationDate }}, nombre assets :
                 {{ scene.assetsNumber }}, id : {{ scene.id }}, owner :
-                {{ scene.idUserOwner }}
+                {{ scene.idUserOwner }}, id profile : {{ scene.idProfile }}
               </v-card-text>
 
               <v-card-actions class="flex-wrap">
@@ -110,7 +110,7 @@
           </v-row>
 
           <!-- Les différents boutons -->
-          <v-container class="mt-8" fluid>
+          <v-container fluid class="mt-8">
             <v-col>
               <v-row
                 no-gutters
@@ -148,6 +148,14 @@
                   elevation="2"
                 >
                   Add object in scene
+                </v-btn>
+                <v-btn
+                  @click="saveCurrentScene"
+                  class="primary black--text flex-grow-1"
+                  large
+                  elevation="2"
+                >
+                  Save current scene
                 </v-btn>
               </v-row>
               <v-row no-gutters>
@@ -312,48 +320,8 @@
 import { Component, Vue } from 'vue-property-decorator'
 import API from '@/utils/api'
 import Unreal from '@/utils/unreal'
-import { imageAsset, haguenauImageAsset } from '@/utils/defaultData'
-
-class CardModel {
-  // Initialisation
-  name = ''
-  picture = imageAsset
-  tags = '[]'
-  id = 0
-  color = 0
-  assetsNumber = 0
-  creationDate = 0
-  data = '{}'
-  idProject = 0
-  idUserOwner = 0
-  modificationDate = 0
-  spawnX = 0
-  spawnY = 0
-  spawnZ = 0
-
-  parsedData: any = null
-  parsedTags: string[] = []
-
-  // Permet de récupérer une date en format string
-  get formatedCreationDate (): string {
-    return new Date(this.creationDate).toLocaleString()
-  }
-
-  // Permet de construire une scène
-  constructor (params: Partial<CardModel>) {
-    this.name = `NewScene_${String(Date.now()).slice(-7)}`
-    this.color = Math.floor(Math.random() * 16777215)
-    Object.assign(this, params)
-    try {
-      console.log(params.tags)
-      this.parsedData = JSON.parse(this.data || '[]')
-      this.parsedTags = JSON.parse(this.tags || '[]')
-      console.log(this.parsedTags)
-    } catch (e) {
-      console.error(e)
-    }
-  }
-}
+import CardModel from '@/utils/cardmodel'
+import { haguenauImageAsset } from '@/utils/defaultData'
 
 // Scene recue d'unreal
 class SceneRecue {
@@ -389,18 +357,6 @@ class Autre {
   }
 }
 
-// Message venant d'Unreal
-class messageUnreal {
-  // message = ''
-  nomScene = ''
-  // dataRoom: CardModel = new CardModel({})
-  data: Autre = new Autre({})
-
-  constructor (params: Partial<Autre>) {
-    Object.assign(this, params)
-  }
-}
-
 @Component
 export default class ErgonomIOAssets extends Vue {
   // Initialisation
@@ -415,7 +371,7 @@ export default class ErgonomIOAssets extends Vue {
   modifyScene = false
 
   search = ''
-  sceneChoose: any = new CardModel({ id: 2 })
+  sceneChoose: CardModel = new CardModel({ id: 2 })
 
   newTag = ''
   newImage = ''
@@ -444,9 +400,6 @@ export default class ErgonomIOAssets extends Vue {
   mounted (): void {
     this.requeteAPI()
 
-    // TODO : remove this
-    // this.scenes.push(this.haguenauExample)
-
     // Permet de récupérer la réponse d'Unreal
     Unreal.callback.$on('unreal-message', (data: unknown) => {
       this.$root.$emit('bottom-message', `Unreal : ${JSON.stringify(data)}`)
@@ -460,17 +413,16 @@ export default class ErgonomIOAssets extends Vue {
         this.$root.$emit('bottom-message', `Unreal : ${e}`)
       }
 
-      // Unreal.send(maScene.assets[0].name)
       Unreal.send(maScene?.scene.nombreAssets.toString())
       Unreal.send(maScene?.scene.idScene.toString())
-      // Unreal.send(maScene.scene.idScene.toString())
-      // Unreal.send(maScene?.assets)
 
       var maCard = new CardModel({
         assetsNumber: maScene?.scene.nombreAssets,
         id: maScene?.scene.idScene,
         data: JSON.stringify(maScene?.assets)
       })
+
+      // refreshScenes
 
       this.releaseScene(maCard)
     })
@@ -539,10 +491,11 @@ export default class ErgonomIOAssets extends Vue {
         spawnX: scene.spawnX,
         spawnY: scene.spawnY,
         spawnZ: scene.spawnZ,
-        tags: JSON.stringify(scene.parsedTags)
+        tags: JSON.stringify(scene.parsedTags),
+        idProfile: scene.idProfile
       })
     ).then((response: Response) => {
-      console.log('api modif scene')
+      console.log('api modif scene : ', response)
       this.refreshScenes()
     })
   }
@@ -551,7 +504,7 @@ export default class ErgonomIOAssets extends Vue {
   deleteSceneAPi (id: number): void {
     API.delete(this, `/resources/ergonomio-scenes/${id}`, '').then(
       (response: Response) => {
-        console.log('supprimer scene')
+        console.log('supprimer scene : ', response)
       }
     )
   }
@@ -594,6 +547,20 @@ export default class ErgonomIOAssets extends Vue {
 
       Unreal.send(object)
     }
+  }
+
+  // Permet de sauvegarder la scene courante
+  saveCurrentScene (): void {
+    var objectAsset = {
+      action: 'sauvegarderSceneCourante'
+    }
+
+    var object = {
+      menu: 'scene',
+      objet: objectAsset
+    }
+
+    Unreal.send(object)
   }
 
   // Permet de mettre à jour la scène
@@ -752,6 +719,7 @@ export default class ErgonomIOAssets extends Vue {
       [...target.files].forEach(file => {
         const reader = new FileReader()
         reader.onload = e => {
+          console.log('e : ', e)
           console.log(reader.result)
           console.log('============')
           console.log('============')
@@ -831,13 +799,8 @@ export default class ErgonomIOAssets extends Vue {
     }
   }
 
-  // Permet d'envoyer un message à l'instance unreal
-  // Permet de charger sur la scène cliquée
+  // Permet de charger la scène cliquée
   sendUnreal (scene: CardModel): void {
-    // console.log('asset.name : ', scene.name)
-    // console.log('asset.id : ', scene.id)
-    // console.log('asset : ', scene)
-
     var objectAsset = {
       name: scene.name,
       assetsNumber: scene.assetsNumber,
@@ -845,15 +808,14 @@ export default class ErgonomIOAssets extends Vue {
       idScene: scene.id,
       action: 'chargerScene',
       nomRoom: '',
-      creerRoom: 0
+      creerRoom: 0,
+      idProfil: scene.idProfile
     }
 
     var object = {
       menu: 'scene',
       objet: objectAsset
     }
-
-    // console.log('data : ', scene.data)
 
     Unreal.send(object)
   }

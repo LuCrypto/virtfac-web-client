@@ -112,49 +112,8 @@
 import { Component, Vue } from 'vue-property-decorator'
 import API from '@/utils/api'
 import Unreal from '@/utils/unreal'
-import VueRouter, { RouterMode } from 'vue-router'
-import { imageAsset, haguenauImageAsset } from '@/utils/defaultData'
-
-class CardModel {
-  // Initialisation
-  name = ''
-  picture = imageAsset
-  tags = '[]'
-  id = 0
-  color = 0
-  assetsNumber = 0
-  creationDate = 0
-  data = '{}'
-  idProject = 0
-  idUserOwner = 0
-  modificationDate = 0
-  spawnX = 0
-  spawnY = 0
-  spawnZ = 0
-
-  parsedData: any = null
-  parsedTags: string[] = []
-
-  // Permet de récupérer une date en format string
-  get formatedCreationDate (): string {
-    return new Date(this.creationDate).toLocaleString()
-  }
-
-  // Permet de construire une scène
-  constructor (params: Partial<CardModel>) {
-    this.name = `NewScene_${String(Date.now()).slice(-7)}`
-    this.color = Math.floor(Math.random() * 16777215)
-    Object.assign(this, params)
-    try {
-      console.log(params.tags)
-      this.parsedData = JSON.parse(this.data || '[]')
-      this.parsedTags = JSON.parse(this.tags || '[]')
-      console.log(this.parsedTags)
-    } catch (e) {
-      console.error(e)
-    }
-  }
-}
+import VueRouter from 'vue-router'
+import CardModel from '@/utils/cardmodel'
 
 class Room {
   nom = 'room'
@@ -164,16 +123,6 @@ class Room {
   dateCreation = '20/04/2022'
   joueurs = 1
   // Mettre la scene
-
-  constructor (params: Partial<Room>) {
-    Object.assign(this, params)
-  }
-}
-
-// Message venant d'Unreal
-class messageUnreal {
-  message = ''
-  dataRoom: Room = new Room({})
 
   constructor (params: Partial<Room>) {
     Object.assign(this, params)
@@ -190,7 +139,7 @@ export default class ErgonomIOAssets extends Vue {
 
   maSceneSelection = ''
   scenes: CardModel[] = []
-  maRoomSauvegarder = new Room({})
+  maRoomSauvegarder: Room = new Room({})
 
   unrealContext = Unreal
 
@@ -198,6 +147,7 @@ export default class ErgonomIOAssets extends Vue {
   mounted (): void {
     this.getScenes()
 
+    // eslint-disable-next-line
     Unreal.callback.$on('unreal-message', (data: any) => {
       this.$root.$emit('bottom-message', `Unreal : ${JSON.stringify(data)}`)
 
@@ -220,6 +170,7 @@ export default class ErgonomIOAssets extends Vue {
     })
   }
 
+  // Permet de récupérer les scenes
   getScenes (): void {
     API.post(
       this,
@@ -258,12 +209,12 @@ export default class ErgonomIOAssets extends Vue {
   }
 
   // ???
-  refreshRoomActuelle () {
+  refreshRoomActuelle (): void {
     this.rooms = []
   }
 
   // Permet de quitter la room actuelle
-  quitRoomCurrent () {
+  quitRoomCurrent (): void {
     this.rooms = []
   }
 
