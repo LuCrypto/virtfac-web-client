@@ -365,7 +365,7 @@ export class MatrixUtils {
   public static symetricBlockDiagonalisation (
     a: Matrix,
     alpha = 0.5
-  ): { score: number; assigns: Map<number, number> } {
+  ): { score: number; assigns: Map<number, number>; nbClass: number } {
     const bestGroups = new Map<number, number>()
 
     let nbGroups = 0
@@ -481,15 +481,30 @@ export class MatrixUtils {
       }
     })
 
+    let nbClass = 0
     // const v = MatrixUtils.groupConcordance(a, rowGroups, colGroups, alpha)
     const rg = new Array<number>()
     for (let i = 0; i < nbGroups + 1; i++) {
       Array.prototype.push.apply(rg, rgroups[i])
+      if (rgroups[i].length > 0) nbClass++
     }
     a.reorderRows(rg)
     a.reorderColumns(rg)
 
-    return { score: 0, assigns: bestGroups }
+    const res = new Map<number, number>()
+
+    const map = new Map<number, number>()
+    map.set(-1, -1)
+
+    bestGroups.forEach((value, key) => {
+      if (!map.has(value)) {
+        map.set(value, map.size)
+      }
+      bestGroups.set(key, map.get(value) as number)
+      res.set(a.getRowLabel(key), map.get(value) as number)
+    })
+
+    return { score: 0, assigns: bestGroups, nbClass: nbClass - 1 }
   }
 
   public static blockDiagonalisation (
@@ -499,6 +514,7 @@ export class MatrixUtils {
     score: number
     rowAssignment: Map<number, number>
     colAssignment: Map<number, number>
+    nbClass: number
   } {
     const bestColGroups = new Map<number, number>()
     const bestRowGroups = new Map<number, number>()
@@ -782,7 +798,8 @@ export class MatrixUtils {
     return {
       score: oldScore,
       rowAssignment: resRow,
-      colAssignment: resCol
+      colAssignment: resCol,
+      nbClass: map.size - 1
     }
   }
 

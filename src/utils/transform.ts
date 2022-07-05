@@ -68,4 +68,23 @@ export default class T {
 
     return this
   }
+
+  /**
+   * Convert transform to string
+   * * @param separator - Separator between each values (space by default)
+   * @returns - New string with format <position.x><separator><position.y><separator><size.x><separator><size.y>
+   */
+  toString (separator = ' '): string {
+    return `${this.position.toString(
+      separator
+    )}${separator}${this.size.toString(separator)}`
+  }
+
+  /**
+   * Get middle coordinate of transform
+   * @returns - V, the position of the middle (position + size / 2)
+   */
+  getMiddle (): V {
+    return this.position.addV(this.size.divN(2))
+  }
 }

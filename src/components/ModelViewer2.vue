@@ -72,7 +72,7 @@ export default class ModelViewer2 extends Vue {
     if (active) {
       const fogColor = new THREE.Color(color)
       // this.scene.background = fogColor
-      this.scene.fog = new THREE.Fog(fogColor, 0.0025, 20)
+      this.scene.fog = new THREE.Fog(fogColor, 0.000000025, 10)
     } else {
       const fogColor = new THREE.Color(color)
       // this.scene.background = fogColor
@@ -109,7 +109,7 @@ export default class ModelViewer2 extends Vue {
     // Create floor
     this.floor = new THREE.Mesh(
       new THREE.PlaneGeometry(size, size),
-      new THREE.MeshPhongMaterial({ color: backgroundColor })
+      new THREE.MeshPhongMaterial({ color: 0x999999, depthWrite: false })
     )
     this.floor.rotation.x = -Math.PI / 2
     this.floor.receiveShadow = true
@@ -143,7 +143,7 @@ export default class ModelViewer2 extends Vue {
     // Create sun visualizer
     // const sunHelper = new THREE.DirectionalLightHelper(sun, 4, 0xffb000)
     // this.scene.add(sunHelper)
-    this.setGrid(100, 100, 0xaaaaaa, 0xfefefe)
+    this.setGrid(100, 100, 0xaaaaaa, 0x363636)
     this.setEnvMap(studioEnvMap, 'HDR')
 
     if (this.displayFog) {
@@ -214,8 +214,8 @@ export default class ModelViewer2 extends Vue {
     return new Promise((resolve, reject) =>
       loader.load(
         path,
-        (object) => {
-          object.scene.traverse((child) => {
+        object => {
+          object.scene.traverse(child => {
             if (child instanceof THREE.Mesh) {
               child.castShadow = true
               child.receiveShadow = true
@@ -225,7 +225,7 @@ export default class ModelViewer2 extends Vue {
           resolve(object)
         },
         undefined,
-        (error) => reject(error)
+        error => reject(error)
       )
     )
   }
@@ -235,12 +235,12 @@ export default class ModelViewer2 extends Vue {
     return new Promise((resolve, reject) =>
       fbxLoader.load(
         path,
-        (object) => {
+        object => {
           if (this.scene != null) this.scene.add(object)
           resolve(object)
         },
         undefined,
-        (error) => reject(error)
+        error => reject(error)
       )
     )
   }

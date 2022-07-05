@@ -587,11 +587,11 @@ export default class ErgonomIOAvatarsContainer extends Vue {
   updateTheme (): void {
     if (this.viewer !== null) {
       if (Session.getTheme() === 'dark') {
-        this.viewer.setFogActive(true, 0xf5a406)
-        this.viewer.setGrid(100, 1, 0x555555, 0x1e1e1e, 0xeeeeee)
+        this.viewer.setFogActive(true, 0x1e1e1e)
+        this.viewer.setGrid(100, 1, 0x555555, 0x1e1e1e, 0x363636)
       } else {
-        this.viewer.setFogActive(true, 0xf5a406)
-        this.viewer.setGrid(100, 1, 0xaaaaaa, 0xfefefe, 0x111111)
+        this.viewer.setFogActive(true, 0xffffff)
+        this.viewer.setGrid(100, 1, 0xaaaaaa, 0xfefefe, 0x363636)
       }
     }
   }
