@@ -12,12 +12,20 @@ export default class DynamicChartData extends Vue {
           .subN(100 + Math.random() * 20)
       )
   })
-  private data!: V[]
+  protected data!: V[]
 
-  public box: T = new T()
+  @Prop({
+    default: () => (size: V) => null
+  })
+  private setSize!: (size: V) => void
+
+  public step = new V(50, 50)
+  public box: T = new T(new V(0, 0), this.step)
+  public gridBox: T = new T(new V(0, 0), this.step)
 
   mounted () {
     this.computeDataBox()
+    this.computeGridBox()
   }
 
   // Compute data box
@@ -33,7 +41,19 @@ export default class DynamicChartData extends Vue {
 
     this.box.position = min
     this.box.size = max.subV(min)
-    console.log('computed data box :', this.box)
     this.$parent.$emit('updateBox', this.box)
+  }
+
+  // Get grid from step
+  public computeGridBox (): void {
+    const stepper = (v: V) =>
+      v
+        .divV(this.step)
+        .floor()
+        .multV(this.step)
+    this.gridBox = new T(
+      stepper(this.box.position).subV(this.step),
+      stepper(this.box.size).addV(this.step.multN(3))
+    )
   }
 }

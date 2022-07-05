@@ -26,101 +26,137 @@ svg {
 }
 </style>
 <template>
-  <g>
-    <!-- Draw bounding box -->
-    <rect
-      :x="this.box.position.x"
-      :y="-(this.box.position.y + this.box.size.y)"
-      :width="this.box.size.x"
-      :height="this.box.size.y"
-      rx="10"
-      ry="10"
-      :stroke="theme.current.backgroundColorIn"
-      stroke-width="5"
-      fill="transparent"
-    ></rect>
-
-    <!-- Draw data curve -->
-    <line
-      v-for="(v, vi) in data"
-      :key="`v-${vi}`"
-      stroke="#f5a406"
-      :x1="v.x"
-      :y1="-v.y"
-      :x2="(data[vi + 1] || v).x"
-      :y2="-(data[vi + 1] || v).y"
-    ></line>
-
-    <!-- Draw data points -->
-    <g
-      fill="#f5a406"
-      v-for="(v, pi) in data"
-      :key="`p-${pi}`"
-      :transform="`translate(${v.x}, ${-v.y})`"
-      class="point"
-    >
-      <circle r="7"></circle>
-      <circle class="shadow" r="20"></circle>
-
-      <text
-        class="coordinates"
-        font-family="Montserrat"
-        font-size="14"
-        text-anchor="middle"
-        style="opacity: 0;"
-        :fill="theme.current.gridColorX"
-        y="40"
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    xmlns:xlink="http://www.w3.org/1999/xlink"
+    :viewBox="
+      `${this.gridBox.position.x - theme.current.styles.padding} ${-this.gridBox
+        .position.y + theme.current.styles.padding} ${this.gridBox.size
+        .addN(theme.current.styles.padding * 2)
+        .toString()}`
+    "
+    version="1.1"
+  >
+    <defs>
+      <pattern
+        id="grid"
+        x="0"
+        y="0"
+        :width="step.x"
+        :height="step.y"
+        patternUnits="userSpaceOnUse"
       >
-        {{ `${Math.round(v.x * 100) / 100}` }}
+        <rect
+          :width="step.x"
+          :height="step.y"
+          :fill="theme.current.colors.grid"
+        />
+        <rect
+          :x="theme.current.styles.grid.stroke / 2"
+          :y="theme.current.styles.grid.stroke / 2"
+          :width="step.x - theme.current.styles.grid.stroke"
+          :height="step.y - theme.current.styles.grid.stroke"
+          :fill="theme.current.colors.backgroundIn"
+        />
+      </pattern>
+    </defs>
+    <g>
+      <!-- Draw bounding box -->
+      <rect
+        :x="this.gridBox.position.x"
+        :y="-(this.gridBox.position.y + this.gridBox.size.y)"
+        :width="this.gridBox.size.x"
+        :height="this.gridBox.size.y"
+        rx="10"
+        ry="10"
+        :stroke="theme.current.colors.backgroundIn"
+        stroke-width="5"
+        fill="url(#grid)"
+      ></rect>
+
+      <!-- Draw data curve -->
+      <line
+        v-for="(v, vi) in data"
+        :key="`v-${vi}`"
+        stroke="#f5a406"
+        :x1="v.x"
+        :y1="-v.y"
+        :x2="(data[vi + 1] || v).x"
+        :y2="-(data[vi + 1] || v).y"
+      ></line>
+
+      <!-- Draw data points -->
+      <g
+        fill="#f5a406"
+        v-for="(v, pi) in data"
+        :key="`p-${pi}`"
+        :transform="`translate(${v.x}, ${-v.y})`"
+        class="point"
+      >
+        <circle r="7"></circle>
+        <circle class="shadow" r="20"></circle>
+
+        <text
+          class="coordinates"
+          font-family="Montserrat"
+          font-size="14"
+          text-anchor="middle"
+          style="opacity: 0;"
+          :fill="theme.current.colors.gridXAxis"
+          y="40"
+        >
+          {{ `${Math.round(v.x * 100) / 100}` }}
+        </text>
+        <text
+          class="coordinates"
+          font-family="Montserrat"
+          font-size="14"
+          text-anchor="middle"
+          style="opacity: 0;"
+          :fill="theme.current.colors.gridYAxis"
+          y="60"
+        >
+          {{ `${Math.round(v.y * 100) / 100}` }}
+        </text>
+      </g>
+
+      <!-- Draw X (horizontal) coordinates -->
+      <text
+        v-for="(x, txi) in Math.floor(gridBox.size.x / step.x) - 1"
+        :key="`tx-${txi}`"
+        :fill="theme.current.colors.gridAxisValues"
+        font-family="Montserrat"
+        :font-size="theme.current.styles.fontSize"
+        alignment-baseline="central"
+        text-anchor="middle"
+        :x="gridBox.position.x + x * step.x"
+        :y="-gridBox.position.y - step.y / 2"
+      >
+        {{ Math.round((gridBox.position.x + x * step.x) * 100) / 100 }}
       </text>
+
+      <!-- Draw Y (vertical) coordinates -->
       <text
-        class="coordinates"
+        v-for="(y, tyi) in Math.floor(gridBox.size.divV(step).y) - 1"
+        :key="`ty-${tyi}`"
+        :fill="theme.current.colors.gridAxisValues"
         font-family="Montserrat"
-        font-size="14"
+        :font-size="theme.current.styles.fontSize"
+        alignment-baseline="central"
         text-anchor="middle"
-        style="opacity: 0;"
-        :fill="theme.current.gridColorY"
-        y="60"
+        :x="gridBox.position.x + step.x / 2"
+        :y="-(gridBox.position.y + y * step.y)"
       >
-        {{ `${Math.round(v.y * 100) / 100}` }}
+        {{ Math.round((gridBox.position.y + y * step.y) * 100) / 100 }}
       </text>
     </g>
-
-    <!-- Draw X (horizontal) coordinates -->
-    <text
-      v-for="(x, txi) in Math.floor(box.size.x / step.x) + 1"
-      :key="`tx-${txi}`"
-      :fill="theme.current.axisValues"
-      font-family="Montserrat"
-      :font-size="theme.current.fontSize"
-      alignment-baseline="hanging"
-      text-anchor="middle"
-      :x="box.position.x + x * step.x"
-      :y="-box.position.y"
-    >
-      {{ Math.round((box.position.x + x * step.x) * 100) / 100 }}
-    </text>
-
-    <!-- Draw Y (vertical) coordinates -->
-    <text
-      v-for="(y, tyi) in Math.floor(box.size.divV(step).y) + 1"
-      :key="`ty-${tyi}`"
-      :fill="theme.current.axisValues"
-      font-family="Montserrat"
-      :font-size="theme.current.fontSize"
-      alignment-baseline="central"
-      text-anchor="end"
-      :x="box.position.x"
-      :y="-(box.position.y + y * step.y)"
-    >
-      {{ Math.round((box.position.y + y * step.y) * 100) / 100 }}
-    </text>
-  </g>
+  </svg>
 </template>
 
 <script lang="ts">
 import { Component } from 'vue-property-decorator'
 import V from '@/utils/vector'
+import T from '@/utils/transform'
 import DynamicChartData from '@/components/dynamicChart/DynamicChartData'
 import DynamicChartThemes from '@/components/dynamicChart/DynamicChartThemes'
 
@@ -131,8 +167,6 @@ import DynamicChartThemes from '@/components/dynamicChart/DynamicChartThemes'
 // @group COMPONENTS
 export default class DynamicChartPlot extends DynamicChartData {
   private theme = new DynamicChartThemes(this)
-
-  step = new V(50, 50)
 
   mounted (): void {
     console.log('DynamicChartPlot')
