@@ -595,6 +595,7 @@ export default class OpenFilePopUp extends Vue {
   }
 
   uploadFile (file: APIFile): void {
+    console.log('Upload file with mime :', file.mime)
     API.put(this, '/resources/files', JSON.stringify(file.toJSON()))
       .then((response: Response) => {
         const id = ((response as unknown) as { id: number }).id

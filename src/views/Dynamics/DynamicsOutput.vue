@@ -10,6 +10,17 @@
 </style>
 <template>
   <v-container fluid class="d-flex flex-column" style="overflow-y: auto;">
+    <!-- Popup -->
+    <pop-up ref="openFilePopUp">
+      <open-file
+        @close="openFilePopUp.close()"
+        application="DYNAMICS_OUTPUT"
+        :singleSelect="true"
+        :openFile="true"
+        @fileInput="onFileInput"
+      ></open-file>
+    </pop-up>
+
     <v-col class="flex-grow-0 pa-0 mb-3">
       <v-card flat class="flex-grow-1">
         <v-card-title>Dynamics outputs</v-card-title>
@@ -65,7 +76,10 @@
             >
               Open local file
             </v-btn>
-            <v-btn color="primary black--text flex-grow-1">
+            <v-btn
+              color="primary black--text flex-grow-1"
+              @click="openFilePopUp.open()"
+            >
               Open from cloud
             </v-btn>
           </v-row>
@@ -245,6 +259,9 @@ import DynamicChart from '@/components/dynamicChart/DynamicChart.vue'
 import DynamicChartSvg from '@/components/dynamicChart/DynamicChartSvg.vue'
 import DynamicChartPlot from '@/components/dynamicChart/DynamicChartPlot.vue'
 import V from '@/utils/vector'
+import OpenFile from '@/components/OpenFile.vue'
+import { APIFile } from '@/utils/models'
+import PopUp from '@/components/PopUp.vue'
 
 class StockItem {
   time = 0
@@ -289,8 +306,9 @@ class TransportItem {
   name: 'DynamicsOutput',
   components: {
     DynamicChart,
-    // DynamicChartSvg,
-    DynamicChartPlot
+    DynamicChartPlot,
+    OpenFile,
+    PopUp
   }
 })
 // @vuese
@@ -300,6 +318,7 @@ export default class DynamicsOutput extends Vue {
   filename = ''
   updateStockChart = 0
   updateTransportChart = 0
+  openFilePopUp: PopUp | null = null
   sheetsNames: string[] = []
   selectedSheets = {
     stocks: '',
@@ -327,6 +346,10 @@ export default class DynamicsOutput extends Vue {
     data: V[]
   }[] = []
 
+  mounted (): void {
+    this.openFilePopUp = this.$refs.openFilePopUp as PopUp
+  }
+
   resetInputFile (): void {
     this.filename = ''
     this.sheetsNames = []
@@ -334,6 +357,30 @@ export default class DynamicsOutput extends Vue {
       stocks: '',
       utilizations: '',
       transports: ''
+    }
+  }
+
+  onFileInput (files: APIFile[]): void {
+    const file = files.pop()
+    if (file != null) {
+      let workbook = null
+      try {
+        this.filename = file.name
+        const fileContent = file.uri.split('base64,')[1]
+        workbook = XLSX.read(fileContent, {
+          type: 'base64'
+        })
+      } catch (error) {
+        this.$root.$emit('bottom-message', 'Cannot parse data file.')
+        console.error('error', error)
+        return
+      }
+      this.step = 2
+      this.getDataSheets(workbook)
+      this.computeCharts(workbook)
+    } else {
+      console.error('Unable to open selected file.')
+      this.$root.$emit('bottom-message', 'Unable to open selected file.')
     }
   }
 
