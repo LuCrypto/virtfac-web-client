@@ -1,67 +1,69 @@
 <template>
-  <v-card elevation="3" height="700" class="d-flex flex-row">
-    <v-navigation-drawer stateless permanent :mini-variant="menuCollapse">
-      <v-list
-        nav
-        dense
-        class="d-flex flex-column justify-start;"
-        style="height: 100%"
-      >
-        <v-list-item-group v-model="selectedMenuItem" color="primary">
-          <v-list-item
-            v-for="(menuItem, i) in menuItemList"
-            :key="i"
-            class="justify-start"
-            @click.stop="menuItem.action"
-          >
-            <v-list-item-icon>
-              <v-icon v-text="menuItem.icon"></v-icon>
-            </v-list-item-icon>
-            <v-list-item-content>
-              <v-list-item-title v-text="menuItem.text"></v-list-item-title>
-            </v-list-item-content>
-          </v-list-item>
-        </v-list-item-group>
-        <v-list-item-group class="mt-auto">
-          <v-list-item
-            class="justify-start"
-            @click="menuCollapse = !menuCollapse"
-          >
-            <v-list-item-icon>
-              <v-icon v-if="menuCollapse" v-text="'mdi-arrow-right'"></v-icon>
-              <v-icon v-if="!menuCollapse" v-text="'mdi-arrow-left'"></v-icon>
-            </v-list-item-icon>
-            <v-list-item-content>
-              <v-list-item-title v-text="'Menu labels'"></v-list-item-title>
-            </v-list-item-content>
-          </v-list-item>
-        </v-list-item-group>
-      </v-list>
-    </v-navigation-drawer>
-    <v-container style="width: auto; margin: 0; flex-grow: 1; padding: 0px">
-      <routing-graph-viewer ref="graphViewer"></routing-graph-viewer>
-    </v-container>
-    <input
-      ref="loadGammeFile"
-      type="file"
-      accept=".xls"
-      hidden
-      @change="loadGammeFile"
-    />
-    <pop-up ref="filePopUp">
-      <open-file
-        @close="$refs.filePopUp.close()"
-        application="ALL"
-        :singleSelect="true"
-        :openFile="true"
-        @fileInput="handleFile"
-      ></open-file>
-    </pop-up>
-    <pop-up ref="matrixEditor">
-      <matrix-viewer ref="matrixViewer"></matrix-viewer>
-    </pop-up>
-    <select-pop-up ref="selectPopUp"></select-pop-up>
-  </v-card>
+  <maximizable-container>
+    <v-card elevation="3" class="d-flex flex-row flex-grow-1">
+      <v-navigation-drawer stateless permanent :mini-variant="menuCollapse">
+        <v-list
+          nav
+          dense
+          class="d-flex flex-column justify-start;"
+          style="height: 100%"
+        >
+          <v-list-item-group v-model="selectedMenuItem" color="primary">
+            <v-list-item
+              v-for="(menuItem, i) in menuItemList"
+              :key="i"
+              class="justify-start"
+              @click.stop="menuItem.action"
+            >
+              <v-list-item-icon>
+                <v-icon v-text="menuItem.icon"></v-icon>
+              </v-list-item-icon>
+              <v-list-item-content>
+                <v-list-item-title v-text="menuItem.text"></v-list-item-title>
+              </v-list-item-content>
+            </v-list-item>
+          </v-list-item-group>
+          <v-list-item-group class="mt-auto">
+            <v-list-item
+              class="justify-start"
+              @click="menuCollapse = !menuCollapse"
+            >
+              <v-list-item-icon>
+                <v-icon v-if="menuCollapse" v-text="'mdi-arrow-right'"></v-icon>
+                <v-icon v-if="!menuCollapse" v-text="'mdi-arrow-left'"></v-icon>
+              </v-list-item-icon>
+              <v-list-item-content>
+                <v-list-item-title v-text="'Menu labels'"></v-list-item-title>
+              </v-list-item-content>
+            </v-list-item>
+          </v-list-item-group>
+        </v-list>
+      </v-navigation-drawer>
+      <v-container style="width: auto; margin: 0; flex-grow: 1; padding: 0px">
+        <routing-graph-viewer ref="graphViewer"></routing-graph-viewer>
+      </v-container>
+      <input
+        ref="loadGammeFile"
+        type="file"
+        accept=".xls"
+        hidden
+        @change="loadGammeFile"
+      />
+      <pop-up ref="filePopUp">
+        <open-file
+          @close="$refs.filePopUp.close()"
+          application="ALL"
+          :singleSelect="true"
+          :openFile="true"
+          @fileInput="handleFile"
+        ></open-file>
+      </pop-up>
+      <pop-up ref="matrixEditor">
+        <matrix-viewer ref="matrixViewer"></matrix-viewer>
+      </pop-up>
+      <select-pop-up ref="selectPopUp"></select-pop-up>
+    </v-card>
+  </maximizable-container>
 </template>
 
 <script lang="ts">
@@ -81,6 +83,7 @@ import { GraphLayout } from '@/utils/graph/graphLayout'
 import { MatrixUtils, Matrix } from '@/utils/matrixUtils'
 import MatrixViewer from '@/components/MatrixViewer.vue'
 import SelectPopUp from './popup/SelectPopUp.vue'
+import MaximizableContainer from './MaximizableContainer.vue'
 import { VAlert } from 'vuetify/lib'
 
 class Poste {
@@ -124,7 +127,8 @@ interface ClassifSolution {
     OpenFile,
     PopUp,
     MatrixViewer,
-    SelectPopUp
+    SelectPopUp,
+    MaximizableContainer
   }
 })
 // @vuese
@@ -1180,15 +1184,6 @@ export default class RoutingAnalysisComponent extends Vue {
               ) as Node
             )
           )
-          posteMapforArticle.set(
-            nodeValue,
-            this.articlePostGraph.addNode(
-              new Node()
-                .setData<string>('name', posteRefMap.get(nodeValue) as string)
-                .setData<'row' | 'col'>('matCelltype', 'col') as Node
-            )
-          )
-          console.log(posteRefMap.get(nodeValue) as string)
 
           let article = gammeSheet[nameOf(0, 1)].v
           articleMap.set(
@@ -1197,6 +1192,19 @@ export default class RoutingAnalysisComponent extends Vue {
               new Node()
                 .setData<string>('name', itemRefMap.get(article) as string)
                 .setData<'row' | 'col'>('matCelltype', 'row') as Node
+            )
+          )
+          posteMapforArticle.set(
+            nodeValue,
+            this.articlePostGraph.addNode(
+              new Node()
+                .setData<string>('name', posteRefMap.get(nodeValue) as string)
+                .setData<'row' | 'col'>('matCelltype', 'col')
+                .setData<number>('nbOF', 1)
+                .setData<Set<Node>>(
+                  'articleSet',
+                  new Set<Node>([articleMap.get(article) as Node])
+                ) as Node
             )
           )
           ;(articleMap.get(article) as Node).addLink(
@@ -1211,6 +1219,21 @@ export default class RoutingAnalysisComponent extends Vue {
             if (next !== undefined) {
               const nextNode = next.v
               const nextPhase = +gammeSheet[nameOf(1, row)].v
+
+              const nextArticle = gammeSheet[nameOf(0, row)].v
+              if (!articleMap.has(nextArticle)) {
+                articleMap.set(
+                  nextArticle,
+                  this.articlePostGraph.addNode(
+                    new Node()
+                      .setData<string>(
+                        'name',
+                        itemRefMap.get(nextArticle) as string
+                      )
+                      .setData<'row' | 'col'>('matCelltype', 'row') as Node
+                  )
+                )
+              }
               if (!posteMap.has(nextNode)) {
                 console.log(
                   ('add Node : ' + posteRefMap.get(nextNode)) as string
@@ -1232,24 +1255,22 @@ export default class RoutingAnalysisComponent extends Vue {
                         'name',
                         posteRefMap.get(nextNode) as string
                       )
-                      .setData<'row' | 'col'>('matCelltype', 'col') as Node
+                      .setData<'row' | 'col'>('matCelltype', 'col')
+                      .setData<number>('nbOF', 1)
+                      .setData<Set<Node>>(
+                        'articleSet',
+                        new Set<Node>([articleMap.get(nextArticle) as Node])
+                      ) as Node
                   )
                 )
+              } else {
+                const node = posteMapforArticle.get(nextNode) as Node
+                node
+                  .getData<Set<Node>>('articleSet')
+                  .add(articleMap.get(nextArticle) as Node)
+                node.setData<number>('nbOF', node.getData<number>('nbOF') + 1)
               }
-              const nextArticle = gammeSheet[nameOf(0, row)].v
-              if (!articleMap.has(nextArticle)) {
-                articleMap.set(
-                  nextArticle,
-                  this.articlePostGraph.addNode(
-                    new Node()
-                      .setData<string>(
-                        'name',
-                        itemRefMap.get(nextArticle) as string
-                      )
-                      .setData<'row' | 'col'>('matCelltype', 'row') as Node
-                  )
-                )
-              }
+
               (articleMap.get(nextArticle) as Node).addLink(
                 posteMapforArticle.get(nextNode) as Node
               )
@@ -1289,6 +1310,14 @@ export default class RoutingAnalysisComponent extends Vue {
               nodeValue = undefined
             }
           } while (nodeValue !== undefined)
+
+          posteMapforArticle.forEach(n => {
+            console.log({
+              name: n.getData<string>('name'),
+              nbOF: n.getData<number>('nbOF'),
+              nbArticle: n.getData<Set<Node>>('articleSet').size
+            })
+          })
 
           const nbNode = posteMap.size
           const xSpread = nbNode * 60
