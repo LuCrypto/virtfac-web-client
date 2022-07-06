@@ -5,12 +5,20 @@
   padding: 20px;
 }
 * >>> .v-stepper__content {
-  margin: -14px -36px -16px 43px !important;
+  margin: -6px -36px -16px 43px !important;
 }
 </style>
 <template>
-  <v-container fluid class="d-flex flex-column">
-    <v-col class="flex-grow-0">
+  <v-container fluid class="d-flex flex-column" style="overflow-y: auto;">
+    <v-row no-gutters>
+      <v-card class="flex-grow-1 mb-4" style="overflow: hidden;">
+        <dynamic-chart title="Title of chart">
+          <dynamic-chart-plot></dynamic-chart-plot>
+        </dynamic-chart>
+      </v-card>
+    </v-row>
+
+    <v-col class="flex-grow-0 pa-0 mb-3">
       <v-card flat class="flex-grow-1">
         <v-card-title>Dynamics outputs</v-card-title>
         <v-card-subtitle>
@@ -20,14 +28,15 @@
         </v-card-subtitle>
       </v-card>
     </v-col>
-    <v-col class="flex-grow-0">
+    <v-card class="mx-auto" style="max-width: 1000px;">
       <!-- Header -->
-      <v-toolbar flat>
-        <v-toolbar-title>
-          Current file :
-          <span class="primary--text">{{ filename ? filename : 'None' }}</span>
-        </v-toolbar-title>
-      </v-toolbar>
+      <v-sheet
+        class="pa-6 text-h5"
+        :color="$vuetify.theme.dark ? null : 'rgba(0, 0, 0, 0.06)'"
+      >
+        Current file :
+        <span class="primary--text">{{ filename ? filename : 'None' }}</span>
+      </v-sheet>
 
       <v-stepper v-model="step" vertical>
         <!-- Step 1 : import file -->
@@ -83,17 +92,17 @@
         <v-stepper-content step="2">
           <v-col>
             <v-select
-              :value="selectedSheets.stock"
+              :value="selectedSheets.stocks"
               :items="sheetsNames"
               label="Stock sheet"
             ></v-select>
             <v-select
-              :value="selectedSheets.utilization"
+              :value="selectedSheets.utilizations"
               :items="sheetsNames"
               label="Utilization sheet"
             ></v-select>
             <v-select
-              :value="selectedSheets.transport"
+              :value="selectedSheets.transports"
               :items="sheetsNames"
               label="Transport sheet"
             ></v-select>
@@ -111,10 +120,11 @@
           :complete="step > 2"
           step="3"
           :editable="
-            selectedSheets.stock !== '' &&
-              selectedSheets.utilization !== '' &&
-              selectedSheets.transport !== ''
+            selectedSheets.stocks !== '' &&
+              selectedSheets.utilizations !== '' &&
+              selectedSheets.transports !== ''
           "
+          edit-icon="mdi-eye"
         >
           Show data
           <small class="pt-1">
@@ -123,6 +133,54 @@
         </v-stepper-step>
 
         <v-stepper-content step="3">
+          <v-col class="pa-0">
+            <v-card
+              v-for="(listName, index) in Object.keys(dataLists)"
+              :key="index"
+              class="mb-6 mr-6"
+            >
+              <v-card-title class="text-h6 primary black--text py-0 px-2"
+                >Data : {{ listName }}
+              </v-card-title>
+              <v-card-text class="pa-0">
+                <v-data-table
+                  :style="{
+                    backgroundColor: $vuetify.theme.dark
+                      ? ''
+                      : 'rgba(0, 0, 0, 0.04)'
+                  }"
+                  dense
+                  :items-per-page="5"
+                  :headers="
+                    Object.keys(dataLists[listName][0] || {}).map(label => {
+                      return {
+                        text: label,
+                        align: 'start',
+                        sortable: true,
+                        value: label
+                      }
+                    })
+                  "
+                  :items="
+                    dataLists[listName].map(item => {
+                      Object.keys(item)
+                        .filter(key => typeof item[key] === 'number')
+                        .forEach(
+                          key =>
+                            (item[key] = Math.round(item[key] * 10000) / 10000)
+                        )
+                      return item
+                    })
+                  "
+                  class="elevation-1 mx-0 mb-6"
+                  :footer-props="{
+                    'items-per-page-options': [5, 10, 15]
+                  }"
+                >
+                </v-data-table>
+              </v-card-text>
+            </v-card>
+          </v-col>
           <v-btn color="primary" class="black--text" @click="step = 4">
             Continue
           </v-btn>
@@ -136,9 +194,9 @@
           :complete="step > 4"
           step="4"
           :editable="
-            selectedSheets.stock !== '' &&
-              selectedSheets.utilization !== '' &&
-              selectedSheets.transport !== ''
+            selectedSheets.stocks !== '' &&
+              selectedSheets.utilizations !== '' &&
+              selectedSheets.transports !== ''
           "
         >
           Graphics
@@ -148,26 +206,21 @@
         </v-stepper-step>
 
         <v-stepper-content step="4">
-          <Histogram
-            :data="fakedata"
-            :width="300"
-            :height="200"
-            :num-bins="40"
-          />
           <v-btn text>
             Cancel
           </v-btn>
         </v-stepper-content>
       </v-stepper>
-    </v-col>
+    </v-card>
   </v-container>
 </template>
 
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator'
 import * as XLSX from 'ts-xlsx'
-import * as d3 from 'd3'
-import Histogram from '@/components/charts/histogram.vue'
+import DynamicChart from '@/components/dynamicChart/DynamicChart.vue'
+import DynamicChartSvg from '@/components/dynamicChart/DynamicChartSvg.vue'
+import DynamicChartPlot from '@/components/dynamicChart/DynamicChartPlot.vue'
 
 class StockItem {
   time = 0
@@ -211,7 +264,9 @@ class TransportItem {
 @Component({
   name: 'DynamicsOutput',
   components: {
-    Histogram
+    DynamicChart,
+    // DynamicChartSvg,
+    DynamicChartPlot
   }
 })
 // @vuese
@@ -221,9 +276,9 @@ export default class DynamicsOutput extends Vue {
   filename = ''
   sheetsNames: string[] = []
   selectedSheets = {
-    stock: '',
-    utilization: '',
-    transport: ''
+    stocks: '',
+    utilizations: '',
+    transports: ''
   }
 
   dataLists: {
@@ -236,15 +291,13 @@ export default class DynamicsOutput extends Vue {
     transports: []
   }
 
-  fakedata = d3.range(0, 2000).map(d3.randomNormal())
-
   resetInputFile (): void {
     this.filename = ''
     this.sheetsNames = []
     this.selectedSheets = {
-      stock: '',
-      utilization: '',
-      transport: ''
+      stocks: '',
+      utilizations: '',
+      transports: ''
     }
   }
 
@@ -296,9 +349,9 @@ export default class DynamicsOutput extends Vue {
 
   computeCharts (workbook: XLSX.IWorkBook): void {
     // Check sheets names
-    const stock = this.selectedSheets.stock
-    const utilization = this.selectedSheets.utilization
-    const transport = this.selectedSheets.transport
+    const stock = this.selectedSheets.stocks
+    const utilization = this.selectedSheets.utilizations
+    const transport = this.selectedSheets.transports
     if ([stock, utilization, transport].some(sheetName => !sheetName)) {
       return
     }
@@ -321,35 +374,11 @@ export default class DynamicsOutput extends Vue {
     console.log(this.dataLists)
   }
 
-  getCellCoordinate (cellCoordinate: string): { x: number; y: number } | null {
-    if (typeof cellCoordinate !== 'string') return null
-
-    const match = cellCoordinate.match(/^([A-Z][A-Z]*)([1-9][0-9]*)$/)
-    if (!match) return null
-
-    const letterToNumber = (letter: string) => {
-      let n = 0
-      const A = 'A'.charCodeAt(0)
-      const N = 'Z'.charCodeAt(0) - A + 1
-      letter
-        .split('')
-        .reverse()
-        .forEach((c, i) => {
-          n += Math.pow(N, i) * (c.charCodeAt(0) - A + 1)
-        })
-      return n
-    }
-
-    return {
-      x: letterToNumber(match[1]) - 1,
-      y: parseInt(match[2]) - 1
-    }
-  }
-
   sheetToArray (sheet: XLSX.IWorkSheet): (string | number)[][] {
     const sheetArray: (string | number)[][] = [[]]
     Object.keys(sheet).map(cell => {
-      const coordinate = this.getCellCoordinate(cell)
+      const cellData = XLSX.utils.decode_cell(cell)
+      const coordinate = { x: cellData.c, y: cellData.r }
       if (coordinate) {
         if (sheetArray[coordinate.y] === undefined) {
           sheetArray[coordinate.y] = []
@@ -371,7 +400,7 @@ export default class DynamicsOutput extends Vue {
 
       // Search stock sheet
       if (
-        !this.selectedSheets.stock &&
+        !this.selectedSheets.stocks &&
         [
           'stock',
           'stockpile',
@@ -385,13 +414,13 @@ export default class DynamicsOutput extends Vue {
           'vorrat'
         ].some(searchName => name.includes(searchName))
       ) {
-        this.selectedSheets.stock = sheetName
+        this.selectedSheets.stocks = sheetName
         return
       }
 
       // Search utilization sheet
       if (
-        !this.selectedSheets.utilization &&
+        !this.selectedSheets.utilizations &&
         [
           'utilization',
           'use',
@@ -403,13 +432,13 @@ export default class DynamicsOutput extends Vue {
           'benutzung'
         ].some(searchName => name.includes(searchName))
       ) {
-        this.selectedSheets.utilization = sheetName
+        this.selectedSheets.utilizations = sheetName
         return
       }
 
       // Search transport sheet
       if (
-        !this.selectedSheets.transport &&
+        !this.selectedSheets.transports &&
         [
           'transport',
           'transportation',
@@ -417,7 +446,7 @@ export default class DynamicsOutput extends Vue {
           'verkehr'
         ].some(searchName => name.includes(searchName))
       ) {
-        this.selectedSheets.transport = sheetName
+        this.selectedSheets.transports = sheetName
       }
     })
   }
