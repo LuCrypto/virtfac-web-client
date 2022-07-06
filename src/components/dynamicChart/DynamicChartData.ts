@@ -5,38 +5,57 @@ import T from '@/utils/transform'
 @Component
 export default class DynamicChartData extends Vue {
   @Prop({
-    default: () =>
-      [...Array(100)].map((v, i) =>
-        new V(i + 5 * Math.random(), i + 5 * Math.random())
-          .multN(10)
-          .subN(100 + Math.random() * 20)
-      )
+    default: () => []
   })
-  protected data!: V[]
+  protected rawCurves!: { name: string; data: V[] }[]
 
-  @Prop({
-    default: () => (size: V) => null
-  })
-  private setSize!: (size: V) => void
+  @Prop({ default: () => 'X axis' }) private labelX!: string
+  @Prop({ default: () => 'Y axis' }) private labelY!: string
+  @Prop({ default: () => 50 }) private stepX!: number
+  @Prop({ default: () => 50 }) private stepY!: number
+  @Prop({ default: () => 1 }) private scaleX!: number
+  @Prop({ default: () => 1 }) private scaleY!: number
+  @Prop({ default: () => true }) private displayPlot!: boolean
 
-  public step = new V(50, 50)
+  public curves: { name: string; data: V[] }[] = []
+
+  public step = new V(this.stepX, this.stepY)
   public box: T = new T(new V(0, 0), this.step)
   public gridBox: T = new T(new V(0, 0), this.step)
+  public scale = new V(0, 0)
 
   mounted () {
-    this.computeDataBox()
-    this.computeGridBox()
+    this.scale = new V(this.scaleX, this.scaleY)
+    this.curves = this.rawCurves.map(curve => {
+      return {
+        name: curve.name,
+        data: curve.data.map(v => v.multV(this.scale))
+      }
+    })
+
+    if (this.curves.length > 0) {
+      this.computeDataBox()
+      this.computeGridBox()
+    } else {
+      this.box = new T(new V(0, 0), this.step)
+      this.gridBox = new T(new V(0, 0), this.step)
+    }
   }
+
+  // Scale data
 
   // Compute data box
   public computeDataBox (): void {
     const min = new V(Infinity, Infinity)
     const max = new V(-Infinity, -Infinity)
-    this.data.forEach(v => {
-      min.x = v.x < min.x ? v.x : min.x
-      min.y = v.y < min.y ? v.y : min.y
-      max.x = v.x > max.x ? v.x : max.x
-      max.y = v.y > max.y ? v.y : max.y
+
+    this.curves.forEach(curve => {
+      curve.data.forEach(v => {
+        min.x = v.x < min.x ? v.x : min.x
+        min.y = v.y < min.y ? v.y : min.y
+        max.x = v.x > max.x ? v.x : max.x
+        max.y = v.y > max.y ? v.y : max.y
+      })
     })
 
     this.box.position = min

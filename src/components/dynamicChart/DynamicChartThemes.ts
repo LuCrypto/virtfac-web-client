@@ -10,8 +10,8 @@ class ChartTheme {
     gridYAxis: string
     gridAxisValues: string
   } = {
-    backgroundOut: '#303030',
-    backgroundIn: '#1e1e1e',
+    backgroundOut: '#1e1e1e',
+    backgroundIn: '#303030',
     grid: '#282828',
     gridXAxis: '#bb0000',
     gridYAxis: '#009900',
@@ -21,18 +21,32 @@ class ChartTheme {
   public styles: {
     fontSize: number
     padding: number
+    arrowSizeX: number
+    arrowSizeY: number
+    arrowLength: number
     grid: {
       type: 'none' | 'line' | 'point'
       stroke: number
       round: number
     }
+    data: {
+      pointSize: number
+      pointShadowSize: number
+    }
   } = {
     fontSize: 14,
-    padding: 24,
+    padding: 10,
+    arrowSizeX: 10,
+    arrowSizeY: 7,
+    arrowLength: 50,
     grid: {
       type: 'line',
       stroke: 2,
       round: 0
+    },
+    data: {
+      pointSize: 7,
+      pointShadowSize: 10
     }
   }
 

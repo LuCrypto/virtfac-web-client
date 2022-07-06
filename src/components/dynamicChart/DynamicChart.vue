@@ -3,6 +3,7 @@
   overflow: hidden;
   width: 100%;
   position: relative;
+  border-radius: 8px;
 
   .pinch-scroll-zoom {
     z-index: 0;
@@ -32,7 +33,7 @@
           mdi-camera-control
         </v-icon>
       </v-btn>
-      <v-btn fab small outlined color="primary">
+      <v-btn fab small outlined color="primary" @click="downloadAsPng">
         <v-icon>
           mdi-download
         </v-icon>
@@ -75,6 +76,8 @@ import { Component, Vue, Prop } from 'vue-property-decorator'
 import PinchScrollZoom from '@coddicat/vue-pinch-scroll-zoom'
 import DynamicChartThemes from '@/components/dynamicChart/DynamicChartThemes'
 import V from '@/utils/vector'
+import { Canvg } from 'canvg'
+import OffscreenCanvasRenderingContext2D from 'canvg/dist/types.d'
 
 @Component({
   name: 'DynamicChart',
@@ -128,6 +131,37 @@ export default class DynamicChart extends Vue {
     }
     this.updateSize()
     requestAnimationFrame(() => this.loop())
+  }
+
+  downloadAsPng () {
+    const canvas = new OffscreenCanvas(4096, 4096)
+    const ctx = canvas.getContext('2d')
+
+    const svg =
+      this.$el.querySelector('.dynamic-chart-container svg')?.outerHTML ||
+      '<svg></svg>'
+
+    const v = Canvg.fromString(ctx as OffscreenCanvasRenderingContext2D, svg)
+
+    // Start drawing the SVG on the canvas
+    v.render()
+
+    // Convert the Canvas to an image
+    canvas
+      .convertToBlob()
+      .then(blob => {
+        const pngUrl = URL.createObjectURL(blob)
+        var a = document.createElement('a')
+        a.setAttribute('href', pngUrl)
+        a.setAttribute('download', `${this.title}.png`)
+        document.body.append(a)
+        a.click()
+        URL.revokeObjectURL(pngUrl)
+        document.body.removeChild(a)
+      })
+      .catch(error => {
+        console.warn(error)
+      })
   }
 }
 </script>

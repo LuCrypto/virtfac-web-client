@@ -10,14 +10,6 @@
 </style>
 <template>
   <v-container fluid class="d-flex flex-column" style="overflow-y: auto;">
-    <v-row no-gutters>
-      <v-card class="flex-grow-1 mb-4" style="overflow: hidden;">
-        <dynamic-chart title="Title of chart">
-          <dynamic-chart-plot></dynamic-chart-plot>
-        </dynamic-chart>
-      </v-card>
-    </v-row>
-
     <v-col class="flex-grow-0 pa-0 mb-3">
       <v-card flat class="flex-grow-1">
         <v-card-title>Dynamics outputs</v-card-title>
@@ -28,7 +20,8 @@
         </v-card-subtitle>
       </v-card>
     </v-col>
-    <v-card class="mx-auto" style="max-width: 1000px;">
+
+    <v-card>
       <!-- Header -->
       <v-sheet
         class="pa-6 text-h5"
@@ -206,9 +199,39 @@
         </v-stepper-step>
 
         <v-stepper-content step="4">
-          <v-btn text>
-            Cancel
-          </v-btn>
+          <dynamic-chart
+            title="Stock chart"
+            :key="`stock-chart-${updateStockChart}`"
+          >
+            <dynamic-chart-plot
+              :rawCurves="stockChartCurves.length > 0 ? stockChartCurves : []"
+              label-x="Stock"
+              label-y="Time"
+              :step-x="100"
+              :step-y="100"
+              :scale-x="1"
+              :scale-y="1"
+              :display-plot="false"
+            ></dynamic-chart-plot>
+          </dynamic-chart>
+
+          <dynamic-chart
+            title="Transport chart"
+            :key="`transport-chart-${updateTransportChart}`"
+          >
+            <dynamic-chart-plot
+              :rawCurves="
+                transportChartCurves.length > 0 ? transportChartCurves : []
+              "
+              label-x="Amount"
+              label-y="Time"
+              :step-x="100"
+              :step-y="100"
+              :scale-x="100"
+              :scale-y="30"
+              :display-plot="true"
+            ></dynamic-chart-plot>
+          </dynamic-chart>
         </v-stepper-content>
       </v-stepper>
     </v-card>
@@ -221,6 +244,7 @@ import * as XLSX from 'ts-xlsx'
 import DynamicChart from '@/components/dynamicChart/DynamicChart.vue'
 import DynamicChartSvg from '@/components/dynamicChart/DynamicChartSvg.vue'
 import DynamicChartPlot from '@/components/dynamicChart/DynamicChartPlot.vue'
+import V from '@/utils/vector'
 
 class StockItem {
   time = 0
@@ -274,6 +298,8 @@ class TransportItem {
 export default class DynamicsOutput extends Vue {
   step = 1
   filename = ''
+  updateStockChart = 0
+  updateTransportChart = 0
   sheetsNames: string[] = []
   selectedSheets = {
     stocks: '',
@@ -290,6 +316,16 @@ export default class DynamicsOutput extends Vue {
     utilizations: [],
     transports: []
   }
+
+  stockChartCurves: {
+    name: string
+    data: V[]
+  }[] = []
+
+  transportChartCurves: {
+    name: string
+    data: V[]
+  }[] = []
 
   resetInputFile (): void {
     this.filename = ''
@@ -371,7 +407,39 @@ export default class DynamicsOutput extends Vue {
       .slice(1)
       .map(row => new TransportItem(row))
 
-    console.log(this.dataLists)
+    // Compute stock chart
+    this.stockChartCurves = []
+
+    this.dataLists.stocks.forEach(item => {
+      let index = 0
+      const name = `${item.resName} (${item.resId})`
+      if (
+        !this.stockChartCurves.some((existingItem, i) => {
+          index = i
+          return existingItem.name === name
+        })
+      ) {
+        index = this.stockChartCurves.length
+        this.stockChartCurves.push({
+          name: name,
+          data: []
+        })
+      }
+      this.stockChartCurves[index].data.push(new V(item.time, item.value))
+    })
+
+    // Compute Transport chart
+    this.transportChartCurves = [
+      {
+        name: 'transport',
+        data: this.dataLists.transports.map(item => {
+          return new V(item.amount, item.time / 3600)
+        })
+      }
+    ]
+
+    this.updateStockChart++
+    this.updateTransportChart++
   }
 
   sheetToArray (sheet: XLSX.IWorkSheet): (string | number)[][] {
