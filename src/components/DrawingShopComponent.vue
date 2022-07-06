@@ -1,57 +1,59 @@
 <template>
-  <v-card elevation="3" height="700" class="d-flex flex-row">
-    <v-navigation-drawer stateless permanent :mini-variant="menuCollapse">
-      <v-list
-        nav
-        dense
-        class="d-flex flex-column justify-start;"
-        style="height: 100%"
-      >
-        <v-list-item-group v-model="selectedMenuItem" color="primary">
-          <v-list-item
-            v-for="(menuItem, i) in menuItemList"
-            :key="i"
-            class="justify-start"
-            @click.stop="menuItem.action"
-          >
-            <v-list-item-icon>
-              <v-icon v-text="menuItem.icon"></v-icon>
-            </v-list-item-icon>
-            <v-list-item-content>
-              <v-list-item-title v-text="menuItem.text"></v-list-item-title>
-            </v-list-item-content>
-          </v-list-item>
-        </v-list-item-group>
-        <v-list-item-group class="mt-auto">
-          <v-list-item
-            class="justify-start"
-            @click="menuCollapse = !menuCollapse"
-          >
-            <v-list-item-icon>
-              <v-icon v-if="menuCollapse" v-text="'mdi-arrow-right'"></v-icon>
-              <v-icon v-if="!menuCollapse" v-text="'mdi-arrow-left'"></v-icon>
-            </v-list-item-icon>
-            <v-list-item-content>
-              <v-list-item-title v-text="'Menu labels'"></v-list-item-title>
-            </v-list-item-content>
-          </v-list-item>
-        </v-list-item-group>
-      </v-list>
-    </v-navigation-drawer>
-    <v-container style="width: auto; margin: 0; flex-grow: 1;">
-      <blueprint-editor ref="nodeViewer"></blueprint-editor>
-    </v-container>
-    <input-field-pop-up ref="inputFieldPopUp"></input-field-pop-up>
-    <pop-up ref="filePopUp">
-      <open-file
-        @close="$refs.filePopUp.close()"
-        application="ALL"
-        :singleSelect="true"
-        :openFile="true"
-        @fileInput="handleFile"
-      ></open-file>
-    </pop-up>
-  </v-card>
+  <maximizable-container>
+    <v-card elevation="3" class="d-flex flex-row flex-grow-1">
+      <v-navigation-drawer stateless permanent :mini-variant="menuCollapse">
+        <v-list
+          nav
+          dense
+          class="d-flex flex-column justify-start;"
+          style="height: 100%"
+        >
+          <v-list-item-group v-model="selectedMenuItem" color="primary">
+            <v-list-item
+              v-for="(menuItem, i) in menuItemList"
+              :key="i"
+              class="justify-start"
+              @click.stop="menuItem.action"
+            >
+              <v-list-item-icon>
+                <v-icon v-text="menuItem.icon"></v-icon>
+              </v-list-item-icon>
+              <v-list-item-content>
+                <v-list-item-title v-text="menuItem.text"></v-list-item-title>
+              </v-list-item-content>
+            </v-list-item>
+          </v-list-item-group>
+          <v-list-item-group class="mt-auto">
+            <v-list-item
+              class="justify-start"
+              @click="menuCollapse = !menuCollapse"
+            >
+              <v-list-item-icon>
+                <v-icon v-if="menuCollapse" v-text="'mdi-arrow-right'"></v-icon>
+                <v-icon v-if="!menuCollapse" v-text="'mdi-arrow-left'"></v-icon>
+              </v-list-item-icon>
+              <v-list-item-content>
+                <v-list-item-title v-text="'Menu labels'"></v-list-item-title>
+              </v-list-item-content>
+            </v-list-item>
+          </v-list-item-group>
+        </v-list>
+      </v-navigation-drawer>
+      <v-container style="width: auto; margin: 0; flex-grow: 1;">
+        <blueprint-editor ref="nodeViewer"></blueprint-editor>
+      </v-container>
+      <input-field-pop-up ref="inputFieldPopUp"></input-field-pop-up>
+      <pop-up ref="filePopUp">
+        <open-file
+          @close="$refs.filePopUp.close()"
+          application="ALL"
+          :singleSelect="true"
+          :openFile="true"
+          @fileInput="handleFile"
+        ></open-file>
+      </pop-up>
+    </v-card>
+  </maximizable-container>
 </template>
 
 <script lang="ts">
@@ -63,6 +65,7 @@ import OpenFile from '@/components/OpenFile.vue'
 import XLSX from 'xlsx'
 import BlueprintEditor from '@/components/BlueprintEditor.vue'
 import PopUp from '@/components/PopUp.vue'
+import MaximizableContainer from './MaximizableContainer.vue'
 
 import { BlueprintContainer } from '@/utils/routingAnalysis/blueprintContainer'
 import { BlueprintExporter } from '@/utils/routingAnalysis/blueprintExporter'
@@ -84,7 +87,8 @@ class MenuItem {
     BlueprintEditor,
     InputFieldPopUp,
     OpenFile,
-    PopUp
+    PopUp,
+    MaximizableContainer
   }
 })
 // @vuese
