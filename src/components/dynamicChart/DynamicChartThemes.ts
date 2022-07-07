@@ -35,7 +35,7 @@ class ChartTheme {
     }
   } = {
     fontSize: 14,
-    padding: 10,
+    padding: 0,
     arrowSizeX: 10,
     arrowSizeY: 7,
     arrowLength: 50,
