@@ -219,8 +219,8 @@
           >
             <dynamic-chart-plot
               :rawCurves="stockChartCurves.length > 0 ? stockChartCurves : []"
-              label-x="Stock"
-              label-y="Time"
+              label-x="Time (Hours)"
+              label-y="Stock (Units)"
               :step-x="100"
               :step-y="100"
               :scale-x="1"
@@ -237,12 +237,12 @@
               :rawCurves="
                 transportChartCurves.length > 0 ? transportChartCurves : []
               "
-              label-x="Amount"
-              label-y="Time"
+              label-x="Amount (Units)"
+              label-y="Time (Hours)"
               :step-x="100"
               :step-y="100"
               :scale-x="100"
-              :scale-y="30"
+              :scale-y="10"
               :display-plot="true"
             ></dynamic-chart-plot>
           </dynamic-chart>
