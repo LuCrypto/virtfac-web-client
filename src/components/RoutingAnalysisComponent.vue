@@ -39,22 +39,25 @@
           </v-list-item-group>
         </v-list>
       </v-navigation-drawer>
-      <v-container style="width: auto; margin: 0; flex-grow: 1; padding: 0px">
+      <v-container
+        style="width: auto; margin: 0; flex-grow: 1; padding: 0px; max-width:none"
+      >
         <routing-graph-viewer ref="graphViewer"></routing-graph-viewer>
       </v-container>
       <input
-        ref="loadGammeFile"
+        ref="loadRoutingFile"
         type="file"
         accept=".xls"
         hidden
-        @change="loadGammeFile"
+        @change="loadRoutingFile"
       />
       <pop-up ref="filePopUp">
         <open-file
           @close="$refs.filePopUp.close()"
-          application="ALL"
+          application="ROUTING_ANALYSIS"
           :singleSelect="true"
           :openFile="true"
+          :uploadPipeline="changeMime"
           @fileInput="handleFile"
         ></open-file>
       </pop-up>
@@ -85,6 +88,7 @@ import MatrixViewer from '@/components/MatrixViewer.vue'
 import SelectPopUp from './popup/SelectPopUp.vue'
 import MaximizableContainer from './MaximizableContainer.vue'
 import { VAlert } from 'vuetify/lib'
+import { APIFile } from '@/utils/models'
 
 class Poste {
   name: string
@@ -177,13 +181,13 @@ export default class RoutingAnalysisComponent extends Vue {
           ],
           [
             {
-              txt: 'Gamme file',
+              txt: 'Routing file',
               callback: () => {
                 // console.log('Article/Poste Matrix')
                 const input = document.createElement('input')
                 input.type = 'file'
                 input.accept = '.xls, .xlsx'
-                input.oninput = this.loadGammeFile
+                input.oninput = this.loadRoutingFile
                 input.click()
               }
             },
@@ -221,7 +225,7 @@ export default class RoutingAnalysisComponent extends Vue {
             }
           ],
           item => {
-            ((item as Record<string, unknown>).callback as { (): void })()
+            if (item !== null) { ((item as Record<string, unknown>).callback as { (): void })() }
           }
         )
       }),
@@ -259,7 +263,7 @@ export default class RoutingAnalysisComponent extends Vue {
             }
           ],
           item => {
-            ((item as Record<string, unknown>).callback as { (): void })()
+            if (item !== null) { ((item as Record<string, unknown>).callback as { (): void })() }
           }
         )
       }),
@@ -521,8 +525,8 @@ export default class RoutingAnalysisComponent extends Vue {
             ],
             solutions,
             item => {
-              const it = item as ClassifSolution
               if (item !== null) {
+                const it = item as ClassifSolution
                 applyClassif({
                   matrix: it.matrix,
                   assignment: it.classif.rowAssignment
@@ -592,8 +596,10 @@ export default class RoutingAnalysisComponent extends Vue {
             ],
             choices,
             item => {
-              const it = item as Record<string, unknown>
-              ;(it.callback as { (): void })()
+              if (item !== null) {
+                const it = item as Record<string, unknown>
+                ;(it.callback as { (): void })()
+              }
             }
           )
         }
@@ -607,28 +613,14 @@ export default class RoutingAnalysisComponent extends Vue {
     input.click()
   }
 
-  handleFile (file: File | null): void {
+  handleFile (file: APIFile[]): void {
     if (file == null) {
       console.log('This type of file cannot be read yet.')
     } else {
-      const reader = new FileReader()
-      const name = file.name
-      reader.onload = e => {
-        if (e == null || e.target == null) {
-          console.error('Cannot read file...')
-          return
-        }
-        var data = e.target.result
-        var workbook = XLSX.read(data, { type: 'binary' })
-        console.log(
-          'Excel File = ',
-          name,
-          workbook,
-          JSON.stringify(workbook.Sheets[workbook.SheetNames[0]])
-        )
-        // const mapper = new Mapper(workbook.Sheets[workbook.SheetNames[0]])
-      }
-      reader.readAsBinaryString(file)
+      var workbook = XLSX.read(file[0].uri.split('base64,')[1], {
+        type: 'base64'
+      })
+      this.loadRoutingXLSX(workbook)
     }
   }
 
@@ -1100,7 +1092,7 @@ export default class RoutingAnalysisComponent extends Vue {
     }
   }
 
-  loadGammeFile (event: Event) {
+  loadRoutingFile (event: Event) {
     console.log('file uploaded')
     if (event != null && event.target != null) {
       const f: File = ((event.target as HTMLInputElement).files as FileList)[0]
@@ -1116,244 +1108,262 @@ export default class RoutingAnalysisComponent extends Vue {
           }
           const wb = XLSX.read(arr.join(''), { type: 'binary' })
 
-          const searchSheet = (source: string, name: string) => {
-            return source.includes(name) && source.includes('data')
-          }
-
-          const itemSheet =
-            wb.Sheets[
-              wb.SheetNames.find(value => {
-                return searchSheet(value.toLowerCase(), 'item')
-              }) as string
-            ]
-          const posteSheet =
-            wb.Sheets[
-              wb.SheetNames.find(value => {
-                return searchSheet(value.toLowerCase(), 'poste')
-              }) as string
-            ]
-          const gammeSheet =
-            wb.Sheets[
-              wb.SheetNames.find(value => {
-                return searchSheet(value.toLowerCase(), 'gamme')
-              }) as string
-            ]
-
-          console.log(gammeSheet)
-          const nameOf: { (x: number, y: number): string } = (x, y) => {
-            return XLSX.utils.encode_cell({ c: x, r: y })
-          }
-          console.log(nameOf(0, 2))
-
-          const itemRefMap = new Map<string, string>()
-          const posteRefMap = new Map<string, string>()
-
-          let i = 1
-          while (itemSheet[nameOf(0, i)] !== undefined) {
-            itemRefMap.set(itemSheet[nameOf(0, i)].v, itemSheet[nameOf(1, i)].v)
-            i++
-          }
-          i = 1
-          while (posteSheet[nameOf(0, i)] !== undefined) {
-            posteRefMap.set(
-              posteSheet[nameOf(0, i)].v,
-              posteSheet[nameOf(1, i)].v
-            )
-            i++
-          }
-
-          let phaseValue = +gammeSheet[nameOf(1, 1)].v
-          let row = 1
-          let nodeValue = gammeSheet[nameOf(2, 1)].v
-
-          if (nodeValue === undefined) return
-          const posteMap = new Map<string, Node>()
-          const posteMapforArticle = new Map<string, Node>()
-          const articleMap = new Map<string, Node>()
-
-          const orderGraph = GraphUtils.genOrderGraph()
-          this.postPostGraph = orderGraph.graph
-          this.articlePostGraph = new Graph()
-
-          posteMap.set(
-            nodeValue,
-            orderGraph.graph.addNode(
-              new Node().setData<string>(
-                'name',
-                posteRefMap.get(nodeValue) as string
-              ) as Node
-            )
-          )
-
-          let article = gammeSheet[nameOf(0, 1)].v
-          articleMap.set(
-            article,
-            this.articlePostGraph.addNode(
-              new Node()
-                .setData<string>('name', itemRefMap.get(article) as string)
-                .setData<'row' | 'col'>('matCelltype', 'row') as Node
-            )
-          )
-          posteMapforArticle.set(
-            nodeValue,
-            this.articlePostGraph.addNode(
-              new Node()
-                .setData<string>('name', posteRefMap.get(nodeValue) as string)
-                .setData<'row' | 'col'>('matCelltype', 'col')
-                .setData<number>('nbOF', 1)
-                .setData<Set<Node>>(
-                  'articleSet',
-                  new Set<Node>([articleMap.get(article) as Node])
-                ) as Node
-            )
-          )
-          ;(articleMap.get(article) as Node).addLink(
-            posteMapforArticle.get(nodeValue) as Node
-          )
-
-          do {
-            row++
-            console.log(row)
-            // console.log(nodeValue + " : " + phaseValue);
-            const next = gammeSheet[nameOf(2, row)]
-            if (next !== undefined) {
-              const nextNode = next.v
-              const nextPhase = +gammeSheet[nameOf(1, row)].v
-
-              const nextArticle = gammeSheet[nameOf(0, row)].v
-              if (!articleMap.has(nextArticle)) {
-                articleMap.set(
-                  nextArticle,
-                  this.articlePostGraph.addNode(
-                    new Node()
-                      .setData<string>(
-                        'name',
-                        itemRefMap.get(nextArticle) as string
-                      )
-                      .setData<'row' | 'col'>('matCelltype', 'row') as Node
-                  )
-                )
-              }
-              if (!posteMap.has(nextNode)) {
-                console.log(
-                  ('add Node : ' + posteRefMap.get(nextNode)) as string
-                )
-                posteMap.set(
-                  nextNode,
-                  orderGraph.graph.addNode(
-                    new Node().setData<string>(
-                      'name',
-                      posteRefMap.get(nextNode) as string
-                    ) as Node
-                  )
-                )
-                posteMapforArticle.set(
-                  nextNode,
-                  this.articlePostGraph.addNode(
-                    new Node()
-                      .setData<string>(
-                        'name',
-                        posteRefMap.get(nextNode) as string
-                      )
-                      .setData<'row' | 'col'>('matCelltype', 'col')
-                      .setData<number>('nbOF', 1)
-                      .setData<Set<Node>>(
-                        'articleSet',
-                        new Set<Node>([articleMap.get(nextArticle) as Node])
-                      ) as Node
-                  )
-                )
-              } else {
-                const node = posteMapforArticle.get(nextNode) as Node
-                node
-                  .getData<Set<Node>>('articleSet')
-                  .add(articleMap.get(nextArticle) as Node)
-                node.setData<number>('nbOF', node.getData<number>('nbOF') + 1)
-              }
-
-              (articleMap.get(nextArticle) as Node).addLink(
-                posteMapforArticle.get(nextNode) as Node
-              )
-
-              if (article === nextArticle) {
-                const n1 = posteMap.get(nodeValue) as Node
-                const n2 = posteMap.get(nextNode) as Node
-                let link = n1.getLink(n2)
-                if (link === undefined) {
-                  link = n1
-                    .addLink(n2)
-                    .setData<Map<string, number>>(
-                      'articleWeight',
-                      new Map<string, number>()
-                    ) as Link
-                }
-                link.setData<number>(
-                  'weight',
-                  link.getDataOrDefault<number>('weight', 0) + 1
-                )
-                const articleWeightMap = link.getData<Map<string, number>>(
-                  'articleWeight'
-                )
-                if (!articleWeightMap.has(nextArticle)) {
-                  articleWeightMap.set(nextArticle, 0)
-                }
-                articleWeightMap.set(
-                  nextArticle,
-                  (articleWeightMap.get(nextArticle) as number) + 1
-                )
-              }
-
-              phaseValue = nextPhase
-              nodeValue = nextNode
-              article = nextArticle
-            } else {
-              nodeValue = undefined
-            }
-          } while (nodeValue !== undefined)
-
-          posteMapforArticle.forEach(n => {
-            console.log({
-              name: n.getData<string>('name'),
-              nbOF: n.getData<number>('nbOF'),
-              nbArticle: n.getData<Set<Node>>('articleSet').size
-            })
-          })
-
-          const nbNode = posteMap.size
-          const xSpread = nbNode * 60
-          const xOffset = -xSpread / 2
-
-          let linkCount = 0
-
-          orderGraph.graph.setData<number>('fasScore', 0)
-          orderGraph.graph.foreachNode(n => {
-            n.foreachLink(l => {
-              linkCount++
-              if (l.getDataOrDefault<boolean>('goBack', false)) {
-                orderGraph.graph.setData<number>(
-                  'fasScore',
-                  orderGraph.graph.getData<number>('fasScore') +
-                    l.getDataOrDefault<number>('weight', 1)
-                )
-              }
-            })
-          })
-
-          GraphUtils.orderAlgo(
-            orderGraph.graph,
-            nbNode,
-            xSpread,
-            xOffset,
-            linkCount / nbNode
-          )
-          if (this.graphViewer !== null) {
-            this.graphViewer.setGraph(orderGraph.displayGraph)
-          }
+          this.loadRoutingXLSX(wb)
         }
 
         fileReader.readAsArrayBuffer(f)
       }
     }
+  }
+
+  loadRoutingXLSX (wb: XLSX.WorkBook) {
+    const searchSheet = (source: string, name: string) => {
+      return source.includes(name) && source.includes('data')
+    }
+
+    // console.log(wb)
+
+    const itemSheet =
+      wb.Sheets[
+        wb.SheetNames.find(value => {
+          return searchSheet(value.toLowerCase(), 'item')
+        }) as string
+      ]
+    const posteSheet =
+      wb.Sheets[
+        wb.SheetNames.find(value => {
+          return searchSheet(value.toLowerCase(), 'poste')
+        }) as string
+      ]
+    const routingSheet =
+      wb.Sheets[
+        wb.SheetNames.find(value => {
+          return searchSheet(value.toLowerCase(), 'gamme')
+        }) as string
+      ]
+
+    // console.log(routingSheet)
+    const nameOf: { (x: number, y: number): string } = (x, y) => {
+      return XLSX.utils.encode_cell({ c: x, r: y })
+    }
+
+    const itemRefMap = new Map<string, string>()
+    const posteRefMap = new Map<string, string>()
+
+    let i = 1
+    while (itemSheet[nameOf(0, i)] !== undefined) {
+      itemRefMap.set(itemSheet[nameOf(0, i)].v, itemSheet[nameOf(1, i)].v)
+      i++
+    }
+    i = 1
+    while (posteSheet[nameOf(0, i)] !== undefined) {
+      posteRefMap.set(posteSheet[nameOf(0, i)].v, posteSheet[nameOf(1, i)].v)
+      i++
+    }
+
+    let phaseValue = +routingSheet[nameOf(1, 1)].v
+    let row = 1
+    let nodeValue = routingSheet[nameOf(2, 1)].v
+
+    if (nodeValue === undefined) return
+    const posteMap = new Map<string, Node>()
+    const posteMapforArticle = new Map<string, Node>()
+    const articleMap = new Map<string, Node>()
+
+    const orderGraph = GraphUtils.genOrderGraph()
+    this.postPostGraph = orderGraph.graph
+    this.articlePostGraph = new Graph()
+
+    posteMap.set(
+      nodeValue,
+      orderGraph.graph.addNode(
+        new Node().setData<string>(
+          'name',
+          posteRefMap.get(nodeValue) as string
+        ) as Node
+      )
+    )
+
+    let article = routingSheet[nameOf(0, 1)].v
+    articleMap.set(
+      article,
+      this.articlePostGraph.addNode(
+        new Node()
+          .setData<string>('name', itemRefMap.get(article) as string)
+          .setData<'row' | 'col'>('matCelltype', 'row') as Node
+      )
+    )
+    posteMapforArticle.set(
+      nodeValue,
+      this.articlePostGraph.addNode(
+        new Node()
+          .setData<string>('name', posteRefMap.get(nodeValue) as string)
+          .setData<'row' | 'col'>('matCelltype', 'col')
+          .setData<number>('nbOF', 1)
+          .setData<Set<Node>>(
+            'articleSet',
+            new Set<Node>([articleMap.get(article) as Node])
+          ) as Node
+      )
+    )
+    ;(articleMap.get(article) as Node).addLink(
+      posteMapforArticle.get(nodeValue) as Node
+    )
+
+    do {
+      row++
+      // console.log(row)
+      // console.log(nodeValue + " : " + phaseValue);
+      const next = routingSheet[nameOf(2, row)]
+      if (next !== undefined) {
+        const nextNode = next.v
+        const nextPhase = +routingSheet[nameOf(1, row)].v
+
+        const nextArticle = routingSheet[nameOf(0, row)].v
+        if (!articleMap.has(nextArticle)) {
+          articleMap.set(
+            nextArticle,
+            this.articlePostGraph.addNode(
+              new Node()
+                .setData<string>('name', itemRefMap.get(nextArticle) as string)
+                .setData<'row' | 'col'>('matCelltype', 'row') as Node
+            )
+          )
+        }
+        if (!posteMap.has(nextNode)) {
+          // console.log(('add Node : ' + posteRefMap.get(nextNode)) as string)
+          posteMap.set(
+            nextNode,
+            orderGraph.graph.addNode(
+              new Node().setData<string>(
+                'name',
+                posteRefMap.get(nextNode) as string
+              ) as Node
+            )
+          )
+          posteMapforArticle.set(
+            nextNode,
+            this.articlePostGraph.addNode(
+              new Node()
+                .setData<string>('name', posteRefMap.get(nextNode) as string)
+                .setData<'row' | 'col'>('matCelltype', 'col')
+                .setData<number>('nbOF', 1)
+                .setData<Set<Node>>(
+                  'articleSet',
+                  new Set<Node>([articleMap.get(nextArticle) as Node])
+                ) as Node
+            )
+          )
+        } else {
+          const node = posteMapforArticle.get(nextNode) as Node
+          node
+            .getData<Set<Node>>('articleSet')
+            .add(articleMap.get(nextArticle) as Node)
+          node.setData<number>('nbOF', node.getData<number>('nbOF') + 1)
+        }
+
+        (articleMap.get(nextArticle) as Node).addLink(
+          posteMapforArticle.get(nextNode) as Node
+        )
+
+        if (article === nextArticle) {
+          const n1 = posteMap.get(nodeValue) as Node
+          const n2 = posteMap.get(nextNode) as Node
+          let link = n1.getLink(n2)
+          if (link === undefined) {
+            link = n1
+              .addLink(n2)
+              .setData<Map<string, number>>(
+                'articleWeight',
+                new Map<string, number>()
+              ) as Link
+          }
+          link.setData<number>(
+            'weight',
+            link.getDataOrDefault<number>('weight', 0) + 1
+          )
+          const articleWeightMap = link.getData<Map<string, number>>(
+            'articleWeight'
+          )
+          if (!articleWeightMap.has(nextArticle)) {
+            articleWeightMap.set(nextArticle, 0)
+          }
+          articleWeightMap.set(
+            nextArticle,
+            (articleWeightMap.get(nextArticle) as number) + 1
+          )
+        }
+
+        phaseValue = nextPhase
+        nodeValue = nextNode
+        article = nextArticle
+      } else {
+        nodeValue = undefined
+      }
+    } while (nodeValue !== undefined)
+
+    posteMapforArticle.forEach(n => {
+      console.log({
+        name: n.getData<string>('name'),
+        nbOF: n.getData<number>('nbOF'),
+        nbArticle: n.getData<Set<Node>>('articleSet').size
+      })
+    })
+
+    const nbNode = posteMap.size
+    const xSpread = nbNode * 60
+    const xOffset = -xSpread / 2
+
+    let linkCount = 0
+
+    orderGraph.graph.setData<number>('fasScore', 0)
+    orderGraph.graph.foreachNode(n => {
+      n.foreachLink(l => {
+        linkCount++
+        if (l.getDataOrDefault<boolean>('goBack', false)) {
+          orderGraph.graph.setData<number>(
+            'fasScore',
+            orderGraph.graph.getData<number>('fasScore') +
+              l.getDataOrDefault<number>('weight', 1)
+          )
+        }
+      })
+    })
+
+    GraphUtils.orderAlgo(
+      orderGraph.graph,
+      nbNode,
+      xSpread,
+      xOffset,
+      linkCount / nbNode
+    )
+    if (this.graphViewer !== null) {
+      this.graphViewer.setGraph(orderGraph.displayGraph)
+    }
+  }
+
+  private changeMime (xlsx: File): Promise<File> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader()
+
+      reader.onload = () => {
+        const xlsxUri = reader.result as string
+
+        const bstr = atob(xlsxUri.split('base64,')[1])
+        let n = bstr.length
+        const u8arr = new Uint8Array(n)
+        while (n--) u8arr[n] = bstr.charCodeAt(n)
+
+        const f = new File([u8arr], xlsx.name, {
+          type: 'application/json;application=virtfac/routing'
+        })
+        resolve(f)
+      }
+      reader.onerror = error => {
+        reject(error)
+      }
+      reader.readAsDataURL(xlsx)
+    })
   }
 
   private displayClassifMatrix (

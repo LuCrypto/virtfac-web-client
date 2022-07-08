@@ -373,10 +373,10 @@ export default class ContradictionExpert extends Vue {
         const constraintProject = new ConstraintProject(xlsxUri)
 
         const blob = new Blob([JSON.stringify(constraintProject)], {
-          type: 'application/virtfac.constraint+json'
+          type: 'application/json;application=virtfac/constraint'
         })
         const f = new File([blob], xlsx.name, {
-          type: 'application/virtfac.constraint+json'
+          type: 'application/json;application=virtfac/constraint'
         })
         resolve(f)
       }

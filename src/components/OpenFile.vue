@@ -405,7 +405,8 @@ export default class OpenFilePopUp extends Vue {
         sort: (a: string, b: string): number => {
           return a < b ? -1 : a > b ? 1 : 0
         }
-      }
+      },
+      active: false
     }),
     new DataTableHeaderSelector({
       editable: false,
