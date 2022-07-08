@@ -1,5 +1,6 @@
 <template>
   <v-app
+    :class="fullpage ? 'fullpage' : ''"
     ref="app"
     :style="{
       width: `${this.size.x / this.zoom}px`,
