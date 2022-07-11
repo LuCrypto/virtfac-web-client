@@ -13,11 +13,6 @@ const vue = new Vue({
   render: h => h(App)
 })
 
-const query = vue.$router.currentRoute.query
-if (query.fullpage === 'true') {
-  require('./unreal.scss')
-}
-
 Vue.config.devtools = false
 Vue.config.productionTip = false
 vue.$mount('#app')

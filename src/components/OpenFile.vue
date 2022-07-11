@@ -403,7 +403,8 @@ export default class OpenFilePopUp extends Vue {
         sort: (a: string, b: string): number => {
           return a < b ? -1 : a > b ? 1 : 0
         }
-      }
+      },
+      active: false
     }),
     new DataTableHeaderSelector({
       editable: false,
@@ -593,6 +594,7 @@ export default class OpenFilePopUp extends Vue {
   }
 
   uploadFile (file: APIFile): void {
+    console.log('Upload file with mime :', file.mime)
     API.put(this, '/resources/files', JSON.stringify(file.toJSON()))
       .then((response: Response) => {
         const id = (response as unknown as { id: number }).id

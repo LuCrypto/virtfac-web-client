@@ -123,12 +123,13 @@ export class APIFileItem {
   getDate (dateValue: number): string {
     const date = new Date(dateValue).toLocaleString().split(', ')
     return (
-      date[1]
+      date[1] ||
+      ''
         .split(':')
         .slice(0, -1)
         .join(':') +
-      ' ' +
-      date[0]
+        ' ' +
+        date[0]
     )
   }
 

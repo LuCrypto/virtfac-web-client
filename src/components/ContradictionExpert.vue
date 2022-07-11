@@ -1,5 +1,6 @@
 <template>
-  <v-card elevation="3" height="700" class="d-flex flex-row">
+  <maximizable-container>
+  <v-card elevation="3" class="d-flex flex-row flex-grow-1">
     <v-navigation-drawer stateless permanent :mini-variant="menuCollapse">
       <v-list
         nav
@@ -149,6 +150,7 @@
     <select-pop-up ref="selectPopUp"></select-pop-up>
     <input-field-pop-up ref="inputFieldPopUp"></input-field-pop-up>
   </v-card>
+  </maximizable-container>
 </template>
 
 <script lang="ts">
@@ -168,6 +170,7 @@ import SelectPopUp from '@/components/popup/SelectPopUp.vue'
 import InputFieldPopUp from '@/components/popup/InputFieldPopUp.vue'
 import { GraphLayout } from '@/utils/graph/graphLayout'
 import PopUp from '@/components/PopUp.vue'
+import MaximizableContainer from './MaximizableContainer.vue'
 
 class MenuItem {
   text: string
@@ -238,7 +241,8 @@ interface SettingItem {
     PopUp,
     NV,
     SelectPopUp,
-    InputFieldPopUp
+    InputFieldPopUp,
+    MaximizableContainer
   }
 })
 // @vuese
@@ -369,10 +373,10 @@ export default class ContradictionExpert extends Vue {
         const constraintProject = new ConstraintProject(xlsxUri)
 
         const blob = new Blob([JSON.stringify(constraintProject)], {
-          type: 'application/virtfac.constraint+json'
+          type: 'application/json;application=virtfac/constraint'
         })
         const f = new File([blob], xlsx.name, {
-          type: 'application/virtfac.constraint+json'
+          type: 'application/json;application=virtfac/constraint'
         })
         resolve(f)
       }
