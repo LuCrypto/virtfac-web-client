@@ -34,7 +34,10 @@ import * as XLSX from 'ts-xlsx'
 })
 // @vuese
 // @group COMPONENTS
+// Content of the ContradictionExpert component
 export default class NV extends Vue {
+  // @vuese
+  // Data structure of the loaded graph
   graph!: Graph
   public themeID = 0
 
@@ -56,6 +59,8 @@ export default class NV extends Vue {
     this.container.updateTheme()
   }
 
+  // @vuese
+  // list of themes
   public themes: NvTheme[] = new Array<NvTheme>(
     new NvTheme({ name: 'LIGHT' }),
     new NvTheme({
@@ -87,6 +92,8 @@ export default class NV extends Vue {
     })
   )
 
+  // @vuese
+  // Loop between the list of themes
   public changeTheme (): void {
     this.themeID++
     this.themeID %= this.themes.length
@@ -96,16 +103,19 @@ export default class NV extends Vue {
     this.container.updateTheme()
   }
 
-  /*
-  public exportToSVG() {
-    domtoimage.toSvg(this.$refs.container as Element).then((dataUrl) => {
-      let link = document.createElement("a");
-      link.download = "export.svg";
-      link.href = dataUrl;
-      link.click();
-    });
+  // @vuese
+  // Export displayed graph to an svg image and download it to the client
+  public exportToSVG () {
+    domtoimage.toSvg(this.$refs.container as Element).then(dataUrl => {
+      const link = document.createElement('a')
+      link.download = 'export.svg'
+      link.href = dataUrl
+      link.click()
+    })
   }
-*/
+
+  // @vuese
+  // Export displayed graph to a PNG image and download it to the client
   public exportToPNG (): void {
     if (this.container == null) return
 

@@ -111,6 +111,7 @@ import Component from 'vue-class-component'
 })
 // @vuese
 // @group COMPONENTS
+// Display all information of an asset
 export default class AssetInfo extends Vue {
   private name = ''
   private iconUri = ''
@@ -152,6 +153,9 @@ export default class AssetInfo extends Vue {
     )
   }
 
+  // @vuese
+  // Request asset data to the API and refresh display when loaded
+  // @arg id: ID of the asset to load
   public loadData (id: number): void {
     if (id === -1) {
     } else {
@@ -190,6 +194,8 @@ export default class AssetInfo extends Vue {
     }
   }
 
+  // @vuese
+  // Set asset data locally
   public setAssetData (
     name: string,
     iconUri: string,
@@ -238,15 +244,21 @@ export default class AssetInfo extends Vue {
     })
   }
 
+  // @vuese
+  // remove a tag from the list of affected tags
   public removeTag (tag: string): void {
     this.tags.splice(this.tags.indexOf(tag as never, 0), 1)
   }
 
+  // @vuese
+  // cancel local modification of the asset
   cancel (): void {
     this.$emit('cancel')
     this.$emit('close')
   }
 
+  // @vuese
+  // save local modification of the asset to the API
   save (): void {
     if (this.id !== -1) {
       let apiFile: unknown = {}

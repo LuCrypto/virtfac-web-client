@@ -156,6 +156,7 @@ interface SettingItem {
 })
 // @vuese
 // @group COMPONENTS
+// Content Component of the ergonom-io-asset page.
 export default class ErgonomIOAssetContainer extends Vue {
   defaultMaterial = new MeshLambertMaterial({
     color: 0xaaaaaa
@@ -177,6 +178,8 @@ export default class ErgonomIOAssetContainer extends Vue {
   currentAssetPicture = ''
   inputField: InputFieldPopUp | null = null
 
+  // @vuese
+  // Update the dispalyed theme to match the website global theme (dark or light)
   updateTheme (): void {
     if (this.viewer !== null) {
       if (Session.getTheme() === 'dark') {
@@ -334,18 +337,16 @@ export default class ErgonomIOAssetContainer extends Vue {
     }
   }
 
-  /*
-  onUpdate (data: ActionCallbackData): void {
-    //
-  }
-*/
-
+  // @vuese
+  // ask user to select a 3d object file to upload
   inputFile (): void {
     const input = this.$refs.inputFile as HTMLInputElement
     input.value = ''
     input.click()
   }
 
+  // @vuese
+  // load 3d object file (accepted format : .gltf, .glb, .obj, .fbx, .stl, .wrl) and send it to the 'onLoaded' callback
   public loadObjectAsync (
     url: string,
     extension: string,
@@ -465,6 +466,8 @@ export default class ErgonomIOAssetContainer extends Vue {
     }
   }
 
+  // @vuese
+  // download the loaded model to the client pc in GLTF format.
   exportGltf (): void {
     if (this.currentAsset === null) return
     const gltfExporter = new GLTFExporter()
@@ -484,6 +487,9 @@ export default class ErgonomIOAssetContainer extends Vue {
     )
   }
 
+  /**
+   * callback to load localfile in local
+   */
   onFileUploaded (event: Event): void {
     if (event != null && event.target != null) {
       const f: File = ((event.target as HTMLInputElement).files as FileList)[0]
@@ -532,6 +538,8 @@ export default class ErgonomIOAssetContainer extends Vue {
     }
   }
 
+  // @vuese
+  // Apply the transformation of the 3d object to its geometry
   applyTransform (): void {
     if (this.currentAsset === null) return
     this.currentAsset.updateMatrix()
@@ -547,6 +555,8 @@ export default class ErgonomIOAssetContainer extends Vue {
     this.currentAsset.updateMatrix()
   }
 
+  // @vuese
+  // Switch TransformController mode between rotate, scaling and translating
   switchAxisMode (): void {
     if (this.viewer === null) return
     switch (this.viewer.getMeshControlMode()) {
@@ -562,10 +572,14 @@ export default class ErgonomIOAssetContainer extends Vue {
     }
   }
 
+  // @vuese
+  // Enable/disable snap mode on the TransformController
   switchSnapMode (): void {
     if (this.viewer !== null) this.viewer.switchMeshControlSnap()
   }
 
+  // @vuese
+  // Callback when an Asset is loaded to the viewer
   onFileInput (files: APIAsset[]): void {
     const file = files.pop()
     if (file != null) {
@@ -591,6 +605,8 @@ export default class ErgonomIOAssetContainer extends Vue {
     }
   }
 
+  // @vuese
+  // Pipeline to convert the uploaded file to a gltf file
   onFileUpload (file: File): Promise<File> {
     return new Promise<File>(resolve => {
       const extension = (file.name.split('.').pop() as string).toLowerCase()
@@ -623,6 +639,8 @@ export default class ErgonomIOAssetContainer extends Vue {
     })
   }
 
+  // @vuese
+  // Convert a THREE.JS object instance to a GLTF string
   public ObjectToGLTFUri (object: Group): Promise<string> {
     return new Promise((resolve, reject) => {
       const exporter = new GLTFExporter()
@@ -650,6 +668,8 @@ export default class ErgonomIOAssetContainer extends Vue {
     })
   }
 
+  // @vuese
+  // Send a patch request to the API to apply local changes
   patchFileFromAsset (): void {
     if (this.currentAssetApiId !== -1 && this.currentAsset !== null) {
       const exporter = new GLTFExporter()

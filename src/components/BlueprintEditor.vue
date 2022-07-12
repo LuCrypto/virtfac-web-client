@@ -84,6 +84,7 @@ import Component from 'vue-class-component'
 })
 // @vuese
 // @group COMPONENTS
+// Content of the DrawingShopComponent
 export default class BlueprintEditor extends Vue {
   private container: Element | null = null
   private mode:
@@ -95,6 +96,9 @@ export default class BlueprintEditor extends Vue {
     | 'SCALE' = 'WALL'
 
   private bpContainer: BlueprintContainer | null = null
+
+  // @vuese
+  // return the BlueprintContainer attached to the component
   public getBpContainer (): BlueprintContainer | null {
     return this.bpContainer
   }
@@ -112,6 +116,9 @@ export default class BlueprintEditor extends Vue {
     MatrixUtils.mainTest()
   }
 
+  // @vuese
+  // Set editing mode
+  // @arg mode: 'WALL','DOOR','WINDOW','SUPP_WALL','SUPP_FURNITURE'
   setMode (
     mode: 'WALL' | 'DOOR' | 'WINDOW' | 'SUPP_WALL' | 'SUPP_FURNITURE'
   ): void {

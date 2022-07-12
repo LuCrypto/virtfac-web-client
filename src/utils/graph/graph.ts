@@ -11,6 +11,9 @@ interface savedObject {
   links: Set<unknown>
 }
 
+/**
+ * Graph structure
+ */
 /// <reference path="@/utils/metadata"/>
 export class Graph extends MetaData {
   private nodes: Set<Node>

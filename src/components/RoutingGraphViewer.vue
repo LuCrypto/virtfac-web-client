@@ -22,6 +22,7 @@ import { NvEl } from '@/utils/nodeViewer/nv_el'
 })
 // @vuese
 // @group COMPONENTS
+// Content of the RoutingAnalysis component
 export default class RoutingGraphViewer extends Vue {
   private theme = {
     defaultNodeColor: '#BDC3C7',
@@ -133,6 +134,8 @@ export default class RoutingGraphViewer extends Vue {
     this.updateTransform()
   }
 
+  // @vuese
+  // update transform of the svg layers
   public updateTransform () {
     if (this.nodeLayer === null) throw new Error('null nodeLayer')
     if (this.linkLayer === null) throw new Error('null linkLayer')
@@ -336,10 +339,14 @@ export default class RoutingGraphViewer extends Vue {
     this.linkMap.delete(l)
   }
 
+  // @vuese
+  // get displayed graph
   public getGraph (): Graph | null {
     return this.displayedGraph
   }
 
+  // @vuese
+  // set graph to display
   public setGraph (graph: Graph | null): void {
     if (this.displayedGraph !== null) {
       [

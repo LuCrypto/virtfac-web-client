@@ -137,6 +137,7 @@ interface ClassifSolution {
 })
 // @vuese
 // @group COMPONENTS
+// Content component of the routing-analysis page
 export default class RoutingAnalysisComponent extends Vue {
   selectedMenuItem = -1
   actionContainer: ActionContainer | null = null
@@ -192,7 +193,7 @@ export default class RoutingAnalysisComponent extends Vue {
               }
             },
             {
-              txt: 'Article/Poste Matrix',
+              txt: 'Part/Machine Matrix',
               callback: () => {
                 // console.log('Article/Poste Matrix')
                 const input = document.createElement('input')
@@ -203,7 +204,7 @@ export default class RoutingAnalysisComponent extends Vue {
               }
             },
             {
-              txt: 'Poste/Poste Matrix',
+              txt: 'Machine/Machine Matrix',
               callback: () => {
                 // console.log('Article/Poste Matrix')
                 const input = document.createElement('input')
@@ -214,7 +215,7 @@ export default class RoutingAnalysisComponent extends Vue {
               }
             },
             {
-              txt: 'Classification',
+              txt: 'Clustering',
               callback: () => {
                 const input = document.createElement('input')
                 input.type = 'file'
@@ -225,7 +226,9 @@ export default class RoutingAnalysisComponent extends Vue {
             }
           ],
           item => {
-            if (item !== null) { ((item as Record<string, unknown>).callback as { (): void })() }
+            if (item !== null) {
+              ((item as Record<string, unknown>).callback as { (): void })()
+            }
           }
         )
       }),
@@ -244,26 +247,28 @@ export default class RoutingAnalysisComponent extends Vue {
           ],
           [
             {
-              txt: 'Article/Poste Matrix',
+              txt: 'Part/Machine Matrix',
               callback: () => {
                 this.saveArticlePosteMatrix()
               }
             },
             {
-              txt: 'Poste/Poste Matrix',
+              txt: 'Machine/Machine Matrix',
               callback: () => {
                 this.savePostePosteMatrix()
               }
             },
             {
-              txt: 'Classification',
+              txt: 'Clustering',
               callback: () => {
                 this.saveClassification()
               }
             }
           ],
           item => {
-            if (item !== null) { ((item as Record<string, unknown>).callback as { (): void })() }
+            if (item !== null) {
+              ((item as Record<string, unknown>).callback as { (): void })()
+            }
           }
         )
       }),
@@ -341,7 +346,7 @@ export default class RoutingAnalysisComponent extends Vue {
           this.graphViewer.setGraph(this.postPostGraph)
         }
       }),
-      new MenuItem('Classification Article/Poste', 'mdi-matrix', () => {
+      new MenuItem('Clustering Part/Machine', 'mdi-matrix', () => {
         if (this.articlePostGraph !== null) {
           if (this.articlePostMatrix === null) {
             this.articlePostMatrix = MatrixUtils.matrixFromBipartiGraph(
@@ -443,7 +448,7 @@ export default class RoutingAnalysisComponent extends Vue {
           )
         }
       }),
-      new MenuItem('Classification Poste/Poste', 'mdi-matrix', () => {
+      new MenuItem('Clustering Machine/Machine', 'mdi-matrix', () => {
         if (this.postPostGraph !== null) {
           const m = MatrixUtils.matrixFromGraph(this.postPostGraph, 'index')
           m.printMat()
@@ -624,6 +629,8 @@ export default class RoutingAnalysisComponent extends Vue {
     }
   }
 
+  // @vuese
+  // Download the part/machine matrix in xlsx format to the client
   saveArticlePosteMatrix () {
     if (this.articlePostGraph !== null) {
       if (this.articlePostMatrix === null) {
@@ -671,9 +678,9 @@ export default class RoutingAnalysisComponent extends Vue {
       const ws = XLSX.utils.aoa_to_sheet(data)
       const wb = XLSX.utils.book_new()
 
-      wb.SheetNames = ['Article Poste Matrix']
+      wb.SheetNames = ['Part Machine Matrix']
 
-      wb.Sheets['Article Poste Matrix'] = ws
+      wb.Sheets['Part Machine Matrix'] = ws
 
       const uri = XLSX.write(wb, { bookType: 'xlsx', type: 'binary' })
       const buf = new ArrayBuffer(uri.length)
@@ -684,13 +691,15 @@ export default class RoutingAnalysisComponent extends Vue {
         type:
           'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
       })
-      const file = new File([blob], 'poste matrix.xlsx')
+      const file = new File([blob], 'part/machine matrix.xlsx')
       a.href = URL.createObjectURL(file)
-      a.download = 'article/poste matrix.xlsx'
+      a.download = 'part/machine matrix.xlsx'
       a.click()
     }
   }
 
+  // @vuese
+  // Download the part/part matrix in xlsx format to the client
   savePostePosteMatrix () {
     if (this.postPostGraph !== null) {
       const data = new Array<Array<unknown>>()
@@ -729,9 +738,9 @@ export default class RoutingAnalysisComponent extends Vue {
       }
       */
 
-      wb.SheetNames = ['Poste Matrix']
+      wb.SheetNames = ['Machine Matrix']
 
-      wb.Sheets['Poste Matrix'] = ws
+      wb.Sheets['Machine Matrix'] = ws
 
       const uri = XLSX.write(wb, { bookType: 'xlsx', type: 'binary' })
       const buf = new ArrayBuffer(uri.length)
@@ -742,13 +751,15 @@ export default class RoutingAnalysisComponent extends Vue {
         type:
           'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
       })
-      const file = new File([blob], 'poste matrix.xlsx')
+      const file = new File([blob], 'machine matrix.xlsx')
       a.href = URL.createObjectURL(file)
-      a.download = 'poste matrix.xlsx'
+      a.download = 'machine matrix.xlsx'
       a.click()
     }
   }
 
+  // @vuese
+  // Download the classification in xlsx format to the client
   saveClassification () {
     const data = new Array<Array<unknown>>()
     const savedSet = new Set<string>()
@@ -777,9 +788,9 @@ export default class RoutingAnalysisComponent extends Vue {
     const ws = XLSX.utils.aoa_to_sheet(data)
     const wb = XLSX.utils.book_new()
 
-    wb.SheetNames = ['Classification']
+    wb.SheetNames = ['Clustering']
 
-    wb.Sheets.Classification = ws
+    wb.Sheets.Clustering = ws
 
     const uri = XLSX.write(wb, { bookType: 'xlsx', type: 'binary' })
     const buf = new ArrayBuffer(uri.length)
@@ -789,12 +800,14 @@ export default class RoutingAnalysisComponent extends Vue {
     const blob = new Blob([buf], {
       type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
     })
-    const file = new File([blob], 'Classification.xlsx')
+    const file = new File([blob], 'clustering.xlsx')
     a.href = URL.createObjectURL(file)
-    a.download = 'Classification.xlsx'
+    a.download = 'clustering.xlsx'
     a.click()
   }
 
+  // @vuese
+  // Load a classification from xlsx format from a client file
   loadClassification (event: Event) {
     if (event != null && event.target != null) {
       const f: File = ((event.target as HTMLInputElement).files as FileList)[0]
@@ -878,6 +891,8 @@ export default class RoutingAnalysisComponent extends Vue {
     }
   }
 
+  // @vuese
+  // Load a part/machine matrix from xlsx format from a client file
   loadArticlePosteMatrix (event: Event) {
     if (event != null && event.target != null) {
       const f: File = ((event.target as HTMLInputElement).files as FileList)[0]
@@ -968,6 +983,8 @@ export default class RoutingAnalysisComponent extends Vue {
     }
   }
 
+  // @vuese
+  // Load a machine/machine matrix from xlsx format from a client file
   loadPostePosteMatrix (event: Event) {
     if (event != null && event.target != null) {
       const f: File = ((event.target as HTMLInputElement).files as FileList)[0]
@@ -1092,6 +1109,8 @@ export default class RoutingAnalysisComponent extends Vue {
     }
   }
 
+  // @vuese
+  // Load a routing file from xlsx format from a client file
   loadRoutingFile (event: Event) {
     console.log('file uploaded')
     if (event != null && event.target != null) {
@@ -1116,6 +1135,8 @@ export default class RoutingAnalysisComponent extends Vue {
     }
   }
 
+  // @vuese
+  // Load routing worksheet to the routing analysis session
   loadRoutingXLSX (wb: XLSX.WorkBook) {
     const searchSheet = (source: string, name: string) => {
       return source.includes(name) && source.includes('data')
