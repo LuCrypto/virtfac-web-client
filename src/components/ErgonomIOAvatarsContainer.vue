@@ -46,165 +46,164 @@
 </style>
 
 <template>
-  <!--v-card of component-->
-  <v-card elevation="3" height="700" class="d-flex flex-row pa-0 ma-0">
-    <!-- Popup windows-->
-    <!--Open avatar profile pop-up-->
-    <pop-up ref="openFilePopUp">
-      <open-avatar
-        @close="$refs.openFilePopUp.close()"
-        application="ERGONOM_IO"
-        accept=".obj, .fbx, .stl, .wrl, .glb"
-        :uploadPipeline="onFileUpload"
-        :singleSelect="true"
-        :openFile="true"
-        @fileInput="onFileInput"
-      ></open-avatar>
-    </pop-up>
-    <input
-      ref="playerDataUpload"
-      type="file"
-      accept=".json"
-      hidden
-      @change="onPlayerDataUpload"
-    />
-    <!--Save avatar pop-up-->
-    <pop-up ref="avatarInfo">
-      <avatar-info
-        ref="avatarInfoComponent"
-        @close="$refs.avatarInfo.close()"
-      ></avatar-info>
-    </pop-up>
-    <!--TODO : Complete Pop-Up list-->
+  <maximizable-container>
+    <!--v-card of component-->
+    <v-card elevation="3" height="700" class="d-flex flex-row flex-grow-1">
+      <!-- Popup windows-->
+      <!--Open avatar profile pop-up-->
+      <pop-up ref="openFilePopUp">
+        <open-avatar
+          @close="$refs.openFilePopUp.close()"
+          application="ERGONOM_IO"
+          accept=".obj, .fbx, .stl, .wrl, .glb"
+          :uploadPipeline="onFileUpload"
+          :singleSelect="true"
+          :openFile="true"
+          @fileInput="onFileInput"
+        ></open-avatar>
+      </pop-up>
+      <input
+        ref="playerDataUpload"
+        type="file"
+        accept=".json"
+        hidden
+        @change="onPlayerDataUpload"
+      />
+      <!--Save avatar pop-up-->
+      <pop-up ref="avatarInfo">
+        <avatar-info
+          ref="avatarInfoComponent"
+          @close="$refs.avatarInfo.close()"
+        ></avatar-info>
+      </pop-up>
+      <!--TODO : Complete Pop-Up list-->
 
-    <!--Left Menu Labels-->
-    <v-navigation-drawer stateless permanent :mini-variant="menuCollapse">
-      <v-list
-        nav
-        dense
-        class="d-flex flex-column justify-start;"
-        style="height: 100%"
-      >
-        <!--item list of navigation page-->
-        <v-list-item-group v-model="selectedMenuItem" color="primary">
-          <v-list-item
-            v-for="(menuItem, i) in menuItemList"
-            :key="i"
-            class="justify-start"
-            @click.stop="menuItem.action"
-          >
-            <v-list-item-icon>
-              <v-icon v-text="menuItem.icon"></v-icon>
-            </v-list-item-icon>
-            <v-list-item-content>
-              <v-list-item-title v-text="menuItem.text"></v-list-item-title>
-            </v-list-item-content>
-          </v-list-item>
-        </v-list-item-group>
-
-        <v-list-item-group class="mt-auto">
-          <v-list-item
-            class="justify-start"
-            @click="menuCollapse = !menuCollapse"
-          >
-            <v-list-item-icon>
-              <v-icon v-if="menuCollapse" v-text="'mdi-arrow-right'"></v-icon>
-              <v-icon v-if="!menuCollapse" v-text="'mdi-arrow-left'"></v-icon>
-            </v-list-item-icon>
-            <v-list-item-content>
-              <v-list-item-title v-text="'Menu labels'"></v-list-item-title>
-            </v-list-item-content>
-          </v-list-item>
-        </v-list-item-group>
-      </v-list>
-    </v-navigation-drawer>
-
-    <!--Main Components-->
-    <v-col class="pa-0 d-flex flex-column">
-      <!--Three.js View-->
-      <v-row no-gutters class="pa-0 d-flex flex-row">
-        <v-col class="pa-0 d-flex flex-column">
-          <v-row class="ma-0 flex-grow-1">
-            <model-viewer-2 :displayFog="true" ref="viewer"></model-viewer-2>
-          </v-row>
-        </v-col>
-        <!-- Morph Custom item, visible when entering Morph menu -->
-        <v-col
-          width="100px"
-          class="ma-3 flex-grow-1 d-flex flex-column justify-center"
-          v-if="mainMenu.selected === 8"
+      <!--Left Menu Labels-->
+      <v-navigation-drawer stateless permanent :mini-variant="menuCollapse">
+        <v-list
+          nav
+          dense
+          class="d-flex flex-column justify-start;"
+          style="height: 100%"
         >
-          <v-row class="flex-grow-1 justify-center"> Customization </v-row>
-          <v-container class="flex-grow-1 justify-center overflow-y-auto">
-            <v-row
-              v-for="(morphItem, morphIndex) in morphList"
-              :key="morphIndex"
+          <!--item list of navigation page-->
+          <v-list-item-group v-model="selectedMenuItem" color="primary">
+            <v-list-item
+              v-for="(menuItem, i) in menuItemList"
+              :key="i"
+              class="justify-start"
+              @click.stop="menuItem.action"
             >
-              {{ morphItem.name }}
-              <div class="slidecontainer mb-4">
-                <input
-                  type="range"
-                  min="0"
-                  max="100"
-                  v-model="morphItem.value"
-                  class="slider"
-                  id="myRange"
-                  @input="updateMorph()"
-                />
+              <v-list-item-icon>
+                <v-icon v-text="menuItem.icon"></v-icon>
+              </v-list-item-icon>
+              <v-list-item-content>
+                <v-list-item-title v-text="menuItem.text"></v-list-item-title>
+              </v-list-item-content>
+            </v-list-item>
+          </v-list-item-group>
+
+          <v-list-item-group class="mt-auto">
+            <v-list-item
+              class="justify-start"
+              @click="menuCollapse = !menuCollapse"
+            >
+              <v-list-item-icon>
+                <v-icon v-if="menuCollapse" v-text="'mdi-arrow-right'"></v-icon>
+                <v-icon v-if="!menuCollapse" v-text="'mdi-arrow-left'"></v-icon>
+              </v-list-item-icon>
+              <v-list-item-content>
+                <v-list-item-title v-text="'Menu labels'"></v-list-item-title>
+              </v-list-item-content>
+            </v-list-item>
+          </v-list-item-group>
+        </v-list>
+      </v-navigation-drawer>
+
+      <!--Main Components-->
+      <v-col class="pa-0 d-flex flex-column">
+        <!--Three.js View-->
+        <v-row no-gutters class="pa-0 d-flex flex-row">
+          <v-col class="pa-0 d-flex flex-column">
+            <v-row class="ma-0 flex-grow-1">
+              <model-viewer-2 :displayFog="true" ref="viewer"></model-viewer-2>
+            </v-row>
+          </v-col>
+          <!-- Morph Custom item, visible when entering Morph menu -->
+          <v-col
+            width="100px"
+            class="ma-3 flex-grow-1 d-flex flex-column justify-center"
+            v-if="mainMenu.selected === 8"
+          >
+            <v-row class="flex-grow-1 justify-center"> Customization </v-row>
+            <v-container class="flex-grow-1 justify-center overflow-y-auto">
+              <v-row
+                v-for="(morphItem, morphIndex) in morphList"
+                :key="morphIndex"
+              >
+                {{ morphItem.name }}
+                <div class="slidecontainer mb-4">
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    v-model="morphItem.value"
+                    class="slider"
+                    id="myRange"
+                    @input="updateMorph()"
+                  />
+                </div>
+              </v-row>
+            </v-container>
+          </v-col>
+
+          <!-- PlayerData set item, wisible when entering Settings menu -->
+          <v-col class="ma-3 d-flex flex-column" v-if="mainMenu.selected === 9">
+            <v-row class="justify-center"> Player Data Settings </v-row>
+            <v-row class="flex-grow-1 justify-center">
+              <v-text-field
+                label="Name"
+                :placeholder="this.playerData.name"
+                v-model="playerData.name"
+                class="mr-5 ml-5"
+                dense
+                :value="this.playerData.name"
+              ></v-text-field>
+            </v-row>
+            <v-row class="flex-grow-1 justify-center">
+              <div
+                v-for="(playerDataItem, itemIndex) in playerData.items"
+                :key="itemIndex"
+              >
+                <v-text-field
+                  :label="playerDataItem.name"
+                  :placeholder="playerDataItem.name"
+                  v-model="playerDataItem.value"
+                  :value="playerDataItem.value"
+                  type="number"
+                  class="mr-2"
+                >
+                </v-text-field>
               </div>
             </v-row>
-          </v-container>
-        </v-col>
-
-        <!-- PlayerData set item, wisible when entering Settings menu -->
-        <v-col class="ma-3 d-flex flex-column" v-if="mainMenu.selected === 9">
-          <v-row class="justify-center"> Player Data Settings </v-row>
-          <v-row class="flex-grow-1 justify-center">
-            <v-text-field
-              label="Name"
-              :placeholder="this.playerData.name"
-              v-model="playerData.name"
-              class="mr-5 ml-5"
-              dense
-              :value="this.playerData.name"
-            ></v-text-field>
-          </v-row>
-          <v-row class="flex-grow-1 justify-center">
-            <div
-              v-for="(playerDataItem, itemIndex) in playerData.items"
-              :key="itemIndex"
-            >
-              <v-text-field
-                :label="playerDataItem.name"
-                :placeholder="playerDataItem.name"
-                v-model="playerDataItem.value"
-                :value="playerDataItem.value"
-                type="number"
-                class="mr-2"
+            <v-row>
+              <v-col>
+                <v-btn color="primary" @click="loadPlayerData()">
+                  Load Data (XML/JSon)
+                </v-btn></v-col
               >
-              </v-text-field>
-            </div>
-          </v-row>
-          <v-row>
-            <v-col>
-              <v-btn color="primary" @click="loadPlayerData()">
-                Load Data (XML/JSon)
-              </v-btn></v-col
+              <v-col>
+                <v-btn color="primary" @click="saveProfile()">
+                  Save Profile
+                </v-btn></v-col
+              ></v-row
             >
-            <v-col>
-              <v-btn color="primary" @click="saveProfile()">
-                Save Profile
-              </v-btn></v-col
-            ></v-row
-          >
-        </v-col>
-      </v-row>
-      <!--Row list of bodypart modifiers -->
-      <v-row class="ma-3 flex-grow-0 align-center justify-center">
-        <v-slide-group show-arrows center-active>
+          </v-col>
+        </v-row>
+        <v-row class="ma-3 flex-grow-0 align-center justify-center">
+          <v-slide-group show-arrows center-active> </v-slide-group>
           <v-slide-item
-            v-for="(childMenu, childIndex) in mainMenu.items[mainMenu.selected]
-              .items"
+            v-for="(childMenu, childIndex) in colorMenu.items"
             :key="childIndex"
             v-slot="{ toggle }"
           >
@@ -214,59 +213,82 @@
               "
               class="mx-2 black--text"
               fab
-              :class="
-                mainMenu.items[mainMenu.selected].selected === childIndex
-                  ? 'selected'
-                  : ''
-              "
-              @click="
-                toggle(
-                  (mainMenu.items[mainMenu.selected].selected = childIndex)
-                ),
+              :class="colorMenu.selected === childIndex ? 'selected' : ''"
+              @click="toggle((colorMenu.selected = childIndex)), updateColor()"
+            >
+            </v-btn>
+          </v-slide-item>
+        </v-row>
+        <!--Row list of bodypart modifiers -->
+        <v-row class="ma-3 flex-grow-0 align-center justify-center">
+          <v-slide-group show-arrows center-active>
+            <v-slide-item
+              v-for="(childMenu, childIndex) in mainMenu.items[
+                mainMenu.selected
+              ].items"
+              :key="childIndex"
+              v-slot="{ toggle }"
+            >
+              <v-btn
+                :color="
+                  childMenu.type === 'COLOR' ? '#' + childMenu.value : 'primary'
+                "
+                class="mx-2 black--text"
+                fab
+                :class="
+                  mainMenu.items[mainMenu.selected].selected === childIndex
+                    ? 'selected'
+                    : ''
+                "
+                @click="
+                  toggle(
+                    (mainMenu.items[mainMenu.selected].selected = childIndex)
+                  ),
+                    update()
+                "
+              >
+                <v-icon color="red">
+                  {{ childMenu.type === 'ICON' ? childMenu.value : '' }}
+                </v-icon>
+              </v-btn>
+            </v-slide-item>
+          </v-slide-group>
+        </v-row>
+
+        <!--Row of buttons to switch between bodyPart list-->
+        <v-row class="ma-3 flex-grow-0 align-center justify-center">
+          <v-slide-group show-arrows center-active>
+            <v-slide-item
+              v-for="(parentMenu, parentIndex) in mainMenu.items"
+              :key="parentIndex"
+              v-slot="{ toggle }"
+            >
+              <v-btn
+                class="mx-2 black--text"
+                fab
+                :color="
+                  parentMenu.type === 'COLOR' ? parentMenu.value : 'primary'
+                "
+                :class="mainMenu.selected === parentIndex ? 'selected' : ''"
+                @click="
+                  toggle((mainMenu.selected = parentIndex))
                   update()
-              "
-            >
-              <v-icon color="red">
-                {{ childMenu.type === 'ICON' ? childMenu.value : '' }}
-              </v-icon>
-            </v-btn>
-          </v-slide-item>
-        </v-slide-group>
-      </v-row>
+                "
+              >
+                <v-icon size="30" class="icon">
+                  {{ parentMenu.type === 'ICON' ? parentMenu.value : '' }}
+                </v-icon>
+              </v-btn>
+            </v-slide-item>
+          </v-slide-group>
+        </v-row>
+      </v-col>
 
-      <!--Row of buttons to switch between bodyPart list-->
-      <v-row class="ma-3 flex-grow-0 align-center justify-center">
-        <v-slide-group show-arrows center-active>
-          <v-slide-item
-            v-for="(parentMenu, parentIndex) in mainMenu.items"
-            :key="parentIndex"
-            v-slot="{ toggle }"
-          >
-            <v-btn
-              class="mx-2 black--text"
-              fab
-              :color="
-                parentMenu.type === 'COLOR' ? parentMenu.value : 'primary'
-              "
-              :class="mainMenu.selected === parentIndex ? 'selected' : ''"
-              @click="
-                toggle((mainMenu.selected = parentIndex))
-                update()
-              "
-            >
-              <v-icon size="30" class="icon">
-                {{ parentMenu.type === 'ICON' ? parentMenu.value : '' }}
-              </v-icon>
-            </v-btn>
-          </v-slide-item>
-        </v-slide-group>
-      </v-row>
-    </v-col>
-
-    <!--Unknown-->
-    <select-pop-up ref="selectPopUp"></select-pop-up>
-    <input-field-pop-up ref="inputFieldPopUp"></input-field-pop-up>
-  </v-card>
+      <!--Unknown-->
+      <select-pop-up ref="selectPopUp"></select-pop-up>
+      <input-field-pop-up ref="inputFieldPopUp"></input-field-pop-up>
+    </v-card>
+  </maximizable-container>
 </template>
 
 <style scoped>
@@ -305,6 +327,8 @@ import OpenAsset from '@/components/OpenAsset.vue'
 import OpenAvatar from '@/components/OpenAvatar.vue'
 import AssetInfo from '@/components/AssetInfo.vue'
 import AvatarInfo from '@/components/AvatarInfo.vue'
+import MaximizableContainer from './MaximizableContainer.vue'
+
 import API from '@/utils/api'
 import { join } from 'path'
 
@@ -416,7 +440,8 @@ class Avatar {
     OpenAsset,
     OpenAvatar,
     AssetInfo,
-    AvatarInfo
+    AvatarInfo,
+    MaximizableContainer
   }
 })
 
@@ -427,22 +452,6 @@ class Avatar {
 // Several customization parameters are available, for the aesthetic
 // and the morph customs.
 export default class ErgonomIOAvatarsContainer extends Vue {
-  // Deprecated
-  bodyMaterialArray: MeshLambertMaterial[] = []
-  shirtMaterialArray: MeshLambertMaterial[] = []
-  pantsMaterialArray: MeshLambertMaterial[] = []
-  shoesMaterialArray: MeshLambertMaterial[] = []
-
-  materialArray: MeshLambertMaterial[] = []
-
-  hairMaterial: MeshLambertMaterial = new MeshLambertMaterial({
-    color: 0x90542f
-  })
-
-  beardMaterial: MeshLambertMaterial = new MeshLambertMaterial({
-    color: 0x90542f
-  })
-
   value = 0
   selectedMenuItem = -1
   menuItemList: MenuItem[] = []
@@ -461,6 +470,17 @@ export default class ErgonomIOAvatarsContainer extends Vue {
     '6e4433',
     '5d3a2b',
     '4d2f24'
+  ]
+
+  hairHexColors = [
+    'e4e1cd',
+    '988880',
+    'dfa345',
+    '53381a',
+    '9e6730',
+    'cd832c',
+    '772f1e',
+    '171111'
   ]
 
   beardNamesArray = [
@@ -535,6 +555,11 @@ export default class ErgonomIOAvatarsContainer extends Vue {
 
   primaryColor = this.$vuetify.theme.themes.dark.primary
 
+  hairHexColor = '#e4e1cd'
+  hairColor = 0xe4e1cd
+  beardHexColor = '#e4e1cd'
+  beardColor = 0xe4e1cd
+
   hairMesh: Group = new Group()
   beardMesh: Group = new Group()
   shirtMesh: Group = new Group()
@@ -547,10 +572,27 @@ export default class ErgonomIOAvatarsContainer extends Vue {
   morphList: MorphItem[] = []
   // var mainMenu needs to be init with an items before calling createItems
   mainMenu: MenuItem2 = new MenuItem2('', 'ICON', [new MenuItem2()])
+  colorMenu: MenuItem2 = new MenuItem2('', 'ICON', [new MenuItem2()])
 
   currentSkinId = 0
 
   showPlayerDataSettings = false
+
+  // Deprecated
+  bodyMaterialArray: MeshLambertMaterial[] = []
+  shirtMaterialArray: MeshLambertMaterial[] = []
+  pantsMaterialArray: MeshLambertMaterial[] = []
+  shoesMaterialArray: MeshLambertMaterial[] = []
+
+  materialArray: MeshLambertMaterial[] = []
+
+  hairMaterial: MeshLambertMaterial = new MeshLambertMaterial({
+    color: this.hairColor
+  })
+
+  beardMaterial: MeshLambertMaterial = new MeshLambertMaterial({
+    color: this.beardColor
+  })
 
   /* ThreeJS view */
   viewer: ModelViewer2 | null = null
@@ -733,6 +775,10 @@ export default class ErgonomIOAvatarsContainer extends Vue {
     for (let i = 0; i < this.shoesNamesArray.length; i++) {
       shoesMenuArray.push(new MenuItem2('$vuetify.icons.shoes', 'ICON'))
     }
+    var hairColorArray = []
+    for (let i = 0; i < this.hairHexColors.length; i++) {
+      hairColorArray.push(new MenuItem2(this.hairHexColors[i], 'COLOR'))
+    }
 
     this.mainMenu = new MenuItem2('', 'ICON', [
       new MenuItem2('$vuetify.icons.colours', 'ICON', skinArray),
@@ -750,6 +796,8 @@ export default class ErgonomIOAvatarsContainer extends Vue {
       new MenuItem2('$vuetify.icons.settings', 'ICON', []),
       new MenuItem2('$vuetify.icons.morph', 'ICON', [])
     ])
+
+    this.colorMenu = new MenuItem2('', 'ICON', hairColorArray)
   }
 
   initMorphData (): void {
@@ -957,6 +1005,26 @@ export default class ErgonomIOAvatarsContainer extends Vue {
     }
   }
 
+  updateColor (): void {
+    if (this.mainMenu.selected === 2) {
+      this.hairMaterial.color = new THREE.Color(
+        parseInt('0x' + this.hairHexColors[this.colorMenu.selected])
+      )
+      this.hairHexColor = '#' + this.hairHexColors[this.colorMenu.selected]
+      this.hairColor = parseInt(
+        '0x' + this.hairHexColors[this.colorMenu.selected]
+      )
+    } else if (this.mainMenu.selected === 3) {
+      this.beardMaterial.color = new THREE.Color(
+        parseInt('0x' + this.hairHexColors[this.colorMenu.selected])
+      )
+      this.beardHexColor = '#' + this.hairHexColors[this.colorMenu.selected]
+      this.beardColor = parseInt(
+        '0x' + this.hairHexColors[this.colorMenu.selected]
+      )
+    }
+  }
+
   // Used to set up management options
   createMenu (): void {
     this.menuItemList.push(
@@ -1048,8 +1116,8 @@ export default class ErgonomIOAvatarsContainer extends Vue {
     // )
     profile.skinHexColor =
       '#' + this.mainMenu.items[0].items[this.mainMenu.items[0].selected].value
-    profile.hairHexColor = '#000000'
-    profile.beardHexColor = '#000000'
+    profile.hairHexColor = this.hairHexColor
+    profile.beardHexColor = this.beardHexColor
 
     const json = JSON.stringify(profile)
     console.log(json)
