@@ -794,6 +794,7 @@ export default class ModelViewer extends Vue {
     hideTransformController?: boolean
   ): void {
     const oldsize = new THREE.Vector2(0, 0)
+    const oldaspect = this.camera.aspect
     this.renderer.getSize(oldsize)
     if (hideGrid) {
       this.scene.remove(this.gridHelper as GridHelper)
@@ -823,9 +824,13 @@ export default class ModelViewer extends Vue {
       this.scene.add(this.gizmo as TransformControls)
     }
     if (width !== undefined && height !== undefined) {
+      // this.camera.aspect = oldsize.x / oldsize.y
+      this.camera.aspect = oldaspect
       this.renderer.setSize(oldsize.x, oldsize.y)
-      this.camera.aspect = oldsize.x / oldsize.y
       this.camera.updateProjectionMatrix()
+      this.renderer.domElement.style.height = ''
+      this.renderer.domElement.style.width = ''
+      console.log(this.renderer)
     }
     this.scene.background = oldColor
     onCaptureDone(imgData)

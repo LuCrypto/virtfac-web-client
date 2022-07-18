@@ -7,6 +7,7 @@ import { Vec2, Vector2 } from '@/utils/graph/Vec'
 import { GraphUtils } from '@/utils/graph/graphUtils'
 import { ArrayUtils } from '@/utils/graph/arrayUtils'
 import { DelayedCallback } from '@/utils/graph/delayedCallback'
+import { GraphLayout } from './graphLayout'
 
 class Constraint extends Node {
   private name: string
@@ -327,6 +328,15 @@ export class ConstraintGraph {
     return s
   }
 
+  /**
+   * Group links nodes that are in similar direction from the origin node
+   * @param graph
+   * @param node origin node
+   * @param mergeAngle max angle between two node that can merge in a group
+   * @param splitAngle max angle between the two 'border' nodes of a group. When reached, split the group in two equal angle groups
+   * @param links List of nodes to groups relatively to the origin node
+   * @returns Array of groups. If a node is not in a group, it will not be returned.
+   */
   private static groupByAngle (
     graph: Graph,
     node: Node,
@@ -342,15 +352,13 @@ export class ConstraintGraph {
     const groupResult: Array<Array<{ angle: number; link: Node }>> = new Array<
       Array<{ angle: number; link: Node }>
     >()
-    // console.log(angles);
 
+    // get list of radians angles foreach link nodes from the origin node.
     links.forEach(link => {
       if (!link.getDataOrDefault<boolean>('isDisplay', false)) {
-        // console.log("j")
         if (
           Vector2.norm(Vector2.minus(link.getData<Vec2>('position'), p)) > 0.01
         ) {
-          // link.setData<boolean>('visible', true)
           angles.push({
             angle: Vector2.angle(
               Vector2.minus(link.getData<Vec2>('position'), p)
@@ -360,11 +368,14 @@ export class ConstraintGraph {
         }
       }
     })
+
     if (angles.length > 1) {
+      // sort by the trigonometric circle order
       angles.sort((a, b) =>
         a.angle < b.angle ? -1 : a.angle > b.angle ? 1 : 0
       )
 
+      // compute distance between two angles
       const diffAngle = (a: number, b: number) => {
         // return Math.abs(Math.abs(a) - Math.abs(b));
         const tmp = (Math.PI * 2 + a - b) % (Math.PI * 2)
@@ -376,6 +387,7 @@ export class ConstraintGraph {
 
       let imax = 0
       let anglMax = diffAngle(angles[angles.length - 1].angle, angles[0].angle)
+      // move the starting index to the node just after the largest gap
       for (let i = 1; i < angles.length; i++) {
         const tmp = diffAngle(angles[i - 1].angle, angles[i].angle)
         if (tmp > anglMax) {
@@ -384,8 +396,8 @@ export class ConstraintGraph {
         }
       }
 
-      let cumulAngle = 0
-      let startPosition = 0
+      let cumulAngle = 0 // angle of the current computing group
+      let startPosition = 0 // starting index of the current coputing group
       for (let i = 1; i < angles.length; i++) {
         const d = diffAngle(
           angles[(angles.length + i - 1 + imax) % angles.length].angle,
@@ -1136,6 +1148,7 @@ export class ConstraintGraph {
   }
 
   public refreshPosition (): void {
+    /*
     console.log('refreshPosition')
     const toCheckSet: Set<Node> = new Set<Node>()
     let i = -this.contrainte.size / 2
@@ -1204,25 +1217,11 @@ export class ConstraintGraph {
           -n.getData<number>('hierarchy') * dist
         )
       )
-      /*
-      n.setData<string>(
-        'name',
-        n.getData<string>('name') +
-          ' herarchy:' +
-          n.getData<number>('hierarchy')
-      )
-      */
     })
+    */
 
-    /*
-        sourcePosition.forEach((pos:Vec2, source:Source) => {
-            sourcePosition.forEach((pos2:Vec2, source2:Source) => {
-                if (source2 != source){
-                    const dist = sour
-                }
-            })
-        })
-        */
+    GraphLayout.verticalHierarchyLayout(this.getRawGraph(), 500)
+    GraphLayout.horizontalOrdering(this.getRawGraph(), 400)
   }
 
   public loadXLSX (wb: IWorkBook): void {

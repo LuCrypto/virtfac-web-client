@@ -41,7 +41,7 @@
       </v-navigation-drawer>
       <v-container
         class="pa-0"
-        style="width: auto; margin: 0; flex-grow: 1; position: relative;"
+        style="width: auto; margin: 0; flex-grow: 1; position: relative; max-width: none"
       >
         <v-card
           v-if="showFilter"
@@ -192,40 +192,6 @@ class ConstraintProject {
   }
 }
 
-class Range {
-  private _min = 0
-  private _max = 0
-  public onChange: { (sender: Range): void } | null = null
-
-  public get min (): number {
-    return this._min
-  }
-
-  public set min (value) {
-    this._min = value
-    if (this.onChange !== null) this.onChange(this)
-  }
-
-  public get max (): number {
-    return this._max
-  }
-
-  public set max (value) {
-    this._max = value
-    if (this.onChange !== null) this.onChange(this)
-  }
-
-  constructor (
-    min: number,
-    max: number,
-    onChange: { (sender: Range): void } | null = null
-  ) {
-    this._min = min
-    this._max = max
-    this.onChange = onChange
-  }
-}
-
 interface SettingItem {
   id: number
   idApplication: number
@@ -247,7 +213,7 @@ interface SettingItem {
 })
 // @vuese
 // @group COMPONENTS
-// TODO
+// Content component of the page contradiction-analysis-expert
 export default class ContradictionExpert extends Vue {
   selectedMenuItem = -1
   nodeViewer: NV | null = null
@@ -266,7 +232,7 @@ export default class ContradictionExpert extends Vue {
   reverseFilter = true
 
   // @vuese
-  // TODO
+  // get raw constraint graph
   getGraph (): Graph {
     return (this.constraintGraph as ConstraintGraph).getRawGraph()
   }
@@ -329,12 +295,6 @@ export default class ContradictionExpert extends Vue {
   }
   */
 
-  inputFile (): void {
-    const input = this.$refs.inputFile as HTMLInputElement
-    input.value = ''
-    input.click()
-  }
-
   handleFile (files: APIFile[]): void {
     if (files == null) {
       console.log('This type of file cannot be read yet.')
@@ -391,7 +351,7 @@ export default class ContradictionExpert extends Vue {
   }
 
   // @vuese
-  // TODO
+  // Save nodes position to the API
   saveShape (): void {
     //*
     if (this.openedProject !== null && this.openedFile !== null) {
@@ -417,8 +377,6 @@ export default class ContradictionExpert extends Vue {
     }
   }
 
-  // @vuese
-  // TODO
   selectLayout (): void {
     const headers = new Array<{
       text: string
@@ -477,7 +435,7 @@ export default class ContradictionExpert extends Vue {
   }
 
   // @vuese
-  // TODO
+  // Load nodes position from the API
   loadShape (): void {
     if (this.openedFile === null) return
     if (this.openedProject === null) return
@@ -574,7 +532,7 @@ export default class ContradictionExpert extends Vue {
   }
 
   // @vuese
-  // TODO
+  // Update shown/hidden links related to the selected filters
   refreshFilters () {
     this.constraintGraph.getGraph().foreachLink(l => {
       const w = l.getDataOrDefault<number>('weight', 0)
