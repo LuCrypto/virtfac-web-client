@@ -65,7 +65,6 @@
       <input
         ref="playerDataUpload"
         type="file"
-        accept=".json"
         hidden
         @change="onPlayerDataUpload"
       />
@@ -172,14 +171,14 @@
             </v-row>
             <v-row class="flex-grow-1 justify-center">
               <div
-                v-for="(playerDataItem, itemIndex) in playerData.items"
+                v-for="(playerDataItem, itemIndex) in playerData.values"
                 :key="itemIndex"
               >
                 <v-text-field
                   :label="playerDataItem.name"
                   :placeholder="playerDataItem.name"
-                  v-model="playerDataItem.value"
-                  :value="playerDataItem.value"
+                  v-model="playerDataItem.length"
+                  :value="playerDataItem.length"
                   type="number"
                   class="mr-2"
                 >
@@ -188,19 +187,31 @@
             </v-row>
             <v-row>
               <v-col>
-                <v-btn color="primary" @click="loadPlayerData()">
+                <v-btn
+                  color="primary"
+                  class="black--text"
+                  @click="loadPlayerData()"
+                >
                   Load Data (XML/JSon)
                 </v-btn></v-col
               >
               <v-col>
-                <v-btn color="primary" @click="saveProfile()">
+                <v-btn
+                  color="primary"
+                  class="black--text"
+                  @click="saveProfile()"
+                >
                   Save Profile
                 </v-btn></v-col
               ></v-row
             >
           </v-col>
         </v-row>
-        <v-row class="ma-3 flex-grow-0 align-center justify-center">
+        <!-- Hair and beard custom colorization -->
+        <v-row
+          class="ma-3 flex-grow-0 align-center justify-center"
+          v-if="mainMenu.selected === 2 || mainMenu.selected === 3"
+        >
           <v-slide-group show-arrows center-active> </v-slide-group>
           <v-slide-item
             v-for="(childMenu, childIndex) in colorMenu.items"
@@ -375,19 +386,19 @@ class MorphItem {
 
 class PlayerDataItem {
   name: string
-  value = 0
-  constructor (name: string, value: number) {
-    this.value = value
+  length = 0
+  constructor (name: string, length: number) {
+    this.length = length
     this.name = name
   }
 }
 
 class PlayerData {
   name: string
-  items: PlayerDataItem[] = []
-  constructor (name = '', items: PlayerDataItem[] = []) {
+  values: PlayerDataItem[] = []
+  constructor (name = '', values: PlayerDataItem[] = []) {
     this.name = name
-    this.items = items
+    this.values = values
   }
 }
 
@@ -1039,16 +1050,41 @@ export default class ErgonomIOAvatarsContainer extends Vue {
     )
   }
 
-  onPlayerDataUpload (event: Event): void {
-    console.log('JSon uploaded')
+  setPlayerData (data: PlayerData): void {
+    console.log(data)
+    this.playerData = data
+  }
+
+  onPlayerDataUpload (event: InputEvent): void {
     if (event != null && event.target != null) {
       const f: File = ((event.target as HTMLInputElement).files as FileList)[0]
       if (f != null) {
-        console.log((event.target as HTMLInputElement).files)
-        console.log(f.stream)
-        // JSON.parse(f.text)
+        if (f.name.split('.').pop() === 'json') {
+          console.log('JSon uploaded')
+          const fr = new FileReader()
+          fr.onload = () => {
+            this.setPlayerData(JSON.parse(fr.result as string))
+          }
+          fr.readAsText(f, 'utf8')
+        } else if (f.name.split('.').pop() === 'xml') {
+          console.log('XML uploaded')
+          const fr = new FileReader()
+          fr.onload = () => {
+            this.setPlayerData(this.parseXMLData(fr.result as string))
+          }
+          fr.readAsText(f, 'utf8')
+        }
       }
     }
+  }
+
+  parseXMLData (xml: string): unknown {
+    return [
+      ...xml.matchAll(/(name="[\w\s]*"(\s)*length="[0-9]*(.[0-9]*)")+/gm)
+    ].map(i => {
+      const result = i.shift().split('"')
+      return { name: result[1], length: parseFloat(result[3]) }
+    })
   }
 
   saveProfile (): void {
@@ -1087,18 +1123,18 @@ export default class ErgonomIOAvatarsContainer extends Vue {
     }
 
     // PlayerData values
-    profile.hipWidth = this.playerData.items[0].value
-    profile.body = this.playerData.items[1].value
-    profile.neck = this.playerData.items[2].value
-    profile.head = this.playerData.items[3].value
-    profile.shoulderWidth = this.playerData.items[4].value
-    profile.upperArm = this.playerData.items[5].value
-    profile.foreArm = this.playerData.items[6].value
-    profile.palm = this.playerData.items[7].value
-    profile.upperLeg = this.playerData.items[8].value
-    profile.lowerLeg = this.playerData.items[9].value
-    profile.footLength = this.playerData.items[10].value
-    profile.heelHeight = this.playerData.items[11].value
+    profile.hipWidth = this.playerData.values[0].length
+    profile.body = this.playerData.values[1].length
+    profile.neck = this.playerData.values[2].length
+    profile.head = this.playerData.values[3].length
+    profile.shoulderWidth = this.playerData.values[4].length
+    profile.upperArm = this.playerData.values[5].length
+    profile.foreArm = this.playerData.values[6].length
+    profile.palm = this.playerData.values[7].length
+    profile.upperLeg = this.playerData.values[8].length
+    profile.lowerLeg = this.playerData.values[9].length
+    profile.footLength = this.playerData.values[10].length
+    profile.heelHeight = this.playerData.values[11].length
 
     // Morph values
     profile.femaleFace = this.morphList[0].value / 100
