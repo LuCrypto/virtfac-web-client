@@ -1,9 +1,10 @@
-import { V } from '@/utils/nodeViewer/v'
+// import { V } from '@/utils/nodeViewer/v'
 import { NvEl } from '@/utils/nodeViewer/nv_el'
 import { Link } from '@/utils/graph/link'
 import { BlueprintContainer } from './blueprintContainer'
-import { Vec2, Vector2 } from '@/utils/graph/Vec'
+// import { Vec2, Vector2 } from '@/utils/graph/Vec'
 import { BpWindow, Destroyable } from '@/utils/routingAnalysis/bp_window'
+import V from '@/utils/vector'
 
 export class BpWallHole {
   private xpos: { (link: Link): number }
@@ -58,7 +59,7 @@ export class BpWallLink {
 
   private furnitures = new Set<BpWindow>()
 
-  private hoveringPosition: Vec2 = new Vector2(0, 0)
+  private hoveringPosition: V = new V(0, 0)
   private hovered = false
 
   private isHighlighted () {
@@ -126,16 +127,14 @@ export class BpWallLink {
         this.furnitures.add(w)
 
         const dist =
-          Vector2.norm(
-            Vector2.minus(
-              link.getOriginNode().getData<Vec2>('position'),
-              this.hoveringPosition
-            )
-          ) /
-          Vector2.distanceBetween(
-            link.getOriginNode().getData<Vec2>('position'),
-            link.getNode().getData<Vec2>('position')
-          )
+          link
+            .getOriginNode()
+            .getData<V>('position')
+            .distanceTo(this.hoveringPosition) /
+          link
+            .getOriginNode()
+            .getData<V>('position')
+            .distanceTo(link.getNode().getData<V>('position'))
         w.setPosition(
           link.getOriginNode(),
           this.link,
@@ -145,30 +144,28 @@ export class BpWallLink {
         )
 
         // searching for tunnel
-        const dir = Vector2.rotate90(
-          Vector2.normalize(
-            Vector2.minus(
-              link.getNode().getData<Vec2>('position'),
-              link.getOriginNode().getData<Vec2>('position')
-            )
-          )
-        )
-        const dir2 = Vector2.multiply(dir, -1)
-        let pos: Vec2 | null = null
+        const dir = link
+          .getNode()
+          .getData<V>('position')
+          .subV(link.getOriginNode().getData<V>('position'))
+          .normalize()
+          .rotate90()
+        const dir2 = dir.multN(-1)
+        let pos: V | null = null
         let otherLink: Link | null = null
         this.container.getBlueprint().foreachWallNode(n => {
           n.foreachLink(l => {
             if (l !== link) {
-              const p1 = l.getNode().getData<Vec2>('position')
-              const p2 = l.getOriginNode().getData<Vec2>('position')
-              let intersection = Vector2.intersectionOrNull(
+              const p1 = l.getNode().getData<V>('position')
+              const p2 = l.getOriginNode().getData<V>('position')
+              let intersection = V.intersectionOrNull(
                 this.hoveringPosition,
                 dir,
                 p1,
                 p2
               )
               if (intersection === null) {
-                intersection = Vector2.intersectionOrNull(
+                intersection = V.intersectionOrNull(
                   this.hoveringPosition,
                   dir2,
                   p1,
@@ -181,8 +178,8 @@ export class BpWallLink {
               ) {
                 if (
                   pos === null ||
-                  Vector2.distanceBetween(intersection, this.hoveringPosition) <
-                    Vector2.distanceBetween(pos, this.hoveringPosition)
+                  intersection.distanceTo(this.hoveringPosition) <
+                    pos.distanceTo(this.hoveringPosition)
                 ) {
                   pos = intersection
                   otherLink = l
@@ -209,27 +206,26 @@ export class BpWallLink {
               new BpWallHole(
                 l => {
                   // xpos
-                  const p1 = l.getNode().getData<Vec2>('position')
-                  const p2 = l.getOriginNode().getData<Vec2>('position')
-                  const p = Vector2.plus(
-                    this.link.getOriginNode().getData<Vec2>('position'),
-                    Vector2.multiply(
-                      Vector2.minus(
-                        this.link.getNode().getData<Vec2>('position'),
-                        this.link.getOriginNode().getData<Vec2>('position')
-                      ),
-                      dist
+                  const p1 = l.getNode().getData<V>('position')
+                  const p2 = l.getOriginNode().getData<V>('position')
+                  const p = this.link
+                    .getOriginNode()
+                    .getData<V>('position')
+                    .addV(
+                      this.link
+                        .getNode()
+                        .getData<V>('position')
+                        .subV(this.link.getOriginNode().getData<V>('position'))
+                        .multN(dist)
                     )
-                  )
-                  let intersection = Vector2.intersectionOrNull(p, dir, p1, p2)
+                  let intersection = V.intersectionOrNull(p, dir, p1, p2)
                   if (intersection === null) {
-                    intersection = Vector2.intersectionOrNull(p, dir2, p1, p2)
+                    intersection = V.intersectionOrNull(p, dir2, p1, p2)
                   }
                   if (intersection !== null) {
                     return (
-                      Vector2.distanceBetween(
-                        intersection as Vec2,
-                        l.getOriginNode().getData<Vec2>('position')
+                      intersection.distanceTo(
+                        l.getOriginNode().getData<V>('position')
                       ) / this.container.getBlueprint().getData<number>('scale')
                     )
                   } else throw new Error('invalid window')
@@ -302,12 +298,15 @@ export class BpWallLink {
         e.clientX,
         e.clientY
       )
-      const origPos = new Vector2(clientPos.x, clientPos.y)
-      const p1 = this.link.getNode().getData<Vec2>('position')
-      const p2 = this.link.getOriginNode().getData<Vec2>('position')
-      const intersectionpos = Vector2.intersection(
+      const origPos = new V(clientPos.x, clientPos.y)
+      const p1 = this.link.getNode().getData<V>('position')
+      const p2 = this.link.getOriginNode().getData<V>('position')
+      const intersectionpos = V.intersectionLineWithSegment(
         origPos,
-        Vector2.normalize(Vector2.rotate90(Vector2.minus(p2, p1))),
+        p2
+          .subV(p1)
+          .rotate90()
+          .normalize(),
         p1,
         p2
       )
@@ -323,16 +322,14 @@ export class BpWallLink {
         this.container.getMode() === 'DOOR'
       ) {
         const dist =
-          Vector2.norm(
-            Vector2.minus(
-              link.getOriginNode().getData<Vec2>('position'),
-              this.hoveringPosition
-            )
-          ) /
-          Vector2.distanceBetween(
-            link.getOriginNode().getData<Vec2>('position'),
-            link.getNode().getData<Vec2>('position')
-          )
+          link
+            .getOriginNode()
+            .getData<V>('position')
+            .distanceTo(this.hoveringPosition) /
+          link
+            .getOriginNode()
+            .getData<V>('position')
+            .distanceTo(link.getNode().getData<V>('position'))
         this.container.setFurniturePreview(
           link.getOriginNode(),
           this.link,
@@ -413,14 +410,20 @@ export class BpWallLink {
   }
 
   public refreshPos (): void {
-    const p1 = this.link.getOriginNode().getData<Vec2>('position')
-    const p2 = this.link.getNode().getData<Vec2>('position')
+    const p1 = this.link.getOriginNode().getData<V>('position')
+    const p2 = this.link.getNode().getData<V>('position')
     const l = this.link.getData<number>('length')
     if (l !== undefined) {
       const textPos =
         p1.x < p2.x
-          ? Vector2.plus(Vector2.divide(Vector2.minus(p2, p1), 2), p1)
-          : Vector2.plus(Vector2.divide(Vector2.minus(p1, p2), 2), p2)
+          ? p2
+            .subV(p1)
+            .divN(2)
+            .addV(p1)
+          : p1
+            .subV(p2)
+            .divN(2)
+            .addV(p2)
       this.length.getDom().innerHTML = Math.round(l) / 100 + ' m'
 
       this.length.setStyle({ transform: '' })
@@ -435,37 +438,29 @@ export class BpWallLink {
         transform: `translate(${textPos.x -
           this.length.getDom().getBoundingClientRect().width / 2 / scale}px, ${
           textPos.y
-        }px) rotate(${-Vector2.angle(
-          p1.x < p2.x ? Vector2.minus(p2, p1) : Vector2.minus(p1, p2)
-        ) +
+        }px) rotate(${-(p1.x < p2.x ? p2.subV(p1) : p1.subV(p2)).angle() +
           Math.PI / 2}rad) translateY(-5px)`
       })
     } else {
       this.length.getDom().innerHTML = ''
     }
     if (this.link.getData<boolean>('double')) {
-      const offsetDir = Vector2.normalize(
-        Vector2.rotate90(Vector2.minus(p1, p2))
-      )
+      const offsetDir = p1
+        .subV(p2)
+        .rotate90()
+        .normalize()
 
       this.line
         .getDom()
         .setAttribute(
           'd',
-          `M${Vector2.plus(
-            p1,
-            Vector2.multiply(
-              offsetDir,
-              this.container.getTheme().DoubleWallWidth
-            )
-          ).str()} L${Vector2.plus(
-            p2,
-            Vector2.multiply(
-              offsetDir,
-              this.container.getTheme().DoubleWallWidth
-            )
-          ).str()}`
+          `M${p1
+            .addV(offsetDir.multN(this.container.getTheme().DoubleWallWidth))
+            .toString()} L${p2
+            .addV(offsetDir.multN(this.container.getTheme().DoubleWallWidth))
+            .toString()}`
         )
+      /*
       this.doubleLine
         .getDom()
         .setAttribute(
@@ -484,19 +479,20 @@ export class BpWallLink {
             )
           ).str()}`
         )
+      */
     } else {
       this.line
         .getDom()
         .setAttribute(
           'd',
-          `M${new V(p1.x, p1.y).str()} L${new V(p2.x, p2.y).str()}`
+          `M${new V(p1.x, p1.y).toString()} L${new V(p2.x, p2.y).toString()}`
         )
     }
     this.collider
       .getDom()
       .setAttribute(
         'd',
-        `M${new V(p1.x, p1.y).str()} L${new V(p2.x, p2.y).str()}`
+        `M${new V(p1.x, p1.y).toString()} L${new V(p2.x, p2.y).toString()}`
       )
   }
 

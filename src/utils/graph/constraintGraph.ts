@@ -3,7 +3,8 @@ import { Graph } from '../graph/graph'
 import { Node } from '@/utils/graph/node'
 import { Link } from '@/utils/graph/link'
 import * as XLSX from 'ts-xlsx'
-import { Vec2, Vector2 } from '@/utils/graph/Vec'
+// import { Vec2, Vector2 } from '@/utils/graph/Vec'
+import V from '@/utils/vector'
 import { GraphUtils } from '@/utils/graph/graphUtils'
 import { ArrayUtils } from '@/utils/graph/arrayUtils'
 import { DelayedCallback } from '@/utils/graph/delayedCallback'
@@ -23,7 +24,7 @@ class Constraint extends Node {
     this.setData<string[]>('tooltip', ['name: ' + name, 'weight: ' + weight])
     this.setData<boolean>('usePhysics', true)
     this.setData<boolean>('isConstraint', true)
-    this.setData<Vec2>('position', new Vector2(0, 0))
+    this.setData<V>('position', new V(0, 0))
     this.setData<string>('type', 'constraint')
     // this.setData<number>
   }
@@ -51,7 +52,7 @@ class Source extends Node {
     this.setData<string[]>('tooltip', ['name: ' + name])
     this.setData<string>('name', name)
     this.setData<boolean>('usePhysics', true)
-    this.setData<Vec2>('position', new Vector2(0, 0))
+    this.setData<V>('position', new V(0, 0))
     this.setData<string>('type', 'source')
     this.setData<string>('color', Source.colArray[Source.nextColor])
     /*
@@ -95,12 +96,7 @@ export class ConstraintGraph {
     this.source = new Map<string, Source>()
     this.displayGraph.setData(
       'validBusDir',
-      new Array<Vec2>(
-        Vector2.normalize(new Vector2(1, 0)),
-        Vector2.normalize(new Vector2(0, 1)),
-        Vector2.normalize(new Vector2(-1, 0)),
-        Vector2.normalize(new Vector2(0, -1))
-      )
+      new Array<V>(new V(1, 0), new V(0, 1), new V(-1, 0), new V(0, -1))
     )
 
     this.displayGraph.setData(
@@ -115,66 +111,35 @@ export class ConstraintGraph {
       }, 60)
     )
 
-    this.localGraph.setData<{(elem: Node, foreign: Node): Vec2 }>(
+    this.localGraph.setData<{(elem: Node, foreign: Node): V }>(
       'nodeRepulseForce',
     (el, foreign) => {
-      const p1 = el.getData<Vec2>('position')
-      const p2 = foreign.getData<Vec2>('position')
+      const p1: V = el.getData<V>('position')
+      const p2: V = foreign.getData<V>('position')
 
-      let dir = Vector2.minus(p1, p2)
+      let dir = p1.subV(p2)
 
-      if (Vector2.norm(dir) === 0) {
-        dir = new Vector2(
+      if (dir.length() === 0) {
+        dir = new V(
           Math.random() * 0.01 - 0.005,
           Math.random() * 0.01 - 0.005
         )
       }
-
-      // return Vector2.multiply(Vector2.normalize(dir), 1.0/Vector2.norm(dir));
+      /*
       return Vector2.multiply(
         Vector2.normalize(dir),
         Math.sqrt(Math.max(1, Vector2.norm(dir))) /
             Math.max(0.001, Vector2.norm(dir))
       )
+      */
+
+      return dir
+        .normalize()
+        .multN(
+          Math.sqrt(Math.max(1, dir.length())) / Math.max(0.001, dir.length())
+        )
     }
     )
-
-    this.localGraph.setData<{(elem: Node): Vec2 }>('linkforce', n => {
-      let f = new Vector2(0, 0)
-      n.foreachLink(l => {
-        if (l.getDataOrDefault<boolean>('usePhysics', false)) {
-          const tmp = Vector2.minus(
-            l.getNode().getData<Vec2>('position'),
-            n.getData<Vec2>('position')
-          )
-          f = Vector2.plus(
-            f,
-            Vector2.multiply(tmp, Math.sqrt(Vector2.norm(tmp)))
-          )
-        }
-      })
-      const targeted = n.getData<Set<Node>>('targetedBy')
-      if (targeted !== undefined) {
-        targeted.forEach(l => {
-          if (l.getDataOrDefault<boolean>('usePhysics', false)) {
-            const tmp = Vector2.minus(
-              l.getData<Vec2>('position'),
-              n.getData<Vec2>('position')
-            )
-            f = Vector2.plus(
-              f,
-              Vector2.multiply(tmp, Math.sqrt(Vector2.norm(tmp)))
-            )
-          }
-        })
-      }
-      return f
-    })
-
-    // this.localGraph.setData<{(graph:Graph):void}>("routine", this.physicsFunction);
-    // this.displayGraph.setData<{(graph:Graph):void}>("routine", this.refreshDisplayGraph);
-    // this.displayGraph.setData<{(graph:Graph):void}>("routine", this.refreshDisplayGraphReverse);
-    // this.refreshDisplayGraph(this.displayGraph);
 
     this.displayGraph.setData<{(graph: Graph): void }>(
       'refresh',
@@ -213,102 +178,7 @@ export class ConstraintGraph {
     this.localGraph.getData<Array<string>>('actions').push('Auto Refresh Bus')
   }
 
-  /*
-  private physicsFunction (graph: Graph) {
-    // console.log("beginPhysics");
-    const timeMultiplier = 0.1
-    const repulse: { (elem: Node, foreign: Node): Vec2 } = graph.getData<{
-      (elem: Node, foreign: Node): Vec2
-        }>('nodeRepulseForce')
-    const repluseMultiplier: number = graph.getDataOrDefault<number>(
-      'nodeRepluseMultiplier',
-      50
-    )
-    if (repulse == undefined) return
-
-    // const constraintGravity : {(elem:Node, center:Vec2):Vec2} = graph.getData<{(elem:Node, center:Vec2):Vec2}>("constraintGravity");
-    const constraintGravityMultiplier: number = graph.getDataOrDefault<number>(
-      'constraintGravityMultiplier',
-      0.01
-    )
-    // if (constraintGravity == undefined) return;
-
-    const linkForce: { (elem: Node): Vec2 } = graph.getData<{
-      (elem: Node): Vec2
-        }>('linkforce')
-    const linkForceMultplier: number = graph.getDataOrDefault<number>(
-      'linkForceMultiplier',
-      0.002
-    )
-    if (linkForce == undefined) return
-
-    graph.foreachNode(n => {
-      if (
-        n.getDataOrDefault<boolean>('usePhysics', false) &&
-        !n.getDataOrDefault<boolean>('fixedPosition', false)
-      ) {
-        n.setData<Vec2>(
-          'position',
-          Vector2.plus(
-            n.getData<Vec2>('position'),
-            Vector2.multiply(linkForce(n), timeMultiplier * linkForceMultplier)
-          )
-        )
-      }
-    })
-
-    graph.foreachNode(n => {
-      if (
-        n.getDataOrDefault<boolean>('usePhysics', false) &&
-        !n.getDataOrDefault<boolean>('fixedPosition', false)
-      ) {
-        let f: Vec2 = new Vector2(0, 0)
-        // const p : Vec2 = n.getData<Vec2>("position");
-        graph.foreachNode(foreign => {
-          if (foreign.getDataOrDefault<boolean>('usePhysics', false)) {
-            // const p2 : Vec2 = foreign.getData<Vec2>("position");
-            if (n != foreign) f = Vector2.plus(f, repulse(n, foreign))
-          }
-        })
-
-        // console.log("x:" + f.x + " y:" + f.y)
-        n.setData<Vec2>(
-          'position',
-          Vector2.plus(
-            n.getData<Vec2>('position'),
-            Vector2.multiply(f, timeMultiplier * repluseMultiplier)
-          )
-        )
-      }
-    })
-
-    graph.foreachNode(node => {
-      if (
-        node.getDataOrDefault<boolean>('isConstraint', false) &&
-        node.getDataOrDefault<boolean>('usePhysics', false) &&
-        !node.getDataOrDefault<boolean>('fixedPosition', false)
-      ) {
-        let tmp = node.getData<Vec2>('position')
-        tmp = Vector2.multiply(
-          Vector2.negative(tmp),
-          Math.sqrt(Vector2.norm(tmp)) *
-            timeMultiplier *
-            constraintGravityMultiplier
-        )
-
-        tmp = Vector2.plus(node.getData<Vec2>('position'), tmp)
-        if (Vector2.norm(tmp) < 200) {
-          tmp = Vector2.multiply(Vector2.normalize(tmp), 200)
-        }
-        node.setData<Vec2>('position', tmp)
-      }
-    })
-    // console.log("endPhysics");
-  }
-  */
-
   public getGraph (): Graph {
-    // return this.localGraph;
     return this.displayGraph
   }
 
@@ -348,7 +218,7 @@ export class ConstraintGraph {
       angle: number
       link: Node
     }>()
-    const p = node.getData<Vec2>('position')
+    const p = node.getData<V>('position')
     const groupResult: Array<Array<{ angle: number; link: Node }>> = new Array<
       Array<{ angle: number; link: Node }>
     >()
@@ -356,13 +226,12 @@ export class ConstraintGraph {
     // get list of radians angles foreach link nodes from the origin node.
     links.forEach(link => {
       if (!link.getDataOrDefault<boolean>('isDisplay', false)) {
-        if (
-          Vector2.norm(Vector2.minus(link.getData<Vec2>('position'), p)) > 0.01
-        ) {
+        if (link.getData<V>('position').distanceTo(p) > 0.01) {
           angles.push({
-            angle: Vector2.angle(
-              Vector2.minus(link.getData<Vec2>('position'), p)
-            ),
+            angle: link
+              .getData<V>('position')
+              .subV(p)
+              .angle(),
             link: link
           })
         }
@@ -454,6 +323,10 @@ export class ConstraintGraph {
     return groupResult
   }
 
+  /**
+   *
+   * @param graph
+   */
   public refreshDisplayGraphReverse (graph: Graph): void {
     graph.clearNodes()
     graph.getData<Graph>('source').foreachNode(node => {
@@ -494,41 +367,8 @@ export class ConstraintGraph {
             undefined
           )
         })
-        // console.log(groups.map((g) => { return { node:node, targets:g }}).length);
-        // console.log(Array.from(links.values()).map(n => n.getLink(node) as Link).length);
 
-        /*
-                const validBusDir = new Array<Vec2>(
-                    Vector2.normalize(new Vector2(1,0)),
-                    Vector2.normalize(new Vector2(1,1)),
-                    Vector2.normalize(new Vector2(0,1)),
-                    Vector2.normalize(new Vector2(-1,1)),
-                    Vector2.normalize(new Vector2(-1,0)),
-                    Vector2.normalize(new Vector2(-1,-1)),
-                    Vector2.normalize(new Vector2(0,-1)),
-                    Vector2.normalize(new Vector2(1,-1))
-                    );
-                /**/
-
-        /*
-                const validBusDir = new Array<Vec2>(
-                    Vector2.normalize(new Vector2(1,0)),
-                    Vector2.normalize(new Vector2(0,1)),
-                    Vector2.normalize(new Vector2(-1,0)),
-                    Vector2.normalize(new Vector2(0,-1)),
-                    );
-
-                const validBusWeight = new Array<number>(
-                    1,
-                    0.5,
-                    1,
-                    0.5
-                );
-                */
-
-        const validBusDir = graph.getData<Array<Vec2> | undefined>(
-          'validBusDir'
-        )
+        const validBusDir = graph.getData<Array<V> | undefined>('validBusDir')
         const validBusWeight = graph.getData<Array<number> | undefined>(
           'validBusWeight'
         )
@@ -536,28 +376,24 @@ export class ConstraintGraph {
         const nodeSet: Set<Node> = new Set<Node>()
         groups.forEach(group => {
           if (group.length > 1) {
-            let moyTargetPos: Vector2 = new Vector2(0, 0)
+            let moyTargetPos: V = new V(0, 0)
             group.forEach(element => {
-              moyTargetPos = Vector2.plus(
-                moyTargetPos,
-                element.link.getData<Vec2>('position')
+              moyTargetPos = moyTargetPos.addV(
+                element.link.getData<V>('position')
               )
             })
-            moyTargetPos = Vector2.divide(moyTargetPos, group.length)
-            const direction = Vector2.minus(
-              moyTargetPos,
-              node.getData<Vec2>('position')
-            )
-            const initPosition = Vector2.plus(
-              node.getData<Vec2>('position'),
-              Vector2.multiply(Vector2.normalize(direction), socketDistance)
-            )
+            moyTargetPos = moyTargetPos.divN(group.length)
+            const direction = moyTargetPos.subV(node.getData<V>('position'))
+            const initPosition = node
+              .getData<V>('position')
+              .addV(direction.normalize().multN(socketDistance))
+
             const path: Array<{
-              pos: Vec2
+              pos: V
               links: Node[]
               linkOut: Node | undefined
             }> = new Array<{
-              pos: Vec2
+              pos: V
               links: Node[]
               linkOut: Node | undefined
             }>()
@@ -570,29 +406,26 @@ export class ConstraintGraph {
             let index = 0
             while (index < path.length && path[index].links.length > 0) {
               const item = path[index]
-              let dir = new Vector2(0, 0)
+              let dir = new V(0, 0)
               item.links.forEach(l => {
-                dir = Vector2.plus(l.getData<Vec2>('position'), dir)
+                dir = l.getData<V>('position').addV(dir)
               })
-              dir = Vector2.divide(dir, item.links.length)
-              dir = Vector2.minus(dir, item.pos)
+              dir = dir.divN(item.links.length)
+              dir = dir.subV(item.pos)
 
               if (validBusDir !== undefined) {
-                const match = ArrayUtils.indexOfMin<Vec2>(
+                const match = ArrayUtils.indexOfMin<V>(
                   validBusDir,
                   v => {
-                    return Math.abs(Vector2.angleBetween(dir, v))
+                    return Math.abs(dir.angleWith(v))
                   },
                   validBusWeight
                 )
-                dir = Vector2.multiply(validBusDir[match], Vector2.norm(dir))
+                dir = validBusDir[match].multN(dir.length())
               }
               // dir = Vector2.divide(dir, 2);
 
-              let curPos = Vector2.plus(
-                item.pos,
-                Vector2.multiply(Vector2.normalize(dir), lineDistance)
-              )
+              let curPos = item.pos.addV(dir.normalize().multN(lineDistance))
               // dir = Vector2.divide(dir, 2);
               let maxIteration = 1
               do {
@@ -601,10 +434,10 @@ export class ConstraintGraph {
                 let maxL: Node | undefined
                 item.links.forEach(l => {
                   const tmpAngle = Math.abs(
-                    Vector2.angleBetween(
-                      Vector2.minus(l.getData<Vec2>('position'), curPos),
-                      dir
-                    )
+                    l
+                      .getData<V>('position')
+                      .subV(curPos)
+                      .angleWith(dir)
                   )
                   if (tmpAngle > angle) {
                     angle = tmpAngle
@@ -612,21 +445,7 @@ export class ConstraintGraph {
                   }
                 })
 
-                dir = Vector2.divide(dir, 2)
-                /*
-                                if (Vector2.norm(Vector2.minus(curPos, (index == 0) ? node.getData<Vec2>("position") : path[index-1].pos)) < lineDistance
-                                 || Math.abs(Vector2.angleBetween(Vector2.minus(curPos, item.pos), dir)) > Math.PI*0.49){
-                                    if (maxL != undefined){
-                                        const l :Node[] = new Array<Node>();
-                                        item.links.forEach((item) => {
-                                            if (item != maxL) l.push(item);
-                                        });
-                                        const p = (index == 0) ? node.getData<Vec2>("position") : path[index-1].pos;
-                                        path.push({pos:Vector2.plus(item.pos, Vector2.multiply(Vector2.normalize(Vector2.minus(item.pos, p)), lineDistance)), links:l, linkOut:maxL });
-                                    }
-                                    break;
-                                }
-                                */
+                dir = dir.divN(2)
 
                 if (angle >= backwardAngleMin) {
                   if (maxIteration === 1) {
@@ -637,15 +456,14 @@ export class ConstraintGraph {
                       })
                       const p =
                         index === 0
-                          ? node.getData<Vec2>('position')
+                          ? node.getData<V>('position')
                           : path[index - 1].pos
                       path.push({
-                        pos: Vector2.plus(
-                          item.pos,
-                          Vector2.multiply(
-                            Vector2.normalize(Vector2.minus(item.pos, p)),
-                            lineDistance
-                          )
+                        pos: item.pos.addV(
+                          item.pos
+                            .subV(p)
+                            .normalize()
+                            .multN(lineDistance)
                         ),
                         links: l,
                         linkOut: maxL
@@ -654,9 +472,9 @@ export class ConstraintGraph {
                     break
                   }
 
-                  curPos = Vector2.minus(curPos, dir)
+                  curPos = curPos.subV(dir)
                 } else if (angle <= forwardAngleMax) {
-                  curPos = Vector2.plus(curPos, dir)
+                  curPos = curPos.addV(dir)
                 } else {
                   if (maxL !== undefined) {
                     const l: Node[] = new Array<Node>()
@@ -680,16 +498,13 @@ export class ConstraintGraph {
               const fromLeft = new Array<Node>()
               const fromRight = new Array<Node>()
               for (let i = path.length - 1; i > 0; i--) {
-                const dir = Vector2.minus(path[i].pos, path[i - 1].pos)
+                const dir = path[i].pos.subV(path[i - 1].pos)
                 if (path[i].linkOut !== undefined) {
                   if (
-                    Vector2.angleBetween(
-                      Vector2.minus(
-                        (path[i].linkOut as Node).getData<Vec2>('position'),
-                        path[i].pos
-                      ),
-                      dir
-                    ) < 0
+                    (path[i].linkOut as Node)
+                      .getData<V>('position')
+                      .subV(path[i].pos)
+                      .angleWith(dir) < 0
                   ) {
                     fromLeft.push(path[i].linkOut as Node)
                     /*
@@ -717,53 +532,44 @@ export class ConstraintGraph {
             }
 
             const lastNodes: Map<Node, Node> = new Map<Node, Node>()
-            const nodePaths: Map<Node, Array<Vec2>> = new Map<
-              Node,
-              Array<Vec2>
-            >()
+            const nodePaths: Map<Node, Array<V>> = new Map<Node, Array<V>>()
             path[0].links.forEach(e => {
               lastNodes.set(e, node)
               nodePaths.set(
                 e,
-                new Array<Vec2>(/* node.getData<Vec2>('position') */)
+                new Array<V>(/* node.getData<Vec2>('position') */)
               )
             })
             // lastNode.setData<Vec2>("position", initPosition);
             // lastNode.setData<number>("size", 5);
             // lastNode.addLink(node).copyData("color", node).setData<number>("width", 2);
             for (let i = 0; i < path.length; i++) {
-              const ortogDir: Vector2 =
+              const ortogDir: V =
                 i === 0
-                  ? Vector2.rotate90(
-                    Vector2.normalize(
-                      Vector2.minus(
-                        path[i].pos,
-                        node.getData<Vec2>('position')
-                      )
-                    )
-                  )
-                  : Vector2.rotate90(
-                    Vector2.normalize(
-                      Vector2.minus(path[i].pos, path[i - 1].pos)
-                    )
-                  )
+                  ? path[i].pos
+                    .subV(node.getData<V>('position'))
+                    .normalize()
+                    .rotate90()
+                  : path[i].pos
+                    .subV(path[i - 1].pos)
+                    .normalize()
+                    .rotate90()
+
               const controleNode = graph.addNode(new Node())
-              controleNode.setData<Vec2>('position', path[i].pos)
+              controleNode.setData<V>('position', path[i].pos)
               controleNode.setData<string>('color', '#FFFFFF')
 
               for (let j = 0; j < path[i].links.length; j++) {
-                const pos = Vector2.plus(
-                  path[i].pos,
-                  Vector2.multiply(
-                    ortogDir,
+                const pos = path[i].pos.addV(
+                  ortogDir.multN(
                     lineDistance *
                       (connectionIndex.get(path[i].links[j] as Node) as number)
                   )
                 )
-                ;(nodePaths.get(path[i].links[j]) as Vec2[]).push(pos)
+                ;(nodePaths.get(path[i].links[j]) as V[]).push(pos)
                 const n = graph
                   .addNode(new Node())
-                  .setData<Vec2>('position', pos) as Node
+                  .setData<V>('position', pos) as Node
                 GraphUtils.FollowArrayMetadata(
                   controleNode,
                   'position',
@@ -781,17 +587,15 @@ export class ConstraintGraph {
                 lastNodes.set(path[i].links[j], n)
               }
               if (path[i].linkOut !== undefined) {
-                const pos = Vector2.plus(
-                  path[i].pos,
-                  Vector2.multiply(
-                    ortogDir,
+                const pos = path[i].pos.addV(
+                  ortogDir.multN(
                     lineDistance *
                       (connectionIndex.get(path[i].linkOut as Node) as number)
                   )
                 )
                 const n = graph
                   .addNode(new Node())
-                  .setData<Vec2>('position', pos) as Node
+                  .setData<V>('position', pos) as Node
                 GraphUtils.FollowArrayMetadata(
                   controleNode,
                   'position',
@@ -799,7 +603,7 @@ export class ConstraintGraph {
                   'path',
                   i
                 )
-                ;(nodePaths.get(path[i].linkOut as Node) as Vec2[]).push(pos)
+                ;(nodePaths.get(path[i].linkOut as Node) as V[]).push(pos)
                 n.setData<number>('size', 0)
                 // n.setData<boolean>('visible', false)
                 n.addLink(lastNodes.get(path[i].linkOut as Node) as Node)
@@ -818,12 +622,10 @@ export class ConstraintGraph {
               if (path[i].links.length === 1) {
                 const n = graph
                   .addNode(new Node())
-                  .setData<Vec2>(
+                  .setData<V>(
                     'position',
-                    Vector2.plus(
-                      path[i].pos,
-                      Vector2.multiply(
-                        ortogDir,
+                    path[i].pos.addV(
+                      ortogDir.multN(
                         lineDistance *
                           (connectionIndex.get(
                             path[i].links[0] as Node
@@ -853,8 +655,8 @@ export class ConstraintGraph {
             }
             */
 
-            nodePaths.forEach((value: Vec2[], key: Node) => {
-              (key.getLink(node) as Link).setData<Vec2[]>('path', value)
+            nodePaths.forEach((value: V[], key: Node) => {
+              (key.getLink(node) as Link).setData<V[]>('path', value)
               if (!nodeSet.has(key)) nodeSet.add(key)
               else console.warn('multiple path for node : ', key)
               // console.log(key.getLink(node)?.getData<Vec2[]>('path'));

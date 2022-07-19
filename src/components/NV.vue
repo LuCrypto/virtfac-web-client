@@ -11,11 +11,12 @@ import { NvNode } from '@/utils/nodeViewer/nv_node'
 import { NvTheme } from '@/utils/nodeViewer/nv_theme'
 // import { NV_Socket } from '@/utils/nodeViewer/nv_socket'
 import { NvContainer } from '@/utils/nodeViewer/nv_container'
-import { V } from '@/utils/nodeViewer/v'
+// import { V } from '@/utils/nodeViewer/v'
 import { Graph } from '@/utils/graph/graph'
 import { Node } from '@/utils/graph/node'
 import { Link } from '@/utils/graph/link'
-import { Vector2, Vec2 } from '@/utils/graph/Vec'
+// import { Vector2, Vec2 } from '@/utils/graph/Vec'
+import V from '@/utils/vector'
 
 // import domtoimage from "dom-to-image";
 import { ConstraintGraph } from '@/utils/graph/constraintGraph'
@@ -218,10 +219,10 @@ export default class NV extends Vue {
 
   private addNode (node: Node) {
     if (this.container == null) return
-    const pos = node.getOrAddData<Vec2>('position', new Vector2(0, 0))
+    const pos = node.getOrAddData<V>('position', new V(0, 0))
     const n = this.container.addNode(new V(pos.x, pos.y))
     n.userSetPosition = position => {
-      node.setData<Vec2>('position', new Vector2(position.x, position.y))
+      node.setData<V>('position', new V(position.x, position.y))
     }
     this.nodeMap.set(node, n)
     n.addSocket(
@@ -275,7 +276,7 @@ export default class NV extends Vue {
     node.onDataChanged().addMappedListener(
       'position',
       arg => {
-        const pos = arg.value as Vec2
+        const pos = arg.value as V
         n.setPosition(new V(pos.x, pos.y))
         n.updateLinks()
         if (this.container != null) this.container.callRefreshContainerSize()
@@ -311,15 +312,15 @@ export default class NV extends Vue {
 
     l.onDataChanged().addMappedListener('path', arg => {
       if (arg.value !== undefined) {
-        const d = arg.value as Vec2[]
+        const d = arg.value as V[]
         link.updatePath(d.map(v => new V(v.x, v.y)))
       } else {
         link.updatePath(undefined)
       }
     })
 
-    if (l.getData<Vec2[] | undefined>('path') !== undefined) {
-      link.updatePath(l.getData<Vec2[]>('path').map(v => new V(v.x, v.y)))
+    if (l.getData<V[] | undefined>('path') !== undefined) {
+      link.updatePath(l.getData<V[]>('path').map(v => new V(v.x, v.y)))
     }
   }
 

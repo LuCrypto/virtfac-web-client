@@ -3,7 +3,8 @@ import { NvNode } from './nv_node'
 import { NvLink } from './nv_link'
 import { NvTheme } from './nv_theme'
 import { NvSocket } from './nv_socket'
-import { V } from './v'
+// import { V } from './v'
+import V from '@/utils/vector'
 import { DelayedCallback } from '../graph/delayedCallback'
 import { LocalEvent } from '../graph/localEvent'
 
@@ -96,7 +97,7 @@ export class NvContainer {
 
     event = event || window.event
     event.preventDefault()
-    this.positionStart = this.unscale(new V(event.clientX, event.clientY)).sub(
+    this.positionStart = this.unscale(new V(event.clientX, event.clientY)).subV(
       this.position
     )
     document.onmouseup = e => this.dragMouseUp(e)
@@ -106,7 +107,7 @@ export class NvContainer {
   public dragMouseMove (event: MouseEvent): void {
     event = event || window.event
     event.preventDefault()
-    this.position = this.unscale(new V(event.clientX, event.clientY)).sub(
+    this.position = this.unscale(new V(event.clientX, event.clientY)).subV(
       this.positionStart
     )
     this.updateTransform()
@@ -119,11 +120,11 @@ export class NvContainer {
   }
 
   public unscale (v: V): V {
-    return v.mult(1 / this.size)
+    return v.multN(1 / this.size)
   }
 
   public absolutePos (v: V): V {
-    return v.mult(1 / this.size).sub(this.position)
+    return v.multN(1 / this.size).subV(this.position)
   }
 
   public setScale (scale: number): void {
@@ -167,7 +168,7 @@ export class NvContainer {
         this.size
     )
 
-    this.positionStart = this.unscale(new V(event.clientX, event.clientY)).sub(
+    this.positionStart = this.unscale(new V(event.clientX, event.clientY)).subV(
       this.position
     )
 
@@ -313,7 +314,7 @@ export class NvContainer {
   }
 
   public translate (translation: V): void {
-    this.position = this.position.add(translation)
+    this.position = this.position.addV(translation)
     this.updateTransform()
   }
 

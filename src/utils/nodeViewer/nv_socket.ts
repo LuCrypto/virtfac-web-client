@@ -1,5 +1,6 @@
 import { NvNode } from './nv_node'
-import { V } from './v'
+// import { V } from './v'
+import V from '@/utils/vector'
 import { NvEl } from './nv_el'
 import { NvLink } from './nv_link'
 // import { nextTick } from "vue";
@@ -106,7 +107,7 @@ export class NvSocket {
     const pointRect = this.point.getDom().getBoundingClientRect()
     const pointSize = new V(pointRect.width, pointRect.height)
     const pointPosition = new V(pointRect.x, pointRect.y)
-    return pointPosition.add(pointSize.mult(0.5))
+    return pointPosition.addV(pointSize.multN(0.5))
   }
 
   private tooltip: NvEl | undefined = undefined

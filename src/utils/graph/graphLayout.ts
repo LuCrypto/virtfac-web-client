@@ -1,4 +1,5 @@
-import { Vec2, Vector2 } from '@/utils/graph/Vec'
+// import { Vec2, Vector2 } from '@/utils/graph/Vec'
+import V from '@/utils/vector'
 import { MetaData } from '@/utils/graph/metadata'
 import { Graph } from '@/utils/graph/graph'
 import { Node } from '@/utils/graph/node'
@@ -20,10 +21,10 @@ export class GraphLayout {
     GraphUtils.hierarchization(graph, 'h', 'hierarchy')
 
     graph.foreachNode(n => {
-      n.setData<Vec2>(
+      n.setData<V>(
         positionField,
-        new Vector2(
-          n.getData<Vec2>(positionField).x,
+        new V(
+          n.getData<V>(positionField).x,
           -n.getData<number>('hierarchy') * stepSize
         )
       )
@@ -34,7 +35,7 @@ export class GraphLayout {
    *
    * @param graph
    * @param stepSize space between hierarchy level
-   * @param positionField key of metadata containing the Vec2 position in the graph
+   * @param positionField key of metadata containing the V position in the graph
    */
   public static horizontalHierarchyLayout (
     graph: Graph,
@@ -44,11 +45,11 @@ export class GraphLayout {
     GraphUtils.hierarchization(graph, 'h', 'hierarchy')
 
     graph.foreachNode(n => {
-      n.setData<Vec2>(
+      n.setData<V>(
         positionField,
-        new Vector2(
+        new V(
           -n.getData<number>('hierarchy') * stepSize,
-          n.getData<Vec2>(positionField).y
+          n.getData<V>(positionField).y
         )
       )
     })
@@ -68,10 +69,10 @@ export class GraphLayout {
     const angle = (2 * Math.PI) / graph.nodeCount()
     const r = stepSize / ((2 * Math.PI) / graph.nodeCount())
 
-    let pos = new Vector2(-r, 0)
+    let pos = new V(-r, 0)
     graph.foreachNode(n => {
-      n.setData<Vec2>(positionField, pos)
-      pos = Vector2.rotate(pos, angle)
+      n.setData<V>(positionField, pos)
+      pos = pos.rotateRad(angle)
     })
   }
 
@@ -89,7 +90,7 @@ export class GraphLayout {
     // get nodes sorted by y position
     let nodeArray = new Array<{ n: Node; d: number }>()
     graph.foreachNode(n => {
-      nodeArray.push({ n: n, d: Math.abs(n.getData<Vec2>(positionField).y) })
+      nodeArray.push({ n: n, d: Math.abs(n.getData<V>(positionField).y) })
     })
     nodeArray = nodeArray.sort((a, b) => {
       return a.d - b.d
@@ -120,9 +121,9 @@ export class GraphLayout {
 
     let childPositionning: 'LEFT' | 'MIDDLE' | 'RIGHT' = 'MIDDLE'
 
-    nodeArray[start].n.setData<Vec2>(
+    nodeArray[start].n.setData<V>(
       positionField,
-      new Vector2(0, nodeArray[start].n.getData<Vec2>(positionField).y)
+      new V(0, nodeArray[start].n.getData<V>(positionField).y)
     )
     nodeArray[start].n.setData('__fixed', true)
     nodeArray[start].n.foreachLink(l => {
@@ -136,15 +137,15 @@ export class GraphLayout {
                 ? 'LEFT'
                 : 'RIGHT'
         if (nextChild === 'LEFT') {
-          l.getNode().setData<Vec2>(
+          l.getNode().setData<V>(
             positionField,
-            new Vector2(leftBorder, l.getNode().getData<Vec2>(positionField).y)
+            new V(leftBorder, l.getNode().getData<V>(positionField).y)
           )
           leftBorder -= stepSize
         } else {
-          l.getNode().setData<Vec2>(
+          l.getNode().setData<V>(
             positionField,
-            new Vector2(rightBorder, l.getNode().getData<Vec2>(positionField).y)
+            new V(rightBorder, l.getNode().getData<V>(positionField).y)
           )
           rightBorder += stepSize
         }
@@ -167,7 +168,7 @@ export class GraphLayout {
       node.foreachLink(l => {
         if (l.getNode().getData('__fixed')) {
           fixedCount++
-          middleX += l.getNode().getData<Vec2>(positionField).x
+          middleX += l.getNode().getData<V>(positionField).x
         }
         lCount++
       })
@@ -181,30 +182,30 @@ export class GraphLayout {
           : middleX > rightBorder / 1.5
             ? (childPositionning = 'RIGHT')
             : (childPositionning = 'MIDDLE')
-        node.setData<Vec2>(
+        node.setData<V>(
           positionField,
-          new Vector2(
+          new V(
             middleX -
               (Math.abs(Math.abs(middleX % stepSize) - stepSize / 2) <
               stepSize / 4
                 ? middleX % stepSize
                 : 0),
-            node.getData<Vec2>(positionField).y
+            node.getData<V>(positionField).y
           )
         )
       } else {
         if (Math.abs(leftBorder) < Math.abs(rightBorder)) {
           childPositionning = 'LEFT'
-          node.setData<Vec2>(
+          node.setData<V>(
             positionField,
-            new Vector2(leftBorder, node.getData<Vec2>(positionField).y)
+            new V(leftBorder, node.getData<V>(positionField).y)
           )
           leftBorder -= stepSize
         } else {
           childPositionning = 'RIGHT'
-          node.setData<Vec2>(
+          node.setData<V>(
             positionField,
-            new Vector2(rightBorder, node.getData<Vec2>(positionField).y)
+            new V(rightBorder, node.getData<V>(positionField).y)
           )
           rightBorder += stepSize
         }
@@ -222,21 +223,15 @@ export class GraphLayout {
                   ? 'LEFT'
                   : 'RIGHT'
           if (nextChild === 'LEFT') {
-            l.getNode().setData<Vec2>(
+            l.getNode().setData<V>(
               positionField,
-              new Vector2(
-                leftBorder,
-                l.getNode().getData<Vec2>(positionField).y
-              )
+              new V(leftBorder, l.getNode().getData<V>(positionField).y)
             )
             leftBorder -= stepSize
           } else {
-            l.getNode().setData<Vec2>(
+            l.getNode().setData<V>(
               positionField,
-              new Vector2(
-                rightBorder,
-                l.getNode().getData<Vec2>(positionField).y
-              )
+              new V(rightBorder, l.getNode().getData<V>(positionField).y)
             )
             rightBorder += stepSize
           }
@@ -256,7 +251,7 @@ export class GraphLayout {
     positionField: string,
     xSpacing: number,
     ySpacing: number,
-    transform?: { (v: Vec2): Vec2 } | undefined
+    transform?: { (v: V): V } | undefined
   ) {
     const sources = new Array<Node>()
 
@@ -278,10 +273,7 @@ export class GraphLayout {
     const __fixed = '__fixed'
     sources.forEach(n => {
       const toTravel = new Array<Node>()
-      n.setData<Vec2>(
-        positionField,
-        new Vector2(0, maxOffsetOfLevel[0]++ * ySpacing)
-      )
+      n.setData<V>(positionField, new V(0, maxOffsetOfLevel[0]++ * ySpacing))
       if (maxOffsetOfLevel[0] > maxOffset) maxOffset = maxOffsetOfLevel[0]
       n.foreachLink(l => {
         if (!l.getNode().getDataOrDefault<boolean>(__fixed, false)) {
@@ -293,9 +285,9 @@ export class GraphLayout {
       while (toTravel.length > 0) {
         const node = toTravel.shift() as Node
         const level = node.getData<number>(levelField)
-        node.setData<Vec2>(
+        node.setData<V>(
           positionField,
-          new Vector2(level * xSpacing, maxOffsetOfLevel[level]++ * ySpacing)
+          new V(level * xSpacing, maxOffsetOfLevel[level]++ * ySpacing)
         )
         if (maxOffsetOfLevel[level] > maxOffset) {
           maxOffset = maxOffsetOfLevel[level]

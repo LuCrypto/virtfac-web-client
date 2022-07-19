@@ -71,7 +71,6 @@ import Vue from 'vue'
 
 import { Graph } from '@/utils/graph/graph'
 import { BlueprintContainer } from '@/utils/routingAnalysis/blueprintContainer'
-import { MatrixUtils } from '@/utils/matrixUtils'
 
 import Component from 'vue-class-component'
 
@@ -113,7 +112,6 @@ export default class BlueprintEditor extends Vue {
       if (this.bpContainer !== null) this.bpContainer.updateThemeFromWeb()
     })
     this.bpContainer.updateThemeFromWeb()
-    MatrixUtils.mainTest()
   }
 
   // @vuese

@@ -2,7 +2,8 @@ import { NvEl } from '@/utils/nodeViewer/nv_el'
 import { Node } from '@/utils/graph/node'
 import { Link } from '@/utils/graph/link'
 import { BlueprintContainer } from './blueprintContainer'
-import { Vec2, Vector2 } from '@/utils/graph/Vec'
+// import { Vec2, Vector2 } from '@/utils/graph/Vec'
+import V from '@/utils/vector'
 
 export interface Destroyable {
   destroy(): void
@@ -124,55 +125,46 @@ export class BpWindow implements Destroyable {
   public updateTransform (): void {
     if (this.placement === null) return
     const scale = this.container.getBlueprint().getData<number>('scale')
-    const p1 = this.placement.wall.getNode().getData<Vec2>('position')
-    const p2 = this.placement.wall.getOriginNode().getData<Vec2>('position')
+    const p1 = this.placement.wall.getNode().getData<V>('position')
+    const p2 = this.placement.wall.getOriginNode().getData<V>('position')
     // const anchor = this.placement.anchor.getData<Vec2>('position')
-    const dir = Vector2.minus(p1, p2)
-    const pos = Vector2.plus(
-      p2,
-      Vector2.multiply(dir, this.placement.originDistance)
-    )
+    const dir = p1.subV(p2)
+    const pos = p2.addV(dir.multN(this.placement.originDistance))
     this.displayer.setStyle({
       'transform-origin': `${pos.x}px, ${pos.y}px`,
-      transform: `rotate(${-Vector2.angle(
-        p1.x < p2.x ? Vector2.minus(p2, p1) : Vector2.minus(p1, p2)
-      ) +
+      transform: `rotate(${-(p1.x < p2.x ? p2.subV(p1) : p1.subV(p2)).angle() +
         Math.PI / 2}rad)`
     })
-    const d = `M${Vector2.minus(
-      pos,
-      Vector2.multiply(
-        Vector2.normalize(dir),
-        (this.placement.windowWidth / 2) * scale
-      )
-    ).str()} L${Vector2.plus(
-      pos,
-      Vector2.multiply(
-        Vector2.normalize(dir),
-        (this.placement.windowWidth / 2) * scale
-      )
-    ).str()}`
+    const d = `M${pos
+      .subV(dir.normalize().multN((this.placement.windowWidth / 2) * scale))
+      .toString()} L${pos
+      .addV(dir.normalize().multN((this.placement.windowWidth / 2) * scale))
+      .toString()}`
     // this.front.getDom().setAttribute('d', d)
     this.back.getDom().setAttribute('d', d)
     this.border
       .getDom()
       .setAttribute(
         'd',
-        `M${Vector2.minus(
-          pos,
-          Vector2.multiply(
-            Vector2.normalize(dir),
-            (this.placement.windowWidth / 2) * scale +
-              this.container.getTheme().WindowWidth
+        `M${pos
+          .subV(
+            dir
+              .normalize()
+              .multN(
+                (this.placement.windowWidth / 2) * scale +
+                  this.container.getTheme().WindowWidth
+              )
           )
-        ).str()} L${Vector2.plus(
-          pos,
-          Vector2.multiply(
-            Vector2.normalize(dir),
-            (this.placement.windowWidth / 2) * scale +
-              this.container.getTheme().WindowWidth
+          .toString()} L${pos
+          .addV(
+            dir
+              .normalize()
+              .multN(
+                (this.placement.windowWidth / 2) * scale +
+                  this.container.getTheme().WindowWidth
+              )
           )
-        ).str()}`
+          .toString()}`
       )
     if (this.placement.isDoor) {
       this.border.setStyle({ 'stroke-dasharray': '2,3' })

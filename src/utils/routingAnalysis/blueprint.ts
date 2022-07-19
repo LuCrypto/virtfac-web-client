@@ -1,6 +1,7 @@
 import { Graph } from '@/utils/graph/graph'
 import { Node } from '../graph/node'
-import { Vec2, Vector2 } from '@/utils/graph/Vec'
+// import { Vec2, Vector2 } from '@/utils/graph/Vec'
+import V from '@/utils/vector'
 import { Link } from '../graph/link'
 import { MetaData } from '../graph/metadata'
 import { LocalEvent, MapLocalEvent } from '../graph/localEvent'
@@ -8,27 +9,33 @@ import { LocalEvent, MapLocalEvent } from '../graph/localEvent'
 export class Blueprint extends MetaData {
   private wallGraph: Graph
 
-  public onWallNodeAdded (): LocalEvent<{graph: Graph, node: Node}> {
+  public onWallNodeAdded (): LocalEvent<{ graph: Graph; node: Node }> {
     return this.wallGraph.onNodeAdded()
   }
 
-  public onWallNodeRemoved (): LocalEvent<{graph: Graph, node: Node}> {
+  public onWallNodeRemoved (): LocalEvent<{ graph: Graph; node: Node }> {
     return this.wallGraph.onNodeRemoved()
   }
 
-  public onWallNodeDataChanged (): MapLocalEvent<string, {graph: Graph, node: Node, value: unknown}> {
+  public onWallNodeDataChanged (): MapLocalEvent<
+    string,
+    { graph: Graph; node: Node; value: unknown }
+    > {
     return this.wallGraph.onNodeDataChanged()
   }
 
-  public onWallLinkAdded () : LocalEvent<{graph: Graph, link: Link}> {
+  public onWallLinkAdded (): LocalEvent<{ graph: Graph; link: Link }> {
     return this.wallGraph.onLinkAdded()
   }
 
-  public onWallLinkRemoved () : LocalEvent<{graph: Graph, link: Link}> {
+  public onWallLinkRemoved (): LocalEvent<{ graph: Graph; link: Link }> {
     return this.wallGraph.onLinkRemoved()
   }
 
-  public onWallLinkDataChanged (): MapLocalEvent<string, {graph: Graph, link: Link, value: unknown}> {
+  public onWallLinkDataChanged (): MapLocalEvent<
+    string,
+    { graph: Graph; link: Link; value: unknown }
+    > {
     return this.wallGraph.onLinkDataChanged()
   }
 
@@ -38,10 +45,10 @@ export class Blueprint extends MetaData {
 
   private nextId = 0
 
-  public addWallNode (pos: Vec2): Node {
+  public addWallNode (pos: V): Node {
     const n = this.wallGraph.addNode(new Node())
     n.setData<number>('id', this.nextId++)
-    n.setData<Vec2>('position', pos)
+    n.setData<V>('position', pos)
     return n
   }
 
@@ -63,12 +70,7 @@ export class Blueprint extends MetaData {
     n2.getOrAddData<Set<Node>>('targetBy', new Set<Node>()).add(n1)
     l.setData<number>(
       'length',
-      Vector2.norm(
-        Vector2.minus(
-          n1.getData<Vec2>('position'),
-          n2.getData<Vec2>('position')
-        )
-      )
+      n1.getData<V>('position').distanceTo(n2.getData<V>('position'))
     )
   }
 
@@ -85,16 +87,16 @@ export class Blueprint extends MetaData {
    * @param pos
    * @returns true: inside, false: outside
    */
-  public isInside (pos: Vec2): boolean {
+  public isInside (pos: V): boolean {
     let leftCount = 0
     let rightCount = 0
     let topCount = 0
     let bottomCount = 0
     this.wallGraph.foreachNode(n => {
-      const p1 = n.getData<Vec2>('position')
+      const p1 = n.getData<V>('position')
       n.foreachLink(l => {
         if (!l.getData<boolean>('double')) {
-          const p2 = l.getNode().getData<Vec2>('position')
+          const p2 = l.getNode().getData<V>('position')
           if ((p1.y < pos.y) !== (p2.y < pos.y)) {
             if (
               p1.x + (p2.x - p1.x) * ((pos.y - p1.y) / (p2.y - p1.y)) <
@@ -143,12 +145,10 @@ export class Blueprint extends MetaData {
         arg.node.foreachLink(l => {
           l.setData<number>(
             'length',
-            Vector2.norm(
-              Vector2.minus(
-                arg.node.getData<Vec2>('position'),
-                l.getNode().getData<Vec2>('position')
-              )
-            ) / this.getData<number>('scale')
+            arg.node
+              .getData<V>('position')
+              .distanceTo(l.getNode().getData<V>('position')) /
+              this.getData<number>('scale')
           )
         })
         arg.node
@@ -156,12 +156,10 @@ export class Blueprint extends MetaData {
           .forEach(n => {
             (n.getLink(arg.node) as Link).setData<number>(
               'length',
-              Vector2.norm(
-                Vector2.minus(
-                  arg.node.getData<Vec2>('position'),
-                  n.getData<Vec2>('position')
-                )
-              ) / this.getData<number>('scale')
+              arg.node
+                .getData<V>('position')
+                .distanceTo(n.getData<V>('position')) /
+                this.getData<number>('scale')
             )
           })
       },
@@ -176,12 +174,11 @@ export class Blueprint extends MetaData {
           n.foreachLink(l => {
             l.setData<number>(
               'length',
-              Vector2.norm(
-                Vector2.minus(
-                  l.getNode().getData<Vec2>('position'),
-                  n.getData<Vec2>('position')
-                )
-              ) / this.getData<number>('scale')
+              l
+                .getNode()
+                .getData<V>('position')
+                .distanceTo(n.getData<V>('position')) /
+                this.getData<number>('scale')
             )
           })
         })

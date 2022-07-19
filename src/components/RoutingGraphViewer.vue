@@ -5,11 +5,12 @@
 <script lang="ts">
 import Vue from 'vue'
 
-import { V } from '@/utils/nodeViewer/v'
+// import { V } from '@/utils/nodeViewer/v'
 import { Graph } from '@/utils/graph/graph'
 import { Node } from '@/utils/graph/node'
 import { Link } from '@/utils/graph/link'
-import { Vector2, Vec2 } from '@/utils/graph/Vec'
+// import { Vector2, Vec2 } from '@/utils/graph/Vec'
+import V from '@/utils/vector'
 
 import Component from 'vue-class-component'
 
@@ -105,7 +106,7 @@ export default class RoutingGraphViewer extends Vue {
     this.container.onmousedown = e => {
       if (e.button === 0) {
         // movement
-        this.positionStart = this.unscale(new V(e.clientX, e.clientY)).sub(
+        this.positionStart = this.unscale(new V(e.clientX, e.clientY)).subV(
           this.position
         )
         this.moveMode = true
@@ -115,7 +116,7 @@ export default class RoutingGraphViewer extends Vue {
 
     document.addEventListener('mousemove', e => {
       if (this.moveMode) {
-        this.position = this.unscale(new V(e.clientX, e.clientY)).sub(
+        this.position = this.unscale(new V(e.clientX, e.clientY)).subV(
           this.positionStart
         )
         this.updateTransform()
@@ -163,7 +164,7 @@ export default class RoutingGraphViewer extends Vue {
   }
 
   public unscale (v: V): V {
-    return v.mult(1 / this.size)
+    return v.multN(1 / this.size)
   }
 
   public zoom (event: WheelEvent): void {
@@ -188,7 +189,7 @@ export default class RoutingGraphViewer extends Vue {
         this.size
     )
 
-    this.positionStart = this.unscale(new V(event.clientX, event.clientY)).sub(
+    this.positionStart = this.unscale(new V(event.clientX, event.clientY)).subV(
       this.position
     )
 
@@ -202,7 +203,7 @@ export default class RoutingGraphViewer extends Vue {
       'r',
       '' + n.getDataOrDefault<number>('size', this.theme.defaultNodeSize)
     )
-    const p = n.getData<Vec2>('position')
+    const p = n.getData<V>('position')
     el.setStyle({
       fill: n.getDataOrDefault<string>('color', this.theme.defaultNodeColor),
       transform: `translate(${p.x}px, ${p.y}px)`
@@ -250,21 +251,22 @@ export default class RoutingGraphViewer extends Vue {
   }
 
   private refreshLinkPath (l: Link) {
-    const p1 = l.getOriginNode().getData<Vec2>('position')
-    const p2 = l.getNode().getData<Vec2>('position')
-    let p = `M${p1.str()} L${p2.str()}`
+    const p1 = l.getOriginNode().getData<V>('position')
+    const p2 = l.getNode().getData<V>('position')
+    let p = `M${p1.toString()} L${p2.toString()}`
     if (l.getDataOrDefault<boolean>('in', false)) {
       const ap = this.arrowPath(
         l.getDataOrDefault<number>('width', 1) * 5,
         p2,
-        Vector2.plus(
-          p1,
-          Vector2.multiply(
-            Vector2.normalize(Vector2.minus(p2, p1)),
-            l
-              .getOriginNode()
-              .getDataOrDefault<number>('size', this.theme.defaultNodeSize)
-          )
+        p1.addV(
+          p2
+            .subV(p1)
+            .normalize()
+            .multN(
+              l
+                .getOriginNode()
+                .getDataOrDefault<number>('size', this.theme.defaultNodeSize)
+            )
         )
       )
       p += ' ' + ap
@@ -273,14 +275,15 @@ export default class RoutingGraphViewer extends Vue {
       const ap = this.arrowPath(
         l.getDataOrDefault<number>('width', 1) * 5,
         p1,
-        Vector2.plus(
-          p2,
-          Vector2.multiply(
-            Vector2.normalize(Vector2.minus(p1, p2)),
-            l
-              .getNode()
-              .getDataOrDefault<number>('size', this.theme.defaultNodeSize)
-          )
+        p2.addV(
+          p1
+            .subV(p2)
+            .normalize()
+            .multN(
+              l
+                .getNode()
+                .getDataOrDefault<number>('size', this.theme.defaultNodeSize)
+            )
         )
       )
       p += ' ' + ap
@@ -292,9 +295,9 @@ export default class RoutingGraphViewer extends Vue {
           .getDataOrDefault<string>(
             'name',
             'unamed'
-          )}(${p1.str()}) and ${l
+          )}(${p1.toString()}) and ${l
           .getNode()
-          .getDataOrDefault<string>('name', 'unamed')}(${p2.str()})`
+          .getDataOrDefault<string>('name', 'unamed')}(${p2.toString()})`
       )
     } else {
       const el = this.linkMap.get(l) as NvEl
@@ -313,17 +316,13 @@ export default class RoutingGraphViewer extends Vue {
     }
   }
 
-  private arrowPath (length: number, from: Vec2, to: Vec2) {
-    const dir = Vector2.normalize(Vector2.minus(to, from))
-    const center = Vector2.plus(
-      to,
-      Vector2.multiply(Vector2.negative(dir), length / 1.4142)
-    )
-    const offset = Vector2.multiply(new Vector2(dir.y, -dir.x), length / 1.4142)
-    const p = `M${Vector2.plus(
-      center,
-      offset
-    ).str()} L${to.str()} L${Vector2.minus(center, offset).str()}`
+  private arrowPath (length: number, from: V, to: V) {
+    const dir = to.subV(from).normalize()
+    const center = to.addV(dir.multN(-length / 1.4142))
+    const offset = new V(dir.y, -dir.x).multN(length / 1.4142)
+    const p = `M${center
+      .addV(offset)
+      .toString()} L${to.toString()} L${center.subV(offset).toString()}`
     return p
   }
 
