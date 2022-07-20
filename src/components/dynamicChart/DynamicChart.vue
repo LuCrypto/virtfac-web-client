@@ -35,18 +35,6 @@
   >
     <v-card-title class="pt-0 px-0" style="gap: 14px; justify-content: right;">
       <div class="flex-grow-1">{{ title }}</div>
-      <v-btn @click="downloadAsPNG" class="flex-grow-1">
-        <v-icon>
-          mdi-download
-        </v-icon>
-        PNG
-      </v-btn>
-      <v-btn @click="downloadAsSVG" class="flex-grow-1">
-        <v-icon>
-          mdi-download
-        </v-icon>
-        SVG
-      </v-btn>
       <v-btn
         :color="controls ? 'primary' : ''"
         @click="controls = !controls"
@@ -64,7 +52,7 @@
       </v-btn>
       <v-btn
         :color="fullscreen ? 'primary' : ''"
-        @click="fullscreen = !fullscreen"
+        @click="toggleFullscreen"
         :class="fullscreen ? 'black--text' : ''"
         fab
         small
@@ -77,6 +65,12 @@
           {{ fullscreen ? 'mdi-fullscreen-exit' : 'mdi-fullscreen' }}
         </v-icon>
       </v-btn>
+
+      <v-btn fab small @click="settingsPopUp.open()">
+        <v-icon>
+          mdi-dots-horizontal
+        </v-icon>
+      </v-btn>
     </v-card-title>
     <div
       class="dynamic-chart-container"
@@ -86,10 +80,42 @@
         backgroundColor: theme.current.colors.backgroundOut,
         boxShadow: `inset 0 0 0 2px ${
           $vuetify.theme.dark ? '#303030' : '#ffffff'
-        }`
+        }`,
+        position: 'relative'
       }"
       @dblclick="reset"
     >
+      <div
+        class="d-flex flex-column"
+        style="position: absolute; top: 0; left: 0; z-index: 2; margin: 10px; gap: 10px;"
+      >
+        <v-btn icon small>
+          <v-icon>
+            mdi-plus
+          </v-icon>
+        </v-btn>
+        <v-btn icon small>
+          <v-icon>
+            mdi-minus
+          </v-icon>
+        </v-btn>
+      </div>
+      <div
+        class="d-flex flex-row"
+        style="position: absolute; bottom: 0; right: 0;z-index: 2; margin: 10px; gap: 10px;"
+      >
+        <v-btn icon small>
+          <v-icon>
+            mdi-plus
+          </v-icon>
+        </v-btn>
+        <v-btn icon small>
+          <v-icon>
+            mdi-minus
+          </v-icon>
+        </v-btn>
+      </div>
+
       <PinchScrollZoom
         class="pinch-scroll-zoom"
         ref="pinchScrollZoom"
@@ -110,6 +136,56 @@
         </div>
       </PinchScrollZoom>
     </div>
+    <!-- Popup with chart settingsPopUp -->
+    <pop-up ref="settingsPopUp">
+      <v-card>
+        <v-card-title style="white">
+          Chart :
+          <span class="ml-2" :style="{ color: 'var(--v-primary-base)' }">
+            {{ this.title }}
+          </span></v-card-title
+        >
+        <v-card-text>
+          <v-container fluid class="d-flex flex-column px-0" style="gap: 24px;">
+            <v-row no-gutters>
+              <v-btn @click="downloadAsPNG" class="flex-grow-1">
+                <v-icon>
+                  mdi-download
+                </v-icon>
+                Download as PNG file
+              </v-btn>
+            </v-row>
+
+            <v-row no-gutters>
+              <v-btn @click="downloadAsSVG" class="flex-grow-1">
+                <v-icon>
+                  mdi-download
+                </v-icon>
+                Download as SVG file
+              </v-btn>
+            </v-row>
+
+            <v-row no-gutters>
+              step x :
+            </v-row>
+            <v-row no-gutters>
+              step y :
+            </v-row>
+            <v-row no-gutters>
+              units X :
+            </v-row>
+            <v-row no-gutters>
+              units Y :
+            </v-row>
+          </v-container>
+        </v-card-text>
+        <v-card-actions>
+          <v-btn text color="primary">
+            Close
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </pop-up>
   </v-card>
 </template>
 
@@ -117,12 +193,14 @@
 import { Component, Vue, Prop } from 'vue-property-decorator'
 import PinchScrollZoom from '@coddicat/vue-pinch-scroll-zoom'
 import DynamicChartThemes from '@/components/dynamicChart/DynamicChartThemes'
+import PopUp from '@/components/PopUp.vue'
 import V from '@/utils/vector'
 
 @Component({
   name: 'DynamicChart',
   components: {
-    PinchScrollZoom
+    PinchScrollZoom,
+    PopUp
   }
 })
 // @vuese
@@ -138,11 +216,13 @@ export default class DynamicChart extends Vue {
   private theme = new DynamicChartThemes(this)
   private contentHeight = 1000
   private fullscreen = false
+  private settingsPopUp: PopUp | null = null
 
   mounted (): void {
     this.container = this.$refs.container as HTMLElement
     this.content = this.$refs.content as HTMLElement
     this.pinchScrollZoom = this.$refs.pinchScrollZoom as PinchScrollZoom
+    this.settingsPopUp = this.$refs.settingsPopUp as PopUp
     this.loop()
   }
 
@@ -155,6 +235,13 @@ export default class DynamicChart extends Vue {
       translateX: 0,
       translateY: this.contentHeight
     })
+  }
+
+  toggleFullscreen (): void {
+    this.fullscreen = !this.fullscreen
+    if (this.fullscreen) {
+      this.$root.$emit('close-navbar')
+    }
   }
 
   updateSize (): void {
