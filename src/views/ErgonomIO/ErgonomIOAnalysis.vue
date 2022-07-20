@@ -197,6 +197,8 @@ import GraphChart from '@/components/charts/graphChart.vue'
 import { AxisNeuronSkeleton, UnrealSkeleton } from '@/utils/avatar'
 import T from '@/utils/transform'
 
+import * as SkeletonUtils from 'three/examples/jsm/utils/SkeletonUtils'
+
 class SkeletonHelper extends THREE.SkeletonHelper {
   skeleton: THREE.Skeleton | null = null
 }
@@ -237,6 +239,14 @@ class DataFrame {
   }
 }
 
+interface SkeletonUtilsModule {
+  retarget: (
+    target: THREE.Object3D | THREE.Skeleton,
+    source: THREE.Object3D | THREE.Skeleton,
+    options: any
+  ) => void
+}
+
 @Component({
   name: 'AvatarAnimationComponent',
   components: {
@@ -256,6 +266,7 @@ export default class AvatarAnimationComponent extends Vue {
   animationValue = 0
   rula: RULA | null = null
   bvhSkeletonHelper: SkeletonHelper | null = null
+  unrealSkeletonHelper: SkeletonHelper | null = null
   mixer: THREE.AnimationMixer | null = null
   animationTime = 0
   animationDuration = 0
@@ -268,6 +279,57 @@ export default class AvatarAnimationComponent extends Vue {
   axisNeuronSkeleton = AxisNeuronSkeleton
   unrealSkeleton = UnrealSkeleton
   rulaLabels = Object.keys(RULA_LABELS)
+
+  // Bone reatrgeting
+  options = {
+    hip: 'pelvis',
+    names: {
+      pelvis: 'Spine',
+      spine_01: 'Spine1',
+      spine_02: 'Spine2',
+      spine_03: 'Spine3',
+      neck_01: 'Neck',
+      head: 'Head',
+
+      upperarm_r: 'RightArm',
+      lowerarm_r: 'RightForeArm',
+      hand_r: 'RightHand',
+
+      upperarm_l: 'LeftArm',
+      lowerarm_l: 'LeftForeArm',
+      hand_l: 'LeftHand',
+
+      thigh_r: 'RightUpLeg',
+      calf_r: 'RightLeg',
+      foot_r: 'RightFoot',
+
+      thigh_l: 'LeftUpLeg',
+      calf_l: 'LeftLeg',
+      foot_l: 'LeftFoot'
+    }
+
+    // hip: 'pelvis',
+    // names: {
+    //   Spine: 'pelvis'
+    //   // Spine1: 'spine_01',
+    //   // Spine2: 'spine_02',
+    //   // Spine3: 'spine_03',
+    //   // Neck: 'neck_01',
+    //   // Head: 'head',
+    //   // RightArm: 'upperarm_r',
+    //   // RightForeArm: 'lowerarm_r',
+    //   // RightHand: 'hand_r',
+    //   // LeftArm: 'upperarm_l',
+    //   // LeftForeArm: 'lowerarm_l',
+    //   // LeftHand: 'hand_l',
+    //   // RightUpLeg: 'thigh_r',
+    //   // RightLeg: 'calf_r',
+    //   // RightFoot: 'foot_r',
+    //   // LeftUpLeg: 'thigh_l',
+    //   // LeftLeg: 'calf_l',
+    //   // LeftFoot: 'foot_l'
+    // }
+  }
 
   mounted (): void {
     this.viewer = this.$refs.viewer as ModelViewer2
@@ -298,19 +360,34 @@ export default class AvatarAnimationComponent extends Vue {
       .loadGLTFFromPath('./avatar.gltf')
       .then(gltf => {
         gltf.scene.children[0].position.set(0, 0, -2)
+        gltf.scene.children[0].scale.set(100, 100, 100)
+
+        console.log(gltf)
+        const bones: THREE.Bone[] = []
         gltf.scene.traverse(child => {
           if (child instanceof THREE.Mesh) {
             child.material = material
           }
 
-          if (child instanceof THREE.Bone && child.name === 'mixamorig1Hips') {
-            const helper = new THREE.SkeletonHelper(child)
-            const mat = helper.material as THREE.LineBasicMaterial
-            mat.linewidth = 3
-            helper.visible = true
-            viewer.scene.add(helper)
+          if (child instanceof THREE.Bone) {
+            bones.push(child)
+
+            // Color in yellow and create skelton helper on root bone
+            if (child.name === 'pelvis') {
+              const helper = new THREE.SkeletonHelper(child)
+              this.unrealSkeletonHelper = helper as SkeletonHelper
+              const mat = helper.material as THREE.LineBasicMaterial
+              mat.linewidth = 3
+              helper.visible = true
+              viewer.scene.add(helper)
+            }
           }
         })
+
+        // Create skeleton from bone list
+        if (this.unrealSkeletonHelper) {
+          this.unrealSkeletonHelper.skeleton = new THREE.Skeleton(bones)
+        }
       })
       .catch(e => console.error('Cannot load GLTF', e))
   }
@@ -379,7 +456,7 @@ export default class AvatarAnimationComponent extends Vue {
 
     const boneContainer = new THREE.Group()
     boneContainer.add(bvh.skeleton.bones[0])
-    boneContainer.scale.set(0.005, 0.005, 0.005)
+    // boneContainer.scale.set(0.005, 0.005, 0.005)
     scene.add(boneContainer)
 
     this.mixer = new THREE.AnimationMixer(this.bvhSkeletonHelper)
@@ -403,6 +480,15 @@ export default class AvatarAnimationComponent extends Vue {
     this.animationTime = (this.animationTime + delta) % this.animationDuration
     this.animationValue = this.animationTime / this.animationDuration
     this.mixer.setTime(this.animationTime)
+    // Retarget animation
+    // left is UnrealBoneNames and right is BVH bones names
+    if (this.bvhSkeletonHelper && this.unrealSkeletonHelper) {
+      ((SkeletonUtils as unknown) as SkeletonUtilsModule).retarget(
+        this.unrealSkeletonHelper,
+        this.bvhSkeletonHelper,
+        this.options
+      )
+    }
   }
 
   onFileInput (files: APIFile[]): void {
