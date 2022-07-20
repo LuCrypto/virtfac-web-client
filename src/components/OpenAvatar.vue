@@ -4,7 +4,7 @@
     <v-toolbar color="primary" flat>
       <v-toolbar-title class="black--text">
         <v-icon left v-text="'mdi-file-document'"></v-icon>
-        {{ openFile ? 'Open Avatar' : 'Files manager' }}
+        {{ openFile ? 'Open Avatar' : 'Avatars manager' }}
       </v-toolbar-title>
     </v-toolbar>
 
@@ -88,7 +88,7 @@
             class="elevation-0 flex-grow-1"
             v-model="selectedFile"
             :headers="activeHeaders"
-            :items="myfileList"
+            :items="myAvatarList"
             :key="refreshTableKey"
             item-key="id"
             :height="this.isMobileView ? undefined : '362'"
@@ -209,10 +209,7 @@
                     <h4 class="primary--text">Tags</h4>
                     {{ fileSettings.tags }}
                   </v-flex>
-                  <v-flex>
-                    <h4 class="primary--text">Format</h4>
-                    {{ fileSettings.mime }}
-                  </v-flex>
+
                   <v-flex class="my-3">
                     <h4 class="primary--text">Structure</h4>
                     <v-select
@@ -258,20 +255,7 @@
           <v-btn class="ml-6 mt-6 flex-grow-1" text @click="cancel()">
             Cancel
           </v-btn>
-          <v-btn
-            class="ml-6 mt-6 flex-grow-1 black--text"
-            color="primary"
-            @click="openUploadFile"
-          >
-            <v-icon left v-text="'mdi-upload'"></v-icon>
-            Upload new
-            <input
-              ref="uploadFileInput"
-              hidden
-              type="file"
-              @change="updateUploadFile"
-            />
-          </v-btn>
+
           <v-btn
             class="ml-6 mt-6 flex-grow-1 black--text"
             color="primary"
@@ -302,7 +286,20 @@ import { DataTableHeader } from 'vuetify/types'
 import API from '@/utils/api'
 import { APIGroupItem, APIFileMIME, APIAsset } from '@/utils/models'
 
-@Component
+class DataTableHeaderSelector {
+  active = true
+  editable = true
+  header: DataTableHeader = { text: '', value: '' }
+  constructor (attributes?: Partial<DataTableHeaderSelector>) {
+    Object.assign(this, attributes)
+  }
+}
+
+@Component({
+  name: 'OpenAvatarPopUp'
+})
+// @vuese
+// @group COMPONENTS
 export default class OpenAvatarPopUp extends Vue {
   @Prop({ default: () => 'all' }) private application!: string
   @Prop({ default: () => true }) private singleSelect!: boolean
@@ -311,5 +308,295 @@ export default class OpenAvatarPopUp extends Vue {
   @Prop({ default: () => null }) private uploadPipeline!: {
     (file: File): Promise<File>
   } | null
+
+  waitingTasks = 3
+
+  /* Group bar */
+  groupSettingsPopUp = false
+  groupList: APIGroupItem[] = []
+  selectedGroupId = 0
+
+  /* Search bar */
+  search = ''
+
+  /* Tag list input */
+  tagList: string[] = []
+  tagValues = []
+
+  /* Table row filter */
+  rowFilterPopUp = false
+  rowFilter = []
+
+  /* Table properties */
+  refreshTableKey = 0
+  myAvatarList: APIAsset[] = []
+  selectedFile: APIAsset[] = []
+  selectedFileAfterLoad = 0
+  headersSelector: DataTableHeaderSelector[] = [
+    new DataTableHeaderSelector({
+      header: {
+        text: 'Name',
+        value: 'name',
+        align: 'start',
+        sort: (a: string, b: string): number => {
+          return a < b ? -1 : a > b ? 1 : 0
+        }
+      }
+    }),
+    new DataTableHeaderSelector({
+      header: {
+        text: 'Last use',
+        value: 'modificationDate',
+        align: 'start',
+        sort: (a: number, b: number): number => {
+          return a - b
+        }
+      }
+    }),
+    new DataTableHeaderSelector({
+      header: {
+        text: 'Creation',
+        value: 'creationDate',
+        align: 'start',
+        sort: (a: number, b: number): number => {
+          return a - b
+        }
+      }
+    }),
+
+    new DataTableHeaderSelector({
+      editable: false,
+      header: { text: '', value: 'actions', align: 'end', sortable: false }
+    })
+  ]
+
+  /* File loader */
+  loadFileTasks = 0
+  loadFileTasksNumber = 0
+
+  /* File settings */
+  fileSettingsPopUp = false
+  fileSettings: APIAsset = new APIAsset()
+  fileSettingsIsSaving = false
+  myFormatList: APIFileMIME[] = []
+
+  /* Getters */
+  get isMobileView (): boolean {
+    return this.$vuetify.breakpoint.smAndDown
+  }
+
+  get activeHeaders (): DataTableHeader[] {
+    return this.headersSelector
+      .filter(selector => selector.active)
+      .map(selector => selector.header)
+  }
+
+  get editableHeadersSelector (): DataTableHeaderSelector[] {
+    return this.headersSelector.filter(selector => selector.editable)
+  }
+
+  get formatList (): APIFileMIME[] {
+    return this.myFormatList.filter(
+      mime =>
+        mime.media === this.fileSettings.fileMIME.media &&
+        mime.format === this.fileSettings.fileMIME.format
+    )
+  }
+
+  mounted (): void {
+    this.load()
+  }
+
+  load (): void {
+    this.fileSettingsIsSaving = false
+    this.getAllGroups()
+    this.getAllFormats()
+  }
+
+  getAllGroups (): void {
+    API.get(this, '/user/groups', null).then((reponse: Response) => {
+      const groupListData = (reponse as unknown) as APIGroupItem[]
+      this.groupList = [new APIGroupItem({ id: 0, name: 'All' })]
+      groupListData.forEach((groupInfo: Partial<APIGroupItem>) => {
+        this.groupList.push(new APIGroupItem(groupInfo))
+      })
+      this.waitingTasks -= 1
+    })
+  }
+
+  getAllFormats (): void {
+    API.get(this, '/application/formats/' + this.application, null).then(
+      (response: Response) => {
+        this.myFormatList = []
+        const formatList = (response as unknown) as string[]
+        this.getAllFiles(
+          JSON.stringify({
+            select: [
+              'id',
+              'idUserOwner',
+              'idProject',
+              'creationDate',
+              'modificationDate',
+              'name',
+              'color',
+              'tags',
+              'mime'
+            ]
+          })
+        )
+
+        this.myFormatList = formatList.map(MIME =>
+          APIFileMIME.parseFromString(MIME)
+        )
+        this.waitingTasks -= 1
+      }
+    )
+  }
+
+  getAllFiles (fileParams: string): void {
+    API.post(this, '/resources/assets', fileParams).then(
+      (response: Response) => {
+        const fileList = (response as unknown) as APIAsset[]
+        this.myAvatarList = []
+        fileList.forEach((fileInfo: Partial<APIAsset>) => {
+          if (fileInfo.name && fileInfo.creationDate) {
+            const fileItem = new APIAsset(fileInfo)
+            this.myAvatarList.push(fileItem)
+            if (this.selectedFileAfterLoad !== 0) {
+              this.selectedFile = [fileItem]
+            }
+          }
+        })
+        this.getAllTags()
+        this.waitingTasks -= 1
+      }
+    )
+  }
+
+  getAllTags (): void {
+    this.tagList = []
+    this.myAvatarList.forEach(fileItem => {
+      fileItem.tags.split(',').forEach(tag => {
+        if (!this.tagList.includes(tag)) {
+          this.tagList.push(tag)
+        }
+      })
+    })
+  }
+
+  /*
+    "value" is not used, because value take each column value without column information.
+    Instead, I use "item" with all data included in current row.
+    "search" is also not used, because his value are always set to 'true' (because with
+    empty value, the custom filter is not called).
+    Instead, we use this.seach who is binded value of search bar.
+    To refresh customFilter with tag list, we update :key binded on this.refreshTableKey
+    on table component when tag list changes.
+   */
+
+  customFilter (
+    _value: unknown,
+    _search: string | null,
+    item: APIAsset
+  ): boolean {
+    const itemTags = item.getTags()
+    const groupFilter = this.selectedGroupId === 0 // TODO : Update filter
+    const searchFilter =
+      this.search == null ||
+      item.name.toLocaleUpperCase().indexOf(this.search.toLocaleUpperCase()) !==
+        -1
+    const tagFilter = !this.tagValues.some(tag => !itemTags.includes(tag))
+    return groupFilter && searchFilter && tagFilter
+  }
+
+  uploadFile (file: APIAsset): void {
+    API.put(this, '/resources/assets', JSON.stringify(file.toJSON()))
+      .then((response: Response) => {
+        const id = ((response as unknown) as { id: number }).id
+        this.selectedFileAfterLoad = id
+        this.load()
+      })
+      .catch(() => {
+        console.error('Fail posted resource :', file)
+      })
+  }
+
+  // Toggle row selection on click
+  toggleSelectedFile (
+    _item: APIAsset,
+    row: {
+      expand: (value: boolean) => void
+      headers: DataTableHeader[]
+      isExpanded: boolean
+      isMobile: boolean
+      isSelected: boolean
+      item: APIAsset
+      select: (value: boolean) => void
+    }
+  ): void {
+    row.select(!row.isSelected)
+  }
+
+  openFileSettings (item: APIAsset): void {
+    this.fileSettings = new APIAsset(item)
+    this.fileSettingsPopUp = true
+  }
+
+  saveFileSettings (): void {
+    this.fileSettingsIsSaving = true
+    console.log(this.fileSettings)
+    API.patch(
+      this,
+      `/resources/assets/${this.fileSettings.id}`,
+      JSON.stringify(this.fileSettings.toJSON())
+    ).then((response: Response) => {
+      const fileUpdate = (response as unknown) as APIAsset
+      this.fileSettingsIsSaving = false
+      this.fileSettingsPopUp = false
+      this.myAvatarList.forEach(file => {
+        if (file.id === this.fileSettings.id) {
+          Object.assign(file, fileUpdate)
+        }
+      })
+    })
+  }
+
+  /* Popup actions */
+
+  open (): void {
+    this.selectedFile = []
+    this.selectedFileAfterLoad = 0
+    this.loadFileTasks = 0
+    this.loadFileTasksNumber = 0
+  }
+
+  cancel (): void {
+    this.$emit('cancel')
+    this.$emit('close')
+  }
+
+  validated (): void {
+    this.loadFileTasks = this.selectedFile.length
+    this.loadFileTasksNumber = this.loadFileTasks
+    const fileIdList = this.selectedFile.map(file => {
+      return {
+        id: file.id
+      }
+    })
+    API.post(
+      this,
+      '/resources/assets',
+      JSON.stringify({
+        where: fileIdList
+      })
+    ).then((response: Response) => {
+      const fileResult = (response as unknown) as APIAsset[]
+      this.loadFileTasks -= 1
+      if (this.loadFileTasks === 0) {
+        this.$emit('fileInput', fileResult)
+        this.$emit('close')
+      }
+    })
+  }
 }
 </script>

@@ -52,15 +52,15 @@
       <!-- Popup windows-->
       <!--Open avatar profile pop-up-->
       <pop-up ref="openFilePopUp">
-        <open-avatar
+        <open-file
           @close="$refs.openFilePopUp.close()"
-          application="ERGONOM_IO"
+          application="AVATAR_PROFILES"
           accept=".obj, .fbx, .stl, .wrl, .glb"
           :uploadPipeline="onFileUpload"
           :singleSelect="true"
           :openFile="true"
           @fileInput="onFileInput"
-        ></open-avatar>
+        ></open-file>
       </pop-up>
       <input
         ref="playerDataUpload"
@@ -334,14 +334,13 @@ import {
 } from 'three'
 import { Session } from '@/utils/session'
 import PopUp from './PopUp.vue'
-import OpenAsset from '@/components/OpenAsset.vue'
+import OpenFile from '@/components/OpenFile.vue'
 import OpenAvatar from '@/components/OpenAvatar.vue'
 import AssetInfo from '@/components/AssetInfo.vue'
 import AvatarInfo from '@/components/AvatarInfo.vue'
 import MaximizableContainer from './MaximizableContainer.vue'
 
 import API from '@/utils/api'
-import { join } from 'path'
 
 class MenuItem {
   text: string
@@ -448,7 +447,7 @@ class Avatar {
     InputFieldPopUp,
     ModelViewer2,
     PopUp,
-    OpenAsset,
+    OpenFile,
     OpenAvatar,
     AssetInfo,
     AvatarInfo,
@@ -1043,12 +1042,12 @@ export default class ErgonomIOAvatarsContainer extends Vue {
     const a = [
       ...xml.matchAll(/(name="[\w\s]*"(\s)*length="[0-9]*(.[0-9]*)")+/gm)
     ].map(i => {
-      const result = i.shift().split('"')
+      const result = i?.shift().split('"')
       return { name: result[1], length: parseFloat(result[3]) }
     })
-    const b = xml.matchAll(/(name="[\w\s]*">)+/gm)
-    const tmp = b.split('"')
-    return { name: tmp[1], a }
+    const b = xml.match(/(name="[\w\s]*">)+/gm)
+    const tmp = b.shift().split('"')
+    return { name: tmp[1], values: a }
   }
 
   saveProfile (): void {
