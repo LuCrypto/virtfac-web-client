@@ -15,7 +15,7 @@
         }
       "
       icon
-      style="position: absolute; z-index: 2; right: 11px; top: 11px; z-index:100"
+      style="position: absolute; z-index: 2; right: 0px; top: 0px; z-index:100"
       ><v-icon>{{
         fullscreen ? 'mdi-fullscreen-exit' : 'mdi-fullscreen'
       }}</v-icon></v-btn

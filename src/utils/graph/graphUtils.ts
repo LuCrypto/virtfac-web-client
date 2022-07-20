@@ -499,7 +499,7 @@ export class GraphUtils {
       const h = n.getDataOrDefault<number>('h', 0)
       if (hGroups.has(h)) {
         (subGraph.get(h) as Array<Node>).push(n)
-        n.setData<string>('color', '#E74C3C')
+        // n.setData<string>('color', '#E74C3C')
       }
     })
 
@@ -517,9 +517,11 @@ export class GraphUtils {
     let groupId = 0
 
     subGraph.forEach(value => {
+      /*
       value.forEach(n => {
         n.setData<string>('color', colArray[groupId])
       })
+      */
       groupId++
       groupId %= colArray.length
     })
