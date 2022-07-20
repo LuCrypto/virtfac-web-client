@@ -589,12 +589,6 @@ export default class ErgonomIOAvatarsContainer extends Vue {
 
   showPlayerDataSettings = false
 
-  // Deprecated
-  bodyMaterialArray: MeshLambertMaterial[] = []
-  shirtMaterialArray: MeshLambertMaterial[] = []
-  pantsMaterialArray: MeshLambertMaterial[] = []
-  shoesMaterialArray: MeshLambertMaterial[] = []
-
   materialArray: MeshLambertMaterial[] = []
 
   hairMaterial: MeshLambertMaterial = new MeshLambertMaterial({
@@ -713,7 +707,14 @@ export default class ErgonomIOAvatarsContainer extends Vue {
         this.headMesh.clear()
         this.headMesh = fbx
         mesh = this.headMesh.children[0] as THREE.Mesh
-        mesh.material = this.materialArray
+        mesh.material = [
+          this.materialArray[0],
+          this.materialArray[0],
+          this.materialArray[1]
+        ]
+        mesh = this.headMesh.children[1] as THREE.Mesh
+        mesh.material = this.materialArray[1]
+
         break
       }
       case 7: {
@@ -733,8 +734,6 @@ export default class ErgonomIOAvatarsContainer extends Vue {
   updateMorph (): void {
     var meshArray: THREE.Mesh[] = []
     meshArray.push(this.shirtMesh.children[0] as THREE.Mesh)
-    // meshArray.push(this.beardMesh.children[0] as THREE.Mesh)
-    // meshArray.push(this.hairMesh.children[0] as THREE.Mesh)
     meshArray.push(this.pantsMesh.children[0] as THREE.Mesh)
     meshArray.push(this.headMesh.children[0] as THREE.Mesh)
     meshArray.push(this.shoesMesh.children[0] as THREE.Mesh)
@@ -845,7 +844,8 @@ export default class ErgonomIOAvatarsContainer extends Vue {
     // eyes Material
     this.materialArray.push(
       new MeshLambertMaterial({
-        color: 0xffffff
+        // color: 0xffffff,
+        map: new THREE.TextureLoader().load('./Avatars/Textures/grayscale.jpg')
       })
     )
     // Skin Material
@@ -876,46 +876,6 @@ export default class ErgonomIOAvatarsContainer extends Vue {
     this.materialArray.push(
       new MeshLambertMaterial({
         color: 0x161616
-      })
-    )
-
-    // TODO : For now, each body part need to have the same material array, but this will change with several mat for shirt or pants
-    // Donc on triche un peu
-    for (let i = 0; i < 6; i++) {
-      this.shirtMaterialArray.push(
-        new MeshLambertMaterial({
-          color: 0x0047ab
-        })
-      )
-      this.pantsMaterialArray.push(
-        new MeshLambertMaterial({
-          color: 0x8b4513
-        })
-      )
-      this.shoesMaterialArray.push(
-        new MeshLambertMaterial({
-          color: 0x161616
-        })
-      )
-    }
-
-    // bodyMaterials
-    this.bodyMaterialArray.push(
-      // Eyes
-      new MeshLambertMaterial({
-        color: 0xffffff
-      })
-    )
-    this.bodyMaterialArray.push(
-      // Skin
-      new MeshLambertMaterial({
-        color: 13207147
-      })
-    )
-    this.bodyMaterialArray.push(
-      // Teeth
-      new MeshLambertMaterial({
-        color: 0xffffff
       })
     )
   }
@@ -1078,13 +1038,17 @@ export default class ErgonomIOAvatarsContainer extends Vue {
     }
   }
 
+  // parseXMLData (xml: string):Record<string, unknown> {}
   parseXMLData (xml: string): unknown {
-    return [
+    const a = [
       ...xml.matchAll(/(name="[\w\s]*"(\s)*length="[0-9]*(.[0-9]*)")+/gm)
     ].map(i => {
       const result = i.shift().split('"')
       return { name: result[1], length: parseFloat(result[3]) }
     })
+    const b = xml.matchAll(/(name="[\w\s]*">)+/gm)
+    const tmp = b.split('"')
+    return { name: tmp[1], a }
   }
 
   saveProfile (): void {
