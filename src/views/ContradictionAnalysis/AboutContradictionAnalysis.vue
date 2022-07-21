@@ -1,5 +1,5 @@
 <template>
-  <v-container fluid class="d-flex">
+  <v-container fluid class="d-flex pa-0">
     <iframe v-if="page" class="flex-grow-1 fill-height" :src="page"></iframe>
     <div v-else>No page to display</div>
   </v-container>
