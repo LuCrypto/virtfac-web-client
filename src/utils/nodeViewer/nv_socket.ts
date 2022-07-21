@@ -34,6 +34,10 @@ export class NvSocket {
     return this.hideWhenNotLinked
   }
 
+  /**
+   * called when a link disconnects from this socket
+   * @param link
+   */
   public linkUnconnected (link: NvLink): void {
     this.nbLinkConnected--
     this.links.delete(link)
@@ -54,6 +58,10 @@ export class NvSocket {
     }
   }
 
+  /**
+   * called when a link connects to this socket
+   * @param link
+   */
   public linkConnected (link: NvLink): void {
     this.nbLinkConnected++
     this.links.add(link)
@@ -146,7 +154,9 @@ export class NvSocket {
         'pointer-events': 'none'
       })
       socket.root.onScaleChanged().addListener(() => {
-        (socket.tooltip as NvEl).setStyle({ transform: `scale(${Math.max(0.725 / socket.root.getScale(), 1)})` })
+        (socket.tooltip as NvEl).setStyle({
+          transform: `scale(${Math.max(0.725 / socket.root.getScale(), 1)})`
+        })
         NvSocket.refreshTooltipPos(socket)
       }, socket)
       socket.links.forEach(l => {

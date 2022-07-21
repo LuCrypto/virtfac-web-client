@@ -24,6 +24,9 @@ export class NvLink {
   private nodeIn: NvNode
   private nodeOut: NvNode
 
+  /**
+   * displayed path of the link
+   */
   private cpath: Array<V> | undefined = undefined
 
   private pointerEventPath: NvEl
@@ -38,6 +41,10 @@ export class NvLink {
     return this.link
   }
 
+  /**
+   * Define the link of the graph related to this displayer
+   * @param link
+   */
   public setLink (link: Link | undefined = undefined): void {
     if (this.link !== undefined) {
       this.link.onDataChanged().removeMappedListener('width', this)
@@ -49,6 +56,8 @@ export class NvLink {
           .getDom()
           .setAttribute('stroke-width', '' + link?.getData<number>('width'))
       }
+
+      // init listeners of the link state
       this.link.onDataChanged().addMappedListener('width', arg => {
         this.path
           .getDom()

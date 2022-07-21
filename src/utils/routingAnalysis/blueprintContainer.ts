@@ -89,6 +89,9 @@ class Grid {
   }
 }
 
+/**
+ * manage nodes and links of the blueprint editor.
+ */
 export class BlueprintContainer {
   private mode:
     | 'WALL'
@@ -303,6 +306,7 @@ export class BlueprintContainer {
   }
 
   public constructor (parentNode: HTMLElement) {
+    // init UI elements
     this.theme = new BpTheme()
     this.bp = new Blueprint()
     this.parentNode = parentNode
@@ -348,6 +352,7 @@ export class BlueprintContainer {
     this.svgNodeLayer.setStyle(layerStyle)
     this.svgFurnitureLayer.setStyle(layerStyle)
 
+    // init inputs listeners
     this.container.getDom().oncontextmenu = e => {
       e.preventDefault()
     }
@@ -378,6 +383,7 @@ export class BlueprintContainer {
       }
       e.preventDefault()
     }
+
     this.bp.setData<number>('scale', 1)
 
     // add a new wall node displayer when a wall node is created in the blueprint

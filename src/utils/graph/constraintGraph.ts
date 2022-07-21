@@ -323,27 +323,35 @@ export class ConstraintGraph {
     return groupResult
   }
 
+  test () {
+    //
+  }
+
   /**
-   *
+   * Clear the old displayed graph and recompute it from the raw graph.
+   * The dispalyed graph will group the incoming links to a node that has a similar target location (see : {@link groupByAngle()})
    * @param graph
    */
   public refreshDisplayGraphReverse (graph: Graph): void {
+    // clear old displayed graph
     graph.clearNodes()
     graph.getData<Graph>('source').foreachNode(node => {
       graph.addNode(node)
     })
-
-    const socketDistance = 250
-    const lineDistance = 20
-
-    const forwardAngleMax = Math.PI * 0.3
-    const backwardAngleMin = Math.PI * 0.303
 
     graph.getData<Graph>('source').foreachNode(n => {
       n.foreachLink(l => {
         l.setData<undefined>('path', undefined)
       })
     })
+
+    const socketDistance = 250
+    const lineDistance = 20
+
+    // define the angle at which a link will exit the path
+    const forwardAngleMax = Math.PI * 0.3
+    const backwardAngleMin = Math.PI * 0.303
+
     /*
         const tmp5 = graph.getData<ContrainteGraph>("sourcec");
         tmp5.physicsFunction(tmp5.localGraph);
@@ -368,26 +376,28 @@ export class ConstraintGraph {
           )
         })
 
-        const validBusDir = graph.getData<Array<V> | undefined>('validBusDir')
+        const validBusDir = graph.getData<Array<V> | undefined>('validBusDir') // liste of directions that a path can have
         const validBusWeight = graph.getData<Array<number> | undefined>(
           'validBusWeight'
         )
 
         const nodeSet: Set<Node> = new Set<Node>()
+        // loop through each path
         groups.forEach(group => {
           if (group.length > 1) {
-            let moyTargetPos: V = new V(0, 0)
+            let moyTargetPos: V = new V(0, 0) // the average position of the nodes of the group
             group.forEach(element => {
               moyTargetPos = moyTargetPos.addV(
                 element.link.getData<V>('position')
               )
             })
             moyTargetPos = moyTargetPos.divN(group.length)
-            const direction = moyTargetPos.subV(node.getData<V>('position'))
+            const direction = moyTargetPos.subV(node.getData<V>('position')) // direction to reach the moyTargetPos from the origin node
             const initPosition = node
               .getData<V>('position')
               .addV(direction.normalize().multN(socketDistance))
 
+            // path with each junction position
             const path: Array<{
               pos: V
               links: Node[]
@@ -404,6 +414,7 @@ export class ConstraintGraph {
             })
 
             let index = 0
+            // loop to compute the path
             while (index < path.length && path[index].links.length > 0) {
               const item = path[index]
               let dir = new V(0, 0)
@@ -413,6 +424,7 @@ export class ConstraintGraph {
               dir = dir.divN(item.links.length)
               dir = dir.subV(item.pos)
 
+              // get the nearest valid path direction
               if (validBusDir !== undefined) {
                 const match = ArrayUtils.indexOfMin<V>(
                   validBusDir,
@@ -423,13 +435,11 @@ export class ConstraintGraph {
                 )
                 dir = validBusDir[match].multN(dir.length())
               }
-              // dir = Vector2.divide(dir, 2);
 
               let curPos = item.pos.addV(dir.normalize().multN(lineDistance))
-              // dir = Vector2.divide(dir, 2);
-              let maxIteration = 1
+              let countIteration = 1
+              // search position of the next junction
               do {
-                // let p = Vector2.multiply(dir, dirMultiplier)
                 let angle = 0
                 let maxL: Node | undefined
                 item.links.forEach(l => {
@@ -448,7 +458,7 @@ export class ConstraintGraph {
                 dir = dir.divN(2)
 
                 if (angle >= backwardAngleMin) {
-                  if (maxIteration === 1) {
+                  if (countIteration === 1) {
                     if (maxL !== undefined) {
                       const l: Node[] = new Array<Node>()
                       item.links.forEach(item => {
@@ -486,15 +496,15 @@ export class ConstraintGraph {
                   break
                 }
 
-                maxIteration++
-              } while (maxIteration < 500)
+                countIteration++
+              } while (countIteration < 500)
               index++
             }
 
-            // let lastNode = node;
             const connectionIndex: Map<Node, number> = new Map<Node, number>()
 
             {
+              // sort links of the path to not cross the output link of the junctions with the other links of the path
               const fromLeft = new Array<Node>()
               const fromRight = new Array<Node>()
               for (let i = path.length - 1; i > 0; i--) {
@@ -507,18 +517,8 @@ export class ConstraintGraph {
                       .angleWith(dir) < 0
                   ) {
                     fromLeft.push(path[i].linkOut as Node)
-                    /*
-                    if (path[i].links.length === 1) {
-                      fromRight.push(path[i].links[0])
-                    }
-                    */
                   } else {
                     fromRight.push(path[i].linkOut as Node)
-                    /*
-                    if (path[i].links.length === 1) {
-                      fromLeft.push(path[i].links[0])
-                    }
-                    */
                   }
                 }
               }
@@ -531,18 +531,13 @@ export class ConstraintGraph {
               }
             }
 
+            // compute position of each junction point for each link of the path
             const lastNodes: Map<Node, Node> = new Map<Node, Node>()
             const nodePaths: Map<Node, Array<V>> = new Map<Node, Array<V>>()
             path[0].links.forEach(e => {
               lastNodes.set(e, node)
-              nodePaths.set(
-                e,
-                new Array<V>(/* node.getData<Vec2>('position') */)
-              )
+              nodePaths.set(e, new Array<V>())
             })
-            // lastNode.setData<Vec2>("position", initPosition);
-            // lastNode.setData<number>("size", 5);
-            // lastNode.addLink(node).copyData("color", node).setData<number>("width", 2);
             for (let i = 0; i < path.length; i++) {
               const ortogDir: V =
                 i === 0
@@ -577,13 +572,10 @@ export class ConstraintGraph {
                   'path',
                   i
                 )
-                // console.log(path[i].pos);
                 n.setData<number>('size', 0)
-                // n.setData<boolean>('visible', false)
                 n.addLink(lastNodes.get(path[i].links[j]) as Node)
                   .copyData('color', path[i].links[j])
                   .setData<number>('width', 2)
-                // lastNode = n;
                 lastNodes.set(path[i].links[j], n)
               }
               if (path[i].linkOut !== undefined) {
@@ -605,16 +597,12 @@ export class ConstraintGraph {
                 )
                 ;(nodePaths.get(path[i].linkOut as Node) as V[]).push(pos)
                 n.setData<number>('size', 0)
-                // n.setData<boolean>('visible', false)
                 n.addLink(lastNodes.get(path[i].linkOut as Node) as Node)
                   .copyData('color', path[i].linkOut as Node)
                   .setData<number>('width', 2)
                 n.addLink(path[i].linkOut as Node)
                   .copyData('color', path[i].linkOut as Node)
                   .setData<boolean>('in', true)
-                /* ;((path[i].linkOut as Node).getLink(node) as Link).setData<
-                  boolean
-                >('visible', false) */
                 ;((path[i].linkOut as Node).getLink(node) as Link).setData<
                   Node
                 >('displayedNode', n)
@@ -949,6 +937,9 @@ export class ConstraintGraph {
     link.setData<boolean>('out', true)
   }
 
+  /**
+   * compute default position of nodes
+   */
   public refreshPosition (): void {
     /*
     console.log('refreshPosition')
@@ -1026,6 +1017,10 @@ export class ConstraintGraph {
     GraphLayout.horizontalOrdering(this.getRawGraph(), 400)
   }
 
+  /**
+   * load excel file of constraint
+   * @param wb
+   */
   public loadXLSX (wb: IWorkBook): void {
     const sheet: XLSX.IWorkSheet = wb.Sheets[wb.SheetNames[0]]
 
