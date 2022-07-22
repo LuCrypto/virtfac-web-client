@@ -4,7 +4,7 @@
     <v-toolbar color="primary" flat v-if="this.header">
       <v-toolbar-title class="black--text">
         <v-icon left v-text="'mdi-file-document'"></v-icon>
-        {{ openFile ? 'Open files' : 'Files manager' }}
+        {{ openFile ? title : 'Files manager' }}
       </v-toolbar-title>
     </v-toolbar>
 
@@ -16,7 +16,7 @@
         class="overflow-y-auto"
       >
         <!-- Header -->
-        <v-layout wrap row style="gap: 24px;" class="pa-6">
+        <v-layout wrap row style="gap: 24px" class="pa-6">
           <v-layout justify-center>
             <!-- Group settings button -->
             <v-btn
@@ -32,7 +32,7 @@
             <v-select
               :items="groupList"
               v-model="selectedGroupId"
-              style="min-width: 0;"
+              style="min-width: 0"
               label="Group"
               outlined
               primary
@@ -228,9 +228,7 @@
               </v-container>
               <v-card-actions>
                 <v-spacer></v-spacer>
-                <v-btn text @click="fileSettingsPopUp = false">
-                  Cancel
-                </v-btn>
+                <v-btn text @click="fileSettingsPopUp = false"> Cancel </v-btn>
                 <v-btn
                   color="primary"
                   class="black--text"
@@ -343,6 +341,7 @@ export default class OpenFilePopUp extends Vue {
   // Display or not the "File Manager" header.
   @Prop({ default: () => true }) private header!: boolean
 
+  @Prop({ default: () => 'Open File' }) private title!: string
   waitingTasks = 3
 
   /* Group bar */

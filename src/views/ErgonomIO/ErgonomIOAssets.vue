@@ -33,7 +33,7 @@
             <v-row>
               <v-col cols="3">
                 <v-card-text>
-                  Nouveau titre :
+                  New title :
                 </v-card-text>
               </v-col>
 
@@ -48,7 +48,7 @@
             <v-row>
               <v-col cols="3">
                 <v-card-text>
-                  Nouveau tag :
+                  New tag :
                 </v-card-text>
               </v-col>
 

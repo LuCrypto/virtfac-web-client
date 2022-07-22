@@ -33,7 +33,10 @@ import Component from 'vue-class-component'
 })
 // @vuese
 // @group COMPONENTS
+// Container compotent to able maximization of the content to fill his partent container
 export default class MaximizableContainer extends Vue {
+  // @vuese
+  // state of the component
   fullscreen = false
 }
 </script>

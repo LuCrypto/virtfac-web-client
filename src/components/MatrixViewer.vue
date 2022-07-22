@@ -26,6 +26,7 @@ import Component from 'vue-class-component'
 })
 // @vuese
 // @group COMPONENTS
+// Component to display a matrix
 export default class MatrixViewer extends Vue {
   private matrix: Matrix | null = null
 
@@ -46,6 +47,8 @@ export default class MatrixViewer extends Vue {
   private data = new Array<Array<string>>(['names'])
   private dataStyle = new Array<Array<string>>([''])
 
+  // @vuese
+  // set the matrix to display
   public setMatrix (
     matrix: Matrix,
     rowNames: Array<string>,
@@ -81,6 +84,7 @@ export default class MatrixViewer extends Vue {
   }
 
   private oldOveredCoord: Array<number> | null = null
+
   public onMouseOver (event: MouseEvent) {
     if ((event.relatedTarget as HTMLElement) === null) return
     const coord = (event.target as HTMLElement).id.split('-').map(v => {
@@ -117,6 +121,8 @@ export default class MatrixViewer extends Vue {
     }
   }
 
+  // @vuese
+  // loop through html elements of the matrix
   public foreachElement (func: {
     (x: number, y: number, element: HTMLElement): void
   }) {

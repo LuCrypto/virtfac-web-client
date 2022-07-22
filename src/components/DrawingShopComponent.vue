@@ -93,6 +93,7 @@ class MenuItem {
 })
 // @vuese
 // @group COMPONENTS
+// Content component to the blueprint-editor page
 export default class DrawingShopComponent extends Vue {
   selectedMenuItem = -1
   nodeViewer: BlueprintEditor | null = null
@@ -217,12 +218,6 @@ export default class DrawingShopComponent extends Vue {
       }
       reader.readAsBinaryString(file)
     }
-  }
-
-  selectSheetPopUp (workbook: Record<string, unknown>): void {
-    console.log(workbook)
-    // this.$refs.excel.active = true;
-    // console.log(workbook);
   }
 }
 </script>

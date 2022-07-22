@@ -2,7 +2,8 @@ import { NvEl } from './nv_el'
 import { NvContainer } from './nv_container'
 import { NvLink } from './nv_link'
 import { NvSocket } from './nv_socket'
-import { V } from './v'
+// import { V } from './v'
+import V from '@/utils/vector'
 
 export class NvNode {
   private appliedScale = 1
@@ -140,7 +141,7 @@ export class NvNode {
         */
       this.positionStart = this.root
         .clientPosToLocalPos(event.clientX, event.clientY)
-        .sub(this.position)
+        .subV(this.position)
       // .sub(new V(this.content.getDom().getBoundingClientRect().width/2, this.content.getDom().getBoundingClientRect().height/2)
       document.onmouseup = e => this.dragMouseUp(e)
       document.onmousemove = e => this.dragMouseMove(e)
@@ -152,7 +153,7 @@ export class NvNode {
       this.translationButton = event.button
       this.translationStartPosition = this.root
         .unscale(new V(event.clientX, event.clientY))
-        .sub(this.root.getPosition())
+        .subV(this.root.getPosition())
     }
   }
 
@@ -179,13 +180,13 @@ export class NvNode {
       this.root.setPosition(
         this.root
           .unscale(new V(event.clientX, event.clientY))
-          .sub(this.translationStartPosition)
+          .subV(this.translationStartPosition)
       )
     } else {
       this.userSetPosition(
         this.root
           .clientPosToLocalPos(event.clientX, event.clientY)
-          .sub(this.positionStart)
+          .subV(this.positionStart)
       )
       this.updateLinks()
     }

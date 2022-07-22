@@ -1,7 +1,8 @@
 import { NvEl } from '@/utils/nodeViewer/nv_el'
 import { Node } from '@/utils/graph/node'
 import { BlueprintContainer } from './blueprintContainer'
-import { Vec2 } from '../graph/Vec'
+// import { Vec2 } from '../graph/Vec'
+import V from '@/utils/vector'
 
 export class BpWallNode {
   private node: Node
@@ -27,7 +28,7 @@ export class BpWallNode {
     this.container.getNodeLayer().appendChild(this.point)
     this.container.getNodeLayer().appendChild(this.collider)
 
-    const p = node.getData<Vec2>('position')
+    const p = node.getData<V>('position')
     if (p !== undefined) this.setPos(p.x, p.y)
 
     // hovering wall nodes :

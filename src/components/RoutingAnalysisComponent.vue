@@ -80,7 +80,7 @@ import RoutingGraphViewer from './RoutingGraphViewer.vue'
 import { Graph } from '@/utils/graph/graph'
 import { Node } from '@/utils/graph/node'
 import { Link } from '@/utils/graph/link'
-import { Vec2, Vector2 } from '@/utils/graph/Vec'
+// import { Vec2, Vector2 } from '@/utils/graph/Vec'
 import { GraphUtils } from '@/utils/graph/graphUtils'
 import { GraphLayout } from '@/utils/graph/graphLayout'
 import { MatrixUtils, Matrix } from '@/utils/matrixUtils'
@@ -137,6 +137,7 @@ interface ClassifSolution {
 })
 // @vuese
 // @group COMPONENTS
+// Content component of the routing-analysis page
 export default class RoutingAnalysisComponent extends Vue {
   selectedMenuItem = -1
   actionContainer: ActionContainer | null = null
@@ -149,7 +150,10 @@ export default class RoutingAnalysisComponent extends Vue {
 
   private filterTransitiveLinksVisible = true
 
+  private displayFeedbackLinks = true
+
   postPostGraph: Graph | null = null
+  PostPostOrderGraph: Graph | null = null
   postPostMatrix: Matrix | null = null
 
   articlePostGraph: Graph | null = null
@@ -192,7 +196,7 @@ export default class RoutingAnalysisComponent extends Vue {
               }
             },
             {
-              txt: 'Article/Poste Matrix',
+              txt: 'Part/Machine Matrix',
               callback: () => {
                 // console.log('Article/Poste Matrix')
                 const input = document.createElement('input')
@@ -203,7 +207,7 @@ export default class RoutingAnalysisComponent extends Vue {
               }
             },
             {
-              txt: 'Poste/Poste Matrix',
+              txt: 'Machine/Machine Matrix',
               callback: () => {
                 // console.log('Article/Poste Matrix')
                 const input = document.createElement('input')
@@ -214,7 +218,7 @@ export default class RoutingAnalysisComponent extends Vue {
               }
             },
             {
-              txt: 'Classification',
+              txt: 'Clustering',
               callback: () => {
                 const input = document.createElement('input')
                 input.type = 'file'
@@ -225,7 +229,9 @@ export default class RoutingAnalysisComponent extends Vue {
             }
           ],
           item => {
-            if (item !== null) { ((item as Record<string, unknown>).callback as { (): void })() }
+            if (item !== null) {
+              ((item as Record<string, unknown>).callback as { (): void })()
+            }
           }
         )
       }),
@@ -244,38 +250,66 @@ export default class RoutingAnalysisComponent extends Vue {
           ],
           [
             {
-              txt: 'Article/Poste Matrix',
+              txt: 'Part/Machine Matrix',
               callback: () => {
                 this.saveArticlePosteMatrix()
               }
             },
             {
-              txt: 'Poste/Poste Matrix',
+              txt: 'Machine/Machine Matrix',
               callback: () => {
                 this.savePostePosteMatrix()
               }
             },
             {
-              txt: 'Classification',
+              txt: 'Clustering',
               callback: () => {
                 this.saveClassification()
               }
             }
           ],
           item => {
-            if (item !== null) { ((item as Record<string, unknown>).callback as { (): void })() }
+            if (item !== null) {
+              ((item as Record<string, unknown>).callback as { (): void })()
+            }
           }
         )
       }),
-      new MenuItem('Remove feedback link', 'mdi-backspace', () => {
-        if (this.postPostGraph !== null) {
+      new MenuItem('Show/Hide feedback link', 'mdi-backspace', () => {
+        if (this.postPostGraph !== null && this.graphViewer !== null) {
+          this.displayFeedbackLinks = !this.displayFeedbackLinks
+          const map = this.postPostGraph.getData<Map<Link, Array<Node>>>(
+            'attachedNodes'
+          )
           this.postPostGraph.foreachNode(n => {
             n.foreachLink(l => {
-              if (l.getDataOrDefault<boolean>('goBack', false)) {
-                n.removeLink(l.getNode())
+              const nodes = map.get(l)
+              if (nodes != null) {
+                nodes.forEach(n => {
+                  n.foreachLink(l2 => {
+                    l2.setData<boolean>(
+                      'visible',
+                      this.displayFeedbackLinks ||
+                        !l.getDataOrDefault<boolean>('goBack', false)
+                    )
+                  })
+                })
+              }
+              if (
+                (this.graphViewer as RoutingGraphViewer).getGraph() ===
+                this.postPostGraph
+              ) {
+                l.setData<boolean>(
+                  'visible',
+                  (this.filterTransitiveLinksVisible ||
+                    !l.getDataOrDefault<boolean>('isTransitive', false)) &&
+                    (this.displayFeedbackLinks ||
+                      !l.getDataOrDefault<boolean>('goBack', false))
+                )
               }
             })
           })
+          this.graphViewer.setGraph(this.graphViewer.getGraph())
         }
       }),
       new MenuItem(
@@ -284,7 +318,10 @@ export default class RoutingAnalysisComponent extends Vue {
         () => {
           if (this.postPostGraph !== null) {
             const transitiveSet = GraphUtils.getTransitiveLinks(
-              this.postPostGraph
+              this.postPostGraph,
+              l => {
+                return l.getDataOrDefault<boolean>('goBack', false)
+              }
             )
             const linkMap = this.postPostGraph.getData<Map<Link, Array<Node>>>(
               'attachedNodes'
@@ -321,7 +358,13 @@ export default class RoutingAnalysisComponent extends Vue {
       ),
       new MenuItem('Level layout', 'mdi-file-tree', () => {
         if (this.postPostGraph !== null && this.graphViewer !== null) {
-          const nbLevel = GraphUtils.computeLevels(this.postPostGraph, 'level')
+          const nbLevel = GraphUtils.computeLevels(
+            this.postPostGraph,
+            'level',
+            l => {
+              return l.getDataOrDefault<boolean>('goBack', false)
+            }
+          )
           GraphLayout.levelLayout(
             this.postPostGraph,
             'level',
@@ -333,15 +376,17 @@ export default class RoutingAnalysisComponent extends Vue {
             n.foreachLink(l => {
               l.setData<boolean>(
                 'visible',
-                this.filterTransitiveLinksVisible ||
-                  !l.getDataOrDefault<boolean>('isTransitive', false)
+                (this.filterTransitiveLinksVisible ||
+                  !l.getDataOrDefault<boolean>('isTransitive', false)) &&
+                  (this.displayFeedbackLinks ||
+                    !l.getDataOrDefault<boolean>('goBack', false))
               )
             })
           })
           this.graphViewer.setGraph(this.postPostGraph)
         }
       }),
-      new MenuItem('Classification Article/Poste', 'mdi-matrix', () => {
+      new MenuItem('Clustering Part/Machine', 'mdi-matrix', () => {
         if (this.articlePostGraph !== null) {
           if (this.articlePostMatrix === null) {
             this.articlePostMatrix = MatrixUtils.matrixFromBipartiGraph(
@@ -443,7 +488,7 @@ export default class RoutingAnalysisComponent extends Vue {
           )
         }
       }),
-      new MenuItem('Classification Poste/Poste', 'mdi-matrix', () => {
+      new MenuItem('Clustering Machine/Machine', 'mdi-matrix', () => {
         if (this.postPostGraph !== null) {
           const m = MatrixUtils.matrixFromGraph(this.postPostGraph, 'index')
           m.printMat()
@@ -505,7 +550,6 @@ export default class RoutingAnalysisComponent extends Vue {
                   n.setData<string>('color', notAssignedColor)
                 } else {
                   n.setData<string>('color', colArray[group % colArray.length])
-                  console.log(group)
                 }
               })
 
@@ -546,7 +590,7 @@ export default class RoutingAnalysisComponent extends Vue {
             )
           }
           choices.push({
-            txt: 'Poste/Poste Matrix',
+            txt: 'Machine/Machine Matrix',
             callback: () => {
               (this.$refs.matrixEditor as PopUp).open()
               this.displayClassifMatrix(
@@ -566,7 +610,7 @@ export default class RoutingAnalysisComponent extends Vue {
             )
           }
           choices.push({
-            txt: 'Article/Poste Matrix',
+            txt: 'Part/Machine Matrix',
             callback: () => {
               (this.$refs.matrixEditor as PopUp).open()
               this.displayClassifMatrix(
@@ -624,6 +668,8 @@ export default class RoutingAnalysisComponent extends Vue {
     }
   }
 
+  // @vuese
+  // Download the part/machine matrix in xlsx format to the client
   saveArticlePosteMatrix () {
     if (this.articlePostGraph !== null) {
       if (this.articlePostMatrix === null) {
@@ -671,9 +717,9 @@ export default class RoutingAnalysisComponent extends Vue {
       const ws = XLSX.utils.aoa_to_sheet(data)
       const wb = XLSX.utils.book_new()
 
-      wb.SheetNames = ['Article Poste Matrix']
+      wb.SheetNames = ['Part Machine Matrix']
 
-      wb.Sheets['Article Poste Matrix'] = ws
+      wb.Sheets['Part Machine Matrix'] = ws
 
       const uri = XLSX.write(wb, { bookType: 'xlsx', type: 'binary' })
       const buf = new ArrayBuffer(uri.length)
@@ -684,13 +730,15 @@ export default class RoutingAnalysisComponent extends Vue {
         type:
           'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
       })
-      const file = new File([blob], 'poste matrix.xlsx')
+      const file = new File([blob], 'part/machine matrix.xlsx')
       a.href = URL.createObjectURL(file)
-      a.download = 'article/poste matrix.xlsx'
+      a.download = 'part/machine matrix.xlsx'
       a.click()
     }
   }
 
+  // @vuese
+  // Download the part/part matrix in xlsx format to the client
   savePostePosteMatrix () {
     if (this.postPostGraph !== null) {
       const data = new Array<Array<unknown>>()
@@ -729,9 +777,9 @@ export default class RoutingAnalysisComponent extends Vue {
       }
       */
 
-      wb.SheetNames = ['Poste Matrix']
+      wb.SheetNames = ['Machine Matrix']
 
-      wb.Sheets['Poste Matrix'] = ws
+      wb.Sheets['Machine Matrix'] = ws
 
       const uri = XLSX.write(wb, { bookType: 'xlsx', type: 'binary' })
       const buf = new ArrayBuffer(uri.length)
@@ -742,13 +790,15 @@ export default class RoutingAnalysisComponent extends Vue {
         type:
           'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
       })
-      const file = new File([blob], 'poste matrix.xlsx')
+      const file = new File([blob], 'machine matrix.xlsx')
       a.href = URL.createObjectURL(file)
-      a.download = 'poste matrix.xlsx'
+      a.download = 'machine matrix.xlsx'
       a.click()
     }
   }
 
+  // @vuese
+  // Download the classification in xlsx format to the client
   saveClassification () {
     const data = new Array<Array<unknown>>()
     const savedSet = new Set<string>()
@@ -777,9 +827,9 @@ export default class RoutingAnalysisComponent extends Vue {
     const ws = XLSX.utils.aoa_to_sheet(data)
     const wb = XLSX.utils.book_new()
 
-    wb.SheetNames = ['Classification']
+    wb.SheetNames = ['Clustering']
 
-    wb.Sheets.Classification = ws
+    wb.Sheets.Clustering = ws
 
     const uri = XLSX.write(wb, { bookType: 'xlsx', type: 'binary' })
     const buf = new ArrayBuffer(uri.length)
@@ -789,12 +839,14 @@ export default class RoutingAnalysisComponent extends Vue {
     const blob = new Blob([buf], {
       type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
     })
-    const file = new File([blob], 'Classification.xlsx')
+    const file = new File([blob], 'clustering.xlsx')
     a.href = URL.createObjectURL(file)
-    a.download = 'Classification.xlsx'
+    a.download = 'clustering.xlsx'
     a.click()
   }
 
+  // @vuese
+  // Load a classification from xlsx format from a client file
   loadClassification (event: Event) {
     if (event != null && event.target != null) {
       const f: File = ((event.target as HTMLInputElement).files as FileList)[0]
@@ -878,6 +930,8 @@ export default class RoutingAnalysisComponent extends Vue {
     }
   }
 
+  // @vuese
+  // Load a part/machine matrix from xlsx format from a client file
   loadArticlePosteMatrix (event: Event) {
     if (event != null && event.target != null) {
       const f: File = ((event.target as HTMLInputElement).files as FileList)[0]
@@ -904,9 +958,6 @@ export default class RoutingAnalysisComponent extends Vue {
           })
 
           const sheet = wb.Sheets[wb.SheetNames[0]]
-          console.log(sheet.B2)
-
-          console.log(sheet)
           const nameOf: { (x: number, y: number): string } = (x, y) => {
             return XLSX.utils.encode_cell({ c: x, r: y })
           }
@@ -968,6 +1019,8 @@ export default class RoutingAnalysisComponent extends Vue {
     }
   }
 
+  // @vuese
+  // Load a machine/machine matrix from xlsx format from a client file
   loadPostePosteMatrix (event: Event) {
     if (event != null && event.target != null) {
       const f: File = ((event.target as HTMLInputElement).files as FileList)[0]
@@ -996,9 +1049,6 @@ export default class RoutingAnalysisComponent extends Vue {
           })
 
           const sheet = wb.Sheets[wb.SheetNames[0]]
-          console.log(sheet.B2)
-
-          console.log(sheet)
           const nameOf: { (x: number, y: number): string } = (x, y) => {
             return XLSX.utils.encode_cell({ c: x, r: y })
           }
@@ -1028,7 +1078,6 @@ export default class RoutingAnalysisComponent extends Vue {
           while (value !== undefined) {
             // colArray.push(value.v)
             rowArray.push(value.v)
-            console.log(value.v)
 
             let poste: Poste | null = null
             if (!this.posteMap.has(value.v)) {
@@ -1092,6 +1141,8 @@ export default class RoutingAnalysisComponent extends Vue {
     }
   }
 
+  // @vuese
+  // Load a routing file from xlsx format from a client file
   loadRoutingFile (event: Event) {
     console.log('file uploaded')
     if (event != null && event.target != null) {
@@ -1116,6 +1167,8 @@ export default class RoutingAnalysisComponent extends Vue {
     }
   }
 
+  // @vuese
+  // Load routing worksheet to the routing analysis session
   loadRoutingXLSX (wb: XLSX.WorkBook) {
     const searchSheet = (source: string, name: string) => {
       return source.includes(name) && source.includes('data')
@@ -1301,14 +1354,6 @@ export default class RoutingAnalysisComponent extends Vue {
         nodeValue = undefined
       }
     } while (nodeValue !== undefined)
-
-    posteMapforArticle.forEach(n => {
-      console.log({
-        name: n.getData<string>('name'),
-        nbOF: n.getData<number>('nbOF'),
-        nbArticle: n.getData<Set<Node>>('articleSet').size
-      })
-    })
 
     const nbNode = posteMap.size
     const xSpread = nbNode * 60
