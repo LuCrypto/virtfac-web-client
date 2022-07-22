@@ -5,7 +5,7 @@
       Collaborative sessions
     </v-container>
     <!-- Milieu de page : les différentes cartes de scènes -->
-    <template>
+    <template v-if="connected">
       <!-- Les différentes rooms -->
       <v-row
         no-gutters
@@ -79,31 +79,63 @@
         </v-card>
 
         <!-- Les différents boutons -->
-        <v-layout justify-center class="py-4">
-          <v-flex class="flex-grow-0 mx-5">
-            <!-- Permet de créer une room -->
-            <v-btn
-              v-on:click="createSession1"
-              class="primary black--text"
-              large
-              elevation="2"
-            >
-              Create new session
-            </v-btn>
-          </v-flex>
-          <v-flex class="flex-grow-0 mx-5">
-            <!-- Permet de créer une room -->
-            <v-select
-              class="black--text"
-              label="Scene sélectionnée"
-              v-model="maSceneSelection"
-              :items="this.scenes.map(item => item.name)"
-              dense
-            >
-            </v-select>
-          </v-flex>
-        </v-layout>
+        <v-container>
+          <v-row align="center">
+            <v-col>
+              <v-btn
+                v-on:click="createSession1"
+                class="primary black--text"
+                large
+                elevation="2"
+              >
+                Create new session
+              </v-btn>
+            </v-col>
+
+            <v-col>
+              <v-select
+                class="black--text"
+                label="Scene sélectionnée"
+                v-model="maSceneSelection"
+                :items="this.scenes.map(item => item.name)"
+                dense
+              >
+              </v-select>
+            </v-col>
+          </v-row>
+
+          <v-row align="center">
+            <v-col>
+              <v-btn
+                v-on:click="deleteSession"
+                class="primary black--text"
+                large
+                elevation="2"
+              >
+                Delete session
+              </v-btn>
+            </v-col>
+
+            <v-col>
+              <v-select
+                class="black--text"
+                label="Room à supprimer"
+                v-model="maRoomSelectionDelete"
+                :items="this.rooms.map(item => item.nom)"
+                dense
+              >
+              </v-select>
+            </v-col>
+          </v-row>
+        </v-container>
       </v-row>
+    </template>
+    <template>
+      <div>
+        <p class="text-center">
+          Veuillez vous connecter.
+        </p>
+      </div>
     </template>
   </v-container>
 </template>
@@ -114,6 +146,7 @@ import API from '@/utils/api'
 import Unreal from '@/utils/unreal'
 import VueRouter from 'vue-router'
 import CardModel from '@/utils/cardmodel'
+import { Session } from '@/utils/session'
 
 class Room {
   nom = 'room'
@@ -122,7 +155,6 @@ class Room {
   action = 'quitterRoom'
   dateCreation = '20/04/2022'
   joueurs = 1
-  // Mettre la scene
 
   constructor (params: Partial<Room>) {
     Object.assign(this, params)
@@ -138,13 +170,20 @@ export default class ErgonomIOAssets extends Vue {
   fullpage: boolean = this.query.fullpage === 'true'
 
   maSceneSelection = ''
+  maRoomSelectionDelete = ''
   scenes: CardModel[] = []
   maRoomSauvegarder: Room = new Room({})
+  informationLogin = Session.getUser()
+  connected = false
 
   unrealContext = Unreal
 
   // Begin
   mounted (): void {
+    if (this.informationLogin != null) {
+      this.connected = true
+    }
+
     this.getScenes()
 
     // eslint-disable-next-line
@@ -264,12 +303,30 @@ export default class ErgonomIOAssets extends Vue {
     Unreal.send('Taille scene : ' + this.scenes.length)
   }
 
-  // Deuxieme partie de create session
-  // createSession2 (): void {
-  //   console.log('create session')
-  //   // On crée la room
-  //   this.sendUnreal(new Room({ action: 'creerRoom' }))
-  // }
+  // Permet de supprimer une room
+  deleteSession (): void {
+    console.assert('deleteSession')
+
+    // Si on a pas de scene à charger
+    if (this.maRoomSelectionDelete === '') {
+      // On crée la room
+      console.log('Pas de room sélectionnée')
+      return
+    }
+
+    var objectAsset = {
+      action: 'supprimerRoom',
+      nomRoom: this.maRoomSelectionDelete
+    }
+
+    var object = {
+      menu: 'room',
+      objet: objectAsset
+    }
+
+    // On charge la scene
+    Unreal.send(object)
+  }
 
   // Permet de rejoindre une room partie 1
   joinSession1 (room: Room): void {
@@ -307,23 +364,6 @@ export default class ErgonomIOAssets extends Vue {
     // On charge la scene
     Unreal.send(object)
   }
-
-  // Permet de rejoindre une room partie 2
-  // joinSession2 (room : Room): void {
-  //   console.log('Rejoindre room')
-
-  //   var objectAsset = {
-  //     action: 'rejoindreRoom',
-  //     ma_room: room
-  //   }
-
-  //   var object = {
-  //     menu: 'room',
-  //     objet: objectAsset
-  //   }
-
-  //   Unreal.send(object)
-  // }
 
   // Permet de quitter une room
   leaveSession (): void {
