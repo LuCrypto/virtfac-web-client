@@ -1,6 +1,6 @@
 import { imageAsset } from '@/utils/defaultData'
 
-export default class CardModel {
+export default class CardScene {
   // Initialisation
   name = ''
   picture = imageAsset
@@ -28,7 +28,7 @@ export default class CardModel {
   }
 
   // Permet de construire une scène
-  constructor (params: Partial<CardModel>) {
+  constructor (params: Partial<CardScene>) {
     this.name = `NewScene_${String(Date.now()).slice(-7)}`
     this.color = Math.floor(Math.random() * 16777215)
     Object.assign(this, params)

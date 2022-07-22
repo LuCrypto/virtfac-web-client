@@ -1,12 +1,12 @@
 <template>
   <v-container fluid>
-    <!-- Titre -->
+    <!-- Title -->
     <v-container v-if="!this.fullpage" fluid class="text-h3 text-center py-8">
       Collaborative sessions
     </v-container>
-    <!-- Milieu de page : les différentes cartes de scènes -->
+    <!-- Middle of the page: the different scene cards -->
     <template v-if="connected">
-      <!-- Les différentes rooms -->
+      <!-- The different rooms -->
       <v-row
         no-gutters
         class="overflow-y-auto flex-grow-1 ma-4 rounded-lg"
@@ -38,7 +38,6 @@
           height="600"
           :rounded="unrealContext.check() ? 'xl' : 'md'"
         >
-          <!-- v-on:click="selectionRoom(room)" -->
           <v-card
             :key="indexRoom"
             v-for="(room, indexRoom) in rooms"
@@ -48,20 +47,10 @@
             elevation="5"
             :rounded="unrealContext.check() ? 'xl' : 'md'"
           >
-            <!-- <v-img height="270" :src="room.picture"> </v-img> -->
-            <!-- <v-sheet height="4" :color="`#${room.color.toString(16)}`"> </v-sheet> -->
-            <v-card-title> {{ room.nom }} </v-card-title>
-            <v-card-subtitle>
-              <!-- <v-chip
-              :key="indexTag"
-              v-for="(tag, indexTag) in room.tags"
-              class="mr-2 overflow-y-auto"
-            >
-              {{ tag }}
-            </v-chip> -->
-            </v-card-subtitle>
+            <v-card-title> {{ room.name }} </v-card-title>
+            <v-card-subtitle> </v-card-subtitle>
             <v-card-text>
-              {{ room.host }}, scene : {{ room.nomScene }}
+              {{ room.host }}, scene : {{ room.nameScene }}
             </v-card-text>
 
             <v-card-actions>
@@ -78,7 +67,7 @@
           </v-card>
         </v-card>
 
-        <!-- Les différents boutons -->
+        <!-- The different buttons -->
         <v-container>
           <v-row align="center">
             <v-col>
@@ -121,7 +110,7 @@
                 class="black--text"
                 label="Room à supprimer"
                 v-model="roomSelectedDelete"
-                :items="this.rooms.map(item => item.nom)"
+                :items="this.rooms.map(item => item.name)"
                 dense
               >
               </v-select>
@@ -133,7 +122,7 @@
     <template>
       <div>
         <p class="text-center">
-          Veuillez vous connecter.
+          Please log in.
         </p>
       </div>
     </template>
@@ -145,16 +134,16 @@ import { Component, Vue } from 'vue-property-decorator'
 import API from '@/utils/api'
 import Unreal from '@/utils/unreal'
 import VueRouter from 'vue-router'
-import CardModel from '@/utils/cardmodel'
+import CardScene from '@/utils/cardmodel'
 import { Session } from '@/utils/session'
 
 class Room {
-  nom = 'room'
-  nomScene = ''
+  name = 'room'
+  nameScene = ''
   host = ''
-  action = 'quitterRoom'
+  action = 'quitRoom'
   dateCreation = '20/04/2022'
-  joueurs = 1
+  players = 1
 
   constructor (params: Partial<Room>) {
     Object.assign(this, params)
@@ -171,14 +160,13 @@ export default class ErgonomIOAssets extends Vue {
 
   sceneSelected = ''
   roomSelectedDelete = ''
-  scenes: CardModel[] = []
+  scenes: CardScene[] = []
   roomSave: Room = new Room({})
   informationLogin = Session.getUser()
   connected = false
 
   unrealContext = Unreal
 
-  // Begin
   mounted (): void {
     if (this.informationLogin != null) {
       this.connected = true
@@ -190,8 +178,10 @@ export default class ErgonomIOAssets extends Vue {
     Unreal.callback.$on('unreal-message', (data: any) => {
       this.$root.$emit('bottom-message', `Unreal : ${JSON.stringify(data)}`)
 
+      // For debugging
       Unreal.send(data)
 
+      // We treat the different cases of message
       switch (data.message) {
         case 'creer':
           Unreal.send('Bien recu 1 : ' + JSON.stringify(data))
@@ -199,7 +189,7 @@ export default class ErgonomIOAssets extends Vue {
           Unreal.send('Bien recu 2 !')
           break
         case 'refresh':
-          this.refreshRoomActuelle()
+          this.refreshRoomCurrent()
           break
         case 'quitterRoomActuelle':
           this.quitRoomCurrent()
@@ -209,7 +199,6 @@ export default class ErgonomIOAssets extends Vue {
     })
   }
 
-  // Permet de récupérer les scenes
   getScenes (): void {
     API.post(
       this,
@@ -220,21 +209,21 @@ export default class ErgonomIOAssets extends Vue {
       })
     ).then((response: Response) => {
       console.log('response ', response)
-      this.scenes = ((response as unknown) as Array<Partial<CardModel>>).map(
-        (scene: Partial<CardModel>) => new CardModel(scene)
+      this.scenes = ((response as unknown) as Array<Partial<CardScene>>).map(
+        (scene: Partial<CardScene>) => new CardScene(scene)
       )
       console.log('Scenes : ', this.scenes)
     })
   }
 
   // Permet de selection une room
-  selectionRoom (room: Room): void {
-    var objectAsset = {
+  selectedRoom (room: Room): void {
+    const objectAsset = {
       action: 'selectionnerRoom',
       ma_room: room
     }
 
-    var object = {
+    const object = {
       menu: 'room',
       objet: objectAsset
     }
@@ -242,34 +231,33 @@ export default class ErgonomIOAssets extends Vue {
     Unreal.send(object)
   }
 
-  // Permet de créer une room dans le lobby
   refreshRoomLobby (rooms: Room[]): void {
     this.rooms = rooms
   }
 
-  // ???
-  refreshRoomActuelle (): void {
+  refreshRoomCurrent (): void {
     this.rooms = []
   }
 
-  // Permet de quitter la room actuelle
+  // Quit the currently room
   quitRoomCurrent (): void {
     this.rooms = []
   }
 
-  // Permet de créer une room
+  // For create a session 1
   createSession1 (): void {
     console.log('Creer room with scenen : ', this.sceneSelected)
 
     Unreal.send('Create session')
 
-    // Si on a pas de scene à charger
+    // if i don't have scene
     if (this.sceneSelected === '') {
-      // On crée la room
+      // i create a room
       this.sendUnreal(new Room({ action: 'creerRoom' }))
       return
     }
 
+    // Get the selected scene
     let idSceneModif = -1
     for (let i = 0; i < this.scenes.length; i++) {
       if (this.sceneSelected === this.scenes[i].name) {
@@ -278,32 +266,26 @@ export default class ErgonomIOAssets extends Vue {
       }
     }
 
-    Unreal.send('Cherche la scene : ' + idSceneModif)
-
-    var objectAsset = {
+    const objectAsset = {
       name: this.scenes[idSceneModif].name,
       assetsNumber: this.scenes[idSceneModif].assetsNumber,
       assets: JSON.parse(this.scenes[idSceneModif].data),
       idScene: this.scenes[idSceneModif].id,
       action: 'chargerScene',
-      nomRoom: '',
+      nameRoom: '',
       creerRoom: 1
     }
 
-    var object = {
+    const object = {
       menu: 'scene',
       objet: objectAsset
     }
 
-    Unreal.send('Crée element')
-
-    // On charge la scene
+    // Load scene
     Unreal.send(object)
-
-    Unreal.send('Taille scene : ' + this.scenes.length)
   }
 
-  // Permet de supprimer une room
+  // For delete a session
   deleteSession (): void {
     console.assert('deleteSession')
 
@@ -314,72 +296,67 @@ export default class ErgonomIOAssets extends Vue {
       return
     }
 
-    var objectAsset = {
+    const objectAsset = {
       action: 'supprimerRoom',
-      nomRoom: this.roomSelectedDelete
+      nameRoom: this.roomSelectedDelete
     }
 
-    var object = {
+    const object = {
       menu: 'room',
       objet: objectAsset
     }
 
-    // On charge la scene
+    // Load scene
     Unreal.send(object)
   }
 
-  // Permet de rejoindre une room partie 1
+  // Join room 1
   joinSession1 (room: Room): void {
-    Unreal.send('joinSession 1 : ' + room.nomScene)
+    Unreal.send('joinSession 1 : ' + room.nameScene)
+
     let idSceneModif = -1
     for (let i = 0; i < this.scenes.length; i++) {
-      Unreal.send('joinSession nom : ' + this.scenes[i].name)
-      if (room.nomScene === this.scenes[i].name) {
+      if (room.nameScene === this.scenes[i].name) {
         idSceneModif = i
         break
       }
     }
 
-    Unreal.send('joinSession 2 : ' + idSceneModif)
-
-    var objectAsset = {
+    const objectAsset = {
       name: this.scenes[idSceneModif].name,
       assetsNumber: this.scenes[idSceneModif].assetsNumber,
       assets: JSON.parse(this.scenes[idSceneModif].data),
       idScene: this.scenes[idSceneModif].id,
       action: 'chargerScene',
-      nomRoom: room.nom,
+      nameRoom: room.name,
       creerRoom: 2
     }
 
-    Unreal.send('joinSession 3')
-
-    var object = {
+    const object = {
       menu: 'scene',
       objet: objectAsset
     }
 
-    Unreal.send('Crée element')
-
-    // On charge la scene
+    // Load scene
     Unreal.send(object)
   }
 
-  // Permet de quitter une room
+  // For leave a session
   leaveSession (): void {
-    console.log('Quitter room')
+    console.log('leaveSession')
+
     this.sendUnreal(new Room({ action: 'quitterRoom' }))
   }
 
-  // Permet d'envoyer un message à l'instance unreal
+  // Send message to unreal instance
   sendUnreal (room: Room): void {
-    console.log('asset.nom : ', room.nom)
+    console.log('asset.name : ', room.name)
 
-    var objectAsset = {
+    const objectAsset = {
       action: room.action
     }
 
-    var object = {
+    const object = {
       menu: 'room',
       objet: objectAsset
     }
