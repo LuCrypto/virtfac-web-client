@@ -2,7 +2,7 @@
   <v-container
     class="pa-0 ma-0"
     ref="container"
-    style="max-width: 100%; max-height: 100%; position: relative;"
+    style="max-width: 100%; max-height: 100%; position: relative"
   >
     <model-viewer-stats ref="stats" :pannelIds="[0, 1, 2]"></model-viewer-stats>
   </v-container>
@@ -19,6 +19,7 @@ import { studioEnvMap } from '@/utils/imageData'
 
 // Loaders
 import { GLTFLoader, GLTF } from 'three/examples/jsm/loaders/GLTFLoader'
+import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader'
 import { BVHLoader, BVH } from 'three/examples/jsm/loaders/BVHLoader'
 import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader'
 
@@ -37,11 +38,10 @@ import ModelViewerStats from '@/components/ModelViewerStats.vue'
 export default class ModelViewer2 extends Vue {
   @Prop({ default: () => false }) private displayInspector!: boolean
   @Prop({ default: () => false }) private displayFog!: boolean
+  @Prop({ default: () => false }) private displayGrid!: boolean
 
   container: HTMLElement | null = null
 
-  selectedMenuItem = -1
-  menuCollapse = false
   size: V = new V(0, 0)
   controls: OrbitControls
   mixer: THREE.AnimationMixer | null = null
@@ -72,7 +72,7 @@ export default class ModelViewer2 extends Vue {
     if (active) {
       const fogColor = new THREE.Color(color)
       // this.scene.background = fogColor
-      this.scene.fog = new THREE.Fog(fogColor, 0.0025, 20)
+      this.scene.fog = new THREE.Fog(fogColor, 0.000000025, 10)
     } else {
       const fogColor = new THREE.Color(color)
       // this.scene.background = fogColor
@@ -109,7 +109,7 @@ export default class ModelViewer2 extends Vue {
     // Create floor
     this.floor = new THREE.Mesh(
       new THREE.PlaneGeometry(size, size),
-      new THREE.MeshPhongMaterial({ color: backgroundColor })
+      new THREE.MeshPhongMaterial({ color: 0x999999, depthWrite: false })
     )
     this.floor.rotation.x = -Math.PI / 2
     this.floor.receiveShadow = true
@@ -143,8 +143,7 @@ export default class ModelViewer2 extends Vue {
     // Create sun visualizer
     // const sunHelper = new THREE.DirectionalLightHelper(sun, 4, 0xffb000)
     // this.scene.add(sunHelper)
-    this.setGrid(100, 100, 0xaaaaaa, 0xfefefe)
-
+    this.setGrid(100, 100, 0xaaaaaa, 0x363636)
     this.setEnvMap(studioEnvMap, 'HDR')
 
     if (this.displayFog) {
@@ -223,6 +222,21 @@ export default class ModelViewer2 extends Vue {
             }
           })
           if (this.scene != null) this.scene.add(object.scene)
+          resolve(object)
+        },
+        undefined,
+        error => reject(error)
+      )
+    )
+  }
+
+  loadFBXFromPath (path: string): Promise<THREE.Group> {
+    const fbxLoader = new FBXLoader()
+    return new Promise((resolve, reject) =>
+      fbxLoader.load(
+        path,
+        object => {
+          if (this.scene != null) this.scene.add(object)
           resolve(object)
         },
         undefined,
