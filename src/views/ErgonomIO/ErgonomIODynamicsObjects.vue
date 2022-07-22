@@ -470,12 +470,8 @@ import { Vector3 } from 'three'
 import CardModel from '@/utils/cardmodel'
 
 // Classe d'un évènement
-class evenementClass {
-  evenement = ''
-
-  constructor () {
-    Object.assign(this)
-  }
+interface evenementClass {
+  evenement: string
 }
 
 class message {

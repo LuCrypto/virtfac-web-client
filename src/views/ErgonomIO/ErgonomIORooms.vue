@@ -96,7 +96,7 @@
               <v-select
                 class="black--text"
                 label="Scene sélectionnée"
-                v-model="maSceneSelection"
+                v-model="sceneSelected"
                 :items="this.scenes.map(item => item.name)"
                 dense
               >
@@ -120,7 +120,7 @@
               <v-select
                 class="black--text"
                 label="Room à supprimer"
-                v-model="maRoomSelectionDelete"
+                v-model="roomSelectedDelete"
                 :items="this.rooms.map(item => item.nom)"
                 dense
               >
@@ -169,10 +169,10 @@ export default class ErgonomIOAssets extends Vue {
   query = this.router.currentRoute.query
   fullpage: boolean = this.query.fullpage === 'true'
 
-  maSceneSelection = ''
-  maRoomSelectionDelete = ''
+  sceneSelected = ''
+  roomSelectedDelete = ''
   scenes: CardModel[] = []
-  maRoomSauvegarder: Room = new Room({})
+  roomSave: Room = new Room({})
   informationLogin = Session.getUser()
   connected = false
 
@@ -259,12 +259,12 @@ export default class ErgonomIOAssets extends Vue {
 
   // Permet de créer une room
   createSession1 (): void {
-    console.log('Creer room with scenen : ', this.maSceneSelection)
+    console.log('Creer room with scenen : ', this.sceneSelected)
 
     Unreal.send('Create session')
 
     // Si on a pas de scene à charger
-    if (this.maSceneSelection === '') {
+    if (this.sceneSelected === '') {
       // On crée la room
       this.sendUnreal(new Room({ action: 'creerRoom' }))
       return
@@ -272,7 +272,7 @@ export default class ErgonomIOAssets extends Vue {
 
     let idSceneModif = -1
     for (let i = 0; i < this.scenes.length; i++) {
-      if (this.maSceneSelection === this.scenes[i].name) {
+      if (this.sceneSelected === this.scenes[i].name) {
         idSceneModif = i
         break
       }
@@ -308,7 +308,7 @@ export default class ErgonomIOAssets extends Vue {
     console.assert('deleteSession')
 
     // Si on a pas de scene à charger
-    if (this.maRoomSelectionDelete === '') {
+    if (this.roomSelectedDelete === '') {
       // On crée la room
       console.log('Pas de room sélectionnée')
       return
@@ -316,7 +316,7 @@ export default class ErgonomIOAssets extends Vue {
 
     var objectAsset = {
       action: 'supprimerRoom',
-      nomRoom: this.maRoomSelectionDelete
+      nomRoom: this.roomSelectedDelete
     }
 
     var object = {
