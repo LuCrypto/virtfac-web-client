@@ -1,5 +1,9 @@
 <template>
-  <v-container fluid style="max-height: 100%; overflow: auto;">
+  <v-container
+    fluid
+    style="max-height: 100%; overflow: auto;"
+    class="rounded-lg"
+  >
     <pop-up ref="assetInfo">
       <asset-info
         ref="assetInfoComponent"
@@ -354,6 +358,8 @@ export default class ErgonomIOAssets extends Vue {
 
   // Begin
   mounted (): void {
+    // Envoie un message à unreal pour dire d'afficher le menu
+
     this.requeteAPI()
 
     Unreal.callback.$on('unreal-message', (data: unknown) => {

@@ -1,84 +1,131 @@
 <template>
   <v-container fluid>
-    <!-- Titre -->
-    <v-container fluid class="text-h3 text-center py-8">
+    <!-- Title -->
+    <v-container v-if="!this.fullpage" fluid class="text-h3 text-center py-8">
       Collaborative sessions
     </v-container>
-    <!-- Milieu de page : les différentes cartes de scènes -->
-    <template>
-      <v-row dense class="pa-2">
-        <v-alert dense color="primary" class="flex-grow-1">
+    <!-- Middle of the page: the different scene cards -->
+    <template v-if="connected">
+      <!-- The different rooms -->
+      <v-row
+        no-gutters
+        class="overflow-y-auto flex-grow-1 ma-4 rounded-lg"
+        style="max-height: 800px;background-color: rgb(30,30,30);"
+      >
+        <v-row no-gutters dense class="pa-2">
+          <v-alert
+            dense
+            :rounded="unrealContext.check() ? 'xl' : 'md'"
+            color="primary"
+            class="flex-grow-1"
+          >
+            <v-row align="center">
+              <v-col class="grow black--text">
+                <v-icon left color="black"
+                  >mdi-account-supervisor-circle</v-icon
+                >
+                Current session : None
+              </v-col>
+              <v-col class="shrink">
+                <v-btn @click="leaveSession">Leave session</v-btn>
+              </v-col>
+            </v-row>
+          </v-alert>
+        </v-row>
+        <v-card
+          class="overflow-y-auto d-flex flex-row flex-wrap"
+          width="100%"
+          height="600"
+          :rounded="unrealContext.check() ? 'xl' : 'md'"
+        >
+          <v-card
+            :key="indexRoom"
+            v-for="(room, indexRoom) in rooms"
+            height="455"
+            width="30%"
+            class="ma-3"
+            elevation="5"
+            :rounded="unrealContext.check() ? 'xl' : 'md'"
+          >
+            <v-card-title> {{ room.name }} </v-card-title>
+            <v-card-subtitle> </v-card-subtitle>
+            <v-card-text>
+              {{ room.host }}, scene : {{ room.nameScene }}
+            </v-card-text>
+
+            <v-card-actions>
+              <v-spacer></v-spacer>
+              <v-btn
+                v-on:click="() => joinSession1(room)"
+                class="primary black--text"
+                large
+                elevation="2"
+              >
+                Join
+              </v-btn>
+            </v-card-actions>
+          </v-card>
+        </v-card>
+
+        <!-- The different buttons -->
+        <v-container>
           <v-row align="center">
-            <v-col class="grow black--text">
-              <v-icon left color="black">mdi-account-supervisor-circle</v-icon>
-              Current session : None
+            <v-col>
+              <v-btn
+                v-on:click="createSession1"
+                class="primary black--text"
+                large
+                elevation="2"
+              >
+                Create new session
+              </v-btn>
             </v-col>
-            <v-col class="shrink">
-              <v-btn @click="leaveSession">Leave session</v-btn>
+
+            <v-col>
+              <v-select
+                class="black--text"
+                label="Scene sélectionnée"
+                v-model="sceneSelected"
+                :items="this.scenes.map(item => item.name)"
+                dense
+              >
+              </v-select>
             </v-col>
           </v-row>
-        </v-alert>
+
+          <v-row align="center">
+            <v-col>
+              <v-btn
+                v-on:click="deleteSession"
+                class="primary black--text"
+                large
+                elevation="2"
+              >
+                Delete session
+              </v-btn>
+            </v-col>
+
+            <v-col>
+              <v-select
+                class="black--text"
+                label="Room à supprimer"
+                v-model="roomSelectedDelete"
+                :items="this.rooms.map(item => item.name)"
+                dense
+              >
+              </v-select>
+            </v-col>
+          </v-row>
+        </v-container>
       </v-row>
-
-      <!-- Les différentes rooms -->
-      <v-card
-        class="overflow-y-auto d-flex flex-row flex-wrap"
-        width="100%"
-        height="660"
-      >
-        <v-card
-          :key="indexRoom"
-          v-for="(room, indexRoom) in rooms"
-          height="455"
-          width="30%"
-          class="ma-3"
-          elevation="5"
-          v-on:click="selectionRoom(room)"
-        >
-          <!-- <v-img height="270" :src="room.picture"> </v-img> -->
-          <!-- <v-sheet height="4" :color="`#${room.color.toString(16)}`"> </v-sheet> -->
-          <v-card-title> {{ room.nom }} </v-card-title>
-          <v-card-subtitle>
-            <!-- <v-chip
-              :key="indexTag"
-              v-for="(tag, indexTag) in room.tags"
-              class="mr-2 overflow-y-auto"
-            >
-              {{ tag }}
-            </v-chip> -->
-          </v-card-subtitle>
-          <v-card-text>
-            {{ room.dateCreation }}, nombre de joueurs : {{ room.joueurs }}
-          </v-card-text>
-
-          <v-card-actions>
-            <v-spacer></v-spacer>
-            <v-btn
-              v-on:click="() => joinSession(room)"
-              class="primary black--text"
-              large
-              elevation="2"
-            >
-              Join
-            </v-btn>
-          </v-card-actions>
-        </v-card>
-      </v-card>
     </template>
-    <!-- Les différents boutons -->
-    <v-layout justify-center class="py-4">
-      <v-flex class="flex-grow-0 mx-5">
-        <!-- Permet de créer une room -->
-        <v-btn
-          v-on:click="createSession"
-          class="primary black--text"
-          large
-          elevation="2"
-        >
-          Create new session
-        </v-btn>
-      </v-flex>
-    </v-layout>
+    <template>
+      <div>
+        <p class="text-center">
+          Please log in.
+        </p>
+      </div>
+    </template>
   </v-container>
 </template>
 
@@ -86,25 +133,17 @@
 import { Component, Vue } from 'vue-property-decorator'
 import API from '@/utils/api'
 import Unreal from '@/utils/unreal'
-import { RouterMode } from 'vue-router'
+import VueRouter from 'vue-router'
+import CardScene from '@/utils/cardmodel'
+import { Session } from '@/utils/session'
 
 class Room {
-  nom = 'room'
-  nomScene = 'nom_scene'
+  name = 'room'
+  nameScene = ''
   host = ''
-  action = 'quitterRoom'
+  action = 'quitRoom'
   dateCreation = '20/04/2022'
-  joueurs = 1
-
-  constructor (params: Partial<Room>) {
-    Object.assign(this, params)
-  }
-}
-
-// Message venant d'Unreal
-class messageUnreal {
-  message = ''
-  dataRoom: Room = new Room({})
+  players = 1
 
   constructor (params: Partial<Room>) {
     Object.assign(this, params)
@@ -119,20 +158,42 @@ class messageUnreal {
 export default class ErgonomIORooms extends Vue {
   rooms: Room[] = []
 
-  // Begin
-  mounted (): void {
-    // this.rooms.push(new Room({ nom: 'test' }))
-    // this.requeteAPI()
+  router: VueRouter = this.$router
+  query = this.router.currentRoute.query
+  fullpage: boolean = this.query.fullpage === 'true'
 
-    Unreal.callback.$on('unreal-message', (data: messageUnreal) => {
+  sceneSelected = ''
+  roomSelectedDelete = ''
+  scenes: CardScene[] = []
+  roomSave: Room = new Room({})
+  informationLogin = Session.getUser()
+  connected = false
+
+  unrealContext = Unreal
+
+  mounted (): void {
+    if (this.informationLogin != null) {
+      this.connected = true
+    }
+
+    this.getScenes()
+
+    // eslint-disable-next-line
+    Unreal.callback.$on('unreal-message', (data: any) => {
       this.$root.$emit('bottom-message', `Unreal : ${JSON.stringify(data)}`)
 
+      // For debugging
+      Unreal.send(data)
+
+      // We treat the different cases of message
       switch (data.message) {
         case 'creer':
+          Unreal.send('Bien recu 1 : ' + JSON.stringify(data))
           this.rooms.push(data.dataRoom)
+          Unreal.send('Bien recu 2 !')
           break
         case 'refresh':
-          this.refreshRoomActuelle()
+          this.refreshRoomCurrent()
           break
         case 'quitterRoomActuelle':
           this.quitRoomCurrent()
@@ -142,14 +203,31 @@ export default class ErgonomIORooms extends Vue {
     })
   }
 
+  getScenes (): void {
+    API.post(
+      this,
+      '/resources/ergonomio-scenes',
+      JSON.stringify({
+        select: [],
+        where: []
+      })
+    ).then((response: Response) => {
+      console.log('response ', response)
+      this.scenes = ((response as unknown) as Array<Partial<CardScene>>).map(
+        (scene: Partial<CardScene>) => new CardScene(scene)
+      )
+      console.log('Scenes : ', this.scenes)
+    })
+  }
+
   // Permet de selection une room
-  selectionRoom (room: Room): void {
-    var objectAsset = {
+  selectedRoom (room: Room): void {
+    const objectAsset = {
       action: 'selectionnerRoom',
       ma_room: room
     }
 
-    var object = {
+    const object = {
       menu: 'room',
       objet: objectAsset
     }
@@ -157,57 +235,132 @@ export default class ErgonomIORooms extends Vue {
     Unreal.send(object)
   }
 
-  // Permet de créer une room dans le lobby
   refreshRoomLobby (rooms: Room[]): void {
     this.rooms = rooms
   }
 
-  refreshRoomActuelle () {
+  refreshRoomCurrent (): void {
     this.rooms = []
   }
 
-  // Permet de quitter la room actuelle
-  quitRoomCurrent () {
+  // Quit the currently room
+  quitRoomCurrent (): void {
     this.rooms = []
   }
 
-  // Permet de créer une room
-  createSession (): void {
-    console.log('Creer room')
-    this.sendUnreal(new Room({ action: 'creerRoom' }))
-  }
+  // For create a session 1
+  createSession1 (): void {
+    console.log('Creer room with scenen : ', this.sceneSelected)
 
-  // Permet de rejoindre une room
-  joinSession (): void {
-    console.log('Rejoindre room')
+    Unreal.send('Create session')
 
-    var objectAsset = {
-      action: 'rejoindreRoom'
+    // if i don't have scene
+    if (this.sceneSelected === '') {
+      // i create a room
+      this.sendUnreal(new Room({ action: 'creerRoom' }))
+      return
     }
 
-    var object = {
+    // Get the selected scene
+    let idSceneModif = -1
+    for (let i = 0; i < this.scenes.length; i++) {
+      if (this.sceneSelected === this.scenes[i].name) {
+        idSceneModif = i
+        break
+      }
+    }
+
+    const objectAsset = {
+      name: this.scenes[idSceneModif].name,
+      assetsNumber: this.scenes[idSceneModif].assetsNumber,
+      assets: JSON.parse(this.scenes[idSceneModif].data),
+      idScene: this.scenes[idSceneModif].id,
+      action: 'chargerScene',
+      nameRoom: '',
+      creerRoom: 1
+    }
+
+    const object = {
+      menu: 'scene',
+      objet: objectAsset
+    }
+
+    // Load scene
+    Unreal.send(object)
+  }
+
+  // For delete a session
+  deleteSession (): void {
+    console.assert('deleteSession')
+
+    // Si on a pas de scene à charger
+    if (this.roomSelectedDelete === '') {
+      // On crée la room
+      console.log('Pas de room sélectionnée')
+      return
+    }
+
+    const objectAsset = {
+      action: 'supprimerRoom',
+      nameRoom: this.roomSelectedDelete
+    }
+
+    const object = {
       menu: 'room',
       objet: objectAsset
     }
 
+    // Load scene
     Unreal.send(object)
   }
 
-  // Permet de quitter une room
+  // Join room 1
+  joinSession1 (room: Room): void {
+    Unreal.send('joinSession 1 : ' + room.nameScene)
+
+    let idSceneModif = -1
+    for (let i = 0; i < this.scenes.length; i++) {
+      if (room.nameScene === this.scenes[i].name) {
+        idSceneModif = i
+        break
+      }
+    }
+
+    const objectAsset = {
+      name: this.scenes[idSceneModif].name,
+      assetsNumber: this.scenes[idSceneModif].assetsNumber,
+      assets: JSON.parse(this.scenes[idSceneModif].data),
+      idScene: this.scenes[idSceneModif].id,
+      action: 'chargerScene',
+      nameRoom: room.name,
+      creerRoom: 2
+    }
+
+    const object = {
+      menu: 'scene',
+      objet: objectAsset
+    }
+
+    // Load scene
+    Unreal.send(object)
+  }
+
+  // For leave a session
   leaveSession (): void {
-    console.log('Quitter room')
+    console.log('leaveSession')
+
     this.sendUnreal(new Room({ action: 'quitterRoom' }))
   }
 
-  // Permet d'envoyer un message à l'instance unreal
+  // Send message to unreal instance
   sendUnreal (room: Room): void {
-    console.log('asset.nom : ', room.nom)
+    console.log('asset.name : ', room.name)
 
-    var objectAsset = {
+    const objectAsset = {
       action: room.action
     }
 
-    var object = {
+    const object = {
       menu: 'room',
       objet: objectAsset
     }
