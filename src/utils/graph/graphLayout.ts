@@ -258,9 +258,11 @@ export class GraphLayout {
     let maxLevel = 0
     graph.foreachNode(n => {
       const level = n.getData<number>(levelField)
-      if (level > maxLevel) maxLevel = level
-      if (level === 0) {
-        sources.push(n)
+      if (level !== undefined) {
+        if (level > maxLevel) maxLevel = level
+        if (level === 0) {
+          sources.push(n)
+        }
       }
     })
 

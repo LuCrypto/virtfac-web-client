@@ -150,7 +150,10 @@ export default class RoutingAnalysisComponent extends Vue {
 
   private filterTransitiveLinksVisible = true
 
+  private displayFeedbackLinks = true
+
   postPostGraph: Graph | null = null
+  PostPostOrderGraph: Graph | null = null
   postPostMatrix: Matrix | null = null
 
   articlePostGraph: Graph | null = null
@@ -272,15 +275,41 @@ export default class RoutingAnalysisComponent extends Vue {
           }
         )
       }),
-      new MenuItem('Remove feedback link', 'mdi-backspace', () => {
-        if (this.postPostGraph !== null) {
+      new MenuItem('Show/Hide feedback link', 'mdi-backspace', () => {
+        if (this.postPostGraph !== null && this.graphViewer !== null) {
+          this.displayFeedbackLinks = !this.displayFeedbackLinks
+          const map = this.postPostGraph.getData<Map<Link, Array<Node>>>(
+            'attachedNodes'
+          )
           this.postPostGraph.foreachNode(n => {
             n.foreachLink(l => {
-              if (l.getDataOrDefault<boolean>('goBack', false)) {
-                n.removeLink(l.getNode())
+              const nodes = map.get(l)
+              if (nodes != null) {
+                nodes.forEach(n => {
+                  n.foreachLink(l2 => {
+                    l2.setData<boolean>(
+                      'visible',
+                      this.displayFeedbackLinks ||
+                        !l.getDataOrDefault<boolean>('goBack', false)
+                    )
+                  })
+                })
+              }
+              if (
+                (this.graphViewer as RoutingGraphViewer).getGraph() ===
+                this.postPostGraph
+              ) {
+                l.setData<boolean>(
+                  'visible',
+                  (this.filterTransitiveLinksVisible ||
+                    !l.getDataOrDefault<boolean>('isTransitive', false)) &&
+                    (this.displayFeedbackLinks ||
+                      !l.getDataOrDefault<boolean>('goBack', false))
+                )
               }
             })
           })
+          this.graphViewer.setGraph(this.graphViewer.getGraph())
         }
       }),
       new MenuItem(
@@ -289,7 +318,10 @@ export default class RoutingAnalysisComponent extends Vue {
         () => {
           if (this.postPostGraph !== null) {
             const transitiveSet = GraphUtils.getTransitiveLinks(
-              this.postPostGraph
+              this.postPostGraph,
+              l => {
+                return l.getDataOrDefault<boolean>('goBack', false)
+              }
             )
             const linkMap = this.postPostGraph.getData<Map<Link, Array<Node>>>(
               'attachedNodes'
@@ -326,7 +358,13 @@ export default class RoutingAnalysisComponent extends Vue {
       ),
       new MenuItem('Level layout', 'mdi-file-tree', () => {
         if (this.postPostGraph !== null && this.graphViewer !== null) {
-          const nbLevel = GraphUtils.computeLevels(this.postPostGraph, 'level')
+          const nbLevel = GraphUtils.computeLevels(
+            this.postPostGraph,
+            'level',
+            l => {
+              return l.getDataOrDefault<boolean>('goBack', false)
+            }
+          )
           GraphLayout.levelLayout(
             this.postPostGraph,
             'level',
@@ -338,8 +376,10 @@ export default class RoutingAnalysisComponent extends Vue {
             n.foreachLink(l => {
               l.setData<boolean>(
                 'visible',
-                this.filterTransitiveLinksVisible ||
-                  !l.getDataOrDefault<boolean>('isTransitive', false)
+                (this.filterTransitiveLinksVisible ||
+                  !l.getDataOrDefault<boolean>('isTransitive', false)) &&
+                  (this.displayFeedbackLinks ||
+                    !l.getDataOrDefault<boolean>('goBack', false))
               )
             })
           })
@@ -510,7 +550,6 @@ export default class RoutingAnalysisComponent extends Vue {
                   n.setData<string>('color', notAssignedColor)
                 } else {
                   n.setData<string>('color', colArray[group % colArray.length])
-                  console.log(group)
                 }
               })
 
@@ -551,7 +590,7 @@ export default class RoutingAnalysisComponent extends Vue {
             )
           }
           choices.push({
-            txt: 'Poste/Poste Matrix',
+            txt: 'Machine/Machine Matrix',
             callback: () => {
               (this.$refs.matrixEditor as PopUp).open()
               this.displayClassifMatrix(
@@ -571,7 +610,7 @@ export default class RoutingAnalysisComponent extends Vue {
             )
           }
           choices.push({
-            txt: 'Article/Poste Matrix',
+            txt: 'Part/Machine Matrix',
             callback: () => {
               (this.$refs.matrixEditor as PopUp).open()
               this.displayClassifMatrix(
@@ -919,9 +958,6 @@ export default class RoutingAnalysisComponent extends Vue {
           })
 
           const sheet = wb.Sheets[wb.SheetNames[0]]
-          console.log(sheet.B2)
-
-          console.log(sheet)
           const nameOf: { (x: number, y: number): string } = (x, y) => {
             return XLSX.utils.encode_cell({ c: x, r: y })
           }
@@ -1013,9 +1049,6 @@ export default class RoutingAnalysisComponent extends Vue {
           })
 
           const sheet = wb.Sheets[wb.SheetNames[0]]
-          console.log(sheet.B2)
-
-          console.log(sheet)
           const nameOf: { (x: number, y: number): string } = (x, y) => {
             return XLSX.utils.encode_cell({ c: x, r: y })
           }
@@ -1045,7 +1078,6 @@ export default class RoutingAnalysisComponent extends Vue {
           while (value !== undefined) {
             // colArray.push(value.v)
             rowArray.push(value.v)
-            console.log(value.v)
 
             let poste: Poste | null = null
             if (!this.posteMap.has(value.v)) {
@@ -1322,14 +1354,6 @@ export default class RoutingAnalysisComponent extends Vue {
         nodeValue = undefined
       }
     } while (nodeValue !== undefined)
-
-    posteMapforArticle.forEach(n => {
-      console.log({
-        name: n.getData<string>('name'),
-        nbOF: n.getData<number>('nbOF'),
-        nbArticle: n.getData<Set<Node>>('articleSet').size
-      })
-    })
 
     const nbNode = posteMap.size
     const xSpread = nbNode * 60
