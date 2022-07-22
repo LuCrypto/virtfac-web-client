@@ -233,7 +233,7 @@
             max-width="90%"
             small
             v-if="!selectedObjectDynamique"
-            @click="modifierPositionWithObject(child, item.id)"
+            @click="modifyPositionWithObject(child, item.id)"
           >
             {{ child.name }}
             <br />
@@ -244,7 +244,7 @@
             max-width="90%"
             small
             v-if="selectedObjectDynamique"
-            @click="modifierPositionWithObject(child, item.id)"
+            @click="modifyPositionWithObject(child, item.id)"
           >
             {{ child.name }}
             Pos :
@@ -262,7 +262,7 @@
           </v-btn>
           <v-btn icon>
             <v-icon
-              @click="supprimerEvenement(index)"
+              @click="deleteEvent(index)"
               class="ml-2"
               v-text="'mdi-delete'"
               leftr
@@ -279,7 +279,7 @@
         <v-col align="center">
           <v-btn
             class="primary black--text my-2"
-            @click="demarreProfil()"
+            @click="startProfil()"
             large
             elevation="2"
           >
@@ -290,7 +290,7 @@
         <v-col align="center">
           <v-btn
             class="primary black--text my-2"
-            @click="demarreProfilGlobal()"
+            @click="startProfilGlobal()"
             large
             elevation="2"
           >
@@ -301,7 +301,7 @@
         <v-col align="center">
           <v-btn
             class="primary black--text my-2"
-            @click="supprimerProfil()"
+            @click="deleteProfil()"
             large
             elevation="2"
           >
@@ -322,7 +322,7 @@
         <!-- Add an event -->
         <v-col align="center">
           <v-btn
-            @click="ajouterEvenement"
+            @click="addEvent"
             class="primary black--text my-2"
             large
             elevation="2"
@@ -333,7 +333,7 @@
 
         <v-col align="center">
           <v-btn
-            @click="cheminObjetSelectionne"
+            @click="pathObjectSelected"
             class="primary black--text my-2"
             large
             elevation="2"
@@ -344,7 +344,7 @@
 
         <v-col align="center">
           <v-btn
-            @click="cheminGlobal"
+            @click="globalPath"
             class="primary black--text my-2"
             large
             elevation="2"
@@ -361,7 +361,7 @@
         <v-col align="center">
           <v-btn
             class="primary black--text my-2"
-            @click="assignerProfilScene()"
+            @click="assignProfilScene()"
             large
             elevation="2"
           >
@@ -423,7 +423,7 @@
         <!-- Allows you to edit the current profile -->
         <v-col align="center">
           <v-btn
-            @click="editerProfil"
+            @click="editProfil"
             class="primary black--text my-2"
             large
             elevation="2"
@@ -436,7 +436,7 @@
         <v-col align="center">
           <v-btn
             class="primary black--text my-2"
-            @click="ecouterServeur()"
+            @click="listenServer()"
             large
             elevation="2"
           >
@@ -617,14 +617,13 @@ export default class ErgonomIOAssets extends Vue {
       }
 
       const test = data as message
-      // ======================================================================
       // When we get an event
       if (test.message === 'envoieEvenement') {
         const test2 = test.object as evenementClass
         Unreal.send(test2)
 
         if (this.firstTime) {
-          this.ajouterProfil('New profil', [], 9)
+          this.addProfil('New profil', [], 9)
           this.firstTime = false
         }
 
@@ -637,7 +636,7 @@ export default class ErgonomIOAssets extends Vue {
             datetime: -1
           })
         })
-        this.miseAJourProfil(this.profils[this.profils.length - 1])
+        this.updateProfil(this.profils[this.profils.length - 1])
       } else if (test.message === 'envoiePosition') {
         Unreal.send(test.object)
 
@@ -773,7 +772,7 @@ export default class ErgonomIOAssets extends Vue {
 
   // Assign a profile to a scene
   // @arg No arguments required
-  assignerProfilScene (): void {
+  assignProfilScene (): void {
     if (this.selectedScene === '') return
     if (this.selectedProfil === '') return
 
@@ -821,7 +820,7 @@ export default class ErgonomIOAssets extends Vue {
       objet: objectOpcua
     }
 
-    // On demande de rafraichir les scenes
+    // Refresh scene
     Unreal.send(object)
   }
 
@@ -845,7 +844,7 @@ export default class ErgonomIOAssets extends Vue {
 
   // Open edit profil
   // @arg No arguments required
-  editerProfil (): void {
+  editProfil (): void {
     let trouver = -1
     for (let i = 0; i < this.profils.length; i++) {
       const element = this.profils[i].active
@@ -858,7 +857,7 @@ export default class ErgonomIOAssets extends Vue {
 
   // Add event to a profil
   // @arg No arguments required
-  ajouterEvenement (): void {
+  addEvent (): void {
     let trouver = -1
     for (let i = 0; i < this.profils.length; i++) {
       const element = this.profils[i].active
@@ -869,13 +868,13 @@ export default class ErgonomIOAssets extends Vue {
       new Evenement({ name: 'Nouveau evenement' })
     )
 
-    // Mettre à jour le profil
-    this.miseAJourProfil(this.profils[trouver])
+    // Update profil
+    this.updateProfil(this.profils[trouver])
   }
 
   // Display the path of selected asset
   // @arg No arguments required
-  cheminObjetSelectionne (): void {
+  pathObjectSelected (): void {
     let trouver = -1
     for (let i = 0; i < this.profils.length; i++) {
       const element = this.profils[i].active
@@ -883,7 +882,7 @@ export default class ErgonomIOAssets extends Vue {
     }
 
     const objectOpcua = {
-      action: 'cheminObjetSelectionne',
+      action: 'pathObjectSelected',
       profil: this.profils[trouver]
     }
 
@@ -892,13 +891,12 @@ export default class ErgonomIOAssets extends Vue {
       objet: objectOpcua
     }
 
-    // On envoie le profil
     Unreal.send(object)
   }
 
   // Display the path of all assets of profil
   // @arg No arguments required
-  cheminGlobal (): void {
+  globalPath (): void {
     let trouver = -1
     for (let i = 0; i < this.profils.length; i++) {
       const element = this.profils[i].active
@@ -906,7 +904,7 @@ export default class ErgonomIOAssets extends Vue {
     }
 
     const objectOpcua = {
-      action: 'cheminGlobal',
+      action: 'globalPath',
       profil: this.profils[trouver]
     }
 
@@ -944,7 +942,7 @@ export default class ErgonomIOAssets extends Vue {
           const nomFichierProfil = nomFichier.split('.json')[0]
 
           // Crée un profil
-          this.ajouterProfil(nomFichierProfil, [], -1)
+          this.addProfil(nomFichierProfil, [], -1)
 
           // Chaque ligne du fichier
           for (let i = 0; i < tableau.length; i++) {
@@ -968,7 +966,7 @@ export default class ErgonomIOAssets extends Vue {
           }
 
           // Mettre à jour l'API
-          this.ajouterAPIProfil(this.profils[this.profils.length - 1])
+          this.addAPIProfil(this.profils[this.profils.length - 1])
         }
 
         reader.onerror = error => {
@@ -986,12 +984,12 @@ export default class ErgonomIOAssets extends Vue {
     this.editProfilBooleen = false
 
     // Mettre à jour le profil
-    this.miseAJourProfil(this.profilEdit)
+    this.updateProfil(this.profilEdit)
   }
 
   // api request for adding the profil to API
   // @arg No arguments required
-  ajouterAPIProfil (profil: Profil): void {
+  addAPIProfil (profil: Profil): void {
     API.put(
       this,
       '/resources/dynamics-object-profiles',
@@ -1008,7 +1006,7 @@ export default class ErgonomIOAssets extends Vue {
 
   // Update with api request
   // @arg No arguments required
-  miseAJourProfil (profil: Profil): void {
+  updateProfil (profil: Profil): void {
     API.patch(
       this,
       `/resources/dynamics-object-profiles/${profil.id}`,
@@ -1091,14 +1089,14 @@ export default class ErgonomIOAssets extends Vue {
 
           monTableau.push(objet)
         }
-        this.ajouterProfil(element.name, monTableau, element.id)
+        this.addProfil(element.name, monTableau, element.id)
       }
     })
   }
 
   // Start the simulation of profil with an asset
   // @arg No arguments required
-  demarreProfil (): void {
+  startProfil (): void {
     let trouver = -1
     for (let i = 0; i < this.profils.length; i++) {
       const element = this.profils[i].active
@@ -1106,7 +1104,7 @@ export default class ErgonomIOAssets extends Vue {
     }
 
     const objectOpcua = {
-      action: 'demarreProfil',
+      action: 'startProfil',
       profil: this.profils[trouver]
     }
 
@@ -1121,7 +1119,7 @@ export default class ErgonomIOAssets extends Vue {
 
   // Start the simulation of profil for all assets
   // @arg No arguments required
-  demarreProfilGlobal (): void {
+  startProfilGlobal (): void {
     let trouver = -1
     for (let i = 0; i < this.profils.length; i++) {
       const element = this.profils[i].active
@@ -1129,7 +1127,7 @@ export default class ErgonomIOAssets extends Vue {
     }
 
     const objectOpcua = {
-      action: 'demarreProfilGlobal',
+      action: 'startProfilGlobal',
       profil: this.profils[trouver]
     }
 
@@ -1138,13 +1136,12 @@ export default class ErgonomIOAssets extends Vue {
       objet: objectOpcua
     }
 
-    // On envoie le profil
     Unreal.send(object)
   }
 
   // Delete the selected profil
   // @arg No arguments required
-  supprimerProfil (): void {
+  deleteProfil (): void {
     let trouver = -1
     for (let i = 0; i < this.profils.length; i++) {
       if (this.profils[i].active) {
@@ -1157,12 +1154,12 @@ export default class ErgonomIOAssets extends Vue {
     this.profils.splice(trouver, 1)
 
     // Faire requete api
-    this.supprimerAPIProfil(this.profils[trouver])
+    this.deleteAPIProfil(this.profils[trouver])
   }
 
   // Delete profil with api request
   // @arg No arguments required
-  supprimerAPIProfil (profil: Profil): void {
+  deleteAPIProfil (profil: Profil): void {
     API.delete(
       this,
       `/resources/dynamics-object-profiles/${profil.id}`,
@@ -1174,19 +1171,19 @@ export default class ErgonomIOAssets extends Vue {
 
   // Load a profil file
   // @arg No arguments required
-  chargerProfil (): void {
-    console.log('chargerProfil')
+  loadProfil (): void {
+    console.log('loadProfil')
   }
 
   // For listening the server
   // @arg No arguments required
-  ecouterServeur (): void {
-    console.log('ecouterServeur !')
+  listenServer (): void {
+    console.log('listenServer !')
   }
 
   // Delete an event of a profil
   // @arg No arguments required
-  supprimerEvenement (indexChild: number): void {
+  deleteEvent (indexChild: number): void {
     // On trouve le profil
     let trouver = -1
     for (let i = 0; i < this.profils.length; i++) {
@@ -1207,8 +1204,8 @@ export default class ErgonomIOAssets extends Vue {
       this.profils[trouver].items.push(tableauIntermediaire[i])
     }
 
-    // On mets à jour l'API
-    this.miseAJourProfil(this.profils[trouver])
+    // Refresh API profil
+    this.updateProfil(this.profils[trouver])
   }
 
   // For start an event
@@ -1246,7 +1243,7 @@ export default class ErgonomIOAssets extends Vue {
 
   // Modify the position of an event
   // @arg No arguments required
-  modifierPosition (event: Event, child: Evenement): void {
+  modifyPosition (event: Event, child: Evenement): void {
     // Consume l'event
     event.stopPropagation()
 
@@ -1266,13 +1263,12 @@ export default class ErgonomIOAssets extends Vue {
       objet: objectOpcua
     }
 
-    // On envoie le profil
     Unreal.send(object)
   }
 
   // Define position of event with the position of selected asset
   // @arg No arguments required
-  modifierPositionWithObject (child: Evenement, idProfilParam: number): void {
+  modifyPositionWithObject (child: Evenement, idProfilParam: number): void {
     const objectOpcua = {
       action: 'envoiePositionObjetSelectionne',
       childevenement: child,
@@ -1283,13 +1279,12 @@ export default class ErgonomIOAssets extends Vue {
       objet: objectOpcua
     }
 
-    // On envoie le profil
     Unreal.send(object)
   }
 
   // Add profil with api request
   // @arg No arguments required
-  ajouterProfil (
+  addProfil (
     nomProfil: string,
     itemsTableau: Array<Evenement>,
     idParam: number
