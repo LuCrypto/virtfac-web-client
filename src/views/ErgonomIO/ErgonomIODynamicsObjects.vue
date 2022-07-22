@@ -10,8 +10,8 @@
     style="height: 100%; max-height: 100%"
     class="overflow-y-auto black rounded-lg"
   >
-    <!-- Pour affecter une position à un évènement -->
-    <v-dialog v-model="modifierPositionBooleen">
+    <!-- To assign a position to an event -->
+    <v-dialog v-model="modifyPositionBooleen">
       <v-container class="d-flex flex-wrap flex-nowrap">
         <!-- X, Y et Z -->
         <v-row align="center">
@@ -20,12 +20,12 @@
             <v-sheet max-width="25" :color="axesColorsArray[1]" elevation="1">
               {{ axesArray[1] }}
             </v-sheet>
-            <!-- Inputs pour les coordonnées -->
+            <!-- Inputs for coordinates -->
             <v-text-field
               @click:prepend="decrement(1)"
               @click:append-outer="increment(1)"
               v-if="1 != 0"
-              v-model="positionEvenement['x']"
+              v-model="positionEvent['x']"
               outlined
               value="0"
               input="0"
@@ -43,10 +43,10 @@
             <v-sheet max-width="25" :color="axesColorsArray[2]" elevation="1">
               {{ axesArray[2] }}
             </v-sheet>
-            <!-- Inputs pour les coordonnées -->
+            <!-- Inputs for coordinates -->
             <v-text-field
               v-if="2 != 0"
-              v-model="positionEvenement['y']"
+              v-model="positionEvent['y']"
               outlined
               hide-details
               append-outer-icon="mdi-plus"
@@ -65,10 +65,10 @@
             <v-sheet max-width="25" :color="axesColorsArray[3]" elevation="1">
               {{ axesArray[3] }}
             </v-sheet>
-            <!-- Inputs pour les coordonnées -->
+            <!-- Inputs for coordinates -->
             <v-text-field
               v-if="3 != 0"
-              v-model="positionEvenement['z']"
+              v-model="positionEvent['z']"
               outlined
               hide-details
               append-outer-icon="mdi-plus"
@@ -82,7 +82,7 @@
               :key="counter"
             />
           </v-col>
-          <!-- Pour sauvegarder la position de l'évènement -->
+          <!-- To save the position of the event -->
           <v-col align="center">
             <v-btn color="primary" text @click="save()">
               Save
@@ -92,32 +92,32 @@
       </v-container>
     </v-dialog>
 
-    <!-- Edition d'un profil -->
-    <v-dialog v-model="editerProfilBooleen">
+    <!-- Editing a profile -->
+    <v-dialog v-model="editProfilBooleen">
       <v-card class="overflow-y-auto rounded-lg">
         <v-container fluid class="d-flex flex-wrap">
-          <!-- Pour le titre -->
+          <!-- For the title -->
           <v-row align="center" no-gutters>
             <v-col cols="1" align="center">
               Titre :
             </v-col>
             <v-col cols="11" align="center">
               <v-text-field
-                v-model="profilEditer.title"
+                v-model="profilEdit.title"
                 type="text"
-                :value="this.profilEditer.title"
+                :value="this.profilEdit.title"
               >
               </v-text-field>
             </v-col>
           </v-row>
 
-          <!-- Pour les évènements -->
+          <!-- For the event -->
           <v-container
-            v-for="evenement in this.profilEditer.items"
+            v-for="evenement in this.profilEdit.items"
             :key="evenement.title"
           >
             <v-row align="center" no-gutters>
-              <!-- Nom évènement -->
+              <!-- Name event -->
               <v-col cols="5" align="center">
                 <v-text-field
                   v-model="evenement.name"
@@ -208,7 +208,7 @@
       </v-card>
     </v-dialog>
 
-    <!-- La liste des profils -->
+    <!-- The list of profiles -->
     <v-list>
       <v-list-group
         v-for="item in profils"
@@ -225,14 +225,14 @@
           </v-list-item-content>
         </template>
 
-        <!-- Liste des évènements -->
+        <!-- List of events -->
         <v-list-item v-for="(child, index) in item.items" :key="child.title">
           <v-btn
             class="pa-5"
             min-width="90%"
             max-width="90%"
             small
-            v-if="!objetDynamiqueSelectionne"
+            v-if="!selectedObjectDynamique"
             @click="modifierPositionWithObject(child, item.id)"
           >
             {{ child.name }}
@@ -243,7 +243,7 @@
             min-width="90%"
             max-width="90%"
             small
-            v-if="objetDynamiqueSelectionne"
+            v-if="selectedObjectDynamique"
             @click="modifierPositionWithObject(child, item.id)"
           >
             {{ child.name }}
@@ -272,10 +272,10 @@
       </v-list-group>
     </v-list>
 
-    <!-- Les différents boutons -->
+    <!-- The different buttons -->
     <v-container class="d-flex flex-wrap flex-nowrap">
       <v-row align="center">
-        <!-- Permet de démarrer un profil avec l'objet sélectionné -->
+        <!-- Allows you to start a profile with the selected object -->
         <v-col align="center">
           <v-btn
             class="primary black--text my-2"
@@ -286,7 +286,7 @@
             Démarrer le profil
           </v-btn>
         </v-col>
-        <!-- Permet de démarrer avec tous les objets de la scene -->
+        <!-- Allows to start with all the objects of the scene -->
         <v-col align="center">
           <v-btn
             class="primary black--text my-2"
@@ -297,7 +297,7 @@
             Démarrer le profil global
           </v-btn>
         </v-col>
-        <!-- Permet de supprimer le profil actif -->
+        <!-- Allows you to delete the active profile -->
         <v-col align="center">
           <v-btn
             class="primary black--text my-2"
@@ -308,7 +308,7 @@
             Supprimer le profil
           </v-btn>
         </v-col>
-        <!-- Permet d'attacher un objet à un autre -->
+        <!-- Allows you to attach one object to another -->
         <v-col align="center">
           <v-btn
             class="primary black--text my-2"
@@ -319,7 +319,7 @@
             Attacher un objet
           </v-btn>
         </v-col>
-        <!-- Ajouter un evenement -->
+        <!-- Add an event -->
         <v-col align="center">
           <v-btn
             @click="ajouterEvenement"
@@ -355,7 +355,7 @@
       </v-row>
     </v-container>
 
-    <!-- Deuxieme barre bouton -->
+    <!-- Second button bar -->
     <v-container class="d-flex flex-wrap flex-nowrap">
       <v-row align="center">
         <v-col align="center">
@@ -369,24 +369,24 @@
           </v-btn>
         </v-col>
 
-        <!-- Profil selectionné -->
+        <!-- Selected profile -->
         <v-col align="center">
           <v-select
             class="black--text"
             label="Profil selectionné"
-            v-model="monProfilSelection"
+            v-model="selectedProfil"
             :items="this.profils.map(item => item.title)"
             dense
           >
           </v-select>
         </v-col>
 
-        <!-- Scene selectionnée -->
+        <!-- Selected scene -->
         <v-col align="center">
           <v-select
             class="black--text"
             label="Scene selectionnée"
-            v-model="maSceneSelection"
+            v-model="selectedScene"
             :items="this.scenes.map(item => item.name)"
             dense
           >
@@ -395,13 +395,13 @@
       </v-row>
     </v-container>
 
-    <!-- Troisième barre bouton -->
+    <!-- Third button bar -->
     <v-container
       v-if="!unrealContext.check()"
       class="d-flex flex-wrap flex-nowrap"
     >
       <v-row align="center">
-        <!-- Permet de charger un fichier witness pour un profil -->
+        <!-- Allows you to load a witness file for a profile -->
         <v-col align="center">
           <v-btn
             @click="openUploadFile"
@@ -420,7 +420,7 @@
           </v-btn>
         </v-col>
 
-        <!-- Permet d'edtier le profil courant -->
+        <!-- Allows you to edit the current profile -->
         <v-col align="center">
           <v-btn
             @click="editerProfil"
@@ -432,7 +432,7 @@
           </v-btn>
         </v-col>
 
-        <!-- Permet d'écouter sur le serveur -->
+        <!-- Allows to listen on the server -->
         <v-col align="center">
           <v-btn
             class="primary black--text my-2"
@@ -446,13 +446,13 @@
       </v-row>
     </v-container>
 
-    <!-- Objet dynamique -->
+    <!-- Dynamique object -->
     <v-container
-      v-if="objetDynamiqueSelectionne"
+      v-if="selectedObjectDynamique"
       class="d-flex flex-wrap flex-nowrap"
     >
       <v-row align="center">
-        <!-- Permet de charger un fichier witness pour un profil -->
+        <!-- Allows you to load a witness file for a profile -->
         <v-col align="center">
           Objet dynamique sélectionné !
         </v-col>
@@ -554,18 +554,18 @@ export default class ErgonomIOAssets extends Vue {
   axesColorsArray = ['black', 'red', 'green', 'blue']
   textFieldValue = ''
   counter = 0
-  positionEvenement = new Vector3(0, 0, 0)
+  positionEvent = new Vector3(0, 0, 0)
   childSave: Evenement = new Evenement({ name: 'Evenement 1' })
-  modifierPositionBooleen = false
-  maSceneSelection = ''
-  monProfilSelection = ''
+  modifyPositionBooleen = false
+  selectedScene = ''
+  selectedProfil = ''
   scenes: CardModel[] = []
-  premiereFois = true
-  editerProfilBooleen = false
-  objetDynamiqueSelectionne = false
-  profilEditer: Profil = new Profil({})
+  firstTime = true
+  editProfilBooleen = false
+  selectedObjectDynamique = false
+  profilEdit: Profil = new Profil({})
 
-  // Liste des profils
+  // Profils list
   profils: Array<Profil> = [
     {
       action: 'mdi-calendar-search',
@@ -604,7 +604,6 @@ export default class ErgonomIOAssets extends Vue {
     }
   ]
 
-  // Begin
   mounted (): void {
     this.profils = []
     this.getProfils()
@@ -619,14 +618,14 @@ export default class ErgonomIOAssets extends Vue {
 
       const test = data as message
       // ======================================================================
-      // Quand on recoit un nouveau évènement
+      // When we get an event
       if (test.message === 'envoieEvenement') {
         const test2 = test.object as evenementClass
         Unreal.send(test2)
 
-        if (this.premiereFois) {
+        if (this.firstTime) {
           this.ajouterProfil('Nouveau Profil', [], 9)
-          this.premiereFois = false
+          this.firstTime = false
         }
 
         this.profils[this.profils.length - 1].items.push({
@@ -679,8 +678,6 @@ export default class ErgonomIOAssets extends Vue {
           }
         }
       } else if (test.message === 'envoieListeEvenementProfil') {
-        Unreal.send('RECU !')
-
         let indiceChercher = -1
         for (let i = 0; i < this.profils.length; i++) {
           const element = this.profils[i]
@@ -690,14 +687,13 @@ export default class ErgonomIOAssets extends Vue {
         }
 
         if (indiceChercher !== -1) {
-          var objectOpcua = {
+          const objectOpcua = {
             action: 'listeEvenement',
             evenements: this.profils[indiceChercher].items,
             nomObjet: test.object.nomObjet
           }
-          Unreal.send('RECU 2 !')
 
-          var object = {
+          const object = {
             menu: 'opcua',
             objet: objectOpcua
           }
@@ -707,13 +703,11 @@ export default class ErgonomIOAssets extends Vue {
         } else {
           Unreal.send('Probleme')
         }
-      } else if (test.message === 'objetDynamiqueSelectionne') {
-        Unreal.send('objetDynamiqueSelectionne')
-        this.objetDynamiqueSelectionne = true
+      } else if (test.message === 'selectedObjectDynamique') {
+        Unreal.send('selectedObjectDynamique')
+        this.selectedObjectDynamique = true
       } else if (test.message === 'infosObjetDynamique') {
         const indiceProfil = test.object.idProfil
-        Unreal.send('infosObjetDynamique : ' + indiceProfil)
-        Unreal.send('infosObjetDynamique : ' + JSON.stringify(test.object))
 
         let indiceProfilTableau = -1
         for (let i = 0; i < this.profils.length; i++) {
@@ -762,13 +756,8 @@ export default class ErgonomIOAssets extends Vue {
     })
   }
 
-  // Permet de récupérer les attributs de l'objet selectionne
-  getAttribueObjetDynamique (idProfil: number, attributs: any): void {
-    console.log('getAttribueObjetDynamique')
-    // this.profils[idProfil].items = attributs
-  }
-
-  // Permet de round un Vector3
+  // Allows to round a Vector3
+  // @arg No arguments required
   roundVector3 (vector: any): Vector3 {
     if (vector[0] == null) {
       return new Vector3(
@@ -785,15 +774,16 @@ export default class ErgonomIOAssets extends Vue {
     }
   }
 
-  // Assigner un profil à une scène
+  // Assign a profile to a scene
+  // @arg No arguments required
   assignerProfilScene (): void {
     console.log('assignerProfilScene')
-    if (this.maSceneSelection === '') return
-    if (this.monProfilSelection === '') return
+    if (this.selectedScene === '') return
+    if (this.selectedProfil === '') return
 
     let idSceneModif = -1
     for (let i = 0; i < this.scenes.length; i++) {
-      if (this.maSceneSelection === this.scenes[i].name) {
+      if (this.selectedScene === this.scenes[i].name) {
         idSceneModif = i
         break
       }
@@ -802,7 +792,7 @@ export default class ErgonomIOAssets extends Vue {
 
     let idProfilModif = -1
     for (let i = 0; i < this.scenes.length; i++) {
-      if (this.monProfilSelection === this.profils[i].title) {
+      if (this.selectedProfil === this.profils[i].title) {
         idProfilModif = i
         break
       }
@@ -812,7 +802,6 @@ export default class ErgonomIOAssets extends Vue {
     console.log('Assigner')
 
     const scene = this.scenes[idSceneModif]
-    // this.profils[idProfilModif].
     scene.idProfile = this.profils[idProfilModif].id
 
     // On mets à jour la scene sélectionnée
@@ -828,11 +817,11 @@ export default class ErgonomIOAssets extends Vue {
       })
       .catch(e => console.error(e))
 
-    var objectOpcua = {
+    const objectOpcua = {
       action: 'rafraichirScene'
     }
 
-    var object = {
+    const object = {
       menu: 'opcua',
       objet: objectOpcua
     }
@@ -841,7 +830,8 @@ export default class ErgonomIOAssets extends Vue {
     Unreal.send(object)
   }
 
-  // Permet de récupérer les scènes
+  // Get scenes
+  // @arg No arguments required
   getScenes (): void {
     API.post(
       this,
@@ -859,7 +849,8 @@ export default class ErgonomIOAssets extends Vue {
     })
   }
 
-  // Ouvre l'édition de profil
+  // Open edit profil
+  // @arg No arguments required
   editerProfil (): void {
     let trouver = -1
     for (let i = 0; i < this.profils.length; i++) {
@@ -867,11 +858,12 @@ export default class ErgonomIOAssets extends Vue {
       if (element) trouver = i
     }
 
-    this.editerProfilBooleen = true
-    this.profilEditer = this.profils[trouver]
+    this.editProfilBooleen = true
+    this.profilEdit = this.profils[trouver]
   }
 
-  // Permet d'ajouter un evenement à un profil
+  // Add event to a profil
+  // @arg No arguments required
   ajouterEvenement (): void {
     let trouver = -1
     for (let i = 0; i < this.profils.length; i++) {
@@ -887,7 +879,8 @@ export default class ErgonomIOAssets extends Vue {
     this.miseAJourProfil(this.profils[trouver])
   }
 
-  // Permet d'afficher le chemin de l'objet sélectionné
+  // Display the path of selected asset
+  // @arg No arguments required
   cheminObjetSelectionne (): void {
     console.log('cheminObjetSelectionne')
 
@@ -897,12 +890,12 @@ export default class ErgonomIOAssets extends Vue {
       if (element) trouver = i
     }
 
-    var objectOpcua = {
+    const objectOpcua = {
       action: 'cheminObjetSelectionne',
       profil: this.profils[trouver]
     }
 
-    var object = {
+    const object = {
       menu: 'opcua',
       objet: objectOpcua
     }
@@ -911,7 +904,8 @@ export default class ErgonomIOAssets extends Vue {
     Unreal.send(object)
   }
 
-  // Permet d'afficher le chemin de tous les objets du profil
+  // Display the path of all assets of profil
+  // @arg No arguments required
   cheminGlobal (): void {
     console.log('cheminGlobal')
 
@@ -921,12 +915,12 @@ export default class ErgonomIOAssets extends Vue {
       if (element) trouver = i
     }
 
-    var objectOpcua = {
+    const objectOpcua = {
       action: 'cheminGlobal',
       profil: this.profils[trouver]
     }
 
-    var object = {
+    const object = {
       menu: 'opcua',
       objet: objectOpcua
     }
@@ -935,7 +929,8 @@ export default class ErgonomIOAssets extends Vue {
     Unreal.send(object)
   }
 
-  // Permet de récupérer le fichier qu'on veut upload
+  // Get upload file
+  // @arg No arguments required
   openUploadFile (): void {
     const uploadFileInput = this.$refs.uploadFileInput as HTMLInputElement
     if (uploadFileInput == null) return
@@ -943,7 +938,8 @@ export default class ErgonomIOAssets extends Vue {
     uploadFileInput.click()
   }
 
-  // Charger un profil
+  // Load a profil
+  // @arg No arguments required
   onUploadSceneUpdate (e: Event): void {
     if (e.target == null) return
     const target = e.target as HTMLInputElement
@@ -999,16 +995,18 @@ export default class ErgonomIOAssets extends Vue {
     }
   }
 
-  // Permet de sauvegarder le profil modifié
+  // Save the modify profil
+  // @arg No arguments required
   saveProfil (): void {
-    console.log('this.profilEditer : ', this.profilEditer)
-    this.editerProfilBooleen = false
+    console.log('this.profilEdit : ', this.profilEdit)
+    this.editProfilBooleen = false
 
     // Mettre à jour le profil
-    this.miseAJourProfil(this.profilEditer)
+    this.miseAJourProfil(this.profilEdit)
   }
 
-  // Permet d'ajouter un profil à l'API
+  // api request for adding the profil to API
+  // @arg No arguments required
   ajouterAPIProfil (profil: Profil): void {
     console.log('AJOUTER API PROFIL')
     API.put(
@@ -1025,7 +1023,8 @@ export default class ErgonomIOAssets extends Vue {
     })
   }
 
-  // Mise à jour avec requete API
+  // Update with api request
+  // @arg No arguments required
   miseAJourProfil (profil: Profil): void {
     API.patch(
       this,
@@ -1041,7 +1040,8 @@ export default class ErgonomIOAssets extends Vue {
       .catch(e => console.error(e))
   }
 
-  // API : récupérer les profils
+  // Get all profils with api request
+  // @arg No arguments required
   getProfils (): void {
     console.log('getProfils')
     this.profils = []
@@ -1063,7 +1063,7 @@ export default class ErgonomIOAssets extends Vue {
       for (let i = 0; i < monAssetTableau.length; i++) {
         const element = monAssetTableau[i]
 
-        var monTableau = []
+        const monTableau = []
         const monJson = JSON.parse(element.events)
 
         for (let j = 0; j < monJson.length; j++) {
@@ -1110,17 +1110,15 @@ export default class ErgonomIOAssets extends Vue {
             }
           }
 
-          console.log('objet : ', objet)
-
           monTableau.push(objet)
         }
         this.ajouterProfil(element.name, monTableau, element.id)
       }
-      console.log('Profils final : ', this.profils)
     })
   }
 
-  // Permet de démarrer la simulation du profil avec un objet
+  // Start the simulation of profil with an asset
+  // @arg No arguments required
   demarreProfil (): void {
     let trouver = -1
     for (let i = 0; i < this.profils.length; i++) {
@@ -1128,12 +1126,12 @@ export default class ErgonomIOAssets extends Vue {
       if (element) trouver = i
     }
 
-    var objectOpcua = {
+    const objectOpcua = {
       action: 'demarreProfil',
       profil: this.profils[trouver]
     }
 
-    var object = {
+    const object = {
       menu: 'opcua',
       objet: objectOpcua
     }
@@ -1142,7 +1140,8 @@ export default class ErgonomIOAssets extends Vue {
     Unreal.send(object)
   }
 
-  // Permet de démarrer la simulation du profil avec tous les objets
+  // Start the simulation of profil for all assets
+  // @arg No arguments required
   demarreProfilGlobal (): void {
     let trouver = -1
     for (let i = 0; i < this.profils.length; i++) {
@@ -1150,12 +1149,12 @@ export default class ErgonomIOAssets extends Vue {
       if (element) trouver = i
     }
 
-    var objectOpcua = {
+    const objectOpcua = {
       action: 'demarreProfilGlobal',
       profil: this.profils[trouver]
     }
 
-    var object = {
+    const object = {
       menu: 'opcua',
       objet: objectOpcua
     }
@@ -1164,7 +1163,8 @@ export default class ErgonomIOAssets extends Vue {
     Unreal.send(object)
   }
 
-  // Permet de supprimer le profil actif
+  // Delete the selected profil
+  // @arg No arguments required
   supprimerProfil (): void {
     let trouver = -1
     for (let i = 0; i < this.profils.length; i++) {
@@ -1174,18 +1174,15 @@ export default class ErgonomIOAssets extends Vue {
       }
     }
 
-    console.log('trouver : ', trouver)
-    console.log('this.profils : ', this.profils)
-
     // Delete
     this.profils.splice(trouver, 1)
-    console.log('this.profils : ', this.profils)
 
     // Faire requete api
     this.supprimerAPIProfil(this.profils[trouver])
   }
 
-  // Permet de supprimer un profil avec API
+  // Delete profil with api request
+  // @arg No arguments required
   supprimerAPIProfil (profil: Profil): void {
     console.log('supprimerAPIProfil')
     API.delete(
@@ -1197,17 +1194,20 @@ export default class ErgonomIOAssets extends Vue {
     })
   }
 
-  // Permet de charger un fichier profil
+  // Load a profil file
+  // @arg No arguments required
   chargerProfil (): void {
     console.log('chargerProfil')
   }
 
-  // ???
+  // For listening the server
+  // @arg No arguments required
   ecouterServeur (): void {
     console.log('ecouterServeur !')
   }
 
-  // Permet de supprimer un évènement d'un profil
+  // Delete an event of a profil
+  // @arg No arguments required
   supprimerEvenement (indexChild: number): void {
     console.log('supprimerEvenement')
 
@@ -1232,23 +1232,20 @@ export default class ErgonomIOAssets extends Vue {
     for (let i = 0; i < tableauIntermediaire.length; i++) {
       this.profils[trouver].items.push(tableauIntermediaire[i])
     }
-    console.log('taille : ', this.profils[trouver].items.length)
 
     // On mets à jour l'API
     this.miseAJourProfil(this.profils[trouver])
   }
 
-  // Permet de démarrer l'evenement
+  // For start an event
+  // @arg No arguments required
   moveToEvent (child: Evenement): void {
-    Unreal.send('Child : ' + JSON.stringify(child))
-    Unreal.send('position : ' + child.values.position.x)
-
-    var objectOpcua = {
+    const objectOpcua = {
       action: 'bougerEvenement',
       position: child.values.position
     }
 
-    var object = {
+    const object = {
       menu: 'opcua',
       objet: objectOpcua
     }
@@ -1257,42 +1254,46 @@ export default class ErgonomIOAssets extends Vue {
     Unreal.send(object)
   }
 
-  // Permet de décrementer la position
+  // Decrement position
+  // @arg No arguments required
   decrement (nombre1: number): void {
     console.log('nombre 1 : ', nombre1)
 
-    if (nombre1 === 1) this.positionEvenement.x--
-    else if (nombre1 === 2) this.positionEvenement.y--
-    else if (nombre1 === 3) this.positionEvenement.z--
+    if (nombre1 === 1) this.positionEvent.x--
+    else if (nombre1 === 2) this.positionEvent.y--
+    else if (nombre1 === 3) this.positionEvent.z--
   }
 
-  // Permet d'augmenter la position
+  // Increment position
+  // @arg No arguments required
   increment (nombre1: number): void {
     console.log('nombre 1 : ', nombre1)
 
-    if (nombre1 === 1) this.positionEvenement.x++
-    else if (nombre1 === 2) this.positionEvenement.y++
-    else if (nombre1 === 3) this.positionEvenement.z++
+    if (nombre1 === 1) this.positionEvent.x++
+    else if (nombre1 === 2) this.positionEvent.y++
+    else if (nombre1 === 3) this.positionEvent.z++
   }
 
-  // Permet de modifier la position d'un évènement
+  // Modify the position of an event
+  // @arg No arguments required
   modifierPosition (event: Event, child: Evenement): void {
     // Consume l'event
     event.stopPropagation()
 
     this.childSave = child
-    this.modifierPositionBooleen = true
+    this.modifyPositionBooleen = true
   }
 
-  // Permet d'attacher un objet à un autre
+  // Attach asset to an another
+  // @arg No arguments required
   attacherObjet (): void {
     console.log('attacherObjet')
 
-    var objectOpcua = {
+    const objectOpcua = {
       action: 'attacherObjet'
     }
 
-    var object = {
+    const object = {
       menu: 'opcua',
       objet: objectOpcua
     }
@@ -1301,15 +1302,15 @@ export default class ErgonomIOAssets extends Vue {
     Unreal.send(object)
   }
 
-  // Permet de définir la position de l'évènement
-  // avec la position de l'objet sélectionné
+  // Define position of event with the position of selected asset
+  // @arg No arguments required
   modifierPositionWithObject (child: Evenement, idProfilParam: number): void {
-    var objectOpcua = {
+    const objectOpcua = {
       action: 'envoiePositionObjetSelectionne',
       childevenement: child,
       idProfil: idProfilParam
     }
-    var object = {
+    const object = {
       menu: 'opcua',
       objet: objectOpcua
     }
@@ -1318,7 +1319,8 @@ export default class ErgonomIOAssets extends Vue {
     Unreal.send(object)
   }
 
-  // Permet d'ajouter un profil permettant de stocker une liste d'profils
+  // Add profil with api request
+  // @arg No arguments required
   ajouterProfil (
     nomProfil: string,
     itemsTableau: Array<Evenement>,
@@ -1335,10 +1337,11 @@ export default class ErgonomIOAssets extends Vue {
     )
   }
 
-  // Permet de sauvegarder les modifications des positions sur un évènement
+  // Save positions changes on event
+  // @arg No arguments required
   save (): void {
-    this.modifierPositionBooleen = false
-    this.childSave.values.position = this.positionEvenement
+    this.modifyPositionBooleen = false
+    this.childSave.values.position = this.positionEvent
   }
 }
 </script>

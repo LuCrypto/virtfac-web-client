@@ -203,6 +203,8 @@ export default class ErgonomIORooms extends Vue {
     })
   }
 
+  // For get all scenes on API
+  // @arg No arguments required
   getScenes (): void {
     API.post(
       this,
@@ -220,7 +222,8 @@ export default class ErgonomIORooms extends Vue {
     })
   }
 
-  // Permet de selection une room
+  // Allows you to select a room
+  // @arg No arguments required
   selectedRoom (room: Room): void {
     const objectAsset = {
       action: 'selectionnerRoom',
@@ -235,20 +238,26 @@ export default class ErgonomIORooms extends Vue {
     Unreal.send(object)
   }
 
+  // refreshRoomLobby
+  // @arg No arguments required
   refreshRoomLobby (rooms: Room[]): void {
     this.rooms = rooms
   }
 
+  // refreshRoomCurrent
+  // @arg No arguments required
   refreshRoomCurrent (): void {
     this.rooms = []
   }
 
   // Quit the currently room
+  // @arg No arguments required
   quitRoomCurrent (): void {
     this.rooms = []
   }
 
   // For create a session 1
+  // @arg No arguments required
   createSession1 (): void {
     console.log('Creer room with scenen : ', this.sceneSelected)
 
@@ -290,6 +299,7 @@ export default class ErgonomIORooms extends Vue {
   }
 
   // For delete a session
+  // @arg No arguments required
   deleteSession (): void {
     console.assert('deleteSession')
 
@@ -315,6 +325,7 @@ export default class ErgonomIORooms extends Vue {
   }
 
   // Join room 1
+  // @arg No arguments required
   joinSession1 (room: Room): void {
     Unreal.send('joinSession 1 : ' + room.nameScene)
 
@@ -346,6 +357,7 @@ export default class ErgonomIORooms extends Vue {
   }
 
   // For leave a session
+  // @arg No arguments required
   leaveSession (): void {
     console.log('leaveSession')
 
@@ -353,6 +365,7 @@ export default class ErgonomIORooms extends Vue {
   }
 
   // Send message to unreal instance
+  // @arg No arguments required
   sendUnreal (room: Room): void {
     console.log('asset.name : ', room.name)
 
