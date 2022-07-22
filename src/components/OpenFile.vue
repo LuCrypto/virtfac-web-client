@@ -4,7 +4,7 @@
     <v-toolbar color="primary" flat v-if="this.header">
       <v-toolbar-title class="black--text">
         <v-icon left v-text="'mdi-file-document'"></v-icon>
-        {{ openFile ? 'Open files' : 'Files manager' }}
+        {{ openFile ? title : 'Files manager' }}
       </v-toolbar-title>
     </v-toolbar>
 
@@ -341,6 +341,7 @@ export default class OpenFilePopUp extends Vue {
   // Display or not the "File Manager" header.
   @Prop({ default: () => true }) private header!: boolean
 
+  @Prop({ default: () => 'Open File' }) private title!: string
   waitingTasks = 3
 
   /* Group bar */
@@ -434,15 +435,15 @@ export default class OpenFilePopUp extends Vue {
   // @arg No arguments required
   get activeHeaders (): DataTableHeader[] {
     return this.headersSelector
-      .filter((selector) => selector.active)
-      .map((selector) => selector.header)
+      .filter(selector => selector.active)
+      .map(selector => selector.header)
   }
 
   // @vuese
   // Getter for filtered file table headers
   // @arg No arguments required
   get editableHeadersSelector (): DataTableHeaderSelector[] {
-    return this.headersSelector.filter((selector) => selector.editable)
+    return this.headersSelector.filter(selector => selector.editable)
   }
 
   // @vuese
@@ -450,7 +451,7 @@ export default class OpenFilePopUp extends Vue {
   // @arg No arguments required
   get formatList (): APIFileMIME[] {
     return this.myFormatList.filter(
-      (mime) =>
+      mime =>
         mime.media === this.fileSettings.fileMIME.media &&
         mime.format === this.fileSettings.fileMIME.format
     )
@@ -477,7 +478,7 @@ export default class OpenFilePopUp extends Vue {
   // @arg No arguments required
   getAllGroups (): void {
     API.get(this, '/user/groups', null).then((reponse: Response) => {
-      const groupListData = reponse as unknown as APIGroupItem[]
+      const groupListData = (reponse as unknown) as APIGroupItem[]
       this.groupList = [new APIGroupItem({ id: 0, name: 'All' })]
       groupListData.forEach((groupInfo: Partial<APIGroupItem>) => {
         this.groupList.push(new APIGroupItem(groupInfo))
@@ -493,7 +494,7 @@ export default class OpenFilePopUp extends Vue {
     API.get(this, '/application/formats/' + this.application, null).then(
       (response: Response) => {
         this.myFormatList = []
-        const formatList = response as unknown as string[]
+        const formatList = (response as unknown) as string[]
         this.getAllFiles(
           JSON.stringify({
             select: [
@@ -507,7 +508,7 @@ export default class OpenFilePopUp extends Vue {
               'tags',
               'mime'
             ],
-            where: formatList.map((format) => {
+            where: formatList.map(format => {
               return {
                 mime: format
               }
@@ -515,7 +516,7 @@ export default class OpenFilePopUp extends Vue {
           })
         )
 
-        this.myFormatList = formatList.map((MIME) =>
+        this.myFormatList = formatList.map(MIME =>
           APIFileMIME.parseFromString(MIME)
         )
         this.waitingTasks -= 1
@@ -529,7 +530,7 @@ export default class OpenFilePopUp extends Vue {
   getAllFiles (fileParams: string): void {
     API.post(this, '/resources/files', fileParams).then(
       (response: Response) => {
-        const fileList = response as unknown as APIFileItem[]
+        const fileList = (response as unknown) as APIFileItem[]
         this.myfileList = []
         fileList.forEach((fileInfo: Partial<APIFileItem>) => {
           if (fileInfo.name && fileInfo.creationDate) {
@@ -551,8 +552,8 @@ export default class OpenFilePopUp extends Vue {
   // @arg No arguments required
   getAllTags (): void {
     this.tagList = []
-    this.myfileList.forEach((fileItem) => {
-      fileItem.tags.split(',').forEach((tag) => {
+    this.myfileList.forEach(fileItem => {
+      fileItem.tags.split(',').forEach(tag => {
         if (!this.tagList.includes(tag)) {
           this.tagList.push(tag)
         }
@@ -581,7 +582,7 @@ export default class OpenFilePopUp extends Vue {
       this.search == null ||
       item.name.toLocaleUpperCase().indexOf(this.search.toLocaleUpperCase()) !==
         -1
-    const tagFilter = !this.tagValues.some((tag) => !itemTags.includes(tag))
+    const tagFilter = !this.tagValues.some(tag => !itemTags.includes(tag))
     return groupFilter && searchFilter && tagFilter
   }
 
@@ -597,11 +598,11 @@ export default class OpenFilePopUp extends Vue {
     console.log('Upload file with mime :', file.mime)
     API.put(this, '/resources/files', JSON.stringify(file.toJSON()))
       .then((response: Response) => {
-        const id = (response as unknown as { id: number }).id
+        const id = ((response as unknown) as { id: number }).id
         this.selectedFileAfterLoad = id
         this.load()
       })
-      .catch((_) => {
+      .catch(_ => {
         console.error('Fail posted resource :', file)
       })
   }
@@ -623,7 +624,7 @@ export default class OpenFilePopUp extends Vue {
             })
           )
         }
-        reader.onerror = (error) => {
+        reader.onerror = error => {
           console.error(error)
           // Send message to root container to display error
           // @arg String message to display
@@ -631,7 +632,7 @@ export default class OpenFilePopUp extends Vue {
         }
         reader.readAsDataURL(f)
       }
-      ;[...target.files].forEach((file) => {
+      ;[...target.files].forEach(file => {
         if (this.uploadPipeline !== null) {
           this.uploadPipeline(file).then(uploadFileFunc)
         } else {
@@ -670,10 +671,10 @@ export default class OpenFilePopUp extends Vue {
       `/resources/files/${this.fileSettings.id}`,
       JSON.stringify(this.fileSettings.toJSON())
     ).then((response: Response) => {
-      const fileUpdate = response as unknown as APIFileItem
+      const fileUpdate = (response as unknown) as APIFileItem
       this.fileSettingsIsSaving = false
       this.fileSettingsPopUp = false
-      this.myfileList.forEach((file) => {
+      this.myfileList.forEach(file => {
         if (file.id === this.fileSettings.id) {
           Object.assign(file, fileUpdate)
         }
@@ -703,7 +704,7 @@ export default class OpenFilePopUp extends Vue {
   validated (): void {
     this.loadFileTasks = this.selectedFile.length
     this.loadFileTasksNumber = this.loadFileTasks
-    const fileIdList = this.selectedFile.map((file) => {
+    const fileIdList = this.selectedFile.map(file => {
       return {
         id: file.id
       }
@@ -715,7 +716,7 @@ export default class OpenFilePopUp extends Vue {
         where: fileIdList
       })
     ).then((response: Response) => {
-      const fileResult = response as unknown as APIFile[]
+      const fileResult = (response as unknown) as APIFile[]
       this.loadFileTasks -= 1
       if (this.loadFileTasks === 0) {
         // Send file content to parent component

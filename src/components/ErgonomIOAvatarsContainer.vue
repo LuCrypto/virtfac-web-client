@@ -54,11 +54,11 @@
       <pop-up ref="openFilePopUp">
         <open-file
           @close="$refs.openFilePopUp.close()"
-          application="AVATAR_PROFILES"
-          accept=".obj, .fbx, .stl, .wrl, .glb"
+          application="ERGONOM_IO"
           :uploadPipeline="onFileUpload"
           :singleSelect="true"
           :openFile="true"
+          title="Avatar Profile"
           @fileInput="onFileInput"
         ></open-file>
       </pop-up>
@@ -334,13 +334,12 @@ import {
 } from 'three'
 import { Session } from '@/utils/session'
 import PopUp from './PopUp.vue'
-import OpenFile from '@/components/OpenFile.vue'
-import OpenAvatar from '@/components/OpenAvatar.vue'
 import AssetInfo from '@/components/AssetInfo.vue'
 import AvatarInfo from '@/components/AvatarInfo.vue'
 import MaximizableContainer from './MaximizableContainer.vue'
 
 import API from '@/utils/api'
+import OpenFile from '@/components/OpenFile.vue'
 
 class MenuItem {
   text: string
@@ -447,11 +446,10 @@ class Avatar {
     InputFieldPopUp,
     ModelViewer2,
     PopUp,
-    OpenFile,
-    OpenAvatar,
     AssetInfo,
     AvatarInfo,
-    MaximizableContainer
+    MaximizableContainer,
+    OpenFile
   }
 })
 
@@ -584,12 +582,8 @@ export default class ErgonomIOAvatarsContainer extends Vue {
   mainMenu: MenuItem2 = new MenuItem2('', 'ICON', [new MenuItem2()])
   colorMenu: MenuItem2 = new MenuItem2('', 'ICON', [new MenuItem2()])
 
-  currentSkinId = 0
-
-  showPlayerDataSettings = false
-
+  /* Materials arrays */
   materialArray: MeshLambertMaterial[] = []
-
   hairMaterial: MeshLambertMaterial = new MeshLambertMaterial({
     color: this.hairColor
   })
@@ -603,6 +597,8 @@ export default class ErgonomIOAvatarsContainer extends Vue {
 
   inputField: InputFieldPopUp | null = null
 
+  openFilePopUp: OpenFile | null = null
+
   inputFile (): void {
     const input = this.$refs.inputFile as HTMLInputElement
     input.value = ''
@@ -613,6 +609,9 @@ export default class ErgonomIOAvatarsContainer extends Vue {
     console.log('yo')
   }
 
+  // @vuese
+  // Load the mesh from string file in threeJS viewer
+  // @arg filePath to the bodyPart mesh fbx
   loadBodyPart (filePath: string, callback: (fbx: THREE.Group) => void): void {
     if (this.viewer == null) return
 
@@ -752,6 +751,9 @@ export default class ErgonomIOAvatarsContainer extends Vue {
     }
   }
 
+  // @vuese
+  // Used to generate menu icons elements for avatar customisation
+  // @arg No arguments needed
   createItems (): void {
     var skinArray = []
     for (let i = 0; i < this.skinColors.length; i++) {
@@ -809,6 +811,9 @@ export default class ErgonomIOAvatarsContainer extends Vue {
     this.colorMenu = new MenuItem2('', 'ICON', hairColorArray)
   }
 
+  // @vuese
+  // Usefull function to initialize morph data and their values
+  // @arg No arguments needed
   initMorphData (): void {
     this.morphList.push(new MorphItem('female_face', 0))
     this.morphList.push(new MorphItem('arm_size', 0))
@@ -820,7 +825,10 @@ export default class ErgonomIOAvatarsContainer extends Vue {
     this.morphList.push(new MorphItem('leg_size', 0))
   }
 
-  initPlayerData (): void {
+  // @vuese
+  // Usefull function to initialize player data
+  // @arg No arguments needed
+  initPlayerData (): PlayerData {
     var playerDataItemList: PlayerDataItem[] = []
     playerDataItemList.push(new PlayerDataItem('Hip width', 23.82))
     playerDataItemList.push(new PlayerDataItem('Body', 61.08))
@@ -835,9 +843,12 @@ export default class ErgonomIOAvatarsContainer extends Vue {
     playerDataItemList.push(new PlayerDataItem('Foot Length', 25.94))
     playerDataItemList.push(new PlayerDataItem('Heel height', 7.98))
 
-    this.playerData = new PlayerData('Player', playerDataItemList)
+    return new PlayerData('Player', playerDataItemList)
   }
 
+  // @vuese
+  // Usefull function to initialize materials
+  // @arg No arguments needed
   initMaterials (): void {
     // TODO : For now, each body part need to have the same material array, but this will change with several mat for shirt or pants
     // eyes Material
@@ -895,6 +906,8 @@ export default class ErgonomIOAvatarsContainer extends Vue {
     this.viewer = this.$refs.viewer as ModelViewer2
     this.viewer.setFogActive(true)
 
+    this.openFilePopUp = this.$refs.openFilePopUp as OpenFile
+
     this.updateTheme()
     this.initMaterials()
     this.createMenu()
@@ -907,9 +920,12 @@ export default class ErgonomIOAvatarsContainer extends Vue {
     this.loadMesh('./Avatars/Head/skin.fbx', 6)
 
     this.initMorphData()
-    this.initPlayerData()
+    this.playerData = this.initPlayerData()
   }
 
+  // @vuese
+  // Update function called when selecting a main menu element
+  // @arg No arguments needed
   update (): void {
     console.log('Main menu is updated.')
     // Skin Menu :  Change the skin body color by the new selected one
@@ -952,6 +968,7 @@ export default class ErgonomIOAvatarsContainer extends Vue {
         )
       }
     }
+    // Pants Menu
     if (this.mainMenu.selected === 4) {
       this.loadMesh(
         './Avatars/Pants/' +
@@ -959,6 +976,7 @@ export default class ErgonomIOAvatarsContainer extends Vue {
         4
       )
     }
+    // Shoes Menu
     if (this.mainMenu.selected === 5) {
       this.loadMesh(
         './Avatars/Shoes/' +
@@ -966,6 +984,7 @@ export default class ErgonomIOAvatarsContainer extends Vue {
         5
       )
     }
+    // Head Menu
     if (this.mainMenu.selected === 6) {
       this.loadMesh(
         './Avatars/Head/' +
@@ -975,6 +994,9 @@ export default class ErgonomIOAvatarsContainer extends Vue {
     }
   }
 
+  // @vuese
+  // Update function called when selecting a color menu element
+  // @arg No arguments needed
   updateColor (): void {
     if (this.mainMenu.selected === 2) {
       this.hairMaterial.color = new THREE.Color(
@@ -995,7 +1017,9 @@ export default class ErgonomIOAvatarsContainer extends Vue {
     }
   }
 
-  // Used to set up management options
+  // @vuese
+  // Used to set up management menu
+  // @arg No arguments needed
   createMenu (): void {
     this.menuItemList.push(
       new MenuItem('Open Avatar Profile', 'mdi-account', () => {
@@ -1014,6 +1038,9 @@ export default class ErgonomIOAvatarsContainer extends Vue {
     this.playerData = data
   }
 
+  // @vuese
+  // Used to read xml or fbx file and automatically set up the player data values
+  // @arg No arguments needed
   onPlayerDataUpload (event: InputEvent): void {
     if (event != null && event.target != null) {
       const f: File = ((event.target as HTMLInputElement).files as FileList)[0]
@@ -1038,15 +1065,20 @@ export default class ErgonomIOAvatarsContainer extends Vue {
   }
 
   // parseXMLData (xml: string):Record<string, unknown> {}
-  parseXMLData (xml: string): unknown {
+  // @vuese
+  // Update function called when selecting a main menu element
+  // @arg No arguments needed
+  parseXMLData (xml: string): PlayerData {
     const a = [
       ...xml.matchAll(/(name="[\w\s]*"(\s)*length="[0-9]*(.[0-9]*)")+/gm)
     ].map(i => {
-      const result = i?.shift().split('"')
+      const result = (i.shift() || '').split('"')
       return { name: result[1], length: parseFloat(result[3]) }
     })
     const b = xml.match(/(name="[\w\s]*">)+/gm)
-    const tmp = b.shift().split('"')
+    // if no matching result found, return default playerData
+    if (!b) return this.initPlayerData()
+    const tmp = (b.shift() || '').split('"')
     return { name: tmp[1], values: a }
   }
 
