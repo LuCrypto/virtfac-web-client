@@ -1,5 +1,6 @@
 // import { Node } from '@/utils/graph/node'
-import { Vec2, Vector2 } from '@/utils/graph/Vec'
+// import { Vec2, Vector2 } from '@/utils/graph/Vec'
+import V from '@/utils/vector'
 import { MetaData } from '@/utils/graph/metadata'
 import { Graph } from '@/utils/graph/graph'
 import { Node } from '@/utils/graph/node'
@@ -14,26 +15,25 @@ export class GraphUtils {
     childPropertyIndex: number
   ) {
     child
-      .getOrAddData<Map<number, Vec2>>(
+      .getOrAddData<Map<number, V>>(
         'old_attach_' + attachProperty,
-        new Map<number, Vec2>()
+        new Map<number, V>()
       )
-      .set(childPropertyIndex, attach.getData<Vec2>(attachProperty))
+      .set(childPropertyIndex, attach.getData<V>(attachProperty))
     attach.onDataChanged().addMappedListener(attachProperty, arg => {
-      const pos: Vec2[] = child.getData<Vec2[]>(childProperty)
-      pos[childPropertyIndex] = Vector2.plus(
-        pos[childPropertyIndex],
-        Vector2.minus(
-          attach.getData<Vec2>(attachProperty),
+      const pos: V[] = child.getData<V[]>(childProperty)
+      pos[childPropertyIndex] = attach
+        .getData<V>(attachProperty)
+        .subV(
           child
-            .getData<Map<number, Vec2>>('old_attach_' + attachProperty)
-            .get(childPropertyIndex) as Vec2
+            .getData<Map<number, V>>('old_attach_' + attachProperty)
+            .get(childPropertyIndex) as V
         )
-      )
-      child.setData<Vec2[]>(childProperty, pos)
+        .addV(pos[childPropertyIndex])
+      child.setData<V[]>(childProperty, pos)
       child
-        .getData<Map<number, Vec2>>('old_attach_' + attachProperty)
-        .set(childPropertyIndex, attach.getData<Vec2>(attachProperty))
+        .getData<Map<number, V>>('old_attach_' + attachProperty)
+        .set(childPropertyIndex, attach.getData<V>(attachProperty))
     })
   }
 
@@ -87,74 +87,21 @@ export class GraphUtils {
     }
   }
 
-  public static weightedHierarchization (
-    graph: Graph,
-    outputField: string,
-    linkWeight: { (l: Link): number },
-    nodeWeight: { (n: Node): number }
-  ) {
-    throw new Error('not implemented')
-    const _tmp = '__hierarchization_path'
-
-    const arr = new Array<{ node: Node; h: number }>()
-
-    graph.foreachNode(n => {
-      const toTravel = new Array<Node>()
-      const traveledNodes = new Set<Node>()
-      traveledNodes.add(n)
-      toTravel.push(n)
-      n.setData<boolean>(_tmp, true)
-      let impacted = 0
-      while (toTravel.length > 0) {
-        const c = toTravel.pop() as Node
-        c.foreachLink(l => {
-          if (!l.getNode().getData<boolean | undefined>(_tmp)) {
-            const node = l.getNode()
-            traveledNodes.add(node)
-            toTravel.push(node)
-            node.setData<boolean>(_tmp, true)
-            impacted++
-          }
-        })
-      }
-      n.setData<number>(outputField, impacted)
-      traveledNodes.forEach(n => n.setData<undefined>(_tmp, undefined))
-      arr.push({ node: n, h: impacted })
-    })
-
-    arr.sort((a, b) => {
-      return a.h - b.h
-    })
-
-    let level = 0
-    for (let i = 0; i < arr.length; i++) {
-      arr[i].node.setData(outputField, level)
-      if (arr[i].h !== 0) {
-        level++
-      }
-    }
-  }
-
   public static computeLevels (
     graph: Graph,
     outputField: string,
-    ingoredField?: string | undefined
+    ignoredLink?: { (link: Link): boolean } | undefined,
+    ignoredNode?: { (node: Node): boolean } | undefined
   ): number {
     const targetedByField = '__targetedBy'
     const nodePool = new Set<Node>()
 
     graph.foreachNode(n => {
-      if (
-        ingoredField === undefined ||
-        !n.getDataOrDefault<boolean>(ingoredField, false)
-      ) {
+      if (ignoredNode === undefined || !ignoredNode(n)) {
         n.setData<undefined>(outputField, undefined)
         nodePool.add(n)
         n.foreachLink(l => {
-          if (
-            ingoredField === undefined ||
-            !l.getDataOrDefault<boolean>(ingoredField, false)
-          ) {
+          if (ignoredLink === undefined || !ignoredLink(l)) {
             l.getNode()
               .getOrAddData<Set<Node>>(targetedByField, new Set<Node>())
               .add(l.getOriginNode())
@@ -179,12 +126,18 @@ export class GraphUtils {
       })
       if (assignedNodeArray.length > 0) hasChanged = true
       assignedNodeArray.forEach(n => {
-        n.setData<number>(outputField, level)
-        n.foreachLink(l => {
-          l.getNode()
-            .getData<Set<Node>>(targetedByField)
-            .delete(n)
-        })
+        if (ignoredNode === undefined || !ignoredNode(n)) {
+          n.setData<number>(outputField, level)
+          n.foreachLink(l => {
+            if (ignoredLink === undefined || !ignoredLink(l)) {
+              if (ignoredNode === undefined || !ignoredNode(l.getNode())) {
+                l.getNode()
+                  .getData<Set<Node>>(targetedByField)
+                  .delete(n)
+              }
+            }
+          })
+        }
         nodePool.delete(n)
       })
 
@@ -202,7 +155,10 @@ export class GraphUtils {
     return level
   }
 
-  public static getTransitiveLinks (graph: Graph): Set<Link> {
+  public static getTransitiveLinks (
+    graph: Graph,
+    ignoredLink?: { (link: Link): boolean } | undefined
+  ): Set<Link> {
     const _tmp = '__transitive_path'
     const transitiveSet = new Set<Link>()
 
@@ -213,14 +169,18 @@ export class GraphUtils {
       // toTravel.push(n)
       n.setData<boolean>(_tmp, true)
       n.foreachLink(l => {
-        toTravel.push(l.getNode())
-        traveledNodes.add(l.getNode())
-        // l.getNode().setData<boolean>(_tmp, true)
+        if (ignoredLink === undefined || !ignoredLink(l)) {
+          toTravel.push(l.getNode())
+          traveledNodes.add(l.getNode())
+        }
       })
       while (toTravel.length > 0) {
         const c = toTravel.pop() as Node
         c.foreachLink(l => {
-          if (!l.getNode().getData<boolean | undefined>(_tmp)) {
+          if (
+            !l.getNode().getData<boolean | undefined>(_tmp) &&
+            (ignoredLink === undefined || !ignoredLink(l))
+          ) {
             const node = l.getNode()
             traveledNodes.add(node)
             toTravel.push(node)
@@ -234,7 +194,6 @@ export class GraphUtils {
       }
       traveledNodes.forEach(n => n.setData<undefined>(_tmp, undefined))
     })
-    console.log(transitiveSet)
 
     return transitiveSet
   }
@@ -260,8 +219,8 @@ export class GraphUtils {
     const updateLinkGoback = (l: Link) => {
       const oldGoBack = l.getDataOrDefault<boolean>('goBack', false)
       if (
-        l.getNode().getData<Vec2>('position').x >
-        l.getOriginNode().getData<Vec2>('position').x
+        l.getNode().getData<V>('position').x >
+        l.getOriginNode().getData<V>('position').x
       ) {
         if (oldGoBack !== false) {
           l.setData('goBack', false)
@@ -307,10 +266,10 @@ export class GraphUtils {
         new Node()
           .setData('visible', false)
           .setData('size', 0)
-          .setData<Vec2>(
+          .setData<V>(
             'position',
-            new Vector2(
-              arg.link.getOriginNode().getData<Vec2>('position').x +
+            new V(
+              arg.link.getOriginNode().getData<V>('position').x +
                 (arg.link.getData<boolean>('goBack') ? -20 : 20),
               id * 10
             )
@@ -320,10 +279,10 @@ export class GraphUtils {
         new Node()
           .setData('visible', false)
           .setData('size', 0)
-          .setData<Vec2>(
+          .setData<V>(
             'position',
-            new Vector2(
-              arg.link.getNode().getData<Vec2>('position').x +
+            new V(
+              arg.link.getNode().getData<V>('position').x +
                 (arg.link.getData<boolean>('goBack') ? 20 : -20),
               id * 10
             )
@@ -334,25 +293,22 @@ export class GraphUtils {
         const b = arg.link.getData<boolean>('goBack')
         const y =
           (Math.abs(
-            arg.link.getNode().getData<Vec2>('position').x -
-              arg.link.getOriginNode().getData<Vec2>('position').x
+            arg.link.getNode().getData<V>('position').x -
+              arg.link.getOriginNode().getData<V>('position').x
           ) /
             2) *
           (b ? 1 : -1)
-        n1.setData<Vec2>(
+        n1.setData<V>(
           'position',
-          new Vector2(
-            arg.link.getOriginNode().getData<Vec2>('position').x +
+          new V(
+            arg.link.getOriginNode().getData<V>('position').x +
               (arg.link.getData<boolean>('goBack') ? -20 : 20),
             y
           )
         )
-        n2.setData<Vec2>(
+        n2.setData<V>(
           'position',
-          new Vector2(
-            arg.link.getNode().getData<Vec2>('position').x + (b ? 20 : -20),
-            y
-          )
+          new V(arg.link.getNode().getData<V>('position').x + (b ? 20 : -20), y)
         )
       }
       graph
@@ -388,41 +344,39 @@ export class GraphUtils {
         // const y = arg.link.getData<number>("id") * 10 * (a.value ? 1 : -1);
         const y =
           (Math.abs(
-            arg.link.getNode().getData<Vec2>('position').x -
-              arg.link.getOriginNode().getData<Vec2>('position').x
+            arg.link.getNode().getData<V>('position').x -
+              arg.link.getOriginNode().getData<V>('position').x
           ) /
             2) *
           (a.value ? 1 : -1)
-        n1.getData<Vec2>('position').y = y
-        n2.getData<Vec2>('position').y = y
+        n1.getData<V>('position').y = y
+        n2.getData<V>('position').y = y
       })
       arg.link.setData('goBack', false)
       updateLinkGoback(arg.link)
     })
     graph.onLinkRemoved().addListener(arg => {
-      console.log('link removed')
-      ;(graph
+      (graph
         .getData<Map<Link, Array<Node>>>('attachedNodes')
         .get(arg.link) as Array<Node>).forEach(n => {
         n.foreachLink(l => {
           n.removeLink(l.getNode())
         })
         displayGraph.removeNode(n)
-        console.log('remove display node')
       })
     }, this)
 
     graph.onNodeAdded().addListener(arg => {
       arg.node.setData('targetedBy', new Set<Link>())
-      arg.node.setData<Vec2>(
+      arg.node.setData<V>(
         'position',
-        new Vector2(Math.random() * xSpread + xOffset, 0)
+        new V(Math.random() * xSpread + xOffset, 0)
       )
       displayGraph.addNode(arg.node)
     })
 
     graph.onNodeDataChanged().addMappedListener('position', arg => {
-      const p = arg.node.getData<Vec2>('position')
+      const p = arg.node.getData<V>('position')
       arg.node.foreachLink(l => {
         updateLinkGoback(l)
       })
@@ -468,12 +422,11 @@ export class GraphUtils {
     xOffset: number,
     linkDensity: number
   ) {
-    console.log('\thierarchization')
     GraphUtils.hierarchization(graph, 'h', 'hierarchy', true)
     graph.foreachNode(n => {
-      n.setData<Vec2>(
+      n.setData<V>(
         'position',
-        new Vector2(
+        new V(
           ((nbNode - n.getData<number>('hierarchy')) * xSpread) / nbNode +
             xOffset,
           0
@@ -481,7 +434,6 @@ export class GraphUtils {
       )
     })
 
-    console.log('\tgroup')
     const hGroups = new Set<number>()
     const subGraph = new Map<number, Array<Node>>()
     graph.foreachNode(n => {
@@ -528,10 +480,6 @@ export class GraphUtils {
 
     // tabu search
     subGraph.forEach(group => {
-      console.log(
-        '\t1',
-        group.map(n => n.getData<string>('name'))
-      )
       if (group.length < 2) return
       let nextId = 0
       const orderArray = new Array<string>(group.length)
@@ -543,7 +491,7 @@ export class GraphUtils {
         group.forEach(node => {
           nodeArray.push(node)
           node.setData<number>('subGroupId', nextId++)
-          xCoordArray.push(node.getData<Vec2>('position').x)
+          xCoordArray.push(node.getData<V>('position').x)
         })
         xCoordArray.sort((a, b) => {
           return a - b
@@ -553,23 +501,21 @@ export class GraphUtils {
           orderToPos.set(i, xCoordArray[i])
         }
         group.forEach(node => {
-          orderArray[
-            posToOrder.get(node.getData<Vec2>('position').x) as number
-          ] = '' + node.getData<number>('subGroupId')
+          orderArray[posToOrder.get(node.getData<V>('position').x) as number] =
+            '' + node.getData<number>('subGroupId')
         })
       }
       const tabuMap = new Map<string, number>()
       const iteration = 0
-      console.log('\t2', group)
 
       const swap = (n1: Node, n2: Node) => {
-        const p = n2.getData<Vec2>('position')
-        const n1p = n1.getData<Vec2>('position')
-        n2.setData<Vec2>('position', n1p)
-        n1.setData<Vec2>('position', p)
-        orderArray[posToOrder.get(n1.getData<Vec2>('position').x) as number] =
+        const p = n2.getData<V>('position')
+        const n1p = n1.getData<V>('position')
+        n2.setData<V>('position', n1p)
+        n1.setData<V>('position', p)
+        orderArray[posToOrder.get(n1.getData<V>('position').x) as number] =
           '' + n1.getData<number>('subGroupId')
-        orderArray[posToOrder.get(n2.getData<Vec2>('position').x) as number] =
+        orderArray[posToOrder.get(n2.getData<V>('position').x) as number] =
           '' + n2.getData<number>('subGroupId')
       }
 
@@ -581,12 +527,12 @@ export class GraphUtils {
         const arr = str.split(';')
         for (let i = 0; i < arr.length; i++) {
           orderArray[i] = arr[i]
-          nodeArray[+arr[i]].getData<Vec2>('position').x = orderToPos.get(
+          nodeArray[+arr[i]].getData<V>('position').x = orderToPos.get(
             +i
           ) as number
           nodeArray[+arr[i]].onDataChanged().notify({
             key: 'position',
-            arg: { value: nodeArray[+arr[i]].getData<Vec2>('position') }
+            arg: { value: nodeArray[+arr[i]].getData<V>('position') }
           })
         }
       }
@@ -649,7 +595,7 @@ export class GraphUtils {
               const n1 = Math.round(Math.random() * (nodeArray.length - 1))
               nodeArray[n1].foreachLink(l => {
                 if (l.getDataOrDefault<boolean>('goBack', false)) {
-                  const x = l.getNode().getData<Vec2>('position').x
+                  const x = l.getNode().getData<V>('position').x
                   if (goBacksPos === -1 || x < goBacksPos) {
                     goBacksPos = x
                     link = l
@@ -658,19 +604,17 @@ export class GraphUtils {
               })
               if (link !== null) {
                 const o2 = posToOrder.get(
-                  (link as Link).getNode().getData<Vec2>('position').x
+                  (link as Link).getNode().getData<V>('position').x
                 ) as number
                 const o1 = posToOrder.get(
-                  nodeArray[n1].getData<Vec2>('position').x
+                  nodeArray[n1].getData<V>('position').x
                 ) as number
-                // console.log('move ' + o1 + " to " + o2 + "; from " + getString())
                 if (Math.random() < 0.5) {
                   orderArray.splice(o2, 0, orderArray.splice(o1, 1)[0])
                 } else {
                   orderArray.splice(o1, 0, orderArray.splice(o2, 1)[0])
                 }
                 applyString(orderArray.join(';'))
-                // console.log('\t' + getString())
                 o = getString()
               }
             }
@@ -726,7 +670,6 @@ export class GraphUtils {
           return a.score - b.score
         })
         if (nextEpoq[0] === undefined) {
-          console.log(nextEpoq)
           applyString(bestResult.order)
           break
         }
@@ -735,15 +678,12 @@ export class GraphUtils {
           console.log(bestResult)
           noChangesCount = 0
         } else {
-          // console.log("noChanges")
           noChangesCount++
         }
         currentEpoq = nextEpoq
         currentEpoq.push(bestResult)
         applyString(bestResult.order)
       }
-
-      console.log('\t4', group)
     })
   }
 }

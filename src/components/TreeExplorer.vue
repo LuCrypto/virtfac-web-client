@@ -90,6 +90,7 @@ class Item {
 })
 // @vuese
 // @group COMPONENTS
+// Component from navigating through a tree graph.
 export default class TreeExplorer extends Vue {
   selectedKey: unknown | null = null
   parentLabel = 'root'

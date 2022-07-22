@@ -3,7 +3,8 @@ import { NvEl } from './nv_el'
 import { NvNode } from './nv_node'
 import { NvContainer } from './nv_container'
 import { NvSocket } from './nv_socket'
-import { V } from './v'
+// import { V } from './v'
+import V from '@/utils/vector'
 import { Link } from '@/utils/graph/link'
 
 export class NvLink {
@@ -23,6 +24,9 @@ export class NvLink {
   private nodeIn: NvNode
   private nodeOut: NvNode
 
+  /**
+   * displayed path of the link
+   */
   private cpath: Array<V> | undefined = undefined
 
   private pointerEventPath: NvEl
@@ -37,6 +41,10 @@ export class NvLink {
     return this.link
   }
 
+  /**
+   * Define the link of the graph related to this displayer
+   * @param link
+   */
   public setLink (link: Link | undefined = undefined): void {
     if (this.link !== undefined) {
       this.link.onDataChanged().removeMappedListener('width', this)
@@ -48,6 +56,8 @@ export class NvLink {
           .getDom()
           .setAttribute('stroke-width', '' + link?.getData<number>('width'))
       }
+
+      // init listeners of the link state
       this.link.onDataChanged().addMappedListener('width', arg => {
         this.path
           .getDom()
@@ -224,7 +234,7 @@ export class NvLink {
     const pos = nvLink.nodeIn
       .getRoot()
       .clientPosToLocalPos(event.clientX, event.clientY)
-      .add(distance)
+      .addV(distance)
     nvLink.tooltip.setStyle({ left: pos.x + 'px', top: pos.y + 'px' })
     nvLink.nodeIn
       .getRoot()
@@ -271,11 +281,11 @@ export class NvLink {
     } else {
       this.refreshSockets()
       const tangentSize = 60
-      const p1 = this.root.unscale(this.socketIn.getMiddle().sub(delta))
-      const pp1 = p1.add(this.socketIn.tangent.mult(tangentSize))
-      const p2 = this.root.unscale(this.socketOut.getMiddle().sub(delta))
-      const pp2 = p2.add(this.socketOut.tangent.mult(tangentSize))
-      const path = `M${p1.str()} C${pp1.str()} ${pp2.str()} ${p2.str()}`
+      const p1 = this.root.unscale(this.socketIn.getMiddle().subV(delta))
+      const pp1 = p1.addV(this.socketIn.tangent.multN(tangentSize))
+      const p2 = this.root.unscale(this.socketOut.getMiddle().subV(delta))
+      const pp2 = p2.addV(this.socketOut.tangent.multN(tangentSize))
+      const path = `M${p1.toString()} C${pp1.toString()} ${pp2.toString()} ${p2.toString()}`
       this.path.getDom().setAttribute('d', path)
       this.pointerEventPath.getDom().setAttribute('d', path)
     }
@@ -291,11 +301,11 @@ export class NvLink {
 
   private refreshSockets (): void {
     // const vIn = ((this.cpath != undefined) ? this.cpath[this.cpath.length-1] : this.nodeOut.getPosition()).sub(this.nodeIn.getPosition());
-    const vIn = this.nodeOut.getPosition().sub(this.nodeIn.getPosition())
+    const vIn = this.nodeOut.getPosition().subV(this.nodeIn.getPosition())
     const vOut = (this.cpath !== undefined
       ? this.cpath[0]
       : this.nodeIn.getPosition()
-    ).sub(this.nodeOut.getPosition())
+    ).subV(this.nodeOut.getPosition())
 
     /*
         const sIn = ArrayUtils.refOfMin<NV_Socket, V>(this.nodeIn.getSocketOutDir(), (this.cpath != undefined)
@@ -353,13 +363,15 @@ export class NvLink {
       this.update(this.delta())
     } else {
       this.refreshSockets()
-      const p1 = this.root.unscale(this.socketOut.getMiddle().sub(this.delta()))
-      let path = `M${p1.str()} `
+      const p1 = this.root.unscale(
+        this.socketOut.getMiddle().subV(this.delta())
+      )
+      let path = `M${p1.toString()} `
       for (let i = 0; i < cPath.length; i++) {
-        path += ` L${cPath[i].str()}`
+        path += ` L${cPath[i].toString()}`
       }
-      const p2 = this.root.unscale(this.socketIn.getMiddle().sub(this.delta()))
-      path += ` L${p2.str()}`
+      const p2 = this.root.unscale(this.socketIn.getMiddle().subV(this.delta()))
+      path += ` L${p2.toString()}`
       this.path.getDom().setAttribute('d', path)
       this.pointerEventPath.getDom().setAttribute('d', path)
       // this.nodeIn.updateLinks();
