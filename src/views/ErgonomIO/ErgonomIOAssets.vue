@@ -1,12 +1,16 @@
 <template>
-  <v-container fluid style="max-height: 100%; overflow: auto">
+  <v-container
+    fluid
+    style="max-height: 100%; overflow: auto;"
+    class="rounded-lg"
+  >
     <pop-up ref="assetInfo">
       <asset-info
         ref="assetInfoComponent"
         @close="$refs.assetInfo.close()"
       ></asset-info>
     </pop-up>
-    <!-- Titre -->
+    <!-- Title -->
     <v-container
       v-if="!this.fullpage"
       class="spacing-playground pa-6 contradiction-analysis"
@@ -18,104 +22,113 @@
       </v-card>
     </v-container>
 
-    <!-- Milieu de page : les différentes cartes de scènes -->
-    <template>
-      <!-- Popup permettant de modifier des données de la scène -->
-      <v-row justify="center">
-        <v-dialog v-model="modifyAsset" max-width="780">
-          <v-card>
-            <v-card-title> Modifier des données </v-card-title>
+    <!-- Modify data of scene -->
+    <v-row justify="center">
+      <v-dialog v-model="modifyAsset" max-width="780">
+        <v-card>
+          <v-card-title> Modify data </v-card-title>
 
-            <!-- Permet de changer le titre de l'asset -->
-            <v-container fluid>
-              <v-row>
-                <v-col cols="3">
-                  <v-card-text> Nouveau titre : </v-card-text>
-                </v-col>
+          <!-- Change title of asset -->
+          <v-container fluid>
+            <v-row>
+              <v-col cols="3">
+                <v-card-text>
+                  New title :
+                </v-card-text>
+              </v-col>
 
-                <v-col cols="4">
-                  <v-text-field v-model="search"> </v-text-field>
-                </v-col>
-              </v-row>
-            </v-container>
+              <v-col cols="4">
+                <v-text-field v-model="search"> </v-text-field>
+              </v-col>
+            </v-row>
+          </v-container>
 
-            <!-- Permet d'ajouter des tags -->
-            <v-container fluid>
-              <v-row>
-                <v-col cols="3">
-                  <v-card-text> Nouveau tag : </v-card-text>
-                </v-col>
+          <!-- Add tags -->
+          <v-container fluid>
+            <v-row>
+              <v-col cols="3">
+                <v-card-text>
+                  New tag :
+                </v-card-text>
+              </v-col>
 
-                <v-col cols="4">
-                  <v-text-field v-model="newTag"> </v-text-field>
-                </v-col>
+              <v-col cols="4">
+                <v-text-field v-model="newTag"> </v-text-field>
+              </v-col>
 
-                <v-col cols="3">
-                  <v-btn v-on:click="addTag(assetChoose, newTag)" icon>
-                    <v-icon v-text="'mdi-plus'"></v-icon>
-                  </v-btn>
-                </v-col>
-              </v-row>
-            </v-container>
-            <!-- Permet de changer la preview de l'asset -->
-            <v-container fluid>
-              <v-img height="270" :src="newImage"> </v-img>
-              <v-btn
-                class="ml-6 mt-6 flex-grow-1"
-                color="green"
-                @click="openUploadFile"
-              >
-                <v-icon v-text="'mdi-upload'"></v-icon>
-                Upload new
-                <input
-                  ref="uploadFileInput"
-                  hidden
-                  type="file"
-                  @change="updateUploadFile"
-                />
-              </v-btn>
-            </v-container>
-
-            <!-- Permet de supprimer des tags -->
-            <v-container
-              fluid
-              :key="indexTag2"
-              v-for="(tag, indexTag2) in assetChoose.parsedTags"
+              <v-col cols="3">
+                <v-btn v-on:click="addTag(assetChoose, newTag)" icon>
+                  <v-icon v-text="'mdi-plus'"></v-icon>
+                </v-btn>
+              </v-col>
+            </v-row>
+          </v-container>
+          <!-- Change preview of asset -->
+          <v-container fluid>
+            <v-img height="270" :src="newImage"> </v-img>
+            <v-btn
+              class="ml-6 mt-6 flex-grow-1"
+              color="green"
+              @click="openUploadFile"
             >
-              <v-row>
-                <v-col cols="2">
-                  <v-card-text>
-                    {{ tag }}
-                  </v-card-text>
-                </v-col>
+              <v-icon v-text="'mdi-upload'"></v-icon>
+              Upload new
+              <input
+                ref="uploadFileInput"
+                hidden
+                type="file"
+                @change="updateUploadFile"
+              />
+            </v-btn>
+          </v-container>
 
-                <v-col cols="3">
-                  <v-btn v-on:click="deleteTag(assetChoose, tag)" icon>
-                    <v-icon v-text="'mdi-delete'"></v-icon>
-                  </v-btn>
-                </v-col>
-              </v-row>
-            </v-container>
+          <!-- Delete tags -->
+          <v-container
+            fluid
+            :key="indexTag2"
+            v-for="(tag, indexTag2) in assetChoose.parsedTags"
+          >
+            <v-row>
+              <v-col cols="2">
+                <v-card-text>
+                  {{ tag }}
+                </v-card-text>
+              </v-col>
 
-            <!-- Permet de sauvegarder les modifications -->
-            <v-card-actions>
-              <v-spacer></v-spacer>
-              <v-btn color="primary" text @click="save(assetChoose)">
-                Save
-              </v-btn>
-            </v-card-actions>
-          </v-card>
-        </v-dialog>
-      </v-row>
+              <v-col cols="3">
+                <v-btn v-on:click="deleteTag(assetChoose, tag)" icon>
+                  <v-icon v-text="'mdi-delete'"></v-icon>
+                </v-btn>
+              </v-col>
+            </v-row>
+          </v-container>
 
-      <!-- Le body de la page centrale -->
+          <!-- Save changes -->
+          <v-card-actions>
+            <v-spacer></v-spacer>
+            <v-btn color="primary" text @click="save(assetChoose)">
+              Save
+            </v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
+    </v-row>
+
+    <!-- Middle of the page: the different scene cards -->
+    <v-card
+      class="d-flex flex-column"
+      :rounded="unrealContext.check() ? 'xl' : 'md'"
+    >
       <v-card
-        :class="!this.fullpage ? 'ma-10' : 'ma-6'"
+        :class="!this.fullpage ? 'ma-10' : 'my-8'"
         class="d-flex flex-row"
-        width="97%"
-        height="700"
+        width="95%"
+        :height="!this.fullpage ? '700' : '850'"
+        style="overflow:hidden"
+        :rounded="unrealContext.check() ? 'xl' : 'md'"
+        elevation="0"
       >
-        <!-- Les différentes catégories -->
+        <!-- The different categories -->
         <v-card width="25%">
           <v-btn width="90%" class="ma-2" v-on:click="clearCategory()">
             Reset filter
@@ -123,7 +136,7 @@
           <v-checkbox
             class="mx-2"
             v-model="displayTag"
-            label="Afficher les tags"
+            label="Display tags"
           ></v-checkbox>
           <v-card-title> Categories : </v-card-title>
 
@@ -133,7 +146,7 @@
               item-key="id"
               activatable
               open-on-click
-              @update:active="(values) => scrollOnElement(values)"
+              @update:active="values => scrollOnElement(values)"
             >
               <template v-slot:prepend="{ open }">
                 <v-icon :class="open ? 'primary--text' : ''">
@@ -144,7 +157,7 @@
           </v-card-text>
         </v-card>
 
-        <!-- Les différents assets -->
+        <!-- The different assets -->
         <v-container class="d-flex flex-wrap overflow-y-auto">
           <v-card
             :width="sizeCardString"
@@ -152,7 +165,7 @@
             v-for="(asset, indexCard) in useCategory ? cardsSort : assets"
           >
             <v-list-item :key="asset.name">
-              <!-- Image de l'asset -->
+              <!-- Asset image  -->
               <v-hover>
                 <template v-slot:default="{ hover }">
                   <v-btn
@@ -171,7 +184,6 @@
                 </template>
               </v-hover>
 
-              <!-- Nom + tags + bouton edit -->
               <v-list-item-content>
                 <v-list-item-title v-html="asset.name"> </v-list-item-title>
 
@@ -195,39 +207,39 @@
           </v-card>
         </v-container>
       </v-card>
-    </template>
 
-    <!-- Les différents boutons -->
-    <v-layout justify-center class="py-4">
-      <v-flex class="flex-grow-0 mx-5">
-        <!-- Bouton permettant de charger un asset -->
-        <v-btn
-          v-on:click="loadAsset"
-          class="primary black--text"
-          large
-          elevation="2"
-        >
-          Load an asset
-          <input
-            accept="application/JSON"
-            ref="uploadFileInput"
-            hidden
-            type="file"
-            @change="updateUploadFileChargerAsset"
-          />
-        </v-btn>
-      </v-flex>
-      <v-flex class="flex-grow-0 mx-5">
-        <!-- Permet de réduire la taille des assets -->
-        <v-btn v-on:click="decreaseSizeCard()" icon>
-          <v-icon v-text="'mdi-minus'"></v-icon>
-        </v-btn>
-        <!-- Permet d'augmenter la taille des assets -->
-        <v-btn v-on:click="increaseSizeCard()" icon>
-          <v-icon v-text="'mdi-plus'"></v-icon>
-        </v-btn>
-      </v-flex>
-    </v-layout>
+      <!-- The different buttons -->
+      <v-layout justify-center>
+        <v-flex class="flex-grow-0 mx-5">
+          <!-- Button to load an asset -->
+          <v-btn
+            v-on:click="loadAsset"
+            class="primary black--text"
+            large
+            elevation="2"
+          >
+            Load an asset
+            <input
+              accept="application/JSON"
+              ref="uploadFileInput"
+              hidden
+              type="file"
+              @change="updateUploadFileChargerAsset"
+            />
+          </v-btn>
+        </v-flex>
+        <v-flex class="flex-grow-0 mx-5">
+          <!-- Allows you to reduce the size of your assets -->
+          <v-btn v-on:click="decreaseSizeCard()" icon>
+            <v-icon v-text="'mdi-minus'"></v-icon>
+          </v-btn>
+          <!-- Allows to increase the size of the assets -->
+          <v-btn v-on:click="increaseSizeCard()" icon>
+            <v-icon v-text="'mdi-plus'"></v-icon>
+          </v-btn>
+        </v-flex>
+      </v-layout>
+    </v-card>
   </v-container>
 </template>
 
@@ -241,7 +253,7 @@ import PopUp from '@/components/PopUp.vue'
 import VueRouter from 'vue-router'
 
 // Classe pour les assets
-class CardModel {
+class CardAsset {
   // Initialisation
   name = 'Asset1.json'
   picture = 'https://cdn.vuetifyjs.com/images/cards/house.jpg'
@@ -264,7 +276,7 @@ class CardModel {
   }
 
   // Permet de construire un asset
-  constructor (params: Partial<CardModel>) {
+  constructor (params: Partial<CardAsset>) {
     Object.assign(this, params)
     try {
       this.parsedTags = JSON.parse(this.tags || '[]')
@@ -274,12 +286,12 @@ class CardModel {
   }
 }
 
-// Interface pour les catégories
+// Interface for categories
 interface TreeItem {
   id: number
   name: string
   children: TreeItem[]
-  asset: CardModel
+  asset: CardAsset
 }
 
 class messageAsset {
@@ -305,11 +317,11 @@ class messageAsset {
 // @group VIEWS
 export default class ErgonomIOAssets extends Vue {
   // Initialisation
-  assets: CardModel[] = []
-  assets2: CardModel[] = []
+  assets: CardAsset[] = []
+  assets2: CardAsset[] = []
 
   useCategory = false
-  cardsSort: CardModel[] = []
+  cardsSort: CardAsset[] = []
   dialog = false
   popup = false
   textPopup = 'texte popup'
@@ -321,7 +333,7 @@ export default class ErgonomIOAssets extends Vue {
 
   modifyAsset = false
   displayTag = false
-  assetChoose: CardModel = new CardModel({ id: 1 })
+  assetChoose: CardAsset = new CardAsset({ id: 1 })
 
   sizeCard = 30
   sizeCardString = '30%'
@@ -337,22 +349,18 @@ export default class ErgonomIOAssets extends Vue {
     id: 0,
     name: 'root',
     children: [],
-    asset: new CardModel({})
+    asset: new CardAsset({})
   }
 
-  // Begin
+  unrealContext = Unreal
+
   mounted (): void {
     this.requeteAPI()
 
     Unreal.callback.$on('unreal-message', (data: unknown) => {
       this.$root.$emit('bottom-message', `Unreal : ${JSON.stringify(data)}`)
 
-      Unreal.send(data)
-
-      var monObjet = data as messageAsset
-      Unreal.send(monObjet.message)
-      Unreal.send(monObjet.id)
-      Unreal.send(monObjet.position)
+      const monObjet = data as messageAsset
 
       API.post(
         this,
@@ -362,13 +370,13 @@ export default class ErgonomIOAssets extends Vue {
           where: [{ id: monObjet.id }]
         })
       ).then((response: Response) => {
-        const monAssetTableau = (
-          response as unknown as Array<Partial<CardModel>>
-        ).map((asset: Partial<CardModel>) => new CardModel(asset))
+        const monAssetTableau = ((response as unknown) as Array<
+          Partial<CardAsset>
+        >).map((asset: Partial<CardAsset>) => new CardAsset(asset))
 
         const monAsset = monAssetTableau[0]
 
-        var objectAsset = {
+        const objectAsset = {
           action: 'aRecup',
           name: monAsset.name,
           id: monAsset.id,
@@ -378,7 +386,7 @@ export default class ErgonomIOAssets extends Vue {
           scale: monObjet.scale
         }
 
-        var object = {
+        const object = {
           menu: 'asset',
           objet: objectAsset
         }
@@ -388,7 +396,8 @@ export default class ErgonomIOAssets extends Vue {
     })
   }
 
-  // Permet de créer un exemple des différentes catégorie avec une hiérarchie
+  // Create example of the different categories with a hierarchy
+  // @arg No arguments required
   createCategory (): void {
     let idUnique = 1
     for (let i = 0; i < 5; i++) {
@@ -396,7 +405,7 @@ export default class ErgonomIOAssets extends Vue {
         id: idUnique,
         name: 'Category ' + idUnique.toString(),
         children: [],
-        asset: new CardModel({})
+        asset: new CardAsset({})
       }
       idUnique++
 
@@ -405,7 +414,7 @@ export default class ErgonomIOAssets extends Vue {
           id: idUnique,
           name: 'Categorie ' + idUnique.toString(),
           children: [],
-          asset: new CardModel({})
+          asset: new CardAsset({})
         }
         idUnique++
         test.children.push(test2)
@@ -415,30 +424,27 @@ export default class ErgonomIOAssets extends Vue {
     }
   }
 
-  // Permet d'ouvrir la popup avec les bonnes informations
-  clickCard (card: CardModel): void {
-    console.log('clickCard : ', card.id)
+  // Open popup with good informations
+  // @arg No arguments required
+  clickCard (card: CardAsset): void {
     this.popup = true
     this.titlePopup = card.name
-
-    if (card.uri.length > 10000) {
-      this.textPopup = card.uri.substring(0, 10000) + '........'
-    } else {
-      this.textPopup = card.uri
-    }
+    this.textPopup =
+      card.uri.length > 10000
+        ? card.uri.substring(0, 10000) + '........'
+        : card.uri
   }
 
-  // Requête API pour récupérer les différents assets
+  // api request for get the different assets
+  // @arg No arguments required
   requeteAPI (): void {
-    console.log('api ')
     API.post(
       this,
       '/resources/assets',
       JSON.stringify({ select: ['name', 'picture', 'id', 'tags'] })
     ).then((response: Response) => {
-      console.log('response ', response)
-      this.assets2 = (response as unknown as Array<Partial<CardModel>>).map(
-        (asset: Partial<CardModel>) => new CardModel(asset)
+      this.assets2 = ((response as unknown) as Array<Partial<CardAsset>>).map(
+        (asset: Partial<CardAsset>) => new CardAsset(asset)
       )
 
       for (let i = 0; i < this.assets2.length; i++) {
@@ -449,36 +455,33 @@ export default class ErgonomIOAssets extends Vue {
     })
   }
 
-  // Permet de modifier le nom d'un asset
-  editNameAsset (asset: CardModel): void {
-    // this.modifyAsset = true
-    // this.assetChoose = asset
-    console.log('editNameAsset')
-    ;(this.$refs.assetInfo as PopUp).open()
+  // Modify name of asset
+  // @arg No arguments required
+  editNameAsset (asset: CardAsset): void {
+    (this.$refs.assetInfo as PopUp).open()
     requestAnimationFrame(() => {
       (this.$refs.assetInfoComponent as AssetInfo).loadData(asset.id)
     })
   }
 
-  // Permet de modifier un asset
-  save (asset: CardModel): void {
-    console.log('save : ', this.search)
+  // Modify name of asset
+  // @arg No arguments required
+  save (asset: CardAsset): void {
     this.modifyAsset = false
 
     if (this.newImage !== '') {
-      console.log('Changement image')
       asset.picture = this.newImage
     }
 
     if (this.search.length !== 0) asset.name = this.search
-    this.releaseAsset(asset)
 
+    this.releaseAsset(asset)
     this.newImage = ''
   }
 
-  // Permet de mettre à jour une scène
-  releaseAsset (asset: CardModel): void {
-    // Requête API pour mettre à jour la scène
+  // Update scene
+  // @arg No arguments required
+  releaseAsset (asset: CardAsset): void {
     const apiFile = new APIAsset({
       name: asset.name,
       uri: asset.uri,
@@ -490,15 +493,16 @@ export default class ErgonomIOAssets extends Vue {
       '/resources/assets/' + asset.id,
       JSON.stringify(apiFile.toJSON())
     )
-      .then((res) => {
+      .then(res => {
         console.log(res)
       })
-      .catch((err) => {
+      .catch(err => {
         console.log(err)
       })
   }
 
-  // Permet de récupérer le fichier qu'on veut upload
+  // Get file of upload
+  // @arg No arguments required
   openUploadFile (): void {
     const uploadFileInput = this.$refs.uploadFileInput as HTMLInputElement
     if (uploadFileInput == null) return
@@ -506,20 +510,20 @@ export default class ErgonomIOAssets extends Vue {
     uploadFileInput.click()
   }
 
-  // Permet de lire le fichier uploadé
+  // Read the upload file
+  // @arg No arguments required
   updateUploadFile (e: Event): void {
     if (e.target == null) return
     const target = e.target as HTMLInputElement
     if (target.files != null && target.files.length > 0) {
-      [...target.files].forEach((file) => {
+      [...target.files].forEach(file => {
         const reader = new FileReader()
         reader.onload = () => {
           const fileString = reader.result as string
 
           this.newImage = fileString
-          console.log('fileString : ', fileString)
         }
-        reader.onerror = (error) => {
+        reader.onerror = error => {
           console.error(error)
           this.$root.$emit('bottom-message', 'Sorry, we cannot read this file.')
         }
@@ -528,81 +532,71 @@ export default class ErgonomIOAssets extends Vue {
     }
   }
 
-  // Permet de trier avec une catégorie à travers la hiérarchie
+  // Some with category
+  // @arg No arguments required
   scrollOnElement (values: number[]): void {
-    console.log('values : ', values)
     if (values.length !== 0) {
       const element = values[0]
-      console.log('values : ', this.rootItem.children[element - 1].name)
       this.sortWithCategory(this.rootItem.children[element - 1].name)
     } else {
-      console.log('clear !')
       this.clearCategory()
     }
   }
 
-  // Permet d'ajouter un tag à un asset
-  addTag (asset: CardModel, tag: string): void {
-    console.log('addTag')
-
+  // Add tag to asset
+  // @arg No arguments required
+  addTag (asset: CardAsset, tag: string): void {
     asset.parsedTags.push(tag)
   }
 
-  // Permet de supprimer un tab d'un asset
-  deleteTag (asset: CardModel, tags: string): void {
-    console.log('deleteTag')
-
+  // Delete tag of asset
+  // @arg No arguments required
+  deleteTag (asset: CardAsset, tags: string): void {
     const index = asset.parsedTags.indexOf(tags, 0)
 
     if (index > -1) {
       asset.parsedTags.splice(index, 1)
     }
+
     this.releaseAsset(asset)
   }
 
-  // Permet de télécharger un asset
-  downloadAsset (asset: CardModel): void {
-    console.log('downloadAsset ! ')
-
+  // Download asset
+  // @arg No arguments required
+  downloadAsset (asset: CardAsset): void {
     const data = JSON.stringify(asset)
     const blob = new Blob([data], { type: 'text/plain' })
 
-    var url = URL.createObjectURL(blob)
-    var pom = document.createElement('a')
+    const url = URL.createObjectURL(blob)
+    const pom = document.createElement('a')
     pom.setAttribute('style', 'display: none;')
     pom.href = url
     pom.setAttribute('download', asset.name + '.json')
     pom.click()
   }
 
-  // Permet de charger une scène à partir d'un fichier scène
+  // Load scene from scene file
+  // @arg No arguments required
   loadAsset (): void {
     console.log('Charger asset')
     this.openUploadFile()
   }
 
-  // Charger un asset
+  // Load asset
+  // @arg No arguments required
   updateUploadFileChargerAsset (e: Event): void {
     if (e.target == null) return
     const target = e.target as HTMLInputElement
     if (target.files != null && target.files.length > 0) {
-      [...target.files].forEach((file) => {
+      [...target.files].forEach(file => {
         const reader = new FileReader()
-        reader.onload = (e) => {
-          console.log(reader.result)
-          console.log('============')
-          console.log('============')
-          console.log('============')
-          console.log(JSON.parse(reader.result as string))
-
-          const test = new CardModel(JSON.parse(reader.result as string))
+        reader.onload = _ => {
+          const test = new CardAsset(JSON.parse(reader.result as string))
           this.assets.push(test)
           this.addAssetAPI(test)
-
-          console.log('test name : ', test.name)
         }
 
-        reader.onerror = (error) => {
+        reader.onerror = error => {
           console.error(error)
           this.$root.$emit('bottom-message', 'Sorry, we cannot read this file.')
         }
@@ -611,8 +605,9 @@ export default class ErgonomIOAssets extends Vue {
     }
   }
 
-  // Permet de faire une requête API pour ajouter un asset
-  addAssetAPI (asset: CardModel): void {
+  // api request for adding an asset
+  // @arg No arguments required
+  addAssetAPI (asset: CardAsset): void {
     API.put(
       this,
       '/resources/assets',
@@ -629,26 +624,28 @@ export default class ErgonomIOAssets extends Vue {
         uri: asset.uri
       }).toJSON()
     ).then((response: Response) => {
-      console.log('api modif asset')
+      console.log('api modif asset : ', response)
     })
   }
 
-  // Permet de baisser la taille des assets
+  // Decrease size of asset cards
+  // @arg No arguments required
   decreaseSizeCard (): void {
-    console.log('decreaseSizeCard')
     this.sizeCard -= 10
     if (this.sizeCard < 30) this.sizeCard = 30
     this.sizeCardString = this.sizeCard.toString() + '%'
   }
 
-  // Permet d'augmenter la taille des assets
+  // Increase size of asset cards
+  // @arg No arguments required
   increaseSizeCard (): void {
     this.sizeCard += 10
     if (this.sizeCard > 60) this.sizeCard = 60
     this.sizeCardString = this.sizeCard.toString() + '%'
   }
 
-  // Permet d'afficher les assets de cette catégorie là uniquement
+  // Display asset of the category
+  // @arg No arguments required
   sortWithCategory (categorie: string): void {
     // Active le trie
     this.useCategory = true
@@ -656,20 +653,22 @@ export default class ErgonomIOAssets extends Vue {
     // Trie les différents assets en fonction de la catégorie
     this.cardsSort = []
     for (let i = 0; i < this.assets.length; i++) {
-      var asset = this.assets[i]
+      const asset = this.assets[i]
 
-      if (asset.parsedTags.some((cat) => cat === categorie)) {
+      if (asset.parsedTags.some(cat => cat === categorie)) {
         this.cardsSort.push(asset)
       }
     }
   }
 
-  // Permet de supprimer le tri de catégorie
+  // Delete the active sort
+  // @arg No arguments required
   clearCategory (): void {
     this.useCategory = false
   }
 
-  // Permet de récupérer toutes les catégories différentes des assets
+  // Get all categories of different assets
+  // @arg No arguments required
   getAllCategory (): void {
     for (let i = 0; i < this.assets.length; i++) {
       const asset = this.assets[i]
@@ -696,7 +695,7 @@ export default class ErgonomIOAssets extends Vue {
         id: idUnique,
         name: this.tableauCategory[i],
         children: [],
-        asset: new CardModel({})
+        asset: new CardAsset({})
       }
       idUnique++
 
@@ -704,11 +703,9 @@ export default class ErgonomIOAssets extends Vue {
     }
   }
 
-  // Permet d'envoyer l'asset à l'instance d'unreal
-  sendUnreal (asset: CardModel): void {
-    console.log('asset.name : ', asset.name)
-    console.log('asset.name : ', asset.id)
-
+  // Send asset for unreal instance
+  // @arg No arguments required
+  sendUnreal (asset: CardAsset): void {
     API.post(
       this,
       '/resources/assets',
@@ -717,22 +714,19 @@ export default class ErgonomIOAssets extends Vue {
         where: [{ id: asset.id }]
       })
     ).then((response: Response) => {
-      const monAssetTableau = (
-        response as unknown as Array<Partial<CardModel>>
-      ).map((asset: Partial<CardModel>) => new CardModel(asset))
+      const monAssetTableau = ((response as unknown) as Array<
+        Partial<CardAsset>
+      >).map((asset: Partial<CardAsset>) => new CardAsset(asset))
 
       const monAsset = monAssetTableau[0]
-
-      console.log(monAsset)
-
-      var objectAsset = {
+      const objectAsset = {
         action: 'envoieAsset',
         name: monAsset.name,
         id: monAsset.id,
         uri: monAsset.uri
       }
 
-      var object = {
+      const object = {
         menu: 'asset',
         objet: objectAsset
       }
