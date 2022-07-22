@@ -131,6 +131,9 @@ export default class NavBar extends Vue {
   mounted (): void {
     this.$root.$on('user-connection', (user: User) => this.setUser(user))
     this.$root.$on('user-disconnection', () => this.removeUser())
+    this.$root.$on('close-navbar', () => (this.drawer = false))
+    this.$root.$on('open-navbar', () => (this.drawer = true))
+    this.$root.$on('toggle-navbar', () => (this.drawer = !this.drawer))
     this.setUser(Session.getUser())
   }
 

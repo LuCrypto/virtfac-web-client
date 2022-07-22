@@ -1,19 +1,20 @@
 <template>
-  <v-container fluid class="d-flex">
-    <iframe v-if="page" class="flex-grow-1 fill-height" :src="page"></iframe>
-    <div v-else>No page to display</div>
-  </v-container>
+  <odoo-i-frame
+    src="http://10.244.77.203/about-routing-analysis"
+  ></odoo-i-frame>
 </template>
 
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator'
+import OdooIFrame from '@/components/OdooIframe.vue'
 
 @Component({
-  name: 'AboutRoutingAnalysis'
+  name: 'AboutRoutingAnalysis',
+  components: {
+    OdooIFrame
+  }
 })
 // @vuese
 // @group VIEWS
-export default class AboutRoutingAnalysis extends Vue {
-  page = 'http://10.244.77.203/about-routing-analysis'
-}
+export default class AboutRoutingAnalysis extends Vue {}
 </script>

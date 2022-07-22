@@ -1,5 +1,5 @@
 <template>
-  <v-container fluid style="overflow: hidden;">
+  <v-container fluid style="overflow: hidden;" class="pa-0">
     <iframe
       style="width: 100%; height: 100%;"
       ref="iframe"
