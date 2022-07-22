@@ -27,11 +27,8 @@ export default class API {
         mode: 'cors' as RequestMode,
         headers: {
           'Content-Type': contentType,
-          Authorization:
-            token != null
-              ? `Bearer ${token}`
-              : 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZmlyc3RuYW1lIjoiUXVlbnRpbiIsImxhc3RuYW1lIjoiTWlzc2xpbiIsIm1haWwiOiJxLm1pc3NsaW5AdW5pc3RyYS5mciIsInBob25lIjoiMDcuODAuNTguMDAuMTIiLCJsb2dpbiI6InFtaXNzbGluIiwicHNldWRvIjoiUXVlbnRpbiIsImFjY2VzcyI6NCwiaWF0IjoxNjUxODAyNTIxfQ.9QsRO8eiPHDx_Pa-KH9bZxJvo2THUfBS2k-sXVXxpNA'
-        }, // TODO : remove this fake Auth
+          Authorization: `Bearer ${token}`
+        },
         method: method
       }
       if (body != null) {
@@ -101,76 +98,6 @@ export default class API {
         })
     })
   }
-
-  // static fetch (
-  //   component: Vue,
-  //   method: string,
-  //   path: string,
-  //   body: string | null,
-  //   params: URLSearchParams | null
-  // ): Promise<Response> {
-  //   // Format parameters
-  //   const apiIP = process.env.VUE_APP_API_SERVER_IP
-  //   const apiPort = process.env.VUE_APP_API_SERVER_PORT
-  //   const token = Session.getToken()
-  //   const url =
-  //     `http://${apiIP}:${apiPort}${path}` + (params != null ? `?${params}` : '')
-  //   // const contentType: string =
-  //   //   body == null
-  //   //     ? 'application/x-www-form-urlencoded'
-  //   //     : 'application/json;charset=utf-8'
-  //   // const request: RequestInit = {
-  //   //   mode: 'cors' as RequestMode,
-  //   //   headers: {
-  //   //     'Content-Type': contentType,
-  //   //     Authorization: token != null ? `Bearer ${token}` : ''
-  //   //   },
-  //   //   method: method
-  //   // }
-  //   // if (body != null) {
-  //   //   request.body = body
-  //   // }
-  //   console.log(`%c${method} ${url}`, 'color: #bada55')
-
-  //   // Process request
-  //   return new Promise((resolve, reject) => {
-  //     const xhttp = new XMLHttpRequest()
-
-  //     try {
-  //       xhttp.open(method, url, true)
-  //       xhttp.setRequestHeader(
-  //         'Authorization',
-  //         token == null ? '' : `Bearer ${token}`
-  //       )
-  //       xhttp.setRequestHeader(
-  //         'Content-type',
-  //         body == null
-  //           ? 'application/x-www-form-urlencoded'
-  //           : 'application/json;charset=utf-8'
-  //       )
-  //       xhttp.onreadystatechange = () => {
-  //         const response = xhttp.responseText
-  //         if (xhttp.status === 200 && response) {
-  //           try {
-  //             const data = JSON.parse(response)
-  //             console.log('Good parsed json :', data)
-  //             resolve(data)
-  //           } catch (e) {
-  //             console.error(e)
-  //             console.log(
-  //               `Invalid parsed json : %c ${response}`,
-  //               'color:  #f5a406'
-  //             )
-  //           }
-  //         }
-  //       }
-  //       xhttp.send(body)
-  //     } catch (e) {
-  //       API.error(component, `Request error on ${url}`, xhttp.status)
-  //       reject(xhttp.status)
-  //     }
-  //   })
-  // }
 
   static error (component: Vue, message: string, error: any) {
     console.error(error, message)

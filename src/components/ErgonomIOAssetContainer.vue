@@ -1,84 +1,86 @@
 <template>
-  <v-card elevation="3" height="700px" class="d-flex flex-row pa-0 ma-0">
-    <pop-up ref="openFilePopUp">
-      <open-asset
-        @close="$refs.openFilePopUp.close()"
-        application="ERGONOM_IO"
+  <maximizable-container>
+    <v-card elevation="3" class="d-flex flex-row flex-grow-1 pa-0 ma-0">
+      <pop-up ref="openFilePopUp">
+        <open-asset
+          @close="$refs.openFilePopUp.close()"
+          application="ERGONOM_IO"
+          accept=".gltf, .obj, .fbx, .stl, .wrl, .glb"
+          :uploadPipeline="onFileUpload"
+          :singleSelect="true"
+          :openFile="true"
+          @fileInput="onFileInput"
+        ></open-asset>
+      </pop-up>
+      <pop-up ref="assetInfo">
+        <asset-info
+          ref="assetInfoComponent"
+          @close="$refs.assetInfo.close()"
+        ></asset-info>
+      </pop-up>
+      <input
+        ref="objUpload"
+        type="file"
         accept=".gltf, .obj, .fbx, .stl, .wrl, .glb"
-        :uploadPipeline="onFileUpload"
-        :singleSelect="true"
-        :openFile="true"
-        @fileInput="onFileInput"
-      ></open-asset>
-    </pop-up>
-    <pop-up ref="assetInfo">
-      <asset-info
-        ref="assetInfoComponent"
-        @close="$refs.assetInfo.close()"
-      ></asset-info>
-    </pop-up>
-    <input
-      ref="objUpload"
-      type="file"
-      accept=".gltf, .obj, .fbx, .stl, .wrl, .glb"
-      hidden
-      @change="onFileUploaded"
-    />
-    <input
-      ref="inputTexture"
-      type="file"
-      accept=".png, .jpg, .exr, .hdr"
-      hidden
-      @change="onTextureUploaded"
-    />
-    <v-navigation-drawer stateless permanent :mini-variant="menuCollapse">
-      <v-list
-        nav
-        dense
-        class="d-flex flex-column justify-start;"
-        style="height: 100%"
+        hidden
+        @change="onFileUploaded"
+      />
+      <input
+        ref="inputTexture"
+        type="file"
+        accept=".png, .jpg, .exr, .hdr"
+        hidden
+        @change="onTextureUploaded"
+      />
+      <v-navigation-drawer stateless permanent :mini-variant="menuCollapse">
+        <v-list
+          nav
+          dense
+          class="d-flex flex-column justify-start;"
+          style="height: 100%"
+        >
+          <v-list-item-group v-model="selectedMenuItem" color="primary">
+            <v-list-item
+              v-for="(menuItem, i) in menuItemList"
+              :key="i"
+              class="justify-start"
+              @click.stop="menuItem.action"
+            >
+              <v-list-item-icon>
+                <v-icon v-text="menuItem.icon"></v-icon>
+              </v-list-item-icon>
+              <v-list-item-content>
+                <v-list-item-title v-text="menuItem.text"></v-list-item-title>
+              </v-list-item-content>
+            </v-list-item>
+          </v-list-item-group>
+          <v-list-item-group class="mt-auto">
+            <v-list-item
+              class="justify-start"
+              @click="menuCollapse = !menuCollapse"
+            >
+              <v-list-item-icon>
+                <v-icon v-if="menuCollapse" v-text="'mdi-arrow-right'"></v-icon>
+                <v-icon v-if="!menuCollapse" v-text="'mdi-arrow-left'"></v-icon>
+              </v-list-item-icon>
+              <v-list-item-content>
+                <v-list-item-title v-text="'Menu labels'"></v-list-item-title>
+              </v-list-item-content>
+            </v-list-item>
+          </v-list-item-group>
+        </v-list>
+      </v-navigation-drawer>
+      <v-container
+        fluid
+        style="width: auto; margin: 0; flex-grow: 1;"
+        class="pa-0 ma-0"
       >
-        <v-list-item-group v-model="selectedMenuItem" color="primary">
-          <v-list-item
-            v-for="(menuItem, i) in menuItemList"
-            :key="i"
-            class="justify-start"
-            @click.stop="menuItem.action"
-          >
-            <v-list-item-icon>
-              <v-icon v-text="menuItem.icon"></v-icon>
-            </v-list-item-icon>
-            <v-list-item-content>
-              <v-list-item-title v-text="menuItem.text"></v-list-item-title>
-            </v-list-item-content>
-          </v-list-item>
-        </v-list-item-group>
-        <v-list-item-group class="mt-auto">
-          <v-list-item
-            class="justify-start"
-            @click="menuCollapse = !menuCollapse"
-          >
-            <v-list-item-icon>
-              <v-icon v-if="menuCollapse" v-text="'mdi-arrow-right'"></v-icon>
-              <v-icon v-if="!menuCollapse" v-text="'mdi-arrow-left'"></v-icon>
-            </v-list-item-icon>
-            <v-list-item-content>
-              <v-list-item-title v-text="'Menu labels'"></v-list-item-title>
-            </v-list-item-content>
-          </v-list-item>
-        </v-list-item-group>
-      </v-list>
-    </v-navigation-drawer>
-    <v-container
-      fluid
-      style="width: auto; margin: 0; flex-grow: 1;"
-      class="pa-0 ma-0"
-    >
-      <model-viewer ref="viewer" :displayInspector="true"></model-viewer>
-    </v-container>
-    <select-pop-up ref="selectPopUp"></select-pop-up>
-    <input-field-pop-up ref="inputFieldPopUp"></input-field-pop-up>
-  </v-card>
+        <model-viewer ref="viewer" :displayInspector="true"></model-viewer>
+      </v-container>
+      <select-pop-up ref="selectPopUp"></select-pop-up>
+      <input-field-pop-up ref="inputFieldPopUp"></input-field-pop-up>
+    </v-card>
+  </maximizable-container>
 </template>
 
 <script lang="ts">
@@ -100,6 +102,7 @@ import { VTKLoader } from 'three/examples/jsm/loaders/VTKLoader'
 import { Rhino3dmLoader } from 'three/examples/jsm/loaders/3DMLoader'
 import { PLYLoader } from 'three/examples/jsm/loaders/PLYLoader'
 import { TDSLoader } from 'three/examples/jsm/loaders/TDSLoader'
+import MaximizableContainer from '@/components/MaximizableContainer.vue'
 
 import {
   BufferGeometry,
@@ -139,6 +142,7 @@ interface SettingItem {
 */
 
 @Component({
+  name: 'ErgonomIOAssetContainer',
   components: {
     ActionContainer,
     SelectPopUp,
@@ -146,9 +150,12 @@ interface SettingItem {
     ModelViewer,
     PopUp,
     OpenAsset,
-    AssetInfo
+    AssetInfo,
+    MaximizableContainer
   }
 })
+// @vuese
+// @group COMPONENTS
 export default class ErgonomIOAssetContainer extends Vue {
   defaultMaterial = new MeshLambertMaterial({
     color: 0xaaaaaa
@@ -585,7 +592,7 @@ export default class ErgonomIOAssetContainer extends Vue {
   }
 
   onFileUpload (file: File): Promise<File> {
-    return new Promise<File>((resolve) => {
+    return new Promise<File>(resolve => {
       const extension = (file.name.split('.').pop() as string).toLowerCase()
       this.loadObjectAsync(
         URL.createObjectURL(file),

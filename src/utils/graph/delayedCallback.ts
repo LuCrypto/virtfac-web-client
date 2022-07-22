@@ -1,3 +1,7 @@
+
+/**
+ * encapsulate a function and limit the rate at which it can be called
+ */
 export class DelayedCallback {
   private func: { (): void }
   private minCallInterval: number
@@ -11,6 +15,9 @@ export class DelayedCallback {
     this.lastCall = 0
   }
 
+  /**
+   * request a call to the enscapsulate function
+   */
   public call () {
     if (Date.now() - this.lastCall > this.minCallInterval) {
       this.func()

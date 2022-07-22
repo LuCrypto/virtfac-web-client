@@ -4,7 +4,13 @@
     <v-app-bar app color="primary" light>
       <v-app-bar-nav-icon @click="drawer = !drawer"></v-app-bar-nav-icon>
       <div class="d-flex align-center">
-        <div class="display-2 font-weight-black">VIRTFac</div>
+        <div
+          class="display-2 font-weight-black"
+          style="user-select: none;"
+          @click="clickTitle()"
+        >
+          VIRTFac
+        </div>
       </div>
       <v-spacer></v-spacer>
 
@@ -102,16 +108,20 @@ import PopUp from '@/components/PopUp.vue'
 import Home from '../views/Home.vue'
 
 @Component({
+  name: 'NavBar',
   components: {
     PopUp,
     Login,
     Account
   }
 })
+// @vuese
+// @group COMPONENTS
 export default class NavBar extends Vue {
   drawer = false
   categories: Map<string, Route[]> = new Map()
   avatar: string | null = null
+  clickTitleNumber = 0
 
   created (): void {
     this.updateMenu()
@@ -121,6 +131,9 @@ export default class NavBar extends Vue {
   mounted (): void {
     this.$root.$on('user-connection', (user: User) => this.setUser(user))
     this.$root.$on('user-disconnection', () => this.removeUser())
+    this.$root.$on('close-navbar', () => (this.drawer = false))
+    this.$root.$on('open-navbar', () => (this.drawer = true))
+    this.$root.$on('toggle-navbar', () => (this.drawer = !this.drawer))
     this.setUser(Session.getUser())
   }
 
@@ -181,6 +194,15 @@ export default class NavBar extends Vue {
     this.$vuetify.theme.dark = !this.$vuetify.theme.dark
     Session.setTheme(this.$vuetify.theme.dark ? 'dark' : 'light')
     this.$root.$emit('changeDarkMode')
+  }
+
+  clickTitle (): void {
+    if (this.clickTitleNumber++ < 10) return
+    fetch(
+      'https://v2.jokeapi.dev/joke/Any?lang=fr&format=txt&type=twopart'
+    ).then(response => {
+      response.text().then(text => this.$root.$emit('bottom-message', text))
+    })
   }
 }
 </script>

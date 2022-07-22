@@ -48,7 +48,11 @@
 import Vue from 'vue'
 import Component from 'vue-class-component'
 
-@Component
+@Component({
+  name: 'InputFieldPopUp'
+})
+// @vuese
+// @group COMPONENTS
 export default class InputFieldPopUp extends Vue {
   show = false
   title = 'Input Field'

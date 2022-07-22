@@ -1,6 +1,7 @@
 .DS_Store
 node_modules
 /dist
+/public/doc
 
 
 # local env files
@@ -23,3 +24,5 @@ pnpm-debug.log*
 *.sw?
 
 .env
+
+

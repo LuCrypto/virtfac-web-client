@@ -49,6 +49,7 @@ import RangeBar, { RangeBarData } from '@/components/charts/RangeBar.vue'
 // import CAEExampleFormat1 from '@/exemples/CAEExampleFormat1'
 
 @Component({
+  name: 'ContradictionAnalysisExpert',
   components: {
     DrawingShopComponent,
     OpenFilePopUp,
@@ -56,6 +57,8 @@ import RangeBar, { RangeBarData } from '@/components/charts/RangeBar.vue'
     RangeBar
   }
 })
+// @vuese
+// @group VIEWS
 export default class ContradictionAnalysisExpert extends Vue {
   formatSelectorPopUp: FormatSelectorPopUp | null = null
   chartTextStyle = '#ffffff'

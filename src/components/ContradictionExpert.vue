@@ -1,5 +1,6 @@
 <template>
-  <v-card elevation="3" height="700" class="d-flex flex-row">
+  <maximizable-container>
+  <v-card elevation="3" class="d-flex flex-row flex-grow-1">
     <v-navigation-drawer stateless permanent :mini-variant="menuCollapse">
       <v-list
         nav
@@ -38,7 +39,101 @@
         </v-list-item-group>
       </v-list>
     </v-navigation-drawer>
-    <v-container class="pa-0" style="width: auto; margin: 0; flex-grow: 1;">
+    <v-container
+      class="pa-0"
+      style="width: auto; margin: 0; flex-grow: 1; position: relative;"
+    >
+      <v-card
+        v-if="showFilter"
+        style="position: absolute; z-index: 1; left: 5px; top: 5px; width: 250px;"
+      >
+        <v-toolbar color="primary" flat dense>
+          <v-toolbar-title class="black--text" style="padding-left: 50px;">
+            Filters
+          </v-toolbar-title>
+        </v-toolbar>
+
+        <v-card-text class="pt-0 pb-0 mt-4">
+          <v-row>
+            <v-col class="px-2">
+              <v-range-slider
+                dense
+                v-model="filterRange"
+                :max="filterBorder[1]"
+                :min="filterBorder[0]"
+                hint="Link weight filter"
+                persistent-hint
+                class="align-center"
+                @change="refreshFilters"
+              >
+                <template v-slot:prepend>
+                  <v-text-field
+                    dense
+                    :value="filterRange[0]"
+                    class="mt-0 pt-0"
+                    hide-details
+                    single-line
+                    type="number"
+                    style="width: 40px"
+                    @change="$set(filterRange, 0, $event)"
+                  ></v-text-field>
+                </template>
+                <template v-slot:append>
+                  <v-text-field
+                    dense
+                    readonly
+                    :value="filterRange[1]"
+                    class="mt-0 pt-0"
+                    hide-details
+                    single-line
+                    type="number"
+                    style="width: 40px"
+                    @change="$set(filterRange, 1, $event)"
+                  ></v-text-field>
+                </template>
+              </v-range-slider>
+            </v-col>
+          </v-row>
+          <v-row>
+            <v-col>
+              <v-switch
+                dense
+                v-model="reverseFilter"
+                :label="`${reverseFilter ? 'Show' : 'Hide'} interval`"
+                inset
+                @change="refreshFilters"
+              >
+              </v-switch>
+            </v-col>
+          </v-row>
+        </v-card-text>
+      </v-card>
+      <v-btn
+        v-if="showFilter"
+        @click="
+          () => {
+            showFilter = !showFilter
+          }
+        "
+        outlined
+        icon
+        style="position: absolute; z-index: 2; left: 11px; top: 11px;"
+        ><v-icon v-text="'mdi-filter-minus'"></v-icon
+      ></v-btn>
+      <v-btn
+        v-else
+        outlined
+        icon
+        style="position: absolute; z-index: 2; left: 11px; top: 11px;"
+        color="primary"
+        @click="
+          () => {
+            showFilter = !showFilter
+          }
+        "
+        ><v-icon v-text="'mdi-filter-plus'"></v-icon
+      ></v-btn>
+
       <NV ref="nodeViewer" :graph="getGraph()" />
     </v-container>
     <pop-up ref="filePopUp">
@@ -49,11 +144,13 @@
         :openFile="true"
         accept=".xlsx"
         @fileInput="handleFile"
+        :uploadPipeline="createConstraintProject"
       ></open-file>
     </pop-up>
     <select-pop-up ref="selectPopUp"></select-pop-up>
     <input-field-pop-up ref="inputFieldPopUp"></input-field-pop-up>
   </v-card>
+  </maximizable-container>
 </template>
 
 <script lang="ts">
@@ -73,6 +170,7 @@ import SelectPopUp from '@/components/popup/SelectPopUp.vue'
 import InputFieldPopUp from '@/components/popup/InputFieldPopUp.vue'
 import { GraphLayout } from '@/utils/graph/graphLayout'
 import PopUp from '@/components/PopUp.vue'
+import MaximizableContainer from './MaximizableContainer.vue'
 
 class MenuItem {
   text: string
@@ -85,6 +183,49 @@ class MenuItem {
   }
 }
 
+class ConstraintProject {
+  public xlsxUri = ''
+  public shapes = new Array<{ date: number; name: string; data: unknown }>()
+
+  constructor (xlsxUri: string) {
+    this.xlsxUri = xlsxUri
+  }
+}
+
+class Range {
+  private _min = 0
+  private _max = 0
+  public onChange: { (sender: Range): void } | null = null
+
+  public get min (): number {
+    return this._min
+  }
+
+  public set min (value) {
+    this._min = value
+    if (this.onChange !== null) this.onChange(this)
+  }
+
+  public get max (): number {
+    return this._max
+  }
+
+  public set max (value) {
+    this._max = value
+    if (this.onChange !== null) this.onChange(this)
+  }
+
+  constructor (
+    min: number,
+    max: number,
+    onChange: { (sender: Range): void } | null = null
+  ) {
+    this._min = min
+    this._max = max
+    this.onChange = onChange
+  }
+}
+
 interface SettingItem {
   id: number
   idApplication: number
@@ -93,15 +234,19 @@ interface SettingItem {
 }
 
 @Component({
+  name: 'ContradictionExpert',
   components: {
     ActionContainer,
     OpenFile,
     PopUp,
     NV,
     SelectPopUp,
-    InputFieldPopUp
+    InputFieldPopUp,
+    MaximizableContainer
   }
 })
+// @vuese
+// @group COMPONENTS
 export default class ContradictionExpert extends Vue {
   selectedMenuItem = -1
   nodeViewer: NV | null = null
@@ -113,6 +258,11 @@ export default class ContradictionExpert extends Vue {
   constraintGraph: ConstraintGraph = new ConstraintGraph()
   fileName = ''
   openedFile: APIFile | null = null
+  openedProject: ConstraintProject | null = null
+  showFilter = false
+  filterRange = [-10, 10]
+  filterBorder = [-10, 10]
+  reverseFilter = true
 
   getGraph (): Graph {
     return (this.constraintGraph as ConstraintGraph).getRawGraph()
@@ -187,64 +337,80 @@ export default class ContradictionExpert extends Vue {
       console.log('This type of file cannot be read yet.')
     } else {
       this.openedFile = files[0]
-      const workbook = XLSX.read(files[0].uri.split('base64,')[1], {
-        type: 'base64'
-      })
+      this.openedProject = JSON.parse(
+        atob(files[0].uri.split('base64,')[1])
+      ) as ConstraintProject
+      console.log(this.openedFile, this.openedProject)
+
+      const workbook = XLSX.read(
+        this.openedProject.xlsxUri.split('base64,')[1],
+        {
+          type: 'base64'
+        }
+      )
       this.constraintGraph.loadXLSX(workbook as IWorkBook)
       this.fileName = files[0].name
+      // this.projectId = files[0].idProject
+      this.filterBorder = [0, 0]
+      this.constraintGraph.getGraph().foreachLink(l => {
+        const w = l.getDataOrDefault<number>('weight', 0)
+        if (w > this.filterBorder[1]) {
+          this.filterBorder[1] = w
+        }
+        if (w < this.filterBorder[0]) {
+          this.filterBorder[0] = w
+        }
+      })
+      this.filterRange = [this.filterBorder[0], this.filterBorder[1]]
     }
+  }
+
+  createConstraintProject (xlsx: File): Promise<File> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = () => {
+        const xlsxUri = reader.result as string
+        const constraintProject = new ConstraintProject(xlsxUri)
+
+        const blob = new Blob([JSON.stringify(constraintProject)], {
+          type: 'application/json;application=virtfac/constraint'
+        })
+        const f = new File([blob], xlsx.name, {
+          type: 'application/json;application=virtfac/constraint'
+        })
+        resolve(f)
+      }
+      reader.onerror = error => {
+        reject(error)
+      }
+      reader.readAsDataURL(xlsx)
+    })
   }
 
   // dropHandler(e : )
   saveShape (): void {
-    /*
-    const settingOBJ = {
-      name: this.fileName,
-      type: 'graph_position',
-      data: this.constraintGraph.getRawGraph().toJsonOBJ()
-    }
-    if (this.openedFile !== null){
-      API.put(
+    //*
+    if (this.openedProject !== null && this.openedFile !== null) {
+      this.openedProject.shapes.push({
+        date: Date.now(),
+        name: 'shape ' + this.openedProject.shapes.length,
+        data: this.constraintGraph.getRawGraph().toJsonOBJ()
+      })
+
+      API.patch(
         this,
-        '/resources/files',
-        JSON.stringify(
-        new APIFile({idProject: this.openedFile.idProject,
-          tags: '["graph_shape"]',
-          mime: 'application/json',
+        '/resources/files/' + this.openedFile.id,
+        JSON.stringify({
           uri:
-          }).toJSON())
-      )
-    }
-    /**/
-    /*
-    if (this.inputFieldPopUp != null) {
-      this.inputFieldPopUp.open(
-        'Save Shape',
-        'enter shape name',
-        this.fileName,
-        text => {
-          if (text != null) {
-            const settingOBJ = {
-              name: text,
-              type: 'graph_position',
-              initialProject: this.fileName,
-              date: new Date(),
-              data: this.constraintGraph.getRawGraph().toJsonOBJ()
-            }
-            API.post(
-              this,
-              '/application-settings',
-              JSON.stringify({
-                idApplication: 2,
-                name: text,
-                json: JSON.stringify(settingOBJ)
-              })
+            'data:application/json;base64,' +
+            Buffer.from(JSON.stringify(this.openedProject), 'utf-8').toString(
+              'base64'
             )
-          }
-        }
+        })
       )
+        .then(console.log)
+        .catch(console.error)
     }
-    /**/
   }
 
   selectLayout (): void {
@@ -305,125 +471,98 @@ export default class ContradictionExpert extends Vue {
   }
 
   loadShape (): void {
-    API.get(
-      this,
-      '/application-settings',
-      new URLSearchParams({ application: 'CONTRADICTION_ANALYSIS' })
-    ).then(response => {
-      const headers = new Array<{
-        text: string
-        value: string
-        align: string
-        sortable: boolean
-        sort: {(a: unknown, b: unknown): number }
-          }>(
-          {
-            text: 'Name',
-            value: 'name',
-            align: 'start',
-            sortable: true,
-            sort: (a: unknown, b: unknown) => {
-              return (a as string).localeCompare(b as string)
-            }
-          },
-          {
-            text: 'Initial Project',
-            value: 'initialProject',
-            align: 'start',
-            sortable: true,
-            sort: (a: unknown, b: unknown) => {
-              return (a as string).localeCompare(b as string)
-            }
-          },
-          {
-            text: 'Date',
-            value: 'date',
-            align: 'end',
-            sortable: true,
-            sort: (a: unknown, b: unknown) => {
-              return new Date(a as string) > new Date(b as string) ? 1 : -1
-            }
-          }
-          )
-      const r = (response as unknown) as SettingItem[]
-      const m = new Array<{
-        name: string
-        initialProject: string
-        date: string
-        return: unknown
-      }>()
-      r.forEach(item => {
-        const setting = JSON.parse(item.json)
-        const it = {
-          name: item.name,
-          initialProject:
-            setting.initialProject === undefined
-              ? 'N.A.'
-              : setting.initialProject,
-          date:
-            setting.date === undefined
-              ? 'N.A.'
-              : new Date(setting.date).toLocaleTimeString() +
-                ' ' +
-                new Date(setting.date).toLocaleDateString(),
-          return: item
-        }
-        if (setting.type === 'graph_position') {
-          m.push(it)
-        }
-      })
+    if (this.openedFile === null) return
+    if (this.openedProject === null) return
 
-      if (this.selectPopUp != null) {
-        this.selectPopUp.open(
-          headers,
-          m,
-          item => {
-            if (item != null) {
-              const settingItem = (item as Record<string, unknown>)
-                .return as SettingItem
-              this.getGraph().applyJson(JSON.parse(settingItem.json).data)
-            }
-          },
-          new Array<{
-            text: string
-            icon: string
-            action: {(item: unknown): void }
-              }>(
-              {
-                text: 'download',
-                icon: 'mdi-download',
-                action: item => {
-                  const a = document.createElement('a')
-                  const file = new Blob(
-                    [
-                      JSON.stringify(
-                        JSON.parse(
-                          ((item as Record<string, unknown>)
-                            .return as SettingItem).json
-                        ).data
-                      )
-                    ],
-                    {
-                      type: 'text/plain'
-                    }
-                  )
-                  a.href = URL.createObjectURL(file)
-                  a.download =
-                  ((item as Record<string, unknown>).name as string) + '.json'
-                  a.click()
-                }
-              },
-              {
-                text: 'delete',
-                icon: 'mdi-delete-outline',
-                action: () => {
-                  console.log('delete item')
-                }
-              }
-              )
+    const headers = new Array<{
+      text: string
+      value: string
+      align: string
+      sortable: boolean
+      sort: {(a: unknown, b: unknown): number }
+        }>(
+        {
+          text: 'Name',
+          value: 'name',
+          align: 'start',
+          sortable: true,
+          sort: (a: unknown, b: unknown) => {
+            return (a as string).localeCompare(b as string)
+          }
+        },
+        {
+          text: 'Date',
+          value: 'date',
+          align: 'end',
+          sortable: true,
+          sort: (a: unknown, b: unknown) => {
+            return new Date(a as string) > new Date(b as string) ? 1 : -1
+          }
+        }
         )
+    const m = new Array<{
+      name: string
+      date: string
+      return: unknown
+    }>()
+    this.openedProject.shapes.forEach(item => {
+      const it = {
+        name: item.name,
+        date:
+          new Date(item.date).toLocaleTimeString() +
+          ' ' +
+          new Date(item.date).toLocaleDateString(),
+        return: item.data
       }
+      m.push(it)
     })
+
+    if (this.selectPopUp != null) {
+      this.selectPopUp.open(
+        headers,
+        m,
+        item => {
+          if (item != null) {
+            this.getGraph().applyJson(
+              (item as Record<string, unknown>).return as Record<
+                string,
+                unknown
+              >
+            )
+          }
+        },
+        new Array<{
+          text: string
+          icon: string
+          action: {(item: unknown): void }
+            }>(
+            {
+              text: 'download',
+              icon: 'mdi-download',
+              action: item => {
+                const a = document.createElement('a')
+                const file = new Blob(
+                  [JSON.stringify((item as Record<string, unknown>).return)],
+                  {
+                    type: 'application/json'
+                  }
+                )
+                a.href = URL.createObjectURL(file)
+                a.download =
+                ((item as Record<string, unknown>).name as string) + '.json'
+                a.click()
+              }
+            },
+            {
+              text: 'delete',
+              icon: 'mdi-delete-outline',
+              action: () => {
+                console.log('delete item')
+              }
+            }
+            )
+      )
+    }
   }
 
   /*
@@ -439,6 +578,17 @@ export default class ContradictionExpert extends Vue {
     console.log(workbook)
     // this.$refs.excel.active = true;
     // console.log(workbook);
+  }
+
+  refreshFilters () {
+    this.constraintGraph.getGraph().foreachLink(l => {
+      const w = l.getDataOrDefault<number>('weight', 0)
+      const inInterval = w <= this.filterRange[1] && w >= this.filterRange[0]
+      l.setData<boolean>(
+        'visible',
+        this.reverseFilter ? inInterval : !inInterval
+      )
+    })
   }
 }
 </script>

@@ -47,6 +47,12 @@ export class MetaData {
     })
     return this
   }
+
+  public copyAllData (source: MetaData): void {
+    source.data.forEach((value, key) => {
+      this.setData(key, value)
+    })
+  }
   // #endregion
   ///
 

@@ -1,5 +1,6 @@
 <template>
   <v-app
+    :class="fullpage ? 'fullpage' : ''"
     ref="app"
     :style="{
       width: `${this.size.x / this.zoom}px`,
@@ -7,14 +8,14 @@
       background: this.transparency ? 'transparent' : ''
     }"
   >
-    <!-- Display of not vue in fullpage -->
+    <!-- Display or not vue in fullpage -->
     <nav-bar v-if="!this.fullpage"></nav-bar>
     <v-main style="background-color: transparent;">
       <router-view style="background-color: transparent;"></router-view>
     </v-main>
 
     <!-- Global bottom message -->
-    <v-snackbar v-model="snackbarShow" :timeout="snackbarTime">
+    <v-snackbar v-model="snackbarShow" :timeout="-1">
       {{ snackbarText }}
 
       <template v-slot:action="{ attrs }">
@@ -38,17 +39,21 @@ import NavBar from '@/components/NavBar.vue'
 import Unreal from '@/utils/unreal'
 
 @Component({
+  name: 'App',
   components: {
     NavBar
   }
 })
+// @vuese
+// @group MAIN
 export default class App extends Vue {
   router: VueRouter = this.$router
   query = this.router.currentRoute.query
   fullpage: boolean = this.query.fullpage === 'true'
   transparency: boolean = this.query.transparency === 'true'
   snackbarShow = false
-  snackbarTime = 4000
+  lastSnackBarCall = 0
+  snackbarTime = 8000
   snackbarText = ''
   zoom = 1
   size = {
@@ -66,7 +71,14 @@ export default class App extends Vue {
     // Global botom message handler
     this.$root.$on('bottom-message', (message: string) => {
       this.snackbarShow = true
+      const snackBarCall = Date.now()
+      this.lastSnackBarCall = snackBarCall
       this.snackbarText = message
+      setTimeout(() => {
+        if (snackBarCall === this.lastSnackBarCall) {
+          this.snackbarShow = false
+        }
+      }, this.snackbarTime)
     })
 
     // User disconnection handler

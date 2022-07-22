@@ -17,7 +17,7 @@ export class GraphLayout {
     stepSize: number,
     positionField = 'position'
   ) {
-    GraphUtils.hierarchization(graph, 'hierarchy')
+    GraphUtils.hierarchization(graph, 'h', 'hierarchy')
 
     graph.foreachNode(n => {
       n.setData<Vec2>(
@@ -41,7 +41,7 @@ export class GraphLayout {
     stepSize: number,
     positionField = 'position'
   ) {
-    GraphUtils.hierarchization(graph, 'hierarchy')
+    GraphUtils.hierarchization(graph, 'h', 'hierarchy')
 
     graph.foreachNode(n => {
       n.setData<Vec2>(
@@ -116,8 +116,6 @@ export class GraphLayout {
        ------  x=0, y>0  ---
        |                   |
        x=-s/2,y=0      x=s/2, y=0
-    loop :
-      get next node with y>0,
     */
 
     let childPositionning: 'LEFT' | 'MIDDLE' | 'RIGHT' = 'MIDDLE'
@@ -154,6 +152,12 @@ export class GraphLayout {
       }
     })
 
+    /*
+    loop :
+      get next node n with y>0, get the moy x coord from already positionned linked nodes and use it as reference.
+      from this x position we determine if we add childs to the left/right or alternate(middle)
+      loop to the next node.
+    */
     for (let i = start + 1; i < nodeArray.length; i++) {
       const node = nodeArray[i].n
 
@@ -243,6 +247,74 @@ export class GraphLayout {
 
     graph.foreachNode(n => {
       n.setData('__fixed', undefined)
+    })
+  }
+
+  public static levelLayout (
+    graph: Graph,
+    levelField: string,
+    positionField: string,
+    xSpacing: number,
+    ySpacing: number,
+    transform?: { (v: Vec2): Vec2 } | undefined
+  ) {
+    const sources = new Array<Node>()
+
+    let maxLevel = 0
+    graph.foreachNode(n => {
+      const level = n.getData<number>(levelField)
+      if (level > maxLevel) maxLevel = level
+      if (level === 0) {
+        sources.push(n)
+      }
+    })
+
+    let maxOffset = 0
+    let maxOffsetOfLevel = new Array<number>(maxLevel + 1)
+    for (let i = 0; i < maxLevel + 1; i++) {
+      maxOffsetOfLevel[i] = 0
+    }
+
+    const __fixed = '__fixed'
+    sources.forEach(n => {
+      const toTravel = new Array<Node>()
+      n.setData<Vec2>(
+        positionField,
+        new Vector2(0, maxOffsetOfLevel[0]++ * ySpacing)
+      )
+      if (maxOffsetOfLevel[0] > maxOffset) maxOffset = maxOffsetOfLevel[0]
+      n.foreachLink(l => {
+        if (!l.getNode().getDataOrDefault<boolean>(__fixed, false)) {
+          toTravel.push(l.getNode())
+          l.getNode().setData<boolean>(__fixed, true)
+        }
+      })
+
+      while (toTravel.length > 0) {
+        const node = toTravel.shift() as Node
+        const level = node.getData<number>(levelField)
+        node.setData<Vec2>(
+          positionField,
+          new Vector2(level * xSpacing, maxOffsetOfLevel[level]++ * ySpacing)
+        )
+        if (maxOffsetOfLevel[level] > maxOffset) {
+          maxOffset = maxOffsetOfLevel[level]
+        }
+        node.foreachLink(l => {
+          if (!l.getNode().getDataOrDefault<boolean>(__fixed, false)) {
+            toTravel.unshift(l.getNode())
+            l.getNode().setData<boolean>(__fixed, true)
+          }
+        })
+      }
+
+      maxOffsetOfLevel = maxOffsetOfLevel.map(() => {
+        return maxOffset
+      })
+    })
+
+    graph.foreachNode(n => {
+      n.setData<undefined>(__fixed, undefined)
     })
   }
 }

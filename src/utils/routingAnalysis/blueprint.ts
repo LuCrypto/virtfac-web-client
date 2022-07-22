@@ -80,6 +80,11 @@ export class Blueprint extends MetaData {
       .delete(link.getOriginNode())
   }
 
+  /**
+   * check if a position is inside a room of the blueprint or not.
+   * @param pos
+   * @returns true: inside, false: outside
+   */
   public isInside (pos: Vec2): boolean {
     let leftCount = 0
     let rightCount = 0
@@ -131,6 +136,7 @@ export class Blueprint extends MetaData {
         .delete(arg.link.getOriginNode())
     }, this)
 
+    // listener to refresh the length attribute on links
     this.wallGraph.onNodeDataChanged().addMappedListener(
       'position',
       arg => {
@@ -161,6 +167,8 @@ export class Blueprint extends MetaData {
       },
       this
     )
+
+    // listener to refresh the length attribute on links when the global scale is changed
     this.onDataChanged().addMappedListener(
       'scale',
       () => {

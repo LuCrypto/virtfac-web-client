@@ -1,7 +1,7 @@
 <template>
-  <v-card>
+  <v-card flat>
     <!-- Header -->
-    <v-toolbar color="primary" flat>
+    <v-toolbar color="primary" flat v-if="this.header">
       <v-toolbar-title class="black--text">
         <v-icon left v-text="'mdi-file-document'"></v-icon>
         {{ openFile ? 'Open files' : 'Files manager' }}
@@ -9,7 +9,7 @@
     </v-toolbar>
 
     <!-- Popup content -->
-    <v-card :height="this.isMobileView ? 470 : undefined">
+    <v-card :height="this.isMobileView && this.header ? 470 : undefined" flat>
       <v-container
         fluid
         style="height: 100%; max-height: 100%"
@@ -310,15 +310,38 @@ class DataTableHeaderSelector {
   }
 }
 
-@Component
+type Pipeline = {
+  (file: File): Promise<File>
+} | null
+
+@Component({
+  name: 'OpenFilePopUp'
+})
+// @vuese
+// @group COMPONENTS
+// Component to open a file from the API data.
+// A user can upload a file, or open one.
+// It is possible to filter the files according
+// to the application to select only compatible files.
 export default class OpenFilePopUp extends Vue {
+  // @vuese
+  // Application reference to select only compatible files
   @Prop({ default: () => 'all' }) private application!: string
-  @Prop({ default: () => true }) private singleSelect!: boolean
-  @Prop({ default: () => false }) private openFile!: boolean
+  // @vuese
+  // Filter to show only compatible files extensions when upload file browser is open
   @Prop({ default: () => '' }) private accept!: string
-  @Prop({ default: () => null }) private uploadPipeline!: {
-    (file: File): Promise<File>
-  } | null
+  // @vuese
+  // Middleware callback executed before file uploading on API
+  @Prop({ default: () => null }) private uploadPipeline!: Pipeline
+  // @vuese
+  // Defines if multiple files can be selected or not
+  @Prop({ default: () => true }) private singleSelect!: boolean
+  // @vuese
+  // Defines whether a file can be opened
+  @Prop({ default: () => false }) private openFile!: boolean
+  // @vuese
+  // Display or not the "File Manager" header.
+  @Prop({ default: () => true }) private header!: boolean
 
   waitingTasks = 3
 
@@ -382,7 +405,8 @@ export default class OpenFilePopUp extends Vue {
         sort: (a: string, b: string): number => {
           return a < b ? -1 : a > b ? 1 : 0
         }
-      }
+      },
+      active: false
     }),
     new DataTableHeaderSelector({
       editable: false,
@@ -400,21 +424,32 @@ export default class OpenFilePopUp extends Vue {
   fileSettingsIsSaving = false
   myFormatList: APIFileMIME[] = []
 
-  /* Getters */
+  // @vuese
+  // Getter to check mobile view
+  // @arg No arguments required
   get isMobileView (): boolean {
     return this.$vuetify.breakpoint.smAndDown
   }
 
+  // @vuese
+  // Getter to get active file table header
+  // @arg No arguments required
   get activeHeaders (): DataTableHeader[] {
     return this.headersSelector
       .filter(selector => selector.active)
       .map(selector => selector.header)
   }
 
+  // @vuese
+  // Getter for filtered file table headers
+  // @arg No arguments required
   get editableHeadersSelector (): DataTableHeaderSelector[] {
     return this.headersSelector.filter(selector => selector.editable)
   }
 
+  // @vuese
+  // Getter for format list with automatic MIME filter
+  // @arg No arguments required
   get formatList (): APIFileMIME[] {
     return this.myFormatList.filter(
       mime =>
@@ -423,16 +458,25 @@ export default class OpenFilePopUp extends Vue {
     )
   }
 
+  // @vuese
+  // Mounted function
+  // @arg No arguments required
   mounted (): void {
     this.load()
   }
 
+  // @vuese
+  // Load function to get all groups and formats
+  // @arg No arguments required
   load (): void {
     this.fileSettingsIsSaving = false
     this.getAllGroups()
     this.getAllFormats()
   }
 
+  // @vuese
+  // Load groups from API
+  // @arg No arguments required
   getAllGroups (): void {
     API.get(this, '/user/groups', null).then((reponse: Response) => {
       const groupListData = (reponse as unknown) as APIGroupItem[]
@@ -444,6 +488,9 @@ export default class OpenFilePopUp extends Vue {
     })
   }
 
+  // @vuese
+  // Load formats from API
+  // @arg No arguments required
   getAllFormats (): void {
     API.get(this, '/application/formats/' + this.application, null).then(
       (response: Response) => {
@@ -478,6 +525,9 @@ export default class OpenFilePopUp extends Vue {
     )
   }
 
+  // @vuese
+  // Get all compatible file list from API
+  // @arg The argument is a json value representing select and where to filter files
   getAllFiles (fileParams: string): void {
     API.post(this, '/resources/files', fileParams).then(
       (response: Response) => {
@@ -498,6 +548,9 @@ export default class OpenFilePopUp extends Vue {
     )
   }
 
+  // @vuese
+  // Get all tags from file list
+  // @arg No arguments required
   getAllTags (): void {
     this.tagList = []
     this.myfileList.forEach(fileItem => {
@@ -509,16 +562,16 @@ export default class OpenFilePopUp extends Vue {
     })
   }
 
-  /*
-    "value" is not used, because value take each column value without column information.
-    Instead, I use "item" with all data included in current row.
-    "search" is also not used, because his value are always set to 'true' (because with
-    empty value, the custom filter is not called).
-    Instead, we use this.seach who is binded value of search bar.
-    To refresh customFilter with tag list, we update :key binded on this.refreshTableKey
-    on table component when tag list changes.
-   */
-
+  // @vuese
+  // Custom file filter method to show files by tags, groups, and search bar
+  // "value" argument is not used, because value take each column value without column information.
+  // Instead, I use "item" with all data included in current row.
+  // "search" argument is also not used, because his value are always set to 'true' (because with
+  // empty value, the custom filter is not called).
+  // Instead, we use this.seach who is binded value of search bar.
+  // To refresh customFilter with tag list, we update :key binded on this.refreshTableKey
+  // on table component when tag list changes.
+  // @arg item from file list
   customFilter (
     _value: unknown,
     _search: string | null,
@@ -543,6 +596,7 @@ export default class OpenFilePopUp extends Vue {
   }
 
   uploadFile (file: APIFile): void {
+    console.log('Upload file with mime :', file.mime)
     API.put(this, '/resources/files', JSON.stringify(file.toJSON()))
       .then((response: Response) => {
         const id = ((response as unknown) as { id: number }).id
@@ -573,6 +627,8 @@ export default class OpenFilePopUp extends Vue {
         }
         reader.onerror = error => {
           console.error(error)
+          // Send message to root container to display error
+          // @arg String message to display
           this.$root.$emit('bottom-message', 'Sorry, we cannot read this file.')
         }
         reader.readAsDataURL(f)
@@ -637,7 +693,12 @@ export default class OpenFilePopUp extends Vue {
   }
 
   cancel (): void {
+    // Open file action is cancelled
+    // @arg No arguments required
     this.$emit('cancel')
+
+    // Close the parent popup (if it exists)
+    // @arg No arguments required
     this.$emit('close')
   }
 
@@ -659,7 +720,11 @@ export default class OpenFilePopUp extends Vue {
       const fileResult = (response as unknown) as APIFile[]
       this.loadFileTasks -= 1
       if (this.loadFileTasks === 0) {
+        // Send file content to parent component
+        // @arg fileResult an array of selected files content
         this.$emit('fileInput', fileResult)
+
+        // Close the parent popup (if it exists)
         this.$emit('close')
       }
     })

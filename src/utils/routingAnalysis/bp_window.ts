@@ -8,6 +8,9 @@ export interface Destroyable {
   destroy(): void
 }
 
+/**
+ * Display element for doors and windows on layout walls
+ */
 export class BpWindow implements Destroyable {
   private collider: NvEl
   private container: BlueprintContainer

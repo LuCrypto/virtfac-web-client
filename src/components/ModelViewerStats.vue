@@ -144,8 +144,10 @@ export class Panel {
 }
 
 @Component({
-  components: {}
+  name: 'ModelViewerStats'
 })
+// @vuese
+// @group COMPONENTS
 export default class ModelViewerStats extends Vue {
   @Prop({ default: () => false }) private pannelIds!: number[]
 

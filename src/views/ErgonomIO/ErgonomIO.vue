@@ -24,7 +24,11 @@
 
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator'
-@Component
+@Component({
+  name: 'ErgonomIO'
+})
+// @vuese
+// @group VIEWS
 export default class ErgonomIO extends Vue {
   mounted (): void {
     console.log('Hello Ergonom.io')

@@ -51,7 +51,8 @@ $typoOptions: display-4 display-3 display-2 display-1 headline title subtitle-1
 
 /* Scrollbar */
 ::-webkit-scrollbar {
-  width: 10px;
+  width: 4px;
+  height: 4px;
 }
 
 ::-webkit-scrollbar-thumb {
@@ -135,6 +136,18 @@ $typoOptions: display-4 display-3 display-2 display-1 headline title subtitle-1
 
 /* iframe */
 iframe {
+  display: block;
   border-style: solid;
   border-width: 0;
+}
+
+/* svg */
+svg {
+  display: block;
+}
+
+/* scroolbar */
+.fullpage ::-webkit-scrollbar {
+  width: 20px;
+  height: 20px;
 }

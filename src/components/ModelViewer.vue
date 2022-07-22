@@ -4,7 +4,6 @@
   max-width: 100%;
   max-height: 100%;
   aspect-ratio: 1/1;
-  width: 10000px;
   border: dashed;
   border-width: thin;
   left: 50%;
@@ -19,13 +18,13 @@
   <v-container
     fluid
     ref="mainContainer"
-    style="width:100%; height:100%; display:flex; flex-direction:row"
-    class="pa-0 ma-0"
+    style="height:100%"
+    class="pa-0 ma-0 d-flex flex-row flex-grow-1"
   >
     <div
+      ref="viewerContainer"
       class="viewer-3d"
-      ref="canvasContainer"
-      style="overflow:hidden; position:relative"
+      style="overflow:hidden; position:relative;"
     >
       <model-viewer-stats
         ref="stats"
@@ -35,7 +34,7 @@
         <v-layout class="d-flex flex-row">
           <v-btn
             elevation="2"
-            class="ma-2"
+            class="ma-2 black--text"
             color="primary"
             style="pointer-events:visible"
             @click="screenShotButtonClick"
@@ -61,6 +60,10 @@
           ></v-slider>
         </v-layout>
       </div>
+      <div
+        ref="canvasContainer"
+        style="position:absolute; width:100%; height:100%"
+      ></div>
     </div>
     <v-container
       ref="hierarchy"
@@ -162,7 +165,7 @@
           </template>
         </v-simple-table>
       </v-card>
-      <v-btn dense color="primary" style="width:100%">
+      <v-btn dense color="primary" class="ma-2 black--text" style="width:100%">
         <v-toolbar-title dense class="black--text">
           <v-icon left v-text="'mdi-plus'"></v-icon>
         </v-toolbar-title>
@@ -171,11 +174,11 @@
     </v-container>
     <v-btn
       fab
-      small
+      x-small
       elevation="0"
       v-if="displayInspector"
-      class="ma-1"
-      style="position:absolute; top:0px; right:0px"
+      class="ma-1 black--text"
+      style="position:absolute; top:0px; right:33px"
       color="primary"
       @click="switchInspectorActive"
     >
@@ -192,24 +195,38 @@ import V from '@/utils/vector'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 import { GLTFLoader, GLTF } from 'three/examples/jsm/loaders/GLTFLoader'
 import { BVHLoader, BVH } from 'three/examples/jsm/loaders/BVHLoader'
-import { BoxHelper, GridHelper, Group, Mesh, Object3D } from 'three'
+import {
+  BoxHelper,
+  Euler,
+  GridHelper,
+  Group,
+  Mesh,
+  Object3D,
+  Vector3
+} from 'three'
 import { TransformControls } from 'three/examples/jsm/controls/TransformControls'
 import { Prop } from 'vue-property-decorator'
 import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader'
 import { studioEnvMap } from '@/utils/imageData'
 import TreeExplorer from '@/components/TreeExplorer.vue'
 import ModelViewerStats from '@/components/ModelViewerStats.vue'
+import { UndoManager, Action } from '@/utils/undoManager'
 
 // import AVATAR from '@/utils/avatar'
 
 @Component({
+  name: 'ModelViewer',
   components: {
     TreeExplorer,
     ModelViewerStats
   }
 })
+// @vuese
+// @group COMPONENTS
 export default class ModelViewer extends Vue {
   @Prop({ default: () => false }) private displayInspector!: boolean
+
+  undoManager = new UndoManager()
 
   inspectorActive = false
   switchInspectorActive (): void {
@@ -300,6 +317,12 @@ export default class ModelViewer extends Vue {
   private gizmo: TransformControls | null = null
   private controledObject: Object3D | null = null
 
+  private savedTransform: {
+    position: Vector3
+    rotation: Euler
+    scale: Vector3
+  } | null = null
+
   public controlMesh (obj: Object3D | null): void {
     this.controledObject = obj
     if (obj === null) {
@@ -325,6 +348,60 @@ export default class ModelViewer extends Vue {
         })
         this.gizmo.addEventListener('dragging-changed', e => {
           this.controls.enabled = !e.value
+        })
+        this.gizmo.addEventListener('mouseDown', e => {
+          const obj = this.gizmo?.object as Object3D
+          this.savedTransform = {
+            position: obj.position.clone(),
+            rotation: obj.rotation.clone(),
+            scale: obj.scale.clone()
+          }
+        })
+        this.gizmo.addEventListener('mouseUp', e => {
+          if (this.savedTransform !== null) {
+            const obj = this.gizmo?.object as Object3D
+            const initTransform = this.savedTransform
+            const finalTransform = {
+              position: obj.position.clone(),
+              rotation: obj.rotation.clone(),
+              scale: obj.scale.clone()
+            }
+            this.undoManager.addAction(
+              new Action(
+                () => {
+                  return new Promise<void>(resolve => {
+                    obj.position.copy(initTransform.position)
+                    obj.rotation.copy(initTransform.rotation)
+                    obj.scale.copy(initTransform.scale)
+                    obj.updateMatrix()
+                    this.updateTransformMatrix()
+                    const h = this.boxHelpers.get(obj as Group)
+                    if (h !== undefined) {
+                      h.update()
+                    }
+                    this.draw()
+                    resolve()
+                  })
+                },
+                () => {
+                  return new Promise<void>(resolve => {
+                    obj.position.copy(finalTransform.position)
+                    obj.rotation.copy(finalTransform.rotation)
+                    obj.scale.copy(finalTransform.scale)
+                    obj.updateMatrix()
+                    this.updateTransformMatrix()
+                    const h = this.boxHelpers.get(obj as Group)
+                    if (h !== undefined) {
+                      h.update()
+                    }
+                    this.draw()
+                    resolve()
+                  })
+                }
+              )
+            )
+            this.savedTransform = null
+          }
         })
       }
       this.gizmo.attach(obj)
@@ -496,7 +573,9 @@ export default class ModelViewer extends Vue {
 
     this.container = this.$refs.canvasContainer as HTMLElement
     this.container.appendChild(this.renderer.domElement)
-    this.container.removeChild(this.screenshotViewer)
+    ;(this.$refs.viewerContainer as HTMLElement).removeChild(
+      this.screenshotViewer
+    )
 
     this.renderer.setClearColor(0x000000, 0)
     this.renderer.shadowMap.enabled = true
@@ -516,10 +595,9 @@ export default class ModelViewer extends Vue {
 
     this.setEnvMap(studioEnvMap, 'HDR')
 
-    this.createSphere(0, 0, 0, 1)
-
     this.fov = 75
 
+    this.undoManager.bind()
     // Update scene
     this.updateSize()
     this.loop()
@@ -572,14 +650,26 @@ export default class ModelViewer extends Vue {
 
   updateSize (): void {
     const size = new V(
-      this.renderer.domElement.offsetWidth,
-      this.renderer.domElement.offsetHeight
+      this.container ? this.container.offsetWidth : 0,
+      this.container ? this.container.offsetHeight : 0
     )
+
+    if (this.screenshotViewer !== null) {
+      if (size.x > size.y) {
+        this.screenshotViewer.style.height = `${size.y}px`
+        this.screenshotViewer.style.width = ''
+      } else {
+        this.screenshotViewer.style.height = ''
+        this.screenshotViewer.style.width = `${size.x}px`
+      }
+    }
+
     if (!this.size.equal(size)) {
       this.size = size
       this.camera.aspect = this.size.x / this.size.y
       this.camera.updateProjectionMatrix()
-      this.renderer.setSize(this.size.x, this.size.y)
+
+      this.renderer.setSize(this.size.x, this.size.y, false)
       this.controls.update()
     }
   }

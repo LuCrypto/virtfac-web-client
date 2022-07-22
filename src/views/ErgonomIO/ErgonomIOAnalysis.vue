@@ -1,7 +1,13 @@
+<style>
+.v-badge * {
+  color: black !important;
+}
+</style>
+
 <template>
   <v-container
     fluid
-    class="d-flex flex-wrap pt-6 pl-6"
+    class="d-flex flex-wrap pt-6 pl-6 flex-grow-1"
     style="max-height: 100%; overflow: auto;"
   >
     <v-container
@@ -71,26 +77,95 @@
               </v-list>
             </v-navigation-drawer>
 
-            <v-layout column class="ma-0">
-              <div style="width: 100%; height: 10px; flex-grow: 1;">
-                <!-- Score RULA -->
-                <v-card style="z-index: 10;" class="currentScore">
-                  Score RULA : {{ this.rula ? this.rula.currentScore : 0 }}
-                </v-card>
+            <v-col class="pa-0 d-flex flex-column" style="overflow: hidden;">
+              <!-- Rows -->
+              <v-row class="ma-0 flex-grow-1">
+                <model-viewer-2
+                  :displayFog="true"
+                  ref="viewer"
+                ></model-viewer-2>
+              </v-row>
+              <v-row class="ma-0 flex-grow-0">
+                <v-container class="flex-grow-0 ma-0 pa-0" fluid>
+                  <v-row no-gutters class="align-center justify-center">
+                    <!-- Player control -->
+                    <v-col no-gutters class="flex-grow-0">
+                      <v-row no-gutters class="flex-nowrap pa-2 align-center">
+                        <v-btn fab x-small class="mr-2 primary--text">
+                          <v-icon>mdi-format-list-bulleted-square</v-icon>
+                        </v-btn>
+                        <v-btn fab x-small class="mr-2">
+                          <v-icon>mdi-skip-next</v-icon>
+                        </v-btn>
+                        <v-btn fab small class="mr-2 primary black--text">
+                          <v-icon>mdi-play</v-icon>
+                        </v-btn>
+                        <v-btn fab x-small class="mr-2">
+                          <v-icon>mdi-pause</v-icon>
+                        </v-btn>
 
-                <!-- Model viewer -->
-                <ModelViewer ref="viewer"></ModelViewer>
-              </div>
-              <v-slider
-                v-model="animationValue"
-                @input="rula.update()"
-                dense
-                min="0"
-                max="1"
-                step="0.001"
-                class="flex-grow-0 px-6 pt-5"
-              ></v-slider>
-            </v-layout>
+                        <v-btn fab x-small>
+                          <v-icon>mdi-skip-previous</v-icon>
+                        </v-btn>
+                      </v-row>
+                    </v-col>
+                    <v-col no-gutters>
+                      <v-tabs show-arrows align-with-title>
+                        <v-tabs-slider></v-tabs-slider>
+                        <v-tab>
+                          <v-badge
+                            :color="this.data[this.frame].getRulaColor()"
+                            inline
+                            :value="this.data[this.frame].getRulaScore() >= 0"
+                            :content="this.data[this.frame].getRulaScore()"
+                          >
+                            Rula
+                          </v-badge>
+                        </v-tab>
+                        <v-tab
+                          ><v-badge color="primary" value="" content="0">
+                            Input
+                          </v-badge></v-tab
+                        >
+                        <v-tab
+                          ><v-badge color="primary" value="" content="0">
+                            Output
+                          </v-badge></v-tab
+                        >
+                      </v-tabs>
+                    </v-col>
+                  </v-row>
+                  <v-row no-gutters>
+                    <v-col
+                      no-gutters
+                      class="flex-grow-0 ma-2"
+                      style="min-width: 250px; max-height: 400px; overflow: auto"
+                    >
+                      <v-expansion-panels flat tile>
+                        <v-expansion-panel
+                          v-for="(item, i) in axisNeuronSkeleton"
+                          :key="i"
+                          class="ma-0"
+                        >
+                          <v-expansion-panel-header
+                            ripple
+                            expand-icon="mdi-menu-down"
+                          >
+                            {{ item }}
+                          </v-expansion-panel-header>
+                          <v-expansion-panel-content
+                            >Rotation</v-expansion-panel-content
+                          >
+                        </v-expansion-panel>
+                      </v-expansion-panels>
+                    </v-col>
+                    <v-col no-gutters class="d-flex">
+                      <graph-chart></graph-chart>
+                    </v-col>
+                  </v-row>
+                </v-container>
+              </v-row>
+            </v-col>
           </v-layout>
         </v-card-text>
       </v-card>
@@ -111,14 +186,18 @@
 
 <script lang="ts">
 import Vue from 'vue'
-import { Session } from '@/utils/session'
 import Component from 'vue-class-component'
-import ModelViewer from '@/components/ModelViewer.vue'
+import ModelViewer2 from '@/components/ModelViewer2.vue'
 import OpenFile from '@/components/OpenFile.vue'
 import { APIFile } from '@/utils/models'
 import * as THREE from 'three'
-import RULA from '@/utils/rula'
+import RULA, { RULA_LABELS } from '@/utils/rula'
 import PopUp from '@/components/PopUp.vue'
+import GraphChart from '@/components/charts/graphChart.vue'
+import { AxisNeuronSkeleton, UnrealSkeleton } from '@/utils/avatar'
+import T from '@/utils/transform'
+
+import * as SkeletonUtils from 'three/examples/jsm/utils/SkeletonUtils'
 
 class SkeletonHelper extends THREE.SkeletonHelper {
   skeleton: THREE.Skeleton | null = null
@@ -135,49 +214,127 @@ class MenuItem {
   }
 }
 
+class DataFrame {
+  rula: Map<string, number> = new Map<string, number>()
+  input: Map<string, T> = new Map<string, T>()
+  output: Map<string, T> = new Map<string, T>()
+
+  constructor (data: Partial<DataFrame> | null = null) {
+    Object.assign(this, data)
+  }
+
+  getRulaScore (): number {
+    return this.rula.get('FINAL_SCORE') || -1
+  }
+
+  getRulaColor (): string {
+    const score = this.getRulaScore()
+    return score <= 2
+      ? 'green'
+      : score <= 4
+        ? 'yellow'
+        : score <= 6
+          ? 'orange'
+          : 'red'
+  }
+}
+
+interface SkeletonUtilsModule {
+  retarget: (
+    target: THREE.Object3D | THREE.Skeleton,
+    source: THREE.Object3D | THREE.Skeleton,
+    options: any
+  ) => void
+}
+
 @Component({
+  name: 'AvatarAnimationComponent',
   components: {
-    ModelViewer,
+    ModelViewer2,
     OpenFile,
-    PopUp
+    PopUp,
+    GraphChart
   }
 })
+// @vuese
+// @group VIEWS
 export default class AvatarAnimationComponent extends Vue {
   selectedMenuItem = -1
   menuCollapse = true
   menuItemList: MenuItem[] = []
-  viewer: ModelViewer | null = null
+  viewer: ModelViewer2 | null = null
   animationValue = 0
   rula: RULA | null = null
   bvhSkeletonHelper: SkeletonHelper | null = null
+  unrealSkeletonHelper: SkeletonHelper | null = null
   mixer: THREE.AnimationMixer | null = null
   animationTime = 0
   animationDuration = 0
   clock = new THREE.Clock()
 
-  mounted (): void {
-    this.viewer = this.$refs.viewer as ModelViewer
-    this.createMenu()
-    this.createAvatar()
-    this.rula = new RULA(this.viewer.scene)
-    this.updateTheme()
+  // Analysed data
+  data: DataFrame[] = [new DataFrame()]
+  frame = 0
 
-    this.$root.$on('changeDarkMode', () => {
-      this.updateTheme()
-    })
+  axisNeuronSkeleton = AxisNeuronSkeleton
+  unrealSkeleton = UnrealSkeleton
+  rulaLabels = Object.keys(RULA_LABELS)
+
+  // Bone reatrgeting
+  options = {
+    hip: 'pelvis',
+    names: {
+      pelvis: 'Spine',
+      spine_01: 'Spine1',
+      spine_02: 'Spine2',
+      spine_03: 'Spine3',
+      neck_01: 'Neck',
+      head: 'Head',
+
+      upperarm_r: 'RightArm',
+      lowerarm_r: 'RightForeArm',
+      hand_r: 'RightHand',
+
+      upperarm_l: 'LeftArm',
+      lowerarm_l: 'LeftForeArm',
+      hand_l: 'LeftHand',
+
+      thigh_r: 'RightUpLeg',
+      calf_r: 'RightLeg',
+      foot_r: 'RightFoot',
+
+      thigh_l: 'LeftUpLeg',
+      calf_l: 'LeftLeg',
+      foot_l: 'LeftFoot'
+    }
+
+    // hip: 'pelvis',
+    // names: {
+    //   Spine: 'pelvis'
+    //   // Spine1: 'spine_01',
+    //   // Spine2: 'spine_02',
+    //   // Spine3: 'spine_03',
+    //   // Neck: 'neck_01',
+    //   // Head: 'head',
+    //   // RightArm: 'upperarm_r',
+    //   // RightForeArm: 'lowerarm_r',
+    //   // RightHand: 'hand_r',
+    //   // LeftArm: 'upperarm_l',
+    //   // LeftForeArm: 'lowerarm_l',
+    //   // LeftHand: 'hand_l',
+    //   // RightUpLeg: 'thigh_r',
+    //   // RightLeg: 'calf_r',
+    //   // RightFoot: 'foot_r',
+    //   // LeftUpLeg: 'thigh_l',
+    //   // LeftLeg: 'calf_l',
+    //   // LeftFoot: 'foot_l'
+    // }
   }
 
-  // TODO : put updateTheme in ModelViewer
-  updateTheme (): void {
-    if (this.viewer !== null) {
-      if (Session.getTheme() === 'dark') {
-        this.viewer.setFogActive(false, 0x1e1e1e)
-        this.viewer.setGrid(100, 100, 0x555555, 0x1e1e1e, 0xeeeeee)
-      } else {
-        this.viewer.setFogActive(false, 0xfefefe)
-        this.viewer.setGrid(100, 100, 0xaaaaaa, 0xfefefe, 0x111111)
-      }
-    }
+  mounted (): void {
+    this.viewer = this.$refs.viewer as ModelViewer2
+    this.createMenu()
+    this.createAvatar()
   }
 
   createMenu (): void {
@@ -203,21 +360,85 @@ export default class AvatarAnimationComponent extends Vue {
       .loadGLTFFromPath('./avatar.gltf')
       .then(gltf => {
         gltf.scene.children[0].position.set(0, 0, -2)
+        gltf.scene.children[0].scale.set(100, 100, 100)
+
+        console.log(gltf)
+        const bones: THREE.Bone[] = []
         gltf.scene.traverse(child => {
           if (child instanceof THREE.Mesh) {
             child.material = material
           }
 
-          if (child instanceof THREE.Bone && child.name === 'mixamorig1Hips') {
-            const helper = new THREE.SkeletonHelper(child)
-            const mat = helper.material as THREE.LineBasicMaterial
-            mat.linewidth = 3
-            helper.visible = true
-            viewer.scene.add(helper)
+          if (child instanceof THREE.Bone) {
+            bones.push(child)
+
+            // Color in yellow and create skelton helper on root bone
+            if (child.name === 'pelvis') {
+              const helper = new THREE.SkeletonHelper(child)
+              this.unrealSkeletonHelper = helper as SkeletonHelper
+              const mat = helper.material as THREE.LineBasicMaterial
+              mat.linewidth = 3
+              helper.visible = true
+              viewer.scene.add(helper)
+            }
           }
         })
+
+        // Create skeleton from bone list
+        if (this.unrealSkeletonHelper) {
+          this.unrealSkeletonHelper.skeleton = new THREE.Skeleton(bones)
+        }
       })
       .catch(e => console.error('Cannot load GLTF', e))
+  }
+
+  computeData (
+    skeleton: THREE.Bone,
+    animation: THREE.AnimationMixer,
+    duration: number,
+    fps = 30
+  ): void {
+    if (!this.viewer || !this.bvhSkeletonHelper) {
+      return
+    }
+
+    skeleton.matrixAutoUpdate = false
+
+    const rula = new RULA(this.viewer.scene)
+    rula.createRULAMarkers(this.bvhSkeletonHelper)
+
+    for (let frame = 1; frame <= duration * fps; frame++) {
+      animation.update((frame * duration) / fps)
+      skeleton.updateMatrix()
+      this.data.push(
+        new DataFrame({
+          rula: rula.compute()
+        })
+      )
+      console.log('Compute...')
+    }
+    skeleton.matrixAutoUpdate = true
+  }
+
+  download (filename: string, text: string): void {
+    const element = document.createElement('a')
+    element.setAttribute(
+      'href',
+      'data:text/plain;charset=utf-8,' + encodeURIComponent(text)
+    )
+    element.setAttribute('download', filename)
+    element.style.display = 'none'
+    document.body.appendChild(element)
+    element.click()
+    document.body.removeChild(element)
+  }
+
+  export (): void {
+    const csv = ''
+    // const header = [...this.data[0].keys()].join(',')
+    // const values = this.data.map(o => [...o.values()].join(',')).join('\n')
+    // csv += header + '\n' + values
+    this.download('data.csv', csv)
   }
 
   loadBVHAndAnimate (content: string): void {
@@ -235,7 +456,7 @@ export default class AvatarAnimationComponent extends Vue {
 
     const boneContainer = new THREE.Group()
     boneContainer.add(bvh.skeleton.bones[0])
-    boneContainer.scale.set(0.005, 0.005, 0.005)
+    // boneContainer.scale.set(0.005, 0.005, 0.005)
     scene.add(boneContainer)
 
     this.mixer = new THREE.AnimationMixer(this.bvhSkeletonHelper)
@@ -247,29 +468,27 @@ export default class AvatarAnimationComponent extends Vue {
       .setEffectiveWeight(1.0)
       .play()
 
-    this.displayRULA()
+    // Convert BVH to data
+    this.computeData(bvh.skeleton.bones[0], this.mixer, bvh.clip.duration, 30)
+
     this.viewer.update = () => this.update()
   }
 
-  // Enable or not RULA visualization
-  displayRULA (): void {
-    if (this.viewer == null) return
-    if (this.viewer.scene == null) return
-    if (this.bvhSkeletonHelper == null) return
-    if (this.rula == null) return
-    this.rula.createRULAMarkers(this.bvhSkeletonHelper)
-    this.rula.update()
-  }
-
   update (): void {
-    if (this.rula == null) return
-    this.rula.update()
-
     if (this.mixer == null) return
     const delta = this.clock.getDelta()
     this.animationTime = (this.animationTime + delta) % this.animationDuration
     this.animationValue = this.animationTime / this.animationDuration
     this.mixer.setTime(this.animationTime)
+    // Retarget animation
+    // left is UnrealBoneNames and right is BVH bones names
+    if (this.bvhSkeletonHelper && this.unrealSkeletonHelper) {
+      ((SkeletonUtils as unknown) as SkeletonUtilsModule).retarget(
+        this.unrealSkeletonHelper,
+        this.bvhSkeletonHelper,
+        this.options
+      )
+    }
   }
 
   onFileInput (files: APIFile[]): void {
