@@ -26,7 +26,7 @@
     <v-row justify="center">
       <v-dialog v-model="modifyAsset" max-width="780">
         <v-card>
-          <v-card-title> Modifier des données </v-card-title>
+          <v-card-title> Modify data </v-card-title>
 
           <!-- Change title of asset -->
           <v-container fluid>
@@ -136,7 +136,7 @@
           <v-checkbox
             class="mx-2"
             v-model="displayTag"
-            label="Afficher les tags"
+            label="Display tags"
           ></v-checkbox>
           <v-card-title> Categories : </v-card-title>
 
@@ -427,8 +427,6 @@ export default class ErgonomIOAssets extends Vue {
   // Open popup with good informations
   // @arg No arguments required
   clickCard (card: CardAsset): void {
-    console.log('clickCard : ', card.id)
-
     this.popup = true
     this.titlePopup = card.name
     this.textPopup =
@@ -440,13 +438,11 @@ export default class ErgonomIOAssets extends Vue {
   // api request for get the different assets
   // @arg No arguments required
   requeteAPI (): void {
-    console.log('api ')
     API.post(
       this,
       '/resources/assets',
       JSON.stringify({ select: ['name', 'picture', 'id', 'tags'] })
     ).then((response: Response) => {
-      console.log('response ', response)
       this.assets2 = ((response as unknown) as Array<Partial<CardAsset>>).map(
         (asset: Partial<CardAsset>) => new CardAsset(asset)
       )
@@ -462,8 +458,7 @@ export default class ErgonomIOAssets extends Vue {
   // Modify name of asset
   // @arg No arguments required
   editNameAsset (asset: CardAsset): void {
-    console.log('editNameAsset')
-    ;(this.$refs.assetInfo as PopUp).open()
+    (this.$refs.assetInfo as PopUp).open()
     requestAnimationFrame(() => {
       (this.$refs.assetInfoComponent as AssetInfo).loadData(asset.id)
     })
@@ -472,11 +467,9 @@ export default class ErgonomIOAssets extends Vue {
   // Modify name of asset
   // @arg No arguments required
   save (asset: CardAsset): void {
-    console.log('save : ', this.search)
     this.modifyAsset = false
 
     if (this.newImage !== '') {
-      console.log('Changement image')
       asset.picture = this.newImage
     }
 
@@ -529,7 +522,6 @@ export default class ErgonomIOAssets extends Vue {
           const fileString = reader.result as string
 
           this.newImage = fileString
-          console.log('fileString : ', fileString)
         }
         reader.onerror = error => {
           console.error(error)
@@ -545,10 +537,8 @@ export default class ErgonomIOAssets extends Vue {
   scrollOnElement (values: number[]): void {
     if (values.length !== 0) {
       const element = values[0]
-      console.log('values : ', this.rootItem.children[element - 1].name)
       this.sortWithCategory(this.rootItem.children[element - 1].name)
     } else {
-      console.log('clear !')
       this.clearCategory()
     }
   }
@@ -556,14 +546,12 @@ export default class ErgonomIOAssets extends Vue {
   // Add tag to asset
   // @arg No arguments required
   addTag (asset: CardAsset, tag: string): void {
-    console.log('addTag')
     asset.parsedTags.push(tag)
   }
 
   // Delete tag of asset
   // @arg No arguments required
   deleteTag (asset: CardAsset, tags: string): void {
-    console.log('deleteTag')
     const index = asset.parsedTags.indexOf(tags, 0)
 
     if (index > -1) {
@@ -576,8 +564,6 @@ export default class ErgonomIOAssets extends Vue {
   // Download asset
   // @arg No arguments required
   downloadAsset (asset: CardAsset): void {
-    console.log('downloadAsset ! ')
-
     const data = JSON.stringify(asset)
     const blob = new Blob([data], { type: 'text/plain' })
 
@@ -604,18 +590,10 @@ export default class ErgonomIOAssets extends Vue {
     if (target.files != null && target.files.length > 0) {
       [...target.files].forEach(file => {
         const reader = new FileReader()
-        reader.onload = e => {
-          console.log(reader.result)
-          console.log('============')
-          console.log(e)
-          console.log('============')
-          console.log(JSON.parse(reader.result as string))
-
+        reader.onload = _ => {
           const test = new CardAsset(JSON.parse(reader.result as string))
           this.assets.push(test)
           this.addAssetAPI(test)
-
-          console.log('test name : ', test.name)
         }
 
         reader.onerror = error => {
@@ -653,7 +631,6 @@ export default class ErgonomIOAssets extends Vue {
   // Decrease size of asset cards
   // @arg No arguments required
   decreaseSizeCard (): void {
-    console.log('decreaseSizeCard')
     this.sizeCard -= 10
     if (this.sizeCard < 30) this.sizeCard = 30
     this.sizeCardString = this.sizeCard.toString() + '%'
@@ -729,9 +706,6 @@ export default class ErgonomIOAssets extends Vue {
   // Send asset for unreal instance
   // @arg No arguments required
   sendUnreal (asset: CardAsset): void {
-    console.log('asset.name : ', asset.name)
-    console.log('asset.name : ', asset.id)
-
     API.post(
       this,
       '/resources/assets',

@@ -59,9 +59,9 @@
                 </v-chip-group>
               </v-card-subtitle>
               <v-card-text>
-                {{ scene.formatedCreationDate }}, nombre assets :
+                {{ scene.formatedCreationDate }}, assets number :
                 {{ scene.assetsNumber }}, id : {{ scene.id }}, owner :
-                {{ scene.idUserOwner }}, id profile : {{ scene.idProfile }}
+                {{ scene.idUserOwner }}, profil id : {{ scene.idProfile }}
               </v-card-text>
 
               <v-card-actions class="flex-wrap">
@@ -162,7 +162,7 @@
                 <v-select
                   :items="scenes.map(item => item.name)"
                   v-model="sceneForModif"
-                  label="Scène visée"
+                  label="Target scene"
                   dense
                 ></v-select>
               </v-row>
@@ -409,7 +409,6 @@ export default class ErgonomIOAssets extends Vue {
   // Get all scenes of API
   // @arg No arguments required
   requeteAPI (): void {
-    console.log('api ')
     API.post(
       this,
       '/resources/ergonomio-scenes',
@@ -418,11 +417,9 @@ export default class ErgonomIOAssets extends Vue {
         where: []
       })
     ).then((response: Response) => {
-      console.log('response ', response)
       this.scenes2 = ((response as unknown) as Array<Partial<CardScene>>).map(
         (scene: Partial<CardScene>) => new CardScene(scene)
       )
-      console.log('Scenes : ', this.scenes)
       for (let i = 0; i < this.scenes2.length; i++) {
         this.scenes.push(this.scenes2[i])
       }
@@ -433,22 +430,18 @@ export default class ErgonomIOAssets extends Vue {
   // Stop the event
   // @arg No arguments required
   ergonomioLayout (event: Event): void {
-    console.log('ergonomioLayout !')
     event.stopPropagation()
   }
 
   // Stop the event
   // @arg No arguments required
   ergonomioVirtualTwin (event: Event): void {
-    console.log('ergonomioVirtualTwin !')
     event.stopPropagation()
   }
 
   // Create an empty scene
   // @arg No arguments required
   createEmptyScene (): void {
-    console.log('creerSceneVide')
-
     const scene = new CardScene({ id: this.scenes.length })
     scene.parsedTags.push('vide')
     this.scenes.push(scene)
@@ -479,7 +472,6 @@ export default class ErgonomIOAssets extends Vue {
         idProfile: scene.idProfile
       })
     ).then((response: Response) => {
-      console.log('api modif scene : ', response)
       this.refreshScenes()
     })
   }
@@ -497,16 +489,12 @@ export default class ErgonomIOAssets extends Vue {
   // Load scene from a scene file
   // @arg No arguments required
   loadScene (): void {
-    console.log('Load scene')
     this.openUploadFile()
   }
 
   // Allow adding objects
   // @arg No arguments required
   addObjectInScene (): void {
-    console.log('addObjectInScene')
-    console.log('sceneForModif : ', this.sceneForModif)
-
     let idSceneModif
     for (let i = 0; i < this.scenes.length; i++) {
       if (this.sceneForModif === this.scenes[i].name) {
@@ -555,7 +543,6 @@ export default class ErgonomIOAssets extends Vue {
   // Delete the selected scene
   // @arg No arguments required
   deleteObjet (scene: CardScene, event: Event): void {
-    console.log('Supprimer objet ')
     event.stopPropagation()
 
     const index2 = this.scenes.indexOf(scene, 0)
@@ -571,7 +558,6 @@ export default class ErgonomIOAssets extends Vue {
   // @arg No arguments required
   clickScene (scene: CardScene, event: Event): void {
     event.stopPropagation()
-    console.log('clickScene : ', scene.id)
 
     this.popup = true
     this.titlePopup = scene.name
@@ -584,14 +570,12 @@ export default class ErgonomIOAssets extends Vue {
   // @arg No arguments required
   outline (scene: CardScene, event: Event): void {
     event.stopPropagation()
-    console.log('Aymeric todo !')
   }
 
   // Modify the name of scene
   // @arg No arguments required
   editNameScene (scene: CardScene, event: Event): void {
     event.stopPropagation()
-    console.log('editNameScene ')
     this.modifyScene = true
     this.sceneChoose = scene
   }
@@ -600,7 +584,6 @@ export default class ErgonomIOAssets extends Vue {
   // @arg No arguments required
   downloadScene (scene: CardScene, event: Event): void {
     event.stopPropagation()
-    console.log('downloadScene ! ')
 
     const data = JSON.stringify(scene)
     const blob = new Blob([data], { type: 'text/plain' })
@@ -617,7 +600,6 @@ export default class ErgonomIOAssets extends Vue {
   // Modify a scene
   // @arg No arguments required
   save (scene: CardScene): void {
-    console.log('save : ', this.search)
     this.modifyScene = false
 
     if (this.newImage !== '') {
@@ -632,8 +614,6 @@ export default class ErgonomIOAssets extends Vue {
   // Copy scene
   // @arg No arguments required
   copyScene (scene: CardScene): void {
-    console.log('copyScene !')
-
     this.scenes.push(scene)
     this.addSceneAPI(scene)
   }
@@ -641,16 +621,12 @@ export default class ErgonomIOAssets extends Vue {
   // Add tag to scene
   // @arg No arguments required
   addTag (scene: CardScene, tag: string): void {
-    console.log('addTag')
-
     scene.parsedTags.push(tag)
   }
 
   // Delete tag from scene
   // @arg No arguments required
   deleteTag (scene: CardScene, tags: string): void {
-    console.log('deleteTag')
-
     const index = scene.parsedTags.indexOf(tags, 0)
 
     if (index > -1) {
@@ -672,7 +648,6 @@ export default class ErgonomIOAssets extends Vue {
       })
     )
       .then((response: Response) => {
-        console.log('api modif scene')
         Unreal.send(response)
         // Refresh scenes
         this.refreshScenes()
@@ -737,7 +712,6 @@ export default class ErgonomIOAssets extends Vue {
           const fileString = reader.result as string
 
           this.newImage = fileString
-          console.log('fileString : ', fileString)
         }
         reader.onerror = error => {
           console.error(error)
@@ -760,7 +734,6 @@ export default class ErgonomIOAssets extends Vue {
           const fileString = reader.result as string
 
           // this.newImage = fileString
-          console.log('fileString : ', fileString)
         }
         reader.onerror = error => {
           console.error(error)

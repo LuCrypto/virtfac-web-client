@@ -84,7 +84,7 @@
             <v-col>
               <v-select
                 class="black--text"
-                label="Scene sélectionnée"
+                label="Selected scene"
                 v-model="sceneSelected"
                 :items="this.scenes.map(item => item.name)"
                 dense
@@ -108,7 +108,7 @@
             <v-col>
               <v-select
                 class="black--text"
-                label="Room à supprimer"
+                label="Room to delete"
                 v-model="roomSelectedDelete"
                 :items="this.rooms.map(item => item.name)"
                 dense
@@ -214,11 +214,9 @@ export default class ErgonomIORooms extends Vue {
         where: []
       })
     ).then((response: Response) => {
-      console.log('response ', response)
       this.scenes = ((response as unknown) as Array<Partial<CardScene>>).map(
         (scene: Partial<CardScene>) => new CardScene(scene)
       )
-      console.log('Scenes : ', this.scenes)
     })
   }
 
@@ -259,10 +257,6 @@ export default class ErgonomIORooms extends Vue {
   // For create a session 1
   // @arg No arguments required
   createSession1 (): void {
-    console.log('Creer room with scenen : ', this.sceneSelected)
-
-    Unreal.send('Create session')
-
     // if i don't have scene
     if (this.sceneSelected === '') {
       // i create a room
@@ -305,8 +299,6 @@ export default class ErgonomIORooms extends Vue {
 
     // Si on a pas de scene à charger
     if (this.roomSelectedDelete === '') {
-      // On crée la room
-      console.log('Pas de room sélectionnée')
       return
     }
 
@@ -359,16 +351,12 @@ export default class ErgonomIORooms extends Vue {
   // For leave a session
   // @arg No arguments required
   leaveSession (): void {
-    console.log('leaveSession')
-
     this.sendUnreal(new Room({ action: 'quitterRoom' }))
   }
 
   // Send message to unreal instance
   // @arg No arguments required
   sendUnreal (room: Room): void {
-    console.log('asset.name : ', room.name)
-
     const objectAsset = {
       action: room.action
     }
