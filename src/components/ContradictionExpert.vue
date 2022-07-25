@@ -1,155 +1,155 @@
 <template>
   <maximizable-container>
-  <v-card elevation="3" class="d-flex flex-row flex-grow-1">
-    <v-navigation-drawer stateless permanent :mini-variant="menuCollapse">
-      <v-list
-        nav
-        dense
-        class="d-flex flex-column justify-start;"
-        style="height: 100%"
+    <v-card elevation="3" class="d-flex flex-row flex-grow-1">
+      <v-navigation-drawer stateless permanent :mini-variant="menuCollapse">
+        <v-list
+          nav
+          dense
+          class="d-flex flex-column justify-start;"
+          style="height: 100%"
+        >
+          <v-list-item-group v-model="selectedMenuItem" color="primary">
+            <v-list-item
+              v-for="(menuItem, i) in menuItemList"
+              :key="i"
+              class="justify-start"
+              @click.stop="menuItem.action"
+            >
+              <v-list-item-icon>
+                <v-icon v-text="menuItem.icon"></v-icon>
+              </v-list-item-icon>
+              <v-list-item-content>
+                <v-list-item-title v-text="menuItem.text"></v-list-item-title>
+              </v-list-item-content>
+            </v-list-item>
+          </v-list-item-group>
+          <v-list-item-group class="mt-auto">
+            <v-list-item
+              class="justify-start"
+              @click="menuCollapse = !menuCollapse"
+            >
+              <v-list-item-icon>
+                <v-icon v-if="menuCollapse" v-text="'mdi-arrow-right'"></v-icon>
+                <v-icon v-if="!menuCollapse" v-text="'mdi-arrow-left'"></v-icon>
+              </v-list-item-icon>
+              <v-list-item-content>
+                <v-list-item-title v-text="'Menu labels'"></v-list-item-title>
+              </v-list-item-content>
+            </v-list-item>
+          </v-list-item-group>
+        </v-list>
+      </v-navigation-drawer>
+      <v-container
+        class="pa-0"
+        style="width: auto; margin: 0; flex-grow: 1; position: relative; max-width: none"
       >
-        <v-list-item-group v-model="selectedMenuItem" color="primary">
-          <v-list-item
-            v-for="(menuItem, i) in menuItemList"
-            :key="i"
-            class="justify-start"
-            @click.stop="menuItem.action"
-          >
-            <v-list-item-icon>
-              <v-icon v-text="menuItem.icon"></v-icon>
-            </v-list-item-icon>
-            <v-list-item-content>
-              <v-list-item-title v-text="menuItem.text"></v-list-item-title>
-            </v-list-item-content>
-          </v-list-item>
-        </v-list-item-group>
-        <v-list-item-group class="mt-auto">
-          <v-list-item
-            class="justify-start"
-            @click="menuCollapse = !menuCollapse"
-          >
-            <v-list-item-icon>
-              <v-icon v-if="menuCollapse" v-text="'mdi-arrow-right'"></v-icon>
-              <v-icon v-if="!menuCollapse" v-text="'mdi-arrow-left'"></v-icon>
-            </v-list-item-icon>
-            <v-list-item-content>
-              <v-list-item-title v-text="'Menu labels'"></v-list-item-title>
-            </v-list-item-content>
-          </v-list-item>
-        </v-list-item-group>
-      </v-list>
-    </v-navigation-drawer>
-    <v-container
-      class="pa-0"
-      style="width: auto; margin: 0; flex-grow: 1; position: relative;"
-    >
-      <v-card
-        v-if="showFilter"
-        style="position: absolute; z-index: 1; left: 5px; top: 5px; width: 250px;"
-      >
-        <v-toolbar color="primary" flat dense>
-          <v-toolbar-title class="black--text" style="padding-left: 50px;">
-            Filters
-          </v-toolbar-title>
-        </v-toolbar>
+        <v-card
+          v-if="showFilter"
+          style="position: absolute; z-index: 1; left: 5px; top: 5px; width: 250px;"
+        >
+          <v-toolbar color="primary" flat dense>
+            <v-toolbar-title class="black--text" style="padding-left: 50px;">
+              Filters
+            </v-toolbar-title>
+          </v-toolbar>
 
-        <v-card-text class="pt-0 pb-0 mt-4">
-          <v-row>
-            <v-col class="px-2">
-              <v-range-slider
-                dense
-                v-model="filterRange"
-                :max="filterBorder[1]"
-                :min="filterBorder[0]"
-                hint="Link weight filter"
-                persistent-hint
-                class="align-center"
-                @change="refreshFilters"
-              >
-                <template v-slot:prepend>
-                  <v-text-field
-                    dense
-                    :value="filterRange[0]"
-                    class="mt-0 pt-0"
-                    hide-details
-                    single-line
-                    type="number"
-                    style="width: 40px"
-                    @change="$set(filterRange, 0, $event)"
-                  ></v-text-field>
-                </template>
-                <template v-slot:append>
-                  <v-text-field
-                    dense
-                    readonly
-                    :value="filterRange[1]"
-                    class="mt-0 pt-0"
-                    hide-details
-                    single-line
-                    type="number"
-                    style="width: 40px"
-                    @change="$set(filterRange, 1, $event)"
-                  ></v-text-field>
-                </template>
-              </v-range-slider>
-            </v-col>
-          </v-row>
-          <v-row>
-            <v-col>
-              <v-switch
-                dense
-                v-model="reverseFilter"
-                :label="`${reverseFilter ? 'Show' : 'Hide'} interval`"
-                inset
-                @change="refreshFilters"
-              >
-              </v-switch>
-            </v-col>
-          </v-row>
-        </v-card-text>
-      </v-card>
-      <v-btn
-        v-if="showFilter"
-        @click="
-          () => {
-            showFilter = !showFilter
-          }
-        "
-        outlined
-        icon
-        style="position: absolute; z-index: 2; left: 11px; top: 11px;"
-        ><v-icon v-text="'mdi-filter-minus'"></v-icon
-      ></v-btn>
-      <v-btn
-        v-else
-        outlined
-        icon
-        style="position: absolute; z-index: 2; left: 11px; top: 11px;"
-        color="primary"
-        @click="
-          () => {
-            showFilter = !showFilter
-          }
-        "
-        ><v-icon v-text="'mdi-filter-plus'"></v-icon
-      ></v-btn>
+          <v-card-text class="pt-0 pb-0 mt-4">
+            <v-row>
+              <v-col class="px-2">
+                <v-range-slider
+                  dense
+                  v-model="filterRange"
+                  :max="filterBorder[1]"
+                  :min="filterBorder[0]"
+                  hint="Link weight filter"
+                  persistent-hint
+                  class="align-center"
+                  @change="refreshFilters"
+                >
+                  <template v-slot:prepend>
+                    <v-text-field
+                      dense
+                      :value="filterRange[0]"
+                      class="mt-0 pt-0"
+                      hide-details
+                      single-line
+                      type="number"
+                      style="width: 40px"
+                      @change="$set(filterRange, 0, $event)"
+                    ></v-text-field>
+                  </template>
+                  <template v-slot:append>
+                    <v-text-field
+                      dense
+                      readonly
+                      :value="filterRange[1]"
+                      class="mt-0 pt-0"
+                      hide-details
+                      single-line
+                      type="number"
+                      style="width: 40px"
+                      @change="$set(filterRange, 1, $event)"
+                    ></v-text-field>
+                  </template>
+                </v-range-slider>
+              </v-col>
+            </v-row>
+            <v-row>
+              <v-col>
+                <v-switch
+                  dense
+                  v-model="reverseFilter"
+                  :label="`${reverseFilter ? 'Show' : 'Hide'} interval`"
+                  inset
+                  @change="refreshFilters"
+                >
+                </v-switch>
+              </v-col>
+            </v-row>
+          </v-card-text>
+        </v-card>
+        <v-btn
+          v-if="showFilter"
+          @click="
+            () => {
+              showFilter = !showFilter
+            }
+          "
+          outlined
+          icon
+          style="position: absolute; z-index: 2; left: 11px; top: 11px;"
+          ><v-icon v-text="'mdi-filter-minus'"></v-icon
+        ></v-btn>
+        <v-btn
+          v-else
+          outlined
+          icon
+          style="position: absolute; z-index: 2; left: 11px; top: 11px;"
+          color="primary"
+          @click="
+            () => {
+              showFilter = !showFilter
+            }
+          "
+          ><v-icon v-text="'mdi-filter-plus'"></v-icon
+        ></v-btn>
 
-      <NV ref="nodeViewer" :graph="getGraph()" />
-    </v-container>
-    <pop-up ref="filePopUp">
-      <open-file
-        @close="$refs.filePopUp.close()"
-        application="CONTRADICTION_ANALYSIS"
-        :singleSelect="true"
-        :openFile="true"
-        accept=".xlsx"
-        @fileInput="handleFile"
-        :uploadPipeline="createConstraintProject"
-      ></open-file>
-    </pop-up>
-    <select-pop-up ref="selectPopUp"></select-pop-up>
-    <input-field-pop-up ref="inputFieldPopUp"></input-field-pop-up>
-  </v-card>
+        <NV ref="nodeViewer" :graph="getGraph()" />
+      </v-container>
+      <pop-up ref="filePopUp">
+        <open-file
+          @close="$refs.filePopUp.close()"
+          application="CONTRADICTION_ANALYSIS"
+          :singleSelect="true"
+          :openFile="true"
+          accept=".xlsx"
+          @fileInput="handleFile"
+          :uploadPipeline="createConstraintProject"
+        ></open-file>
+      </pop-up>
+      <select-pop-up ref="selectPopUp"></select-pop-up>
+      <input-field-pop-up ref="inputFieldPopUp"></input-field-pop-up>
+    </v-card>
   </maximizable-container>
 </template>
 
@@ -192,40 +192,6 @@ class ConstraintProject {
   }
 }
 
-class Range {
-  private _min = 0
-  private _max = 0
-  public onChange: { (sender: Range): void } | null = null
-
-  public get min (): number {
-    return this._min
-  }
-
-  public set min (value) {
-    this._min = value
-    if (this.onChange !== null) this.onChange(this)
-  }
-
-  public get max (): number {
-    return this._max
-  }
-
-  public set max (value) {
-    this._max = value
-    if (this.onChange !== null) this.onChange(this)
-  }
-
-  constructor (
-    min: number,
-    max: number,
-    onChange: { (sender: Range): void } | null = null
-  ) {
-    this._min = min
-    this._max = max
-    this.onChange = onChange
-  }
-}
-
 interface SettingItem {
   id: number
   idApplication: number
@@ -247,6 +213,7 @@ interface SettingItem {
 })
 // @vuese
 // @group COMPONENTS
+// Content component of the page contradiction-analysis-expert
 export default class ContradictionExpert extends Vue {
   selectedMenuItem = -1
   nodeViewer: NV | null = null
@@ -264,6 +231,8 @@ export default class ContradictionExpert extends Vue {
   filterBorder = [-10, 10]
   reverseFilter = true
 
+  // @vuese
+  // get raw constraint graph
   getGraph (): Graph {
     return (this.constraintGraph as ConstraintGraph).getRawGraph()
   }
@@ -326,12 +295,6 @@ export default class ContradictionExpert extends Vue {
   }
   */
 
-  inputFile (): void {
-    const input = this.$refs.inputFile as HTMLInputElement
-    input.value = ''
-    input.click()
-  }
-
   handleFile (files: APIFile[]): void {
     if (files == null) {
       console.log('This type of file cannot be read yet.')
@@ -387,7 +350,8 @@ export default class ContradictionExpert extends Vue {
     })
   }
 
-  // dropHandler(e : )
+  // @vuese
+  // Save nodes position to the API
   saveShape (): void {
     //*
     if (this.openedProject !== null && this.openedFile !== null) {
@@ -470,6 +434,8 @@ export default class ContradictionExpert extends Vue {
     }
   }
 
+  // @vuese
+  // Load nodes position from the API
   loadShape (): void {
     if (this.openedFile === null) return
     if (this.openedProject === null) return
@@ -565,21 +531,8 @@ export default class ContradictionExpert extends Vue {
     }
   }
 
-  /*
-  onUploadFile (file: File): Promise<File> {
-    return new Promise<File>((resolve, reject) => {
-      console.log(file.type)
-      resolve(file)
-    })
-  }
-  */
-
-  selectSheetPopUp (workbook: Record<string, unknown>): void {
-    console.log(workbook)
-    // this.$refs.excel.active = true;
-    // console.log(workbook);
-  }
-
+  // @vuese
+  // Update shown/hidden links related to the selected filters
   refreshFilters () {
     this.constraintGraph.getGraph().foreachLink(l => {
       const w = l.getDataOrDefault<number>('weight', 0)

@@ -504,7 +504,7 @@ export class MatrixUtils {
       res.set(a.getRowLabel(key), map.get(value) as number)
     })
 
-    return { score: 0, assigns: bestGroups, nbClass: nbClass - 1 }
+    return { score: 0, assigns: bestGroups, nbClass: map.size - 1 }
   }
 
   public static blockDiagonalisation (

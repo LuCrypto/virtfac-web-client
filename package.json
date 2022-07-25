@@ -22,6 +22,7 @@
         "dom-to-image": "^2.6.0",
         "dotenv": "^8.2.0",
         "fetch": "^1.1.0",
+        "g": "^2.0.1",
         "graphlib": "^2.1.8",
         "pdfvuer": "^1.9.2",
         "three": "^0.135.0",
@@ -30,6 +31,7 @@
         "vue-class-component": "^7.2.3",
         "vue-property-decorator": "^9.1.2",
         "vue-router": "^3.2.0",
+        "vuese": "^1.4.7",
         "vuetify": "^2.4.0",
         "xlsx": "^0.11.3"
     },

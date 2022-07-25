@@ -156,6 +156,57 @@ export default class V {
     return new V(Math.ceil(this.x), Math.ceil(this.y))
   }
 
+  step (f: number): V {
+    return new V(
+      Math.round((this.x * 1) / f) * f,
+      Math.round((this.y * 1) / f) * f
+    )
+  }
+
+  angle (): number {
+    return Math.atan2(this.x, this.y)
+  }
+
+  angleWith (v: V): number {
+    const tmp = (Math.PI * 2 + this.angle() - v.angle()) % (Math.PI * 2)
+    if (tmp > Math.PI) {
+      return -1 * (Math.PI * 2 - tmp)
+    }
+    return tmp
+  }
+
+  lerp (v: V, f: number): V {
+    return this.multN(1 - f).addV(v.multN(f))
+  }
+
+  lerp3 (v1: V, v2: V, f: number): V {
+    return f < 0.5 ? this.lerp(v1, f * 2) : v1.lerp(v2, (f - 0.5) * 2)
+  }
+
+  normalize (): V {
+    return this.divN(this.length())
+  }
+
+  distanceTo (vec: V): number {
+    return this.subV(vec).length()
+  }
+
+  rotate90 (): V {
+    return new V(this.y, -this.x)
+  }
+
+  rotateRad (radAngle: number): V {
+    const s = Math.sin(radAngle)
+    const c = Math.cos(radAngle)
+    return new V(c * this.x - s * this.y, s * this.x + c * this.y)
+  }
+
+  rotateDeg (degAngle: number): V {
+    return this.rotateRad(
+      degAngle * 0.01745329251 /* = (degAngle/360)*(PI*2) */
+    )
+  }
+
   /**
    * Convert vector to string
    * * @param separator - Separator between x an y (space by default)
@@ -163,5 +214,46 @@ export default class V {
    */
   toString (separator = ' '): string {
     return `${this.x}${separator}${this.y}`
+  }
+
+  public static intersectionLineWithSegment (
+    linePoint: V,
+    lineDir: V,
+    segmentP1: V,
+    segmentP2: V
+  ) {
+    const angle = lineDir.angle()
+    let p1 = segmentP1.subV(linePoint).rotateDeg(angle)
+    let p2 = segmentP2.subV(linePoint).rotateDeg(angle)
+    let yLength = p2.y - p1.y
+    if (Math.abs(yLength) < Math.abs(p2.x - p1.x)) {
+      p1 = new V(p1.y, p1.x)
+      p2 = new V(p2.y, p2.x)
+      yLength = p2.y - p1.y
+    }
+    return segmentP1.addV(segmentP2.subV(segmentP1).multN(-p1.y / yLength))
+  }
+
+  public static intersectionOrNull (
+    linePoint: V,
+    lineDir: V,
+    segmentP1: V,
+    segmentP2: V
+  ): V | null {
+    const angle = lineDir.angle()
+    let p1 = segmentP1.subV(linePoint).rotateDeg(angle)
+    let p2 = segmentP2.subV(linePoint).rotateDeg(angle)
+    let yLength = p2.y - p1.y
+    if (Math.abs(yLength) < Math.abs(p2.x - p1.x)) {
+      p1 = new V(p1.y, p1.x)
+      p2 = new V(p2.y, p2.x)
+      yLength = p2.y - p1.y
+    }
+    if ((p1.y > 0 && p2.y < 0) || (p1.y < 0 && p2.y > 0)) {
+      return segmentP2
+        .subV(segmentP1)
+        .multN(-p1.y / yLength)
+        .addV(segmentP1)
+    } else return null
   }
 }

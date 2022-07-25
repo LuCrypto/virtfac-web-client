@@ -1,3 +1,4 @@
+/*
 export interface Vec2 {
   x: number
   y: number
@@ -124,3 +125,4 @@ export class Vector2 implements Vec2 {
     } else return null
   }
 }
+*/

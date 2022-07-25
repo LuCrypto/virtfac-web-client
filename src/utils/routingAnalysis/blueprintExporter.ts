@@ -1,5 +1,4 @@
 import { Blueprint } from './blueprint'
-import { Vec2, Vector2 } from '../graph/Vec'
 import {
   BufferGeometry,
   BufferAttribute,
@@ -12,6 +11,7 @@ import { GLTFExporter } from 'three/examples/jsm/exporters/GLTFExporter'
 import Delaunator from 'delaunator'
 import { Destroyable } from './bp_window'
 import { BpWallHole } from './bp_wallLink'
+import V from '@/utils/vector'
 
 export class BlueprintExporter {
   /**
@@ -59,7 +59,7 @@ export class BlueprintExporter {
       triangles[layer].push(i2)
       triangles[layer].push(i3)
     }
-    const addNormal = (v: Vec2, z = 0) => {
+    const addNormal = (v: V, z = 0) => {
       normals.push(v.x)
       normals.push(z)
       normals.push(v.y)
@@ -72,7 +72,7 @@ export class BlueprintExporter {
       x: number,
       y: number,
       z: number,
-      normal: Vec2,
+      normal: V,
       u: number,
       v = -1,
       normalZ = 0
@@ -98,7 +98,7 @@ export class BlueprintExporter {
     }
     const copyVertex = (
       vertexId: number,
-      normal: Vec2 | undefined = undefined,
+      normal: V | undefined = undefined,
       u: number | undefined = undefined,
       v: number | undefined = undefined,
       normalZ: number | undefined = undefined
@@ -107,7 +107,7 @@ export class BlueprintExporter {
         vertices[vertexId * 3],
         vertices[vertexId * 3 + 2],
         vertices[vertexId * 3 + 1],
-        normal || new Vector2(normals[vertexId * 3], normals[vertexId * 3 + 2]),
+        normal || new V(normals[vertexId * 3], normals[vertexId * 3 + 2]),
         u === undefined ? uv[vertexId * 2] : u,
         v === undefined ? uv[vertexId * 2 + 1] : v,
         normalZ === undefined ? normals[vertexId * 3 + 1] : normalZ
@@ -162,34 +162,10 @@ export class BlueprintExporter {
         { x: v1Data.x, y: v1Data.y, z: v1Data.z },
         { x: v4Data.x, y: v4Data.y, z: v4Data.z }
       )
-      const _v1 = copyVertex(
-        v1,
-        new Vector2(normal.x, normal.y),
-        0,
-        0,
-        normal.z
-      )
-      const _v2 = copyVertex(
-        v2,
-        new Vector2(normal.x, normal.y),
-        0,
-        v,
-        normal.z
-      )
-      const _v3 = copyVertex(
-        v3,
-        new Vector2(normal.x, normal.y),
-        u,
-        v,
-        normal.z
-      )
-      const _v4 = copyVertex(
-        v4,
-        new Vector2(normal.x, normal.y),
-        u,
-        0,
-        normal.z
-      )
+      const _v1 = copyVertex(v1, new V(normal.x, normal.y), 0, 0, normal.z)
+      const _v2 = copyVertex(v2, new V(normal.x, normal.y), 0, v, normal.z)
+      const _v3 = copyVertex(v3, new V(normal.x, normal.y), u, v, normal.z)
+      const _v4 = copyVertex(v4, new V(normal.x, normal.y), u, 0, normal.z)
       if (reverse) {
         addTriangle(_v1, _v3, _v2, layer)
         addTriangle(_v1, _v4, _v3, layer)
@@ -203,7 +179,7 @@ export class BlueprintExporter {
         x: vertices[vertexId * 3],
         y: vertices[vertexId * 3 + 2],
         z: vertices[vertexId * 3 + 1],
-        normal: new Vector2(normals[vertexId * 3], normals[vertexId * 3 + 2]),
+        normal: new V(normals[vertexId * 3], normals[vertexId * 3 + 2]),
         u: uv[vertexId * 2],
         v: uv[vertexId * 2 + 1],
         normalZ: normals[vertexId * 3 + 1]
@@ -211,38 +187,36 @@ export class BlueprintExporter {
     }
 
     blueprint.foreachWallNode(node => {
-      const pos = Vector2.divide(
-        node.getData<Vec2>('position'),
-        blueprint.getData<number>('scale') * 100
-      )
+      const pos = node
+        .getData<V>('position')
+        .divN(blueprint.getData<number>('scale') * 100)
       node.foreachLink(l => {
-        const pos2 = Vector2.divide(
-          l.getNode().getData<Vec2>('position'),
-          blueprint.getData<number>('scale') * 100
-        )
+        const pos2 = l
+          .getNode()
+          .getData<V>('position')
+          .divN(blueprint.getData<number>('scale') * 100)
 
-        const length = Vector2.norm(Vector2.minus(pos, pos2))
+        const length = pos.distanceTo(pos2)
 
-        let normal = Vector2.multiply(
-          Vector2.normalize(Vector2.rotate90(Vector2.minus(pos2, pos))),
-          -1
-        )
+        let normal = pos2
+          .subV(pos)
+          .rotate90()
+          .normalize()
+          .multN(-1)
         if (l.getData<boolean>('double')) {
           // todo
         } else {
           let reverse = false
           if (
             !blueprint.isInside(
-              Vector2.multiply(
-                Vector2.plus(
-                  Vector2.divide(Vector2.plus(pos, pos2), 2),
-                  Vector2.multiply(normal, 0.001)
-                ),
-                blueprint.getData<number>('scale') * 100
-              )
+              pos
+                .addV(pos2)
+                .divN(2)
+                .addV(normal.multN(0.001))
+                .multN(blueprint.getData<number>('scale') * 100)
             )
           ) {
-            normal = Vector2.multiply(normal, -1)
+            normal = normal.multN(-1)
             reverse = true
           }
 
@@ -305,11 +279,11 @@ export class BlueprintExporter {
           const mt2 = addVertex(pos2.x, pos2.y, (h / 3) * 2, normal, 0)
           const t2 = addVertex(pos2.x, pos2.y, h, normal, 0)
 
-          const dir = Vector2.normalize(Vector2.minus(pos2, pos))
+          const dir = pos2.subV(pos).normalize()
           for (let i = 0; i < hArray.length; i++) {
             const c = hArray[i]
 
-            const p1 = Vector2.plus(pos, Vector2.multiply(dir, c.x))
+            const p1 = pos.addV(dir.multN(c.x))
             const hb1 = addVertex(p1.x, p1.y, 0, normal, length - c.x)
             const hmb1 = addVertex(
               p1.x,
@@ -327,7 +301,7 @@ export class BlueprintExporter {
             )
             const ht1 = addVertex(p1.x, p1.y, h, normal, length - c.x)
 
-            const p2 = Vector2.plus(pos, Vector2.multiply(dir, c.x + c.dx))
+            const p2 = pos.addV(dir.multN(c.x + c.dx))
             const hb2 = addVertex(p2.x, p2.y, 0, normal, length - (c.x + c.dx))
             const hmb2 = addVertex(
               p2.x,
@@ -576,16 +550,10 @@ export class BlueprintExporter {
                 }
               } else {
                 tunnel.set(c.tunnelId, {
-                  t1: copyVertex(hmt1, (normal = Vector2.normalize(dir))),
-                  b1: copyVertex(hmb1, (normal = Vector2.normalize(dir))),
-                  t2: copyVertex(
-                    hmt2,
-                    (normal = Vector2.multiply(Vector2.normalize(dir), -1))
-                  ),
-                  b2: copyVertex(
-                    hmb2,
-                    (normal = Vector2.multiply(Vector2.normalize(dir), -1))
-                  ),
+                  t1: copyVertex(hmt1, (normal = dir.normalize())),
+                  b1: copyVertex(hmb1, (normal = dir.normalize())),
+                  t2: copyVertex(hmt2, (normal = dir.normalize().multN(-1))),
+                  b2: copyVertex(hmb2, (normal = dir.normalize().multN(-1))),
                   bb1: hb1,
                   bb2: hb2,
                   t1pos: { x: p1.x, y: p1.y, z: c.ty },
@@ -628,7 +596,7 @@ export class BlueprintExporter {
         ceilingCoords[i][0],
         ceilingCoords[i][1],
         h,
-        new Vector2(0, 0),
+        new V(0, 0),
         ceilingCoords[i][0],
         ceilingCoords[i][1],
         -1
@@ -652,7 +620,7 @@ export class BlueprintExporter {
         floorCoords[i][0],
         floorCoords[i][1],
         0,
-        new Vector2(0, 0),
+        new V(0, 0),
         floorCoords[i][0],
         floorCoords[i][1],
         -1

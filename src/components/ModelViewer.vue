@@ -223,12 +223,20 @@ import { UndoManager, Action } from '@/utils/undoManager'
 })
 // @vuese
 // @group COMPONENTS
+// 3D scene component
 export default class ModelViewer extends Vue {
+  // @vuese
+  // Enable/disable the button to show the inspector
   @Prop({ default: () => false }) private displayInspector!: boolean
 
+  // @vuese
+  // Store the user actions and manage undo/redo
   undoManager = new UndoManager()
 
-  inspectorActive = false
+  private inspectorActive = false
+
+  // @vuese
+  // Switch active state of the inspector
   switchInspectorActive (): void {
     this.inspectorActive = !this.inspectorActive
   }
@@ -238,11 +246,15 @@ export default class ModelViewer extends Vue {
   ]
 
   mfov = 75
+  // @vuese
+  // Set the Field of view of the main camera
   public set fov (value: number) {
     this.mfov = value
     this.onFovChanged(value)
   }
 
+  // @vuese
+  // Get the Field of view of the main camera
   public get fov (): number {
     return this.mfov
   }
@@ -253,11 +265,16 @@ export default class ModelViewer extends Vue {
     { name: 'scale', x: 0, y: 0, z: 0 }
   ]
 
-  get transformMatrix (): { name: string; x: number; y: number; z: number }[] {
+  private get transformMatrix (): {
+    name: string
+    x: number
+    y: number
+    z: number
+  }[] {
     return this.mtransformMatrix
   }
 
-  set transformMatrix (
+  private set transformMatrix (
     value: { name: string; x: number; y: number; z: number }[]
   ) {
     this.mtransformMatrix = value
@@ -300,6 +317,8 @@ export default class ModelViewer extends Vue {
     this.controls = new OrbitControls(this.camera, this.renderer.domElement)
   }
 
+  // @vuese
+  // Enable/disable fog and set his color
   public setFogActive (active: boolean, color = 0xa0a0a0): void {
     if (active) {
       const fogColor = new THREE.Color(color)
@@ -323,6 +342,8 @@ export default class ModelViewer extends Vue {
     scale: Vector3
   } | null = null
 
+  // @vuese
+  // Set the object to control with the transform controller
   public controlMesh (obj: Object3D | null): void {
     this.controledObject = obj
     if (obj === null) {
@@ -408,6 +429,9 @@ export default class ModelViewer extends Vue {
     }
   }
 
+  /**
+   * update the transformMatrix field to match with the controlled object and display the new values in the inspector
+   */
   private updateTransformMatrix (): void {
     if (this.gizmo !== null && this.gizmo.object !== undefined) {
       const d = [
@@ -426,6 +450,9 @@ export default class ModelViewer extends Vue {
     }
   }
 
+  /**
+   * apply local value of transform matrix from the inspector to the transform of the controlled object
+   */
   private applyTransformMatrix (): void {
     if (this.gizmo !== null && this.gizmo.object !== undefined) {
       this.gizmo.object.position.set(
@@ -449,6 +476,9 @@ export default class ModelViewer extends Vue {
     }
   }
 
+  /**
+   * change controlled object and display the new bounding box
+   */
   private selectItem (item: Group): void {
     if (this.gizmo !== null) {
       if (
@@ -464,6 +494,8 @@ export default class ModelViewer extends Vue {
     this.updateTransformMatrix()
   }
 
+  // @vuese
+  // Enable/disable bounding box visualization of a 3D object
   public setHighlightObj (obj: Group, active = true): void {
     if (active) {
       let helper = this.boxHelpers.get(obj)
@@ -482,6 +514,8 @@ export default class ModelViewer extends Vue {
     }
   }
 
+  // @vuese
+  // Set the mode of the transform controller between 'translate', 'rotate' and 'scale'
   public setMeshControlMode (mode: 'translate' | 'rotate' | 'scale'): void {
     if (this.gizmo === null) {
       this.gizmo = new TransformControls(this.camera, this.renderer.domElement)
@@ -489,11 +523,15 @@ export default class ModelViewer extends Vue {
     this.gizmo.setMode(mode)
   }
 
+  // @vuese
+  // Get current mode off the transform controller
   public getMeshControlMode (): 'translate' | 'rotate' | 'scale' {
     if (this.gizmo === null) return 'translate'
     return this.gizmo.mode
   }
 
+  // @vuese
+  // Enable/disable the snap mode of the transform controller
   public switchMeshControlSnap (forceActiveValue?: boolean): void {
     if (this.gizmo === null) return
     let activeValue = this.gizmo.rotationSnap !== null
@@ -511,7 +549,9 @@ export default class ModelViewer extends Vue {
     }
   }
 
-  public setControlerSnap (
+  // @vuese
+  // Set snapping value of the transform controller
+  public setControllerSnap (
     translation?: number,
     rotation?: number,
     scaling?: number
@@ -524,6 +564,8 @@ export default class ModelViewer extends Vue {
     this.gizmo.setScaleSnap(scaling === undefined ? null : scaling)
   }
 
+  // @vuese
+  // configure the floor grid displayer
   public setGrid (
     size: number,
     division: number,
@@ -695,12 +737,16 @@ export default class ModelViewer extends Vue {
     )
   }
 
+  // @vuese
+  // add an object to the scene
   addObjectToScene (object: Group): void {
     this.scene.add(object)
     this.userObjects.add(object)
     this.refreshSceneHierarchy()
   }
 
+  // @vuese
+  // remove an object to the scene
   removeObjectToScene (object: Group): void {
     this.scene.remove(object)
   }
@@ -710,6 +756,8 @@ export default class ModelViewer extends Vue {
     return new BVHLoader().parse(content)
   }
 
+  // @vuese
+  // add light to the scene
   addShadowLight (
     x: number,
     y: number,
@@ -736,20 +784,23 @@ export default class ModelViewer extends Vue {
     sun.shadow.blurSamples = 0
   }
 
+  // @vuese
+  // take a screenshot from the main camera and send the image in base64 format to the 'onCaptureDone' coallback
   public screenShot (
     onCaptureDone: { (uri: string): void },
     width?: number,
     height?: number,
     hideGrid?: boolean,
-    hideTransformControler?: boolean
+    hideTransformController?: boolean
   ): void {
     const oldsize = new THREE.Vector2(0, 0)
+    const oldaspect = this.camera.aspect
     this.renderer.getSize(oldsize)
     if (hideGrid) {
       this.scene.remove(this.gridHelper as GridHelper)
       this.scene.remove(this.floor as Mesh)
     }
-    if (hideTransformControler && this.controledObject !== null) {
+    if (hideTransformController && this.controledObject !== null) {
       this.scene.remove(this.gizmo as TransformControls)
     }
     if (width !== undefined && height !== undefined) {
@@ -769,13 +820,17 @@ export default class ModelViewer extends Vue {
       this.scene.add(this.gridHelper as GridHelper)
       this.scene.add(this.floor as Mesh)
     }
-    if (hideTransformControler && this.controledObject !== null) {
+    if (hideTransformController && this.controledObject !== null) {
       this.scene.add(this.gizmo as TransformControls)
     }
     if (width !== undefined && height !== undefined) {
+      // this.camera.aspect = oldsize.x / oldsize.y
+      this.camera.aspect = oldaspect
       this.renderer.setSize(oldsize.x, oldsize.y)
-      this.camera.aspect = oldsize.x / oldsize.y
       this.camera.updateProjectionMatrix()
+      this.renderer.domElement.style.height = ''
+      this.renderer.domElement.style.width = ''
+      console.log(this.renderer)
     }
     this.scene.background = oldColor
     onCaptureDone(imgData)
@@ -785,6 +840,8 @@ export default class ModelViewer extends Vue {
     /**/
   }
 
+  // @vuese
+  // Set the environment image
   public setEnvMap (
     url: string,
     type: 'HDR' | 'IMG' | 'EXR' = 'IMG',
@@ -825,6 +882,8 @@ export default class ModelViewer extends Vue {
     }
   }
 
+  // @vuese
+  // Activate the screenshot preview UI
   public beginScreenshotSession (
     onCaptureDone: { (uri: string): void },
     width?: number,

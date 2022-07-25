@@ -1,4 +1,4 @@
-import { V } from '@/utils/nodeViewer/v'
+// import { V } from '@/utils/nodeViewer/v'
 import { NvEl } from '@/utils/nodeViewer/nv_el'
 import { Blueprint } from './blueprint'
 import { Node } from '@/utils/graph/node'
@@ -6,10 +6,11 @@ import { Link } from '@/utils/graph/link'
 import { BpWallNode } from '@/utils/routingAnalysis/bp_wallNode'
 import { BpWallLink } from '@/utils/routingAnalysis/bp_wallLink'
 import { BpTheme } from '@/utils/routingAnalysis/bp_theme'
-import { Vec2, Vector2 } from '../graph/Vec'
+// import { Vec2, Vector2 } from '../graph/Vec'
 import { BpWindow, Destroyable } from './bp_window'
 import { LocalEvent } from '../graph/localEvent'
 import { Session } from '../session'
+import V from '@/utils/vector'
 
 class Grid {
   private center: V
@@ -53,7 +54,7 @@ class Grid {
   }
 
   public snap (p: V): V {
-    const relative = p.sub(this.center)
+    const relative = p.subV(this.center)
     const mod = new V(relative.x % this.offset.x, relative.y % this.offset.x)
     const res = new V(
       mod.x < this.offset.x / 2 ? p.x - mod.x : p.x + (this.offset.x - mod.x),
@@ -88,6 +89,9 @@ class Grid {
   }
 }
 
+/**
+ * manage nodes and links of the blueprint editor.
+ */
 export class BlueprintContainer {
   private mode:
     | 'WALL'
@@ -302,6 +306,7 @@ export class BlueprintContainer {
   }
 
   public constructor (parentNode: HTMLElement) {
+    // init UI elements
     this.theme = new BpTheme()
     this.bp = new Blueprint()
     this.parentNode = parentNode
@@ -347,6 +352,7 @@ export class BlueprintContainer {
     this.svgNodeLayer.setStyle(layerStyle)
     this.svgFurnitureLayer.setStyle(layerStyle)
 
+    // init inputs listeners
     this.container.getDom().oncontextmenu = e => {
       e.preventDefault()
     }
@@ -377,6 +383,7 @@ export class BlueprintContainer {
       }
       e.preventDefault()
     }
+
     this.bp.setData<number>('scale', 1)
 
     // add a new wall node displayer when a wall node is created in the blueprint
@@ -389,8 +396,8 @@ export class BlueprintContainer {
       'position',
       arg => {
         (this.wallNodeMap.get(arg.node) as BpWallNode).setPos(
-          (arg.value as Vec2).x,
-          (arg.value as Vec2).y
+          (arg.value as V).x,
+          (arg.value as V).y
         )
       },
       this
@@ -466,7 +473,7 @@ export class BlueprintContainer {
       stroke: this.theme.WallSnapLineColor
     })
 
-    const path = `M${new V(0, 0).str()} L${new V(100, 0).str()}`
+    const path = `M${new V(0, 0).toString()} L${new V(100, 0).toString()}`
     this.scaleDisplayer.lineCol1.getDom().setAttribute('d', path)
     this.scaleDisplayer.lineCol2.getDom().setAttribute('d', path)
 
@@ -516,7 +523,7 @@ export class BlueprintContainer {
 
   public refreshScaleViewer (): void {
     const right = 100 * this.bp.getData<number>('scale') * this.size
-    const path = `M${new V(0, 0).str()} L${new V(right, 0).str()}`
+    const path = `M${new V(0, 0).toString()} L${new V(right, 0).toString()}`
     this.scaleDisplayer.lineCol1.getDom().setAttribute('d', path)
     this.scaleDisplayer.lineCol2.getDom().setAttribute('d', path)
     this.scaleDisplayer.rightPoint.setStyle({
@@ -567,8 +574,8 @@ export class BlueprintContainer {
         if (this.grid === null) return
         this.grid.setOffset(
           this.clientPosToContainerPos(e.clientX, e.clientY)
-            .sub(this.grid.getCenter())
-            .abs()
+            .subV(this.grid.getCenter())
+            .absV()
         )
         this.updateTransform()
       }
@@ -590,10 +597,13 @@ export class BlueprintContainer {
    * @param snappedPos snapped position
    */
   private displayXsnap (node: Node, snappedPos: V) {
-    const p = node.getData<Vec2>('position')
+    const p = node.getData<V>('position')
     this.snapXLine
       .getDom()
-      .setAttribute('d', `M${new V(p.x, p.y).str()} L${snappedPos.str()}`)
+      .setAttribute(
+        'd',
+        `M${new V(p.x, p.y).toString()} L${snappedPos.toString()}`
+      )
   }
 
   /**
@@ -602,10 +612,13 @@ export class BlueprintContainer {
    * @param snappedPos snapped position
    */
   private displayYsnap (node: Node, snappedPos: V) {
-    const p = node.getData<Vec2>('position')
+    const p = node.getData<V>('position')
     this.snapYLine
       .getDom()
-      .setAttribute('d', `M${new V(p.x, p.y).str()} L${snappedPos.str()}`)
+      .setAttribute(
+        'd',
+        `M${new V(p.x, p.y).toString()} L${snappedPos.toString()}`
+      )
   }
 
   /**
@@ -649,14 +662,14 @@ export class BlueprintContainer {
     c.getDom().onmousedown = e => {
       if (e.button === 1) {
         // movement
-        this.positionStart = this.unscale(new V(e.clientX, e.clientY)).sub(
+        this.positionStart = this.unscale(new V(e.clientX, e.clientY)).subV(
           this.position
         )
         c.getDom().onmousemove = event => {
           event.preventDefault()
-          this.position = this.unscale(new V(event.clientX, event.clientY)).sub(
-            this.positionStart
-          )
+          this.position = this.unscale(
+            new V(event.clientX, event.clientY)
+          ).subV(this.positionStart)
           this.updateTransform()
         }
         document.onmouseup = event => {
@@ -670,15 +683,15 @@ export class BlueprintContainer {
         let n: Node | null = null
         if (this.hoveredNode != null) {
           // create wall from snapedWallNode
-          const p = this.hoveredNode.getNode().getData<Vec2>('position')
+          const p = this.hoveredNode.getNode().getData<V>('position')
           pos = new V(p.x, p.y)
           n = this.hoveredNode.getNode()
         } else {
           // create wall from new node
-          n = this.bp.addWallNode(new Vector2(pos.x, pos.y))
+          n = this.bp.addWallNode(new V(pos.x, pos.y))
         }
         // end point wall node
-        const n2 = this.bp.addWallNode(new Vector2(pos.x, pos.y))
+        const n2 = this.bp.addWallNode(new V(pos.x, pos.y))
         this.bp.addWall(n, n2)
         document.onmousemove = e1 => {
           // positioning end point of the wall
@@ -691,7 +704,7 @@ export class BlueprintContainer {
           let snapY: Node | null = null
           this.wallNodeMap.forEach((value: BpWallNode, key: Node) => {
             if (key === n2 || key === n) return
-            const p = key.getData<Vec2>('position')
+            const p = key.getData<V>('position')
             if (Math.abs(p2.x - p.x) < this.optAlignSnapDist) {
               p2.x = p.x
               snapX = key
@@ -701,22 +714,21 @@ export class BlueprintContainer {
               snapY = key
             }
           })
-          if (Vector2.norm(Vector2.minus(p2, pos)) > 0.1) {
+          if (p2.distanceTo(pos) > 0.1) {
             // snapping angle
-            let angle = Vector2.angle(Vector2.minus(p2, pos))
+            let angle = p2.subV(pos).angle()
             if (angle < 0) angle = Math.PI + (Math.PI + angle)
             let tmpTargetAngle = angle - (angle % this.optAngleSnapStep)
             if (angle % this.optAngleSnapStep > this.optAngleSnapStep / 2) {
               tmpTargetAngle += this.optAngleSnapStep
             }
             tmpTargetAngle = -tmpTargetAngle + Math.PI / 2
-            const newP = Vector2.plus(
-              Vector2.multiply(
-                new Vector2(Math.cos(tmpTargetAngle), Math.sin(tmpTargetAngle)),
-                Vector2.norm(Vector2.minus(p2, pos))
-              ),
-              pos
+            const newP = new V(
+              Math.cos(tmpTargetAngle),
+              Math.sin(tmpTargetAngle)
             )
+              .multN(p2.distanceTo(pos))
+              .addV(pos)
 
             // apply snap lines
             if (snapX !== null) newP.x = p2.x
@@ -724,7 +736,7 @@ export class BlueprintContainer {
             if (snapX !== null) this.displayXsnap(snapX, new V(newP.x, newP.y))
             if (snapY !== null) this.displayYsnap(snapY, new V(newP.x, newP.y))
 
-            n2.setData<Vec2>('position', newP)
+            n2.setData<V>('position', newP)
           }
         }
         document.onmouseup = e1 => {
@@ -737,12 +749,10 @@ export class BlueprintContainer {
             // check for merging end point node to an existing node
             this.wallNodeMap.forEach(value => {
               if (
-                Vector2.norm(
-                  Vector2.minus(
-                    value.getNode().getData<Vec2>('position'),
-                    n2.getData<Vec2>('position')
-                  )
-                ) < 2 &&
+                value
+                  .getNode()
+                  .getData<V>('position')
+                  .distanceTo(n2.getData<V>('position')) < 2 &&
                 value.getNode() !== n2
               ) {
                 if (
@@ -786,7 +796,7 @@ export class BlueprintContainer {
         // check for snapping line when moving node
         this.wallNodeMap.forEach((value: BpWallNode, key: Node) => {
           if (key === node) return
-          const p = key.getData<Vec2>('position')
+          const p = key.getData<V>('position')
           if (Math.abs(p2.x - p.x) < this.optAlignSnapDist) {
             p2.x = p.x
             snapX = key
@@ -800,7 +810,7 @@ export class BlueprintContainer {
         if (snapX !== null) this.displayXsnap(snapX, new V(p2.x, p2.y))
         if (snapY !== null) this.displayYsnap(snapY, new V(p2.x, p2.y))
 
-        node.setData<Vec2>('position', p2)
+        node.setData<V>('position', p2)
       }
     }
     document.onmouseup = e => {
@@ -813,12 +823,10 @@ export class BlueprintContainer {
         // check for merge on existing node
         this.wallNodeMap.forEach(value => {
           if (
-            Vector2.norm(
-              Vector2.minus(
-                value.getNode().getData<Vec2>('position'),
-                node.getData<Vec2>('position')
-              )
-            ) < 2 &&
+            value
+              .getNode()
+              .getData<V>('position')
+              .distanceTo(node.getData<V>('position')) < 2 &&
             value.getNode() !== node
           ) {
             node.foreachLink(l => {
@@ -868,7 +876,7 @@ export class BlueprintContainer {
   }
 
   public unscale (v: V): V {
-    return v.mult(1 / this.size)
+    return v.multN(1 / this.size)
   }
 
   public zoom (event: WheelEvent): void {
@@ -892,7 +900,7 @@ export class BlueprintContainer {
         this.size
     )
 
-    this.positionStart = this.unscale(new V(event.clientX, event.clientY)).sub(
+    this.positionStart = this.unscale(new V(event.clientX, event.clientY)).subV(
       this.position
     )
 
@@ -999,9 +1007,9 @@ export class BlueprintContainer {
       if (e.button === 0) {
         const n1 = new Node()
         const p1 = this.clientPosToContainerPos(e.x, e.y)
-        n1.setData<Vec2>('position', new Vector2(p1.x, p1.y))
+        n1.setData<V>('position', new V(p1.x, p1.y))
         const n2 = new Node()
-        n2.setData<Vec2>('position', new Vector2(p1.x, p1.y))
+        n2.setData<V>('position', new V(p1.x, p1.y))
         const l = n1.addLink(n2)
         l.setData<number>('length', 0)
 
@@ -1013,10 +1021,10 @@ export class BlueprintContainer {
 
         this.container.getDom().onmousemove = e2 => {
           const p2 = this.clientPosToContainerPos(e2.x, e2.y)
-          n2.setData<Vec2>('position', new Vector2(p2.x, p2.y))
-          l.setData<number>('length', p1.sub(p2).norm() / oldScale)
-          if (p1.sub(p2).norm() > 1) {
-            this.bp.setData<number>('scale', p1.sub(p2).norm() / refDist / 100)
+          n2.setData<V>('position', new V(p2.x, p2.y))
+          l.setData<number>('length', p1.distanceTo(p2) / oldScale)
+          if (p1.distanceTo(p2) > 1) {
+            this.bp.setData<number>('scale', p1.distanceTo(p2) / refDist / 100)
           }
           n2Display.setPos(p2.x, p2.y)
           lDisplay.refreshPos()
