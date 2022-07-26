@@ -39,6 +39,7 @@ export default class ModelViewer2 extends Vue {
   @Prop({ default: () => false }) private displayInspector!: boolean
   @Prop({ default: () => false }) private displayFog!: boolean
   @Prop({ default: () => false }) private displayGrid!: boolean
+  @Prop({ default: () => false }) private depthWriteFloor!: boolean
 
   container: HTMLElement | null = null
 
@@ -72,7 +73,7 @@ export default class ModelViewer2 extends Vue {
     if (active) {
       const fogColor = new THREE.Color(color)
       // this.scene.background = fogColor
-      this.scene.fog = new THREE.Fog(fogColor, 0.000000025, 10)
+      this.scene.fog = new THREE.Fog(fogColor, 1, 15)
     } else {
       const fogColor = new THREE.Color(color)
       // this.scene.background = fogColor
@@ -109,7 +110,10 @@ export default class ModelViewer2 extends Vue {
     // Create floor
     this.floor = new THREE.Mesh(
       new THREE.PlaneGeometry(size, size),
-      new THREE.MeshPhongMaterial({ color: 0x999999, depthWrite: false })
+      new THREE.MeshPhongMaterial({
+        color: backgroundColor,
+        depthWrite: this.depthWriteFloor
+      })
     )
     this.floor.rotation.x = -Math.PI / 2
     this.floor.receiveShadow = true
@@ -162,10 +166,10 @@ export default class ModelViewer2 extends Vue {
 
   updateTheme (): void {
     if (this.$vuetify.theme.dark) {
-      this.setFogActive(false, 0x1e1e1e)
+      this.setFogActive(this.displayFog, 0x1e1e1e)
       this.setGrid(100, 100, 0x555555, 0x1e1e1e, 0xeeeeee)
     } else {
-      this.setFogActive(false, 0xfefefe)
+      this.setFogActive(this.displayFog, 0xfefefe)
       this.setGrid(100, 100, 0xaaaaaa, 0xfefefe, 0x111111)
     }
   }
