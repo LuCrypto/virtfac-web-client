@@ -38,6 +38,7 @@
                 <v-list-item-group v-model="selectedMenuItem" color="primary">
                   <v-list-item
                     v-for="(menuItem, i) in menuItemList"
+                    :disabled="menuItem.disabled()"
                     :key="i"
                     class="justify-start"
                     @click.stop="menuItem.action"
@@ -81,6 +82,7 @@
               <!-- Rows -->
               <v-row class="ma-0 flex-grow-1">
                 <model-viewer-2
+                  :depthWriteFloor="true"
                   :displayFog="true"
                   ref="viewer"
                 ></model-viewer-2>
@@ -200,6 +202,7 @@ import T from '@/utils/transform'
 import { GLTF } from 'three/examples/jsm/loaders/GLTFLoader'
 import { BVH } from 'three/examples/jsm/loaders/BVHLoader'
 import * as SkeletonUtils from 'three/examples/jsm/utils/SkeletonUtils'
+import { TransformControls } from 'three/examples/jsm/controls/TransformControls.js'
 
 class SkeletonHelper extends THREE.SkeletonHelper {
   skeleton: THREE.Skeleton | null = null
@@ -209,10 +212,17 @@ class MenuItem {
   text: string
   icon: string
   action: () => void
-  constructor (text: string, icon: string, action: () => void) {
+  disabled: () => boolean
+  constructor (
+    text: string,
+    icon: string,
+    action: () => void,
+    disabled: () => boolean = () => false
+  ) {
     this.text = text
     this.icon = icon
     this.action = action
+    this.disabled = disabled
   }
 }
 
@@ -242,24 +252,19 @@ class DataFrame {
 }
 
 interface SkeletonUtilsModule {
-  retarget: (
-    target: THREE.Object3D | THREE.Skeleton,
-    source: THREE.Object3D | THREE.Skeleton,
-    options: any
-  ) => void
-
-  getSkeletonOffsets: (
-    target: THREE.Object3D | THREE.Skeleton,
-    source: THREE.Object3D | THREE.Skeleton,
-    options: Record<string, unknown>
-  ) => THREE.Matrix4[]
-
   retargetClip: (
     target: THREE.Skeleton | THREE.Object3D,
     source: THREE.Skeleton | THREE.Object3D,
     clip: THREE.AnimationClip,
     options: Record<string, unknown>
   ) => THREE.AnimationClip
+}
+
+interface Settings {
+  showInput: boolean
+  showSkeleton: boolean
+  transformType: number
+  showRula: boolean
 }
 
 @Component({
@@ -282,7 +287,7 @@ export default class AvatarAnimationComponent extends Vue {
   rula: RULA | null = null
   bvhSkeletonHelper: SkeletonHelper | null = null
   unrealSkeletonHelper: SkeletonHelper | null = null
-  mixer: THREE.AnimationMixer | null = null
+
   animationTime = 0
   animationDuration = 0
   clock = new THREE.Clock()
@@ -292,6 +297,10 @@ export default class AvatarAnimationComponent extends Vue {
   frame = 0
 
   gltf: GLTF | null = null
+  gltfHipsPosition: THREE.Vector3 = new THREE.Vector3()
+  gltfMixer: THREE.AnimationMixer | null = null
+  bvhMixer: THREE.AnimationMixer | null = null
+  updatePositionAfterLoading: () => void = () => null
 
   // axisNeuronSkeleton = AxisNeuronSkeleton
   // unrealSkeleton = UnrealSkeleton
@@ -299,7 +308,7 @@ export default class AvatarAnimationComponent extends Vue {
 
   // Bone reatrgeting
   options = {
-    useFirstFramePosition: false,
+    useFirstFramePosition: true,
     preserveHipPosition: false,
     hip: 'Hips',
     offsets: [] as THREE.Matrix4[],
@@ -377,10 +386,64 @@ export default class AvatarAnimationComponent extends Vue {
 
   action: THREE.AnimationAction | null = null
 
+  settings: Settings = {
+    showInput: false,
+    showSkeleton: true,
+    transformType: 0,
+    showRula: true
+  }
+
+  settingsReferences: {
+    inputSkeleton: THREE.SkeletonHelper | null
+    outputSkeleton: THREE.SkeletonHelper | null
+    transform: TransformControls | null
+  } = {
+    inputSkeleton: null,
+    outputSkeleton: null,
+    transform: null
+  }
+
   mounted (): void {
     this.viewer = this.$refs.viewer as ModelViewer2
     this.createMenu()
     this.createAvatar()
+  }
+
+  updateSettings (settings: Partial<Settings>): void {
+    if (settings.transformType) {
+      settings.transformType = settings.transformType % 3
+    }
+    Object.assign(this.settings, settings)
+
+    if (this.settingsReferences.inputSkeleton) {
+      this.settingsReferences.inputSkeleton.visible = this.settings.showInput
+    }
+    if (this.settingsReferences.outputSkeleton) {
+      this.settingsReferences.outputSkeleton.visible = this.settings.showSkeleton
+    }
+    if (this.settingsReferences.transform) {
+      switch (this.settings.transformType) {
+        case 1:
+          this.settingsReferences.transform.showX = true
+          this.settingsReferences.transform.showY = true
+          this.settingsReferences.transform.showZ = true
+          this.settingsReferences.transform.enabled = true
+          this.settingsReferences.transform.visible = true
+          this.settingsReferences.transform.setMode('translate')
+          break
+        case 2:
+          this.settingsReferences.transform.showX = false
+          this.settingsReferences.transform.showY = true
+          this.settingsReferences.transform.showZ = false
+          this.settingsReferences.transform.enabled = true
+          this.settingsReferences.transform.visible = true
+          this.settingsReferences.transform.setMode('rotate')
+          break
+        default:
+          this.settingsReferences.transform.visible = false
+          this.settingsReferences.transform.enabled = false
+      }
+    }
   }
 
   createMenu (): void {
@@ -391,6 +454,33 @@ export default class AvatarAnimationComponent extends Vue {
     )
     this.menuItemList.push(
       new MenuItem('Download RULA analysis', 'mdi-download', () => true)
+    )
+    this.menuItemList.push(
+      new MenuItem(
+        'Input skeleton',
+        'mdi-eye-arrow-left',
+        () => this.updateSettings({ showInput: !this.settings.showInput }),
+        () => this.settingsReferences.inputSkeleton == null
+      )
+    )
+    this.menuItemList.push(
+      new MenuItem('Output skeleton', 'mdi-eye-arrow-right', () =>
+        this.updateSettings({ showSkeleton: !this.settings.showSkeleton })
+      )
+    )
+    this.menuItemList.push(
+      new MenuItem('Add asset', 'mdi-archive-plus', () => true)
+    )
+    this.menuItemList.push(
+      new MenuItem('Toggle transform', 'mdi-rotate-orbit', () =>
+        this.updateSettings({ transformType: this.settings.transformType + 1 })
+      )
+    )
+    this.menuItemList.push(
+      new MenuItem('Reset transform', 'mdi-undo', () => true)
+    )
+    this.menuItemList.push(
+      new MenuItem('Toggle RULA markers', 'mdi-eye-circle', () => true)
     )
   }
 
@@ -458,15 +548,37 @@ export default class AvatarAnimationComponent extends Vue {
     this.viewer
       .loadGLTFFromPath('./avatar.gltf')
       .then(gltf => {
-        // gltf.scene.children[0].position.set(0, 0, 0)
-        gltf.scene.children[0].scale.set(0.01, 0.01, 0.01)
+        // Avatar container
+        const avatar = new THREE.Group()
+        avatar.add(gltf.scene)
+        viewer.scene.add(avatar)
 
+        // Global container
+        const container = new THREE.Group()
+        container.add(avatar)
+        container.scale.set(0.01, 0.01, 0.01)
+        viewer.scene.add(container)
+
+        // Control avatar position
+        // Create control
+        const control = new TransformControls(
+          viewer.camera,
+          viewer.renderer.domElement
+        )
+        control.addEventListener('change', () => viewer.draw())
+        control.addEventListener('dragging-changed', event => {
+          viewer.controls.enabled = !event.value
+        })
+        control.setMode('translate')
+        control.attach(container)
+        viewer.scene.add(control)
+        this.settingsReferences.transform = control
+
+        // Keep gltf reference
         this.gltf = gltf
-        this.mixer = new THREE.AnimationMixer(gltf.scene)
 
         // Loop on all hierarchy
         const bones: THREE.Bone[] = []
-        let skeletonHelper: THREE.SkeletonHelper | null = null
         gltf.scene.traverse(child => {
           // Set material for all meshes
           if (child instanceof THREE.Mesh) {
@@ -479,8 +591,18 @@ export default class AvatarAnimationComponent extends Vue {
 
             // Create skeleton helper on root bone
             if (child.name === 'pelvis') {
-              skeletonHelper = new THREE.SkeletonHelper(child)
+              this.updatePositionAfterLoading = () => {
+                avatar.position.set(
+                  child.position.x,
+                  child.position.y,
+                  child.position.z
+                )
+              }
+
+              const skeletonHelper = new THREE.SkeletonHelper(child)
+              this.settingsReferences.outputSkeleton = skeletonHelper
               const skeletonMaterial = skeletonHelper.material as THREE.LineBasicMaterial
+              console.log(skeletonMaterial)
               skeletonMaterial.linewidth = 3
               skeletonMaterial.color = new THREE.Color(0x000000)
               skeletonHelper.visible = true
@@ -489,9 +611,8 @@ export default class AvatarAnimationComponent extends Vue {
           }
         })
 
-        // Create skeleton from bone list
-        // if (!skeletonHelper) return
-        // ;(skeletonHelper as SkeletonHelper).skeleton = new THREE.Skeleton(bones)
+        // Update settings
+        this.updateSettings({})
       })
       .catch(e => console.error('Cannot load GLTF', e))
   }
@@ -520,21 +641,12 @@ export default class AvatarAnimationComponent extends Vue {
     this.options.fps = fps
 
     const utils = (SkeletonUtils as unknown) as SkeletonUtilsModule
-
-    console.log({
-      target: model.skeleton.bones.map(b => b.name),
-      source: skeleton.bones.map(b => b.name),
-      clip
-    })
     const newClip = utils.retargetClip(
       model,
       result.skeleton,
       clip,
       this.options
     )
-
-    /* can dispose of bvhLoader skeleton */
-    // skeleton.dispose()
 
     /* THREE.SkinnedMesh.pose() to reset the model */
     model.traverse(child => {
@@ -550,33 +662,54 @@ export default class AvatarAnimationComponent extends Vue {
     if (this.viewer == null) return
     if (this.viewer.scene == null) return
     if (!this.gltf) return
-    if (!this.mixer) return
 
     // Load BVH
     const bvh = this.viewer.loadBVHFromContent(content)
+    const bvhHelper = new SkeletonHelper(bvh.skeleton.bones[0])
+    this.settingsReferences.inputSkeleton = bvhHelper
+    bvhHelper.skeleton = bvh.skeleton
+    const skeletonMaterial = bvhHelper.material as THREE.LineBasicMaterial
+    skeletonMaterial.linewidth = 3
+    skeletonMaterial.color = new THREE.Color(0xffffff)
+    const helperScale = new THREE.Group()
+    helperScale.add(bvh.skeleton.bones[0])
+    helperScale.scale.set(0.0045, 0.0045, 0.0045)
+    this.viewer.scene.add(bvhHelper)
+    this.viewer.scene.add(helperScale)
 
-    const scene = this.gltf.scene as THREE.Object3D
-    const model = scene as THREE.SkinnedMesh
+    const model = (this.gltf.scene as THREE.Object3D) as THREE.SkinnedMesh
+
+    this.updatePositionAfterLoading()
 
     // Setup animation
     const newClip = this.retargetBVH(bvh, model)
     this.animationDuration = bvh.clip.duration
     this.animationTime = 0
-    this.mixer
+    this.gltfMixer = new THREE.AnimationMixer(this.gltf.scene)
+    this.gltfMixer
       .clipAction(newClip)
       .setLoop(THREE.LoopRepeat, Infinity)
       .setEffectiveWeight(1.0)
       .play()
 
+    this.bvhMixer = new THREE.AnimationMixer(bvhHelper)
+    this.bvhMixer
+      .clipAction(bvh.clip)
+      .setLoop(THREE.LoopRepeat, Infinity)
+      .setEffectiveWeight(1.0)
+      .play()
+
+    this.updateSettings({})
     this.viewer.update = () => this.update()
   }
 
   update (): void {
-    if (this.mixer == null) return
+    if (this.gltfMixer == null || this.bvhMixer == null) return
     const delta = this.clock.getDelta()
     this.animationTime = (this.animationTime + delta) % this.animationDuration
     this.animationValue = this.animationTime / this.animationDuration
-    this.mixer.setTime(this.animationTime)
+    this.gltfMixer.setTime(this.animationTime)
+    this.bvhMixer.setTime(this.animationTime)
   }
 
   onFileInput (files: APIFile[]): void {
