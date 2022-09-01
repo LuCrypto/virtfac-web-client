@@ -1,7 +1,6 @@
 <style lang="scss">
 .dynamic-chart-container {
   overflow: hidden;
-  width: 100%;
 
   .pinch-scroll-zoom {
     z-index: 0;
@@ -27,9 +26,11 @@
 </style>
 <template>
   <v-card
-    class="pa-4 mb-8"
+    class="pa-4"
     :class="fullscreen ? 'fullscreen' : ''"
     :style="{
+      width: '100%',
+      height: '100%',
       backgroundColor: $vuetify.theme.dark ? '#1E1E1E' : '#EFEFEF'
     }"
   >

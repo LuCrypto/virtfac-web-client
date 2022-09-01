@@ -2,18 +2,26 @@
 .modelViewerStats {
   position: absolute;
   display: flex;
-  bottom: 0;
-  right: 0;
   margin: 10px;
   gap: 10px;
   cursor: pointer;
   opacity: 0.9;
   z-index: 2;
+  flex-wrap: wrap;
 }
 </style>
 
 <template>
-  <div class="modelViewerStats" ref="container"></div>
+  <div
+    class="modelViewerStats"
+    :style="{
+      top: position.includes('TOP') ? '0' : null,
+      bottom: position.includes('BOTTOM') ? '0' : null,
+      right: position.includes('RIGHT') ? '0' : null,
+      left: position.includes('LEFT') ? '0' : null
+    }"
+    ref="container"
+  ></div>
 </template>
 
 <script lang="ts">
@@ -24,6 +32,7 @@ export class Panel {
   context: CanvasRenderingContext2D | null = null
   foregroundColor = '#ffffff'
   backgroundColor = '#000000'
+  curveColor = '000000'
   name = 'Info'
   min = Infinity
   max = 0
@@ -40,8 +49,7 @@ export class Panel {
   }
 
   constructor (name: string, dark: boolean) {
-    this.foregroundColor = '#f5a406'
-    this.backgroundColor = '#252525'
+    this.updateTheme(dark)
     this.name = name
     this.layout.PR = Math.round(window.devicePixelRatio || 1)
     this.layout.WIDTH = 80 * this.layout.PR
@@ -70,6 +78,8 @@ export class Panel {
 
       this.context.fillStyle = this.foregroundColor
       this.context.fillText(this.name, this.layout.TEXT_X, this.layout.TEXT_Y)
+
+      this.context.fillStyle = this.foregroundColor
       this.context.fillRect(
         this.layout.GRAPH_X,
         this.layout.GRAPH_Y,
@@ -86,6 +96,12 @@ export class Panel {
         this.layout.GRAPH_HEIGHT
       )
     }
+  }
+
+  updateTheme (dark: boolean): void {
+    this.foregroundColor = '#f5a406'
+    this.backgroundColor = '#252525'
+    this.curveColor = '#f5a406'
   }
 
   update (value: number, maxValue: number): void {
@@ -125,6 +141,7 @@ export class Panel {
       this.layout.GRAPH_HEIGHT
     )
 
+    this.context.fillStyle = this.curveColor
     this.context.fillRect(
       this.layout.GRAPH_X + this.layout.GRAPH_WIDTH - this.layout.PR,
       this.layout.GRAPH_Y,
@@ -150,6 +167,11 @@ export class Panel {
 // @group COMPONENTS
 export default class ModelViewerStats extends Vue {
   @Prop({ default: () => false }) private pannelIds!: number[]
+  @Prop({ default: () => 'TOP_LEFT' }) private position!:
+    | 'TOP_RIGHT'
+    | 'TOP_LEFT'
+    | 'BOTTOM_RIGHT'
+    | 'BOTTOM_LEFT'
 
   container: HTMLElement | null = null
 
@@ -179,6 +201,10 @@ export default class ModelViewerStats extends Vue {
       this.panels.push(this.memPanel)
     }
     this.updatePanels()
+
+    this.$root.$on('changeDarkMode', () => {
+      this.panels.forEach(panel => panel.updateTheme(this.$vuetify.theme.dark))
+    })
   }
 
   updatePanels () {

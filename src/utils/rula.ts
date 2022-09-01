@@ -137,7 +137,7 @@ const RULA_TABLE_C = [
 
 interface RULABonesSettings {
   boneName: string
-  marker: THREE.AxesHelper | null
+  marker: THREE.AxesHelper | THREE.Mesh | null
   computeScore: (angles: THREE.Vector3, scores: Map<string, number>) => void
 }
 
@@ -145,7 +145,7 @@ export default class RULA {
   data: Map<string, number>[] = []
   boneSettings: RULABonesSettings[] = [
     {
-      boneName: 'Spine',
+      boneName: 'Spine1',
       marker: null,
       computeScore: (
         angles: THREE.Vector3,
@@ -449,17 +449,71 @@ export default class RULA {
 
   /* This method attaches a marker to each bone, which is then used as a
    * reference for calculating the RULA score */
-  createRULAMarkers (skeleton: THREE.SkeletonHelper): void {
+  createRULAMarkers (
+    skeleton: THREE.SkeletonHelper,
+    markerType: 'AXIS' | 'SPHERE' = 'SPHERE'
+  ): void {
     skeleton.bones.map(bone => {
       const setting = this.boneSettings
         .filter(setting => setting.boneName === bone.name)
         .pop()
       if (setting) {
-        const axesHelper = new THREE.AxesHelper(10)
-        bone.children.push(axesHelper)
-        axesHelper.parent = bone
-        axesHelper.name = bone.name
-        setting.marker = axesHelper
+        let marker: THREE.AxesHelper | THREE.Mesh | null = null
+
+        switch (markerType) {
+          case 'AXIS':
+            marker = new THREE.AxesHelper(10)
+            break
+          case 'SPHERE':
+            {
+              const geometry = new THREE.SphereGeometry(10, 8, 6)
+              const material = new THREE.MeshBasicMaterial({ color: 0x000000 })
+              marker = new THREE.Mesh(geometry, material)
+            }
+            break
+        }
+
+        if (!marker) return
+
+        bone.children.push(marker)
+        marker.parent = bone
+        marker.name = bone.name
+        setting.marker = marker
+      }
+    })
+  }
+
+  static getMarkerColor (value: number): number {
+    return value < 3 ? 0x27ae60 : value < 6 ? 0xd35400 : 0xe74c3c
+  }
+
+  updateRULAMarkers (markerValues: Map<string, number>): void {
+    const getScoreLabelByBoneName = {
+      Spine1: 'TRUNK_POSTURE',
+      Neck: 'NECK',
+      RightArm: 'RIGHT_SHOULDER',
+      RightForeArm: 'RIGHT_ELBOW',
+      RightHand: 'RIGHT_WRIST',
+      LeftArm: 'LEFT_SHOULDER',
+      LeftForeArm: 'LEFT_ELBOW',
+      LeftHand: 'LEFT_WRIST'
+    }
+
+    this.boneSettings.forEach(setting => {
+      const marker = setting.marker
+      if (marker instanceof THREE.Mesh) {
+        const name = setting.boneName
+        if (name in getScoreLabelByBoneName) {
+          const key = name as keyof typeof getScoreLabelByBoneName
+          const label = getScoreLabelByBoneName[key]
+
+          if (markerValues.has(label)) {
+            const value = markerValues.get(label) as number
+            marker.material = new THREE.MeshBasicMaterial({
+              color: RULA.getMarkerColor(value)
+            })
+          }
+        }
       }
     })
   }

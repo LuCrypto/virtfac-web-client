@@ -4,7 +4,12 @@
     ref="container"
     style="max-width: 100%; max-height: 100%; position: relative"
   >
-    <model-viewer-stats ref="stats" :pannelIds="[0, 1, 2]"></model-viewer-stats>
+    <model-viewer-stats
+      v-if="!hideStats"
+      ref="stats"
+      :pannelIds="[0, 1, 2]"
+      :position="statsPosition"
+    ></model-viewer-stats>
   </v-container>
 </template>
 
@@ -40,6 +45,12 @@ export default class ModelViewer2 extends Vue {
   @Prop({ default: () => false }) private displayFog!: boolean
   @Prop({ default: () => false }) private displayGrid!: boolean
   @Prop({ default: () => false }) private depthWriteFloor!: boolean
+  @Prop({ default: () => false }) private hideStats!: boolean
+  @Prop({ default: () => 'TOP_LEFT' }) private statsPosition!:
+    | 'TOP_RIGHT'
+    | 'TOP_LEFT'
+    | 'BOTTOM_RIGHT'
+    | 'BOTTOM_LEFT'
 
   container: HTMLElement | null = null
 
@@ -130,6 +141,12 @@ export default class ModelViewer2 extends Vue {
     this.camera.position.set(1.5, 2.5, 1.5)
     this.camera.lookAt(new THREE.Vector3(0, 5, 0))
 
+    const canvas = this.renderer.domElement as HTMLCanvasElement
+    canvas.setAttribute(
+      'style',
+      'position: absolute; top: 0; left: 0; width: 100%; height: 100%;'
+    )
+
     this.container = this.$refs.container as HTMLElement
     this.container.appendChild(this.renderer.domElement)
 
@@ -195,13 +212,11 @@ export default class ModelViewer2 extends Vue {
   }
 
   updateSize () {
-    // Hide and show canvas for correct size computation
-    this.renderer.domElement.setAttribute('style', 'display: none;')
+    // Compute new canvas size from container
     const size = new V(
       this.container ? this.container.offsetWidth : 0,
       this.container ? this.container.offsetHeight : 0
     )
-    this.renderer.domElement.setAttribute('style', 'display: block;')
 
     if (!this.size.equal(size)) {
       this.size = size

@@ -43,7 +43,9 @@
                     class="justify-start"
                     @click.stop="menuItem.action"
                   >
-                    <v-list-item-icon>
+                    <v-list-item-icon
+                      :style="{ opacity: menuItem.disabled() ? 0.5 : 1 }"
+                    >
                       <v-icon v-text="menuItem.icon"></v-icon>
                     </v-list-item-icon>
                     <v-list-item-content>
@@ -79,94 +81,106 @@
             </v-navigation-drawer>
 
             <v-col class="pa-0 d-flex flex-column" style="overflow: hidden;">
-              <!-- Rows -->
-              <v-row class="ma-0 flex-grow-1">
-                <model-viewer-2
-                  :depthWriteFloor="true"
-                  :displayFog="true"
-                  ref="viewer"
-                ></model-viewer-2>
-              </v-row>
-              <v-row class="ma-0 flex-grow-0">
-                <v-container class="flex-grow-0 ma-0 pa-0" fluid>
-                  <v-row no-gutters class="align-center justify-center">
-                    <!-- Player control -->
-                    <v-col no-gutters class="flex-grow-0">
-                      <v-row no-gutters class="flex-nowrap pa-2 align-center">
-                        <v-btn fab x-small class="mr-2 primary--text">
-                          <v-icon>mdi-format-list-bulleted-square</v-icon>
-                        </v-btn>
-                        <v-btn fab x-small class="mr-2">
-                          <v-icon>mdi-skip-next</v-icon>
-                        </v-btn>
-                        <v-btn fab small class="mr-2 primary black--text">
-                          <v-icon>mdi-play</v-icon>
-                        </v-btn>
-                        <v-btn fab x-small class="mr-2">
-                          <v-icon>mdi-pause</v-icon>
-                        </v-btn>
+              <!-- Model viewer -->
+              <v-col class="flex-grow-1">
+                <v-row
+                  no-gutters
+                  class="ma-0"
+                  style="position: relative; width: 100%; height: 100%"
+                >
+                  <model-viewer-2
+                    :depthWriteFloor="true"
+                    :displayFog="true"
+                    ref="viewer"
+                    statsPosition="TOP_RIGHT"
+                  ></model-viewer-2>
+                </v-row>
+              </v-col>
 
-                        <v-btn fab x-small>
-                          <v-icon>mdi-skip-previous</v-icon>
-                        </v-btn>
-                      </v-row>
-                    </v-col>
-                    <v-col no-gutters>
-                      <v-tabs show-arrows align-with-title>
-                        <v-tabs-slider></v-tabs-slider>
-                        <v-tab>
-                          <v-badge
-                            :color="this.data[this.frame].getRulaColor()"
-                            inline
-                            :value="this.data[this.frame].getRulaScore() >= 0"
-                            :content="this.data[this.frame].getRulaScore()"
-                          >
-                            Rula
-                          </v-badge>
-                        </v-tab>
-                        <v-tab
-                          ><v-badge color="primary" value="" content="0">
-                            Input
-                          </v-badge></v-tab
-                        >
-                        <v-tab
-                          ><v-badge color="primary" value="" content="0">
-                            Output
-                          </v-badge></v-tab
-                        >
-                      </v-tabs>
-                    </v-col>
-                  </v-row>
-                  <v-row no-gutters>
-                    <v-col
-                      no-gutters
-                      class="flex-grow-0 ma-2"
-                      style="min-width: 250px; max-height: 400px; overflow: auto"
-                    >
-                      <!-- <v-expansion-panels flat tile>
-                        <v-expansion-panel
-                          v-for="(item, i) in axisNeuronSkeleton"
-                          :key="i"
-                          class="ma-0"
-                        >
-                          <v-expansion-panel-header
-                            ripple
-                            expand-icon="mdi-menu-down"
-                          >
-                            {{ item }}
-                          </v-expansion-panel-header>
-                          <v-expansion-panel-content
-                            >Rotation</v-expansion-panel-content
-                          >
-                        </v-expansion-panel>
-                      </v-expansion-panels> -->
-                    </v-col>
-                    <v-col no-gutters class="d-flex">
-                      <graph-chart></graph-chart>
-                    </v-col>
-                  </v-row>
-                </v-container>
-              </v-row>
+              <!-- Player controls -->
+              <v-col class="flex-grow-0 px-1 pt-0">
+                <v-row
+                  no-gutters
+                  class="flex-nowrap px-2 pb-2 justify-center align-center"
+                >
+                  <input
+                    ref="timeRange"
+                    class="my-2"
+                    type="range"
+                    style="width: 100%;"
+                    v-model="animation"
+                    name=""
+                    id=""
+                    value="0"
+                    min="0"
+                    max="0.999"
+                    step="0.001"
+                    :disabled="this.settingsReferences.inputSkeleton == null"
+                  />
+                </v-row>
+                <v-row
+                  no-gutters
+                  class="flex-nowrap pa-2 justify-center align-center"
+                >
+                  <v-btn
+                    fab
+                    x-small
+                    class="mr-2"
+                    @click="
+                      play = false
+                      animation = 0
+                    "
+                    :disabled="this.settingsReferences.inputSkeleton == null"
+                  >
+                    <v-icon>mdi-skip-previous</v-icon>
+                  </v-btn>
+                  <v-btn
+                    fab
+                    small
+                    class="mr-2 primary black--text"
+                    @click="play = !play"
+                    :disabled="this.settingsReferences.inputSkeleton == null"
+                  >
+                    <v-icon>{{ play ? 'mdi-pause' : 'mdi-play' }}</v-icon>
+                  </v-btn>
+                  <v-btn
+                    fab
+                    x-small
+                    @click="
+                      play = false
+                      animation = 0.999
+                    "
+                    :disabled="this.settingsReferences.inputSkeleton == null"
+                  >
+                    <v-icon>mdi-skip-next</v-icon>
+                  </v-btn>
+                </v-row>
+              </v-col>
+
+              <!-- TODO RULA Chart -->
+              <!-- <v-row no-gutters>
+                <v-col no-gutters class="d-flex" style="max-height: 400px">
+                  <dynamic-chart
+                    title="Transport chart"
+                    :key="`transport-chart-${updateTransportChart}`"
+                  >
+                    <dynamic-chart-curve-timeline
+                      :rawCurves="
+                        transportChartCurves.length > 0
+                          ? transportChartCurves
+                          : []
+                      "
+                      label-x="Amount (Units)"
+                      label-y="Time (Hours)"
+                      :step-x="100"
+                      :step-y="100"
+                      :scale-x="100"
+                      :scale-y="10"
+                      :display-plot="true"
+                    ></dynamic-chart-curve-timeline>
+                  </dynamic-chart>
+                </v-col>
+              </v-row> -->
             </v-col>
           </v-layout>
         </v-card-text>
@@ -204,6 +218,10 @@ import { BVH } from 'three/examples/jsm/loaders/BVHLoader'
 import * as SkeletonUtils from 'three/examples/jsm/utils/SkeletonUtils'
 import { TransformControls } from 'three/examples/jsm/controls/TransformControls.js'
 
+import V from '@/utils/vector'
+import DynamicChart from '@/components/dynamicChart/DynamicChart.vue'
+import DynamicChartCurveTimeline from '@/components/dynamicChart/DynamicChartCurveTimeline.vue'
+
 class SkeletonHelper extends THREE.SkeletonHelper {
   skeleton: THREE.Skeleton | null = null
 }
@@ -228,8 +246,6 @@ class MenuItem {
 
 class DataFrame {
   rula: Map<string, number> = new Map<string, number>()
-  input: Map<string, T> = new Map<string, T>()
-  output: Map<string, T> = new Map<string, T>()
 
   constructor (data: Partial<DataFrame> | null = null) {
     Object.assign(this, data)
@@ -237,17 +253,6 @@ class DataFrame {
 
   getRulaScore (): number {
     return this.rula.get('FINAL_SCORE') || -1
-  }
-
-  getRulaColor (): string {
-    const score = this.getRulaScore()
-    return score <= 2
-      ? 'green'
-      : score <= 4
-        ? 'yellow'
-        : score <= 6
-          ? 'orange'
-          : 'red'
   }
 }
 
@@ -265,6 +270,7 @@ interface Settings {
   showSkeleton: boolean
   transformType: number
   showRula: boolean
+  showAvatar: boolean
 }
 
 @Component({
@@ -273,7 +279,9 @@ interface Settings {
     ModelViewer2,
     OpenFile,
     PopUp,
-    GraphChart
+    GraphChart,
+    DynamicChart,
+    DynamicChartCurveTimeline
   }
 })
 // @vuese
@@ -284,27 +292,45 @@ export default class AvatarAnimationComponent extends Vue {
   menuItemList: MenuItem[] = []
   viewer: ModelViewer2 | null = null
   animationValue = 0
-  rula: RULA | null = null
-  bvhSkeletonHelper: SkeletonHelper | null = null
-  unrealSkeletonHelper: SkeletonHelper | null = null
 
+  // Time controlers
   animationTime = 0
   animationDuration = 0
+  play = true
   clock = new THREE.Clock()
+  set animation (value: number) {
+    this.animationTime = value * this.animationDuration
+    this.updateRangeTime()
+  }
+
+  get animation (): number {
+    return this.animationValue
+  }
+
+  updateRangeTime (): void {
+    const value = this.animationValue
+    const element = this.$refs.timeRange as HTMLInputElement
+    if (!element) return
+    const width = Math.ceil(element.offsetWidth * value)
+    element.setAttribute('style', `box-shadow: inset ${width}px 0 0 #ffb000;`)
+  }
 
   // Analysed data
-  data: DataFrame[] = [new DataFrame()]
-  frame = 0
+  data: DataFrame[] = []
+  rula: RULA | null = null
 
   gltf: GLTF | null = null
   gltfHipsPosition: THREE.Vector3 = new THREE.Vector3()
   gltfMixer: THREE.AnimationMixer | null = null
   bvhMixer: THREE.AnimationMixer | null = null
-  updatePositionAfterLoading: () => void = () => null
+  gltfAction: THREE.AnimationAction | null = null
+  bvhAction: THREE.AnimationAction | null = null
+  updateAvatarGizmo: () => void = () => null
 
-  // axisNeuronSkeleton = AxisNeuronSkeleton
-  // unrealSkeleton = UnrealSkeleton
-  // rulaLabels = Object.keys(RULA_LABELS)
+  transportChartCurves: {
+    name: string
+    data: V[]
+  }[] = []
 
   // Bone reatrgeting
   options = {
@@ -390,17 +416,20 @@ export default class AvatarAnimationComponent extends Vue {
     showInput: false,
     showSkeleton: true,
     transformType: 0,
-    showRula: true
+    showRula: true,
+    showAvatar: true
   }
 
   settingsReferences: {
     inputSkeleton: THREE.SkeletonHelper | null
     outputSkeleton: THREE.SkeletonHelper | null
     transform: TransformControls | null
+    avatar: THREE.Group | null
   } = {
     inputSkeleton: null,
     outputSkeleton: null,
-    transform: null
+    transform: null,
+    avatar: null
   }
 
   mounted (): void {
@@ -420,6 +449,12 @@ export default class AvatarAnimationComponent extends Vue {
     }
     if (this.settingsReferences.outputSkeleton) {
       this.settingsReferences.outputSkeleton.visible = this.settings.showSkeleton
+    }
+    if (this.settingsReferences.outputSkeleton) {
+      this.settingsReferences.outputSkeleton.visible = this.settings.showSkeleton
+    }
+    if (this.settingsReferences.avatar) {
+      this.settingsReferences.avatar.visible = this.settings.showAvatar
     }
     if (this.settingsReferences.transform) {
       switch (this.settings.transformType) {
@@ -456,6 +491,11 @@ export default class AvatarAnimationComponent extends Vue {
       new MenuItem('Download RULA analysis', 'mdi-download', () => true)
     )
     this.menuItemList.push(
+      new MenuItem('Toggle avatar', 'mdi-human', () =>
+        this.updateSettings({ showAvatar: !this.settings.showAvatar })
+      )
+    )
+    this.menuItemList.push(
       new MenuItem(
         'Input skeleton',
         'mdi-eye-arrow-left',
@@ -477,7 +517,13 @@ export default class AvatarAnimationComponent extends Vue {
       )
     )
     this.menuItemList.push(
-      new MenuItem('Reset transform', 'mdi-undo', () => true)
+      new MenuItem('Reset transform', 'mdi-undo', () => {
+        const transform = this.settingsReferences.transform
+        if (transform && transform.object) {
+          transform.object.position.set(0, 0, 0)
+          transform.object.rotation.set(0, 0, 0)
+        }
+      })
     )
     this.menuItemList.push(
       new MenuItem('Toggle RULA markers', 'mdi-eye-circle', () => true)
@@ -490,21 +536,21 @@ export default class AvatarAnimationComponent extends Vue {
     duration: number,
     fps = 30
   ): void {
-    if (!this.viewer || !this.bvhSkeletonHelper) {
+    if (!this.viewer || !this.settingsReferences.inputSkeleton) {
       return
     }
 
     skeleton.matrixAutoUpdate = false
 
-    const rula = new RULA(this.viewer.scene)
-    rula.createRULAMarkers(this.bvhSkeletonHelper)
+    this.rula = new RULA(this.viewer.scene)
+    this.rula.createRULAMarkers(this.settingsReferences.inputSkeleton)
 
     for (let frame = 1; frame <= duration * fps; frame++) {
       animation.update((frame * duration) / fps)
       skeleton.updateMatrix()
       this.data.push(
         new DataFrame({
-          rula: rula.compute()
+          rula: this.rula.compute()
         })
       )
       console.log('Compute...')
@@ -533,6 +579,24 @@ export default class AvatarAnimationComponent extends Vue {
     this.download('data.csv', csv)
   }
 
+  createAvatarGizmo (attach: THREE.Group): void {
+    if (!this.viewer) return
+    // Create control
+    const viewer = this.viewer
+    const control = new TransformControls(
+      viewer.camera,
+      viewer.renderer.domElement
+    )
+    control.addEventListener('change', () => viewer.draw())
+    control.addEventListener('dragging-changed', event => {
+      viewer.controls.enabled = !event.value
+    })
+    control.setMode('translate')
+    control.attach(attach)
+    viewer.scene.add(control)
+    this.settingsReferences.transform = control
+  }
+
   createAvatar (): void {
     if (this.viewer == null) return
     const viewer = this.viewer
@@ -551,6 +615,7 @@ export default class AvatarAnimationComponent extends Vue {
         // Avatar container
         const avatar = new THREE.Group()
         avatar.add(gltf.scene)
+        this.settingsReferences.avatar = gltf.scene
         viewer.scene.add(avatar)
 
         // Global container
@@ -558,27 +623,12 @@ export default class AvatarAnimationComponent extends Vue {
         container.add(avatar)
         container.scale.set(0.01, 0.01, 0.01)
         viewer.scene.add(container)
-
-        // Control avatar position
-        // Create control
-        const control = new TransformControls(
-          viewer.camera,
-          viewer.renderer.domElement
-        )
-        control.addEventListener('change', () => viewer.draw())
-        control.addEventListener('dragging-changed', event => {
-          viewer.controls.enabled = !event.value
-        })
-        control.setMode('translate')
-        control.attach(container)
-        viewer.scene.add(control)
-        this.settingsReferences.transform = control
+        this.createAvatarGizmo(container)
 
         // Keep gltf reference
         this.gltf = gltf
 
         // Loop on all hierarchy
-        const bones: THREE.Bone[] = []
         gltf.scene.traverse(child => {
           // Set material for all meshes
           if (child instanceof THREE.Mesh) {
@@ -586,28 +636,22 @@ export default class AvatarAnimationComponent extends Vue {
           }
 
           // Get all bones
-          if (child instanceof THREE.Bone) {
-            bones.push(child)
-
-            // Create skeleton helper on root bone
-            if (child.name === 'pelvis') {
-              this.updatePositionAfterLoading = () => {
-                avatar.position.set(
-                  child.position.x,
-                  child.position.y,
-                  child.position.z
-                )
-              }
-
-              const skeletonHelper = new THREE.SkeletonHelper(child)
-              this.settingsReferences.outputSkeleton = skeletonHelper
-              const skeletonMaterial = skeletonHelper.material as THREE.LineBasicMaterial
-              console.log(skeletonMaterial)
-              skeletonMaterial.linewidth = 3
-              skeletonMaterial.color = new THREE.Color(0x000000)
-              skeletonHelper.visible = true
-              viewer.scene.add(skeletonHelper)
+          if (child instanceof THREE.Bone && child.name === 'pelvis') {
+            this.updateAvatarGizmo = () => {
+              avatar.position.set(
+                child.position.x,
+                child.position.y,
+                child.position.z
+              )
             }
+
+            const skeletonHelper = new THREE.SkeletonHelper(child)
+            this.settingsReferences.outputSkeleton = skeletonHelper
+            const skeletonMaterial = skeletonHelper.material as THREE.LineBasicMaterial
+            skeletonMaterial.linewidth = 3
+            skeletonMaterial.color = new THREE.Color(0x000000)
+            skeletonHelper.visible = true
+            viewer.scene.add(skeletonHelper)
           }
         })
 
@@ -618,14 +662,6 @@ export default class AvatarAnimationComponent extends Vue {
   }
 
   retargetBVH (result: BVH, model: THREE.SkinnedMesh): THREE.AnimationClip {
-    // *Special Note* SkeletonUtils.retargetClip seems to output an animationClip
-    // with more frames (time arrays) than necessary and a reduced duration.
-    // I'm supplying fps and modifying input clip duration to fix that
-
-    /* get fps from first track. */
-    const clip = result.clip
-    const skeleton = result.skeleton
-
     // Set skeleton for GLTF
     if (!model.skeleton) {
       model.traverse(child => {
@@ -636,10 +672,13 @@ export default class AvatarAnimationComponent extends Vue {
       })
     }
 
+    // Recompute fps by
+    const clip = result.clip
     const fps = 1 / clip.tracks[0].times[1] || 1
     clip.duration += 1 / fps
     this.options.fps = fps
 
+    // Retarget animation
     const utils = (SkeletonUtils as unknown) as SkeletonUtilsModule
     const newClip = utils.retargetClip(
       model,
@@ -648,7 +687,7 @@ export default class AvatarAnimationComponent extends Vue {
       this.options
     )
 
-    /* THREE.SkinnedMesh.pose() to reset the model */
+    // Reset all body parts
     model.traverse(child => {
       if (child.type === 'SkinnedMesh') {
         (child as THREE.SkinnedMesh).pose()
@@ -670,34 +709,40 @@ export default class AvatarAnimationComponent extends Vue {
     bvhHelper.skeleton = bvh.skeleton
     const skeletonMaterial = bvhHelper.material as THREE.LineBasicMaterial
     skeletonMaterial.linewidth = 3
-    skeletonMaterial.color = new THREE.Color(0xffffff)
+    skeletonMaterial.color = new THREE.Color(0x000000)
     const helperScale = new THREE.Group()
     helperScale.add(bvh.skeleton.bones[0])
     helperScale.scale.set(0.0045, 0.0045, 0.0045)
     this.viewer.scene.add(bvhHelper)
     this.viewer.scene.add(helperScale)
 
-    const model = (this.gltf.scene as THREE.Object3D) as THREE.SkinnedMesh
-
-    this.updatePositionAfterLoading()
+    this.updateAvatarGizmo()
 
     // Setup animation
+    const model = (this.gltf.scene as THREE.Object3D) as THREE.SkinnedMesh
     const newClip = this.retargetBVH(bvh, model)
     this.animationDuration = bvh.clip.duration
     this.animationTime = 0
     this.gltfMixer = new THREE.AnimationMixer(this.gltf.scene)
-    this.gltfMixer
+    this.gltfAction = this.gltfMixer
       .clipAction(newClip)
       .setLoop(THREE.LoopRepeat, Infinity)
       .setEffectiveWeight(1.0)
       .play()
 
     this.bvhMixer = new THREE.AnimationMixer(bvhHelper)
-    this.bvhMixer
+    this.bvhAction = this.bvhMixer
       .clipAction(bvh.clip)
       .setLoop(THREE.LoopRepeat, Infinity)
       .setEffectiveWeight(1.0)
       .play()
+
+    // Compute RULA
+    this.computeData(
+      model.skeleton.bones[0],
+      this.bvhMixer,
+      this.animationDuration
+    )
 
     this.updateSettings({})
     this.viewer.update = () => this.update()
@@ -705,11 +750,21 @@ export default class AvatarAnimationComponent extends Vue {
 
   update (): void {
     if (this.gltfMixer == null || this.bvhMixer == null) return
+
     const delta = this.clock.getDelta()
-    this.animationTime = (this.animationTime + delta) % this.animationDuration
+    const playDelta = this.play ? delta : 0
+
+    this.animationTime =
+      (this.animationTime + playDelta) % this.animationDuration
     this.animationValue = this.animationTime / this.animationDuration
+    this.updateRangeTime()
     this.gltfMixer.setTime(this.animationTime)
     this.bvhMixer.setTime(this.animationTime)
+
+    if (!this.rula) return
+    this.rula.updateRULAMarkers(
+      this.data[(Math.floor(this.animationTime) * 30) % this.data.length].rula
+    )
   }
 
   onFileInput (files: APIFile[]): void {
