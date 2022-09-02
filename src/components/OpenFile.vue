@@ -308,7 +308,7 @@ class DataTableHeaderSelector {
   }
 }
 
-type Pipeline = {
+export type FileProcessing = {
   (file: File): Promise<File>
 } | null
 
@@ -330,7 +330,7 @@ export default class OpenFilePopUp extends Vue {
   @Prop({ default: () => '' }) private accept!: string
   // @vuese
   // Middleware callback executed before file uploading on API
-  @Prop({ default: () => null }) private uploadPipeline!: Pipeline
+  @Prop({ default: () => null }) private fileProcessing!: FileProcessing
   // @vuese
   // Defines if multiple files can be selected or not
   @Prop({ default: () => true }) private singleSelect!: boolean
@@ -461,6 +461,7 @@ export default class OpenFilePopUp extends Vue {
   // Mounted function
   // @arg No arguments required
   mounted (): void {
+    console.log('open file mounted')
     this.load()
   }
 
@@ -611,7 +612,7 @@ export default class OpenFilePopUp extends Vue {
     if (e.target == null) return
     const target = e.target as HTMLInputElement
     if (target.files != null && target.files.length > 0) {
-      // TODO : Upload file and select format before validation
+      let uploadedFiles = 0
 
       const uploadFileFunc = (f: File) => {
         const reader = new FileReader()
@@ -623,6 +624,12 @@ export default class OpenFilePopUp extends Vue {
               uri: fileString
             })
           )
+
+          // Reset file input once each file is loaded
+          uploadedFiles++
+          if (target.files && uploadedFiles === target.files.length) {
+            target.value = ''
+          }
         }
         reader.onerror = error => {
           console.error(error)
@@ -633,8 +640,8 @@ export default class OpenFilePopUp extends Vue {
         reader.readAsDataURL(f)
       }
       ;[...target.files].forEach(file => {
-        if (this.uploadPipeline !== null) {
-          this.uploadPipeline(file).then(uploadFileFunc)
+        if (this.fileProcessing !== null) {
+          this.fileProcessing(file).then(uploadFileFunc)
         } else {
           uploadFileFunc(file)
         }
@@ -684,7 +691,7 @@ export default class OpenFilePopUp extends Vue {
 
   /* Popup actions */
 
-  open (): void {
+  reset (): void {
     this.selectedFile = []
     this.selectedFileAfterLoad = 0
     this.loadFileTasks = 0
@@ -692,6 +699,8 @@ export default class OpenFilePopUp extends Vue {
   }
 
   cancel (): void {
+    this.reset()
+
     // Open file action is cancelled
     // @arg No arguments required
     this.$emit('cancel')
@@ -724,6 +733,7 @@ export default class OpenFilePopUp extends Vue {
         this.$emit('fileInput', fileResult)
 
         // Close the parent popup (if it exists)
+        this.reset()
         this.$emit('close')
       }
     })

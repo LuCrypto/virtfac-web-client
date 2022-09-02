@@ -191,6 +191,7 @@
         <open-file
           @close="$refs.openFilePopUp.close()"
           application="ERGONOM_IO_ANALYSIS"
+          :fileProcessing="blenderFileProcessing"
           :singleSelect="true"
           :openFile="true"
           @fileInput="onFileInput"
@@ -204,7 +205,7 @@
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import ModelViewer2 from '@/components/ModelViewer2.vue'
-import OpenFile from '@/components/OpenFile.vue'
+import OpenFile, { FileProcessing } from '@/components/OpenFile.vue'
 import { APIFile } from '@/utils/models'
 import * as THREE from 'three'
 // import RULA, { RULA_LABELS } from '@/utils/rula'
@@ -483,7 +484,12 @@ export default class AvatarAnimationComponent extends Vue {
 
   createMenu (): void {
     this.menuItemList.push(
-      new MenuItem('Open BVH File', 'mdi-file-document', () => {
+      new MenuItem('Open classic BVH', 'mdi-file-document', () => {
+        (this.$refs.openFilePopUp as PopUp).open()
+      })
+    )
+    this.menuItemList.push(
+      new MenuItem('Open blender BVH', 'mdi-blender-software', () => {
         (this.$refs.openFilePopUp as PopUp).open()
       })
     )
@@ -556,6 +562,25 @@ export default class AvatarAnimationComponent extends Vue {
       console.log('Compute...')
     }
     skeleton.matrixAutoUpdate = true
+  }
+
+  blenderFileProcessing (file: File): Promise<File> {
+    return new Promise<File>(resolve => {
+      const extension = (file.name.split('.').pop() as string).toLowerCase()
+      console.log('Blender file processing : ', extension)
+
+      // const blob = new Blob([JSON.stringify(gltf)], {
+      //   type: 'model/gltf+json'
+      // })
+      // const f = new File(
+      //   [blob],
+      //   file.name.substring(0, file.name.length - extension.length) + 'gltf',
+      //   { type: 'model/gltf+json' }
+      // )
+      // resolve(f)
+
+      resolve(file)
+    })
   }
 
   download (filename: string, text: string): void {

@@ -55,7 +55,7 @@
         <open-file
           @close="$refs.openFilePopUp.close()"
           application="ERGONOM_IO"
-          :uploadPipeline="onFileUpload"
+          :fileProcessing="onFileUpload"
           :singleSelect="true"
           :openFile="true"
           title="Avatar Profile"

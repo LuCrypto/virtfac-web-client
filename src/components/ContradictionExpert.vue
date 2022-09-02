@@ -144,7 +144,7 @@
           :openFile="true"
           accept=".xlsx"
           @fileInput="handleFile"
-          :uploadPipeline="createConstraintProject"
+          :fileProcessing="createConstraintProject"
         ></open-file>
       </pop-up>
       <select-pop-up ref="selectPopUp"></select-pop-up>
