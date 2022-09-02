@@ -75,7 +75,22 @@
           @close="$refs.avatarInfo.close()"
         ></avatar-info>
       </pop-up>
-      <!--TODO : Complete Pop-Up list-->
+
+      <!--Open avatar profile pop-up-->
+      <pop-up ref="avatarManager" width="500px">
+        <avatar-manager
+          class="d-flex flex-column justify-start;"
+          color="blue"
+          ref="avatarManagerComponent"
+          @close="$refs.avatarManager.close()"
+        ></avatar-manager>
+      </pop-up>
+      <input
+        ref="playerDataUpload"
+        type="file"
+        hidden
+        @change="onPlayerDataUpload"
+      />
 
       <!--Left Menu Labels-->
       <v-navigation-drawer stateless permanent :mini-variant="menuCollapse">
@@ -334,12 +349,12 @@ import {
 } from 'three'
 import { Session } from '@/utils/session'
 import PopUp from './PopUp.vue'
-import AssetInfo from '@/components/AssetInfo.vue'
 import AvatarInfo from '@/components/AvatarInfo.vue'
 import MaximizableContainer from './MaximizableContainer.vue'
 
 import API from '@/utils/api'
 import OpenFile from '@/components/OpenFile.vue'
+import AvatarManager from '@/components/AvatarManager.vue'
 
 class MenuItem {
   text: string
@@ -446,10 +461,10 @@ class Avatar {
     InputFieldPopUp,
     ModelViewer2,
     PopUp,
-    AssetInfo,
     AvatarInfo,
     MaximizableContainer,
-    OpenFile
+    OpenFile,
+    AvatarManager
   }
 })
 
@@ -598,6 +613,8 @@ export default class ErgonomIOAvatarsContainer extends Vue {
   inputField: InputFieldPopUp | null = null
 
   openFilePopUp: OpenFile | null = null
+
+  avatarManager: AvatarManager | null = null
 
   inputFile (): void {
     const input = this.$refs.inputFile as HTMLInputElement
@@ -907,6 +924,7 @@ export default class ErgonomIOAvatarsContainer extends Vue {
     this.viewer.setFogActive(true)
 
     this.openFilePopUp = this.$refs.openFilePopUp as OpenFile
+    this.avatarManager = this.$refs.avatarManager as AvatarManager
 
     this.updateTheme()
     this.initMaterials()
@@ -1031,6 +1049,11 @@ export default class ErgonomIOAvatarsContainer extends Vue {
         (this.$refs.avatarInfo as PopUp).open()
       })
     )
+    this.menuItemList.push(
+      new MenuItem('Profiles Manager', 'mdi-account', () => {
+        (this.$refs.avatarManager as PopUp).open()
+      })
+    )
   }
 
   setPlayerData (data: PlayerData): void {
@@ -1039,7 +1062,7 @@ export default class ErgonomIOAvatarsContainer extends Vue {
   }
 
   // @vuese
-  // Used to read xml or fbx file and automatically set up the player data values
+  // Used to read xml or JSON file and automatically set up the player data values
   // @arg No arguments needed
   onPlayerDataUpload (event: InputEvent): void {
     if (event != null && event.target != null) {
