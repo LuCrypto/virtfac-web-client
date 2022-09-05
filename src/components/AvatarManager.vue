@@ -9,68 +9,76 @@
     </v-toolbar>
 
     <!-- Popup content -->
-    <!-- <v-container fluid style="height: 100%; max-height: 100% overflow-y-auto">
-      <v-layout min-width="iconSize"> -->
+
     <!-- Profile list -->
     <v-list max-height="600px" class="overflow-y-auto">
       <v-card
         class="ma-2"
         :key="indexProfile"
         v-for="(profile, indexProfile) in profiles"
-        color="green"
         elevation="5"
-        @click="sendUnreal(profile)"
+        @click="loadProfile(indexProfile)"
       >
-        <v-col>
-          <v-img height="50px" :src="profile.picture"> </v-img>
-          <v-sheet
-            height="15"
-            :color="`#${profile.color.toString(16).padStart(6, '0')}`"
-          >
-          </v-sheet>
-        </v-col>
-        <v-col>
-          <v-card-title class="pt-2">
-            {{ profile.name }}
-          </v-card-title>
-          <v-card-subtitle>
-            <v-chip-group>
-              <v-chip
-                :key="indexTag"
-                v-for="(tag, indexTag) in profile.parsedTags"
-                class="mr-2 overflow-y-auto"
-              >
-                {{ tag }}
-              </v-chip>
-            </v-chip-group>
-          </v-card-subtitle>
-          <v-card-text>
-            {{ profile.formatedCreationDate }}, assets number :
-            {{ profile.assetsNumber }}, id : {{ profile.id }}, owner :
-            {{ profile.idUserOwner }}, profil id :
-            {{ profile.idProfile }}
-          </v-card-text>
-        </v-col>
-        <v-card-actions class="flex-wrap">
-          <v-container fluid class="pa-0">
-            <v-col class="pa-0">
-              <v-row no-gutters justify="space-between" class="pt-3 flex-wrap">
-                <v-btn @click="deleteObjet(scene, $event)" icon>
-                  <v-icon v-text="'mdi-delete'"></v-icon>
-                </v-btn>
-                <v-btn
-                  @click="editNameScene(profile, $event)"
-                  class="ma-2"
-                  fab
-                  dark
-                  small
+        <v-row class="ma-1">
+          <!-- Profile Picture -->
+          <v-col cols="4">
+            <v-img
+              class="ma-auto"
+              max-height="100px"
+              max-width="100px"
+              :src="profile.picture"
+            >
+            </v-img>
+          </v-col>
+          <!-- Profile Informations -->
+          <v-col cols="8">
+            <v-row>
+              <v-card-title class="pt-2 font-weight-bold">
+                {{ profile.name }}
+              </v-card-title>
+              <v-card-subtitle>
+                <!-- <v-chip-group>
+                <v-chip
+                  :key="indexTag"
+                  v-for="(tag, indexTag) in profile.parsedTags"
+                  class="mr-2 overflow-y-auto"
                 >
-                  <v-icon>mdi-pen</v-icon>
-                </v-btn>
-              </v-row>
-            </v-col>
-          </v-container>
-        </v-card-actions>
+                  {{ tag }}
+                </v-chip>
+              </v-chip-group> -->
+              </v-card-subtitle>
+              <v-card-text class="ma-0">
+                Creation date : {{ profile.formatedCreationDate }}<br />
+                Last Modification :
+                {{ new Date(profile.modificationDate).toLocaleString() }}
+              </v-card-text>
+            </v-row>
+            <v-card-actions class="flex-wrap">
+              <v-container fluid class="pa-0">
+                <v-col class="pa-0">
+                  <v-row
+                    no-gutters
+                    justify="space-between"
+                    class="pt-3 flex-wrap"
+                  >
+                    <v-btn @click="deleteObjet(scene, $event)" icon>
+                      <v-icon v-text="'mdi-delete'"></v-icon>
+                    </v-btn>
+                    <v-btn
+                      @click="editNameScene(profile, $event)"
+                      class="ma-2"
+                      fab
+                      dark
+                      small
+                    >
+                      <v-icon>mdi-pen</v-icon>
+                    </v-btn>
+                  </v-row>
+                </v-col>
+              </v-container>
+            </v-card-actions>
+          </v-col>
+        </v-row>
       </v-card>
     </v-list>
     <v-btn
@@ -87,10 +95,9 @@
 
 <script lang="ts">
 import API from '@/utils/api'
-import { APIAsset } from '@/utils/models'
 import Vue from 'vue'
 import Component from 'vue-class-component'
-import CardProfile from '@/utils/cardmodel'
+import CardProfile from '@/utils/cardProfile'
 import Unreal from '@/utils/unreal'
 
 @Component({
@@ -128,7 +135,7 @@ export default class AvatarManager extends Vue {
     this.requeteAPI()
   }
 
-  // Get all profiles of API
+  // Get all profiles from API
   // @arg No arguments required
   requeteAPI (): void {
     let tmpProfiles: CardProfile[] = []
@@ -153,8 +160,14 @@ export default class AvatarManager extends Vue {
     console.log('TODO')
   }
 
-  sendUnreal (profile: CardProfile) {
-    console.log(profile)
+  loadProfile (indexProfile: number) {
+    console.log(this.profiles[indexProfile])
+    if (Unreal.check()) {
+      Unreal.send(this.profiles[indexProfile])
+    } else {
+      this.$emit('fileInput', this.profiles[indexProfile])
+      this.$emit('close')
+    }
   }
 }
 </script>

@@ -50,17 +50,16 @@
     <!--v-card of component-->
     <v-card elevation="3" height="700" class="d-flex flex-row flex-grow-1">
       <!-- Popup windows-->
+
       <!--Open avatar profile pop-up-->
-      <pop-up ref="openFilePopUp">
-        <open-file
-          @close="$refs.openFilePopUp.close()"
-          application="ERGONOM_IO"
-          :uploadPipeline="onFileUpload"
-          :singleSelect="true"
-          :openFile="true"
-          title="Avatar Profile"
-          @fileInput="onFileInput"
-        ></open-file>
+      <pop-up ref="avatarManager" width="500px">
+        <avatar-manager
+          class="d-flex flex-column justify-start;"
+          color="blue"
+          ref="avatarManagerComponent"
+          @close="$refs.avatarManager.close()"
+          @fileInput="loadProfile"
+        ></avatar-manager>
       </pop-up>
       <input
         ref="playerDataUpload"
@@ -75,22 +74,6 @@
           @close="$refs.avatarInfo.close()"
         ></avatar-info>
       </pop-up>
-
-      <!--Open avatar profile pop-up-->
-      <pop-up ref="avatarManager" width="500px">
-        <avatar-manager
-          class="d-flex flex-column justify-start;"
-          color="blue"
-          ref="avatarManagerComponent"
-          @close="$refs.avatarManager.close()"
-        ></avatar-manager>
-      </pop-up>
-      <input
-        ref="playerDataUpload"
-        type="file"
-        hidden
-        @change="onPlayerDataUpload"
-      />
 
       <!--Left Menu Labels-->
       <v-navigation-drawer stateless permanent :mini-variant="menuCollapse">
@@ -235,7 +218,9 @@
           >
             <v-btn
               :color="
-                childMenu.type === 'COLOR' ? '#' + childMenu.value : 'primary'
+                childMenu.type === 'COLOR'
+                  ? '#' + childMenu.value.toString(16)
+                  : 'primary'
               "
               class="mx-2 black--text"
               fab
@@ -328,6 +313,7 @@ import Vue from 'vue'
 import Component from 'vue-class-component'
 import ActionContainer from '@/components/ActionContainer.vue'
 import { APIAsset } from '@/utils/models'
+import CardProfile from '@/utils/cardProfile'
 
 // Usefull for PopUp windows
 import SelectPopUp from '@/components/popup/SelectPopUp.vue'
@@ -448,9 +434,9 @@ class Avatar {
   buttockSize = 0
   legSize = 0
   // Colors Values
-  skinHexColor = ''
-  hairHexColor = ''
-  beardHexColor = ''
+  skinColor = 0
+  hairColor = 0
+  beardColor = 0
 }
 
 @Component({
@@ -482,17 +468,28 @@ export default class ErgonomIOAvatarsContainer extends Vue {
   menuCollapse = true
   selectedBodyPart = 1
   skinColors = [
-    'e19e83',
-    'd9967b',
-    'd18e73',
-    'c9866b',
-    'c17e63',
-    'b16e53',
-    '8f5943',
-    '7f4e3b',
-    '6e4433',
-    '5d3a2b',
-    '4d2f24'
+    14786179,
+    14259835,
+    13733491,
+    13207147,
+    12680803,
+    11628115,
+    9394499,
+    8343099,
+    7226419,
+    6109739,
+    5058340
+  ]
+
+  hairColors = [
+    15000013,
+    9996416,
+    14656325,
+    5453850,
+    10381104,
+    13468460,
+    7810846,
+    1511697
   ]
 
   hairHexColors = [
@@ -579,9 +576,11 @@ export default class ErgonomIOAvatarsContainer extends Vue {
   primaryColor = this.$vuetify.theme.themes.dark.primary
 
   hairHexColor = '#e4e1cd'
-  hairColor = 0xe4e1cd
+  hairColor = 15000013
   beardHexColor = '#e4e1cd'
   beardColor = 0xe4e1cd
+
+  profiles: CardProfile[] = []
 
   hairMesh: Group = new Group()
   beardMesh: Group = new Group()
@@ -609,11 +608,8 @@ export default class ErgonomIOAvatarsContainer extends Vue {
 
   /* ThreeJS view */
   viewer: ModelViewer2 | null = null
-
   inputField: InputFieldPopUp | null = null
-
   openFilePopUp: OpenFile | null = null
-
   avatarManager: AvatarManager | null = null
 
   inputFile (): void {
@@ -656,10 +652,6 @@ export default class ErgonomIOAvatarsContainer extends Vue {
         this.viewer.setGrid(100, 1, 0xaaaaaa, 0xfefefe, 0x363636)
       }
     }
-  }
-
-  onFileInput (files: APIAsset[]): void {
-    console.log('Hello')
   }
 
   // @vuese
@@ -774,7 +766,7 @@ export default class ErgonomIOAvatarsContainer extends Vue {
   createItems (): void {
     var skinArray = []
     for (let i = 0; i < this.skinColors.length; i++) {
-      skinArray.push(new MenuItem2(this.skinColors[i], 'COLOR'))
+      skinArray.push(new MenuItem2(this.skinColors[i].toString(16), 'COLOR'))
     }
     var hairMenuArray = []
     hairMenuArray.push(new MenuItem2('$vuetify.icons.hair', 'ICON'))
@@ -804,8 +796,10 @@ export default class ErgonomIOAvatarsContainer extends Vue {
       shoesMenuArray.push(new MenuItem2('$vuetify.icons.shoes', 'ICON'))
     }
     var hairColorArray = []
-    for (let i = 0; i < this.hairHexColors.length; i++) {
-      hairColorArray.push(new MenuItem2(this.hairHexColors[i], 'COLOR'))
+    for (let i = 0; i < this.hairColors.length; i++) {
+      hairColorArray.push(
+        new MenuItem2(this.hairColors[i].toString(16), 'COLOR')
+      )
     }
 
     this.mainMenu = new MenuItem2('', 'ICON', [
@@ -847,18 +841,18 @@ export default class ErgonomIOAvatarsContainer extends Vue {
   // @arg No arguments needed
   initPlayerData (): PlayerData {
     var playerDataItemList: PlayerDataItem[] = []
-    playerDataItemList.push(new PlayerDataItem('Hip width', 23.82))
-    playerDataItemList.push(new PlayerDataItem('Body', 61.08))
-    playerDataItemList.push(new PlayerDataItem('Neck', 9.91))
-    playerDataItemList.push(new PlayerDataItem('Head', 18.16))
-    playerDataItemList.push(new PlayerDataItem('Shoulder width', 34.94))
-    playerDataItemList.push(new PlayerDataItem('Upper arm', 23.29))
-    playerDataItemList.push(new PlayerDataItem('Forearm ', 25.41))
-    playerDataItemList.push(new PlayerDataItem('Palm', 18.53))
-    playerDataItemList.push(new PlayerDataItem('Upper leg', 44.02))
-    playerDataItemList.push(new PlayerDataItem('Lower leg', 41.83))
-    playerDataItemList.push(new PlayerDataItem('Foot Length', 25.94))
-    playerDataItemList.push(new PlayerDataItem('Heel height', 7.98))
+    playerDataItemList.push(new PlayerDataItem('hipWidth', 23.82))
+    playerDataItemList.push(new PlayerDataItem('body', 61.08))
+    playerDataItemList.push(new PlayerDataItem('neck', 9.91))
+    playerDataItemList.push(new PlayerDataItem('head', 18.16))
+    playerDataItemList.push(new PlayerDataItem('shoulderWidth', 34.94))
+    playerDataItemList.push(new PlayerDataItem('upperArm', 23.29))
+    playerDataItemList.push(new PlayerDataItem('foreArm ', 25.41))
+    playerDataItemList.push(new PlayerDataItem('palm', 18.53))
+    playerDataItemList.push(new PlayerDataItem('upperLeg', 44.02))
+    playerDataItemList.push(new PlayerDataItem('lowerLeg', 41.83))
+    playerDataItemList.push(new PlayerDataItem('footLength', 25.94))
+    playerDataItemList.push(new PlayerDataItem('heelHeight', 7.98))
 
     return new PlayerData('Player', playerDataItemList)
   }
@@ -1017,21 +1011,13 @@ export default class ErgonomIOAvatarsContainer extends Vue {
   // @arg No arguments needed
   updateColor (): void {
     if (this.mainMenu.selected === 2) {
-      this.hairMaterial.color = new THREE.Color(
-        parseInt('0x' + this.hairHexColors[this.colorMenu.selected])
-      )
+      this.hairMaterial.color.setHex(this.hairColors[this.colorMenu.selected])
+
       this.hairHexColor = '#' + this.hairHexColors[this.colorMenu.selected]
-      this.hairColor = parseInt(
-        '0x' + this.hairHexColors[this.colorMenu.selected]
-      )
+      this.hairColor = this.hairColors[this.colorMenu.selected]
     } else if (this.mainMenu.selected === 3) {
-      this.beardMaterial.color = new THREE.Color(
-        parseInt('0x' + this.hairHexColors[this.colorMenu.selected])
-      )
-      this.beardHexColor = '#' + this.hairHexColors[this.colorMenu.selected]
-      this.beardColor = parseInt(
-        '0x' + this.hairHexColors[this.colorMenu.selected]
-      )
+      this.beardMaterial.color.setHex(this.hairColors[this.colorMenu.selected])
+      this.beardColor = this.hairColors[this.colorMenu.selected]
     }
   }
 
@@ -1040,18 +1026,13 @@ export default class ErgonomIOAvatarsContainer extends Vue {
   // @arg No arguments needed
   createMenu (): void {
     this.menuItemList.push(
-      new MenuItem('Open Avatar Profile', 'mdi-account', () => {
-        (this.$refs.openFilePopUp as PopUp).open()
+      new MenuItem('Profiles Manager', 'mdi-account', () => {
+        (this.$refs.avatarManager as PopUp).open()
       })
     )
     this.menuItemList.push(
       new MenuItem('Save Avatar Profile', 'mdi-content-save-edit', () => {
         (this.$refs.avatarInfo as PopUp).open()
-      })
-    )
-    this.menuItemList.push(
-      new MenuItem('Profiles Manager', 'mdi-account', () => {
-        (this.$refs.avatarManager as PopUp).open()
       })
     )
   }
@@ -1087,7 +1068,6 @@ export default class ErgonomIOAvatarsContainer extends Vue {
     }
   }
 
-  // parseXMLData (xml: string):Record<string, unknown> {}
   // @vuese
   // Update function called when selecting a main menu element
   // @arg No arguments needed
@@ -1164,21 +1144,90 @@ export default class ErgonomIOAvatarsContainer extends Vue {
     profile.buttockSize = this.morphList[6].value / 100
     profile.legSize = this.morphList[7].value / 100
 
-    // Color values
-    // profile.skinHexColor = parseInt(
-    //   '0x' + this.mainMenu.items[0].items[this.mainMenu.items[0].selected].value
-    // )
-    profile.skinHexColor =
-      '#' + this.mainMenu.items[0].items[this.mainMenu.items[0].selected].value
-    profile.hairHexColor = this.hairHexColor
-    profile.beardHexColor = this.beardHexColor
+    profile.skinColor = this.skinColors[this.mainMenu.items[0].selected]
+    profile.hairColor = this.hairColor
+    profile.beardColor = this.beardColor
 
     const json = JSON.stringify(profile)
     console.log(json)
   }
 
-  loadProfile (): void {
-    console.log('Load Profile')
+  // Get all profiles from API
+  // @arg No arguments required
+  requeteAPI (): void {
+    let tmpProfiles: CardProfile[] = []
+    API.post(
+      this,
+      '/resources/ergonomio-profiles',
+      JSON.stringify({
+        select: [],
+        where: []
+      })
+    ).then((response: Response) => {
+      tmpProfiles = ((response as unknown) as Array<Partial<CardProfile>>).map(
+        (profile: Partial<CardProfile>) => new CardProfile(profile)
+      )
+      for (let i = 0; i < tmpProfiles.length; i++) {
+        this.profiles.push(tmpProfiles[i])
+      }
+    })
+  }
+
+  // @vuese
+  // Used to load Profile sent by AvatarManager PopUp
+  // @arg profile loaded
+  loadProfile (profile: CardProfile): void {
+    this.loadMesh('./Avatars/Shirt/'.concat(profile.shirtName, '.fbx'), 1)
+    this.loadMesh('./Avatars/Hairs/'.concat(profile.hairName, '.fbx'), 2)
+    this.loadMesh('./Avatars/Beard/'.concat(profile.beardName, '.fbx'), 3)
+    this.loadMesh('./Avatars/Pants/'.concat(profile.pantName, '.fbx'), 4)
+    this.loadMesh('./Avatars/Shoes/'.concat(profile.shoesName, '.fbx'), 5)
+    this.loadMesh('./Avatars/Head/'.concat(profile.headName, '.fbx'), 6)
+
+    this.hairColor = profile.hairColor
+    this.beardColor = profile.beardColor
+    this.updateColor()
+  }
+
+  // Create an empty scene
+  // @arg No arguments required
+  createProfile (): void {
+    const profile = new CardProfile({ id: this.profiles.length })
+    profile.parsedTags.push('vide')
+    this.profiles.push(profile)
+    this.addProfileAPI(profile)
+  }
+
+  // Create api request for add a new scene
+  // @arg No arguments required
+  addProfileAPI (profile: CardProfile): void {
+    API.put(
+      this,
+      '/resources/ergonomio-profiles',
+      JSON.stringify({
+        assetsNumber: profile.assetsNumber,
+        color: profile.color,
+        creationDate: profile.creationDate,
+        data: profile.data,
+        id: profile.id,
+        idProject: profile.idProject,
+        idUserOwner: profile.idUserOwner,
+        modificationDate: profile.modificationDate,
+        name: profile.name,
+        picture: profile.picture,
+
+        tags: JSON.stringify(profile.parsedTags)
+      })
+    ).then((response: Response) => {
+      this.refreshProfiles()
+    })
+  }
+
+  // Refresh scenes
+  // @arg No arguments required
+  refreshProfiles (): void {
+    this.profiles = []
+    this.requeteAPI()
   }
 }
 </script>
