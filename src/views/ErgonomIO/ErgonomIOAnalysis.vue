@@ -2,6 +2,13 @@
 .v-badge * {
   color: black !important;
 }
+.score-value {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  margin: 20px;
+}
 </style>
 
 <template>
@@ -94,6 +101,18 @@
                     ref="viewer"
                     statsPosition="TOP_RIGHT"
                   ></model-viewer-2>
+                  <v-card
+                    class="score-value pa-3 text-h5"
+                    v-if="rulaValue >= 0"
+                  >
+                    <v-sheet
+                      width="auto"
+                      height="10"
+                      class="mb-3"
+                      :color="getMarkerColor(rulaValue)"
+                    ></v-sheet>
+                    RULA : {{ rulaValue }} / 7
+                  </v-card>
                 </v-row>
               </v-col>
 
@@ -156,31 +175,6 @@
                   </v-btn>
                 </v-row>
               </v-col>
-
-              <!-- TODO RULA Chart -->
-              <!-- <v-row no-gutters>
-                <v-col no-gutters class="d-flex" style="max-height: 400px">
-                  <dynamic-chart
-                    title="Transport chart"
-                    :key="`transport-chart-${updateTransportChart}`"
-                  >
-                    <dynamic-chart-curve-timeline
-                      :rawCurves="
-                        transportChartCurves.length > 0
-                          ? transportChartCurves
-                          : []
-                      "
-                      label-x="Amount (Units)"
-                      label-y="Time (Hours)"
-                      :step-x="100"
-                      :step-y="100"
-                      :scale-x="100"
-                      :scale-y="10"
-                      :display-plot="true"
-                    ></dynamic-chart-curve-timeline>
-                  </dynamic-chart>
-                </v-col>
-              </v-row> -->
             </v-col>
           </v-layout>
         </v-card-text>
@@ -208,8 +202,8 @@ import ModelViewer2 from '@/components/ModelViewer2.vue'
 import OpenFile, { FileProcessing } from '@/components/OpenFile.vue'
 import { APIFile } from '@/utils/models'
 import * as THREE from 'three'
-// import RULA, { RULA_LABELS } from '@/utils/rula'
-import RULA from '@/utils/rula'
+import RULA, { RULA_LABELS } from '@/utils/rula'
+
 import PopUp from '@/components/PopUp.vue'
 import GraphChart from '@/components/charts/graphChart.vue'
 // import { AxisNeuronSkeleton, UnrealSkeleton } from '@/utils/avatar'
@@ -246,6 +240,7 @@ class MenuItem {
 }
 
 class DataFrame {
+  time = 0
   rula: Map<string, number> = new Map<string, number>()
 
   constructor (data: Partial<DataFrame> | null = null) {
@@ -319,6 +314,8 @@ export default class AvatarAnimationComponent extends Vue {
   // Analysed data
   data: DataFrame[] = []
   rula: RULA | null = null
+  rulaValue = 0
+  rulaMarkerType = 0
 
   gltf: GLTF | null = null
   gltfHipsPosition: THREE.Vector3 = new THREE.Vector3()
@@ -489,12 +486,19 @@ export default class AvatarAnimationComponent extends Vue {
       })
     )
     this.menuItemList.push(
-      new MenuItem('Open blender BVH', 'mdi-blender-software', () => {
-        (this.$refs.openFilePopUp as PopUp).open()
-      })
+      new MenuItem(
+        'Open blender BVH',
+        'mdi-blender-software',
+        () => {
+          (this.$refs.openFilePopUp as PopUp).open()
+        },
+        () => true
+      )
     )
     this.menuItemList.push(
-      new MenuItem('Download RULA analysis', 'mdi-download', () => true)
+      new MenuItem('Download RULA analysis', 'mdi-download', () =>
+        this.downloadRULA()
+      )
     )
     this.menuItemList.push(
       new MenuItem('Toggle avatar', 'mdi-human', () =>
@@ -515,7 +519,12 @@ export default class AvatarAnimationComponent extends Vue {
       )
     )
     this.menuItemList.push(
-      new MenuItem('Add asset', 'mdi-archive-plus', () => true)
+      new MenuItem(
+        'Add asset',
+        'mdi-archive-plus',
+        () => true,
+        () => true
+      )
     )
     this.menuItemList.push(
       new MenuItem('Toggle transform', 'mdi-rotate-orbit', () =>
@@ -532,14 +541,21 @@ export default class AvatarAnimationComponent extends Vue {
       })
     )
     this.menuItemList.push(
-      new MenuItem('Toggle RULA markers', 'mdi-eye-circle', () => true)
+      new MenuItem(
+        'Toggle RULA markers',
+        'mdi-eye-circle',
+        () => {
+          this.rulaMarkerType = (this.rulaMarkerType + 1) % 4
+        },
+        () => this.settingsReferences.inputSkeleton == null
+      )
     )
   }
 
   computeData (
     skeleton: THREE.Bone,
     animation: THREE.AnimationMixer,
-    duration: number,
+    duration: number, // animation duration in seconds
     fps = 30
   ): void {
     if (!this.viewer || !this.settingsReferences.inputSkeleton) {
@@ -551,11 +567,15 @@ export default class AvatarAnimationComponent extends Vue {
     this.rula = new RULA(this.viewer.scene)
     this.rula.createRULAMarkers(this.settingsReferences.inputSkeleton)
 
-    for (let frame = 1; frame <= duration * fps; frame++) {
-      animation.update((frame * duration) / fps)
+    const frameNumber = duration * fps
+
+    for (let frame = 1; frame <= frameNumber; frame++) {
+      const time = (frame / frameNumber) * duration
+      animation.setTime(time)
       skeleton.updateMatrix()
       this.data.push(
         new DataFrame({
+          time: time,
           rula: this.rula.compute()
         })
       )
@@ -569,6 +589,27 @@ export default class AvatarAnimationComponent extends Vue {
       const extension = (file.name.split('.').pop() as string).toLowerCase()
       console.log('Blender file processing : ', extension)
 
+      if (extension !== 'bvh') {
+        this.$root.$emit(
+          'bottom-message',
+          'Cannot upload file with another extention than "bvh".'
+        )
+      }
+
+      // const blobFile = URL.createObjectURL(file)
+      const reader = new FileReader()
+
+      // This fires after the blob has been read/loaded.
+      reader.addEventListener('load', e => {
+        if (!e.target) return
+        const text = e.target.result
+        console.log(text)
+        resolve(file)
+      })
+
+      // Start reading the blob as text.
+      reader.readAsText(file)
+
       // const blob = new Blob([JSON.stringify(gltf)], {
       //   type: 'model/gltf+json'
       // })
@@ -578,8 +619,6 @@ export default class AvatarAnimationComponent extends Vue {
       //   { type: 'model/gltf+json' }
       // )
       // resolve(f)
-
-      resolve(file)
     })
   }
 
@@ -596,12 +635,19 @@ export default class AvatarAnimationComponent extends Vue {
     document.body.removeChild(element)
   }
 
-  export (): void {
-    const csv = ''
-    // const header = [...this.data[0].keys()].join(',')
-    // const values = this.data.map(o => [...o.values()].join(',')).join('\n')
-    // csv += header + '\n' + values
-    this.download('data.csv', csv)
+  downloadRULA (): void {
+    let csv = ''
+    const header = ['time (in seconds)', ...this.data[0].rula.keys()]
+      .map(key => {
+        const keyName = key as keyof typeof RULA_LABELS
+        return key in RULA_LABELS ? RULA_LABELS[keyName].name.fr : key
+      })
+      .join(';')
+    const values = this.data
+      .map(o => [o.time.toFixed(2), ...o.rula.values()].join(';'))
+      .join('\n')
+    csv += header + '\n' + values.replaceAll('.', ',') // For Excel CSV compatibility
+    this.download(`RULA_Results_${Date.now()}.csv`, csv)
   }
 
   createAvatarGizmo (attach: THREE.Group): void {
@@ -737,7 +783,8 @@ export default class AvatarAnimationComponent extends Vue {
     skeletonMaterial.color = new THREE.Color(0x000000)
     const helperScale = new THREE.Group()
     helperScale.add(bvh.skeleton.bones[0])
-    helperScale.scale.set(0.0045, 0.0045, 0.0045)
+    helperScale.scale.set(0.009, 0.009, 0.009)
+    helperScale.position.set(0, -1, 0)
     this.viewer.scene.add(bvhHelper)
     this.viewer.scene.add(helperScale)
 
@@ -787,9 +834,14 @@ export default class AvatarAnimationComponent extends Vue {
     this.bvhMixer.setTime(this.animationTime)
 
     if (!this.rula) return
-    this.rula.updateRULAMarkers(
-      this.data[(Math.floor(this.animationTime) * 30) % this.data.length].rula
-    )
+
+    const frame = (Math.floor(this.animationTime) * 30) % this.data.length
+    this.rulaValue = this.data[frame].getRulaScore()
+    this.rula.updateRULAMarkers(this.data[frame].rula, this.rulaMarkerType)
+  }
+
+  getMarkerColor (value: number): string {
+    return `#${RULA.getMarkerColor(value).toString(16)}`
   }
 
   onFileInput (files: APIFile[]): void {
