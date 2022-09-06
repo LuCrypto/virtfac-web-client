@@ -145,10 +145,24 @@
 
             <!-- Custom item for "actions" columns -->
             <template v-slot:[`item.actions`]="{ item }">
-              <v-icon
-                @click="openFileSettings(item)"
-                v-text="'mdi-dots-horizontal'"
-              ></v-icon>
+              <v-btn
+                class="ml-2"
+                fab
+                x-small
+                color="primary"
+                :disabled="mimeToExtension.get(item.mime) === undefined"
+              >
+                <v-icon
+                  @click="downloadFileData(item)"
+                  v-text="'mdi-download'"
+                ></v-icon>
+              </v-btn>
+              <v-btn class="ml-2" fab x-small color="primary">
+                <v-icon
+                  @click="openFileSettings(item)"
+                  v-text="'mdi-dots-horizontal'"
+                ></v-icon>
+              </v-btn>
             </template>
           </v-data-table>
 
@@ -300,6 +314,7 @@ import { Component, Prop, Vue } from 'vue-property-decorator'
 import { DataTableHeader } from 'vuetify/types'
 import API from '@/utils/api'
 import { APIFileItem, APIGroupItem, APIFile, APIFileMIME } from '@/utils/models'
+import { resolve } from 'path'
 
 class DataTableHeaderSelector {
   active = true
@@ -360,6 +375,48 @@ export default class OpenFilePopUp extends Vue {
   /* Table row filter */
   rowFilterPopUp = false
   rowFilter = []
+
+  /*
+  downloadableMime = new Map<string,{(fileid:number):void}>(
+    [
+      ['g',(id) => {
+
+      }]
+    ])
+*/
+  mimeToExtension = new Map<string, string>([
+    ['application/json', 'json'],
+    ['text/csv', 'csv'],
+    [
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'xlsx'
+    ],
+    ['application/xlsx', 'xlsx'],
+    ['application/json;application=virtfac/constraint', 'xlsx'],
+    ['application/json;application=virtfac/routing', 'xlsx']
+  ])
+
+  downloadOverideFunctions = new Map<
+    string,
+    {(fileId: number): Promise<string> }
+      >([
+        [
+          'application/json;application=virtfac/constraint',
+          id => {
+            return new Promise<string>(resolve => {
+              resolve('')
+            })
+          }
+        ],
+        [
+          'application/json;application=virtfac/routing',
+          id => {
+            return new Promise<string>(resolve => {
+              resolve('')
+            })
+          }
+        ]
+      ])
 
   /* Table properties */
   refreshTableKey = 0
@@ -641,6 +698,34 @@ export default class OpenFilePopUp extends Vue {
         }
       })
     }
+  }
+
+  async downloadFileData (item: APIFile): Promise<void> {
+    const dataFunction = this.downloadOverideFunctions.get(item.mime)
+    let uri = ''
+    if (dataFunction !== undefined) {
+      await dataFunction(item.id).then(data => {
+        uri = data
+      })
+    } else {
+      await API.post(
+        this,
+        '/resources/files',
+        JSON.stringify({
+          where: { id: item.id },
+          select: ['uri']
+        })
+      ).then(asset => {
+        const res = (asset as unknown) as APIFile[]
+        uri = res[0].uri
+      })
+    }
+    const a = document.createElement('a')
+    a.href = uri
+    a.download = (item.name +
+      '.' +
+      this.mimeToExtension.get(item.mime)) as string
+    a.click()
   }
 
   // Toggle row selection on click

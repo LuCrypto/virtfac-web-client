@@ -664,7 +664,6 @@ export default class OpenAssetPopUp extends Vue {
       })
     ).then(asset => {
       const res = asset as unknown as APIAsset[]
-      console.log(res[0].uri)
       const a = document.createElement('a')
       a.href = res[0].uri
       a.download = item.name + '.gltf'
