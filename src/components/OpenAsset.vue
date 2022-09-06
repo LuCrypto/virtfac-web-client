@@ -1,5 +1,32 @@
 <template>
   <v-card>
+    <PopUp ref="confirmAction">
+      <v-card style="overflow-y:hidden;">
+        <v-toolbar color="primary" flat>
+          <v-toolbar-title class="black--text">
+            <v-icon left v-text="'mdi-check'"></v-icon>
+            {{ confirmActionMessage }}
+          </v-toolbar-title>
+        </v-toolbar>
+
+        <v-layout row style="max-width:100%; max-height:100%" class="px-6 pb-6">
+          <v-btn
+            class="ml-6 mt-6 flex-grow-1"
+            text
+            @click="$refs.confirmAction.close()"
+          >
+            Cancel
+          </v-btn>
+          <v-btn
+            class="ml-6 mt-6 flex-grow-1 black--text"
+            color="primary"
+            @click="confirmAction()"
+          >
+            Confirm
+          </v-btn>
+        </v-layout>
+      </v-card>
+    </PopUp>
     <!-- Header -->
     <v-toolbar color="primary" flat>
       <v-toolbar-title class="black--text">
@@ -146,18 +173,24 @@
 
             <!-- Custom item for "actions" columns -->
             <template v-slot:[`item.actions`]="{ item }">
-              <v-icon
-                @click="openFileSettings(item)"
-                v-text="'mdi-dots-horizontal'"
-              ></v-icon>
-              <v-icon
-                @click="downloadFileData(item)"
-                v-text="'mdi-download'"
-              ></v-icon>
-              <v-icon
-                @click="openFileSettings(item)"
-                v-text="'mdi-delete-forever'"
-              ></v-icon>
+              <v-btn class="ml-1" fab x-small color="primary" elevation="1">
+                <v-icon
+                  @click="deleteFile(item)"
+                  v-text="'mdi-delete-forever'"
+                ></v-icon>
+              </v-btn>
+              <v-btn class="ml-1" fab x-small color="primary" elevation="1">
+                <v-icon
+                  @click="downloadFileData(item)"
+                  v-text="'mdi-download'"
+                ></v-icon>
+              </v-btn>
+              <v-btn class="ml-1" fab x-small color="primary" elevation="1">
+                <v-icon
+                  @click="openFileSettings(item)"
+                  v-text="'mdi-dots-horizontal'"
+                ></v-icon>
+              </v-btn>
             </template>
           </v-data-table>
 
@@ -316,6 +349,7 @@ import {
 } from '@/utils/models'
 import ThreeUtils from '@/utils/threeUtils'
 import { Box3, Group, Vector3 } from 'three'
+import PopUp from './PopUp.vue'
 
 class DataTableHeaderSelector {
   active = true
@@ -327,7 +361,10 @@ class DataTableHeaderSelector {
 }
 
 @Component({
-  name: 'OpenAssetPopUp'
+  name: 'OpenAssetPopUp',
+  components: {
+    PopUp
+  }
 })
 // @vuese
 // @group COMPONENTS
@@ -663,12 +700,26 @@ export default class OpenAssetPopUp extends Vue {
         select: ['uri']
       })
     ).then(asset => {
-      const res = asset as unknown as APIAsset[]
+      const res = (asset as unknown) as APIAsset[]
       const a = document.createElement('a')
       a.href = res[0].uri
       a.download = item.name + '.gltf'
       a.click()
     })
+  }
+
+  confirmActionMessage = ''
+  confirmAction: { (): void } | undefined = undefined
+
+  deleteFile (item: APIAsset): void {
+    this.confirmAction = () => {
+      API.delete(this, `/resources/assets/${item.id}`, '').then(res => {
+        this.myfileList.splice(this.myfileList.indexOf(item, 0), 1)
+      })
+      ;(this.$refs.confirmAction as PopUp).close()
+    }
+    this.confirmActionMessage = 'Delete "' + item.name + '" premanently ?'
+    ;(this.$refs.confirmAction as PopUp).open()
   }
 
   saveFileSettings (): void {
