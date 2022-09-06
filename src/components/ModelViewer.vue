@@ -216,7 +216,7 @@ import { studioEnvMap } from '@/utils/imageData'
 import TreeExplorer from '@/components/TreeExplorer.vue'
 import ModelViewerStats from '@/components/ModelViewerStats.vue'
 import { UndoManager, Action } from '@/utils/undoManager'
-import ModelScreener from '@/utils/modelscreener'
+import ThreeUtils from '@/utils/threeUtils'
 
 // import AVATAR from '@/utils/avatar'
 
@@ -641,7 +641,7 @@ export default class ModelViewer extends Vue {
     // this.scene.add(sunHelper)
     this.setGrid(100, 100, 0xaaaaaa, 0xfefefe)
 
-    this.setEnvMap(studioEnvMap, 'HDR')
+    this.setEnvMap(studioEnvMap, 'HDR', false)
 
     this.fov = 75
 
@@ -749,14 +749,16 @@ export default class ModelViewer extends Vue {
     this.scene.add(object)
     this.userObjects.add(object)
     this.refreshSceneHierarchy()
+    /*
     const box = new Box3()
     box.setFromObject(object)
     this.scene.add(new Box3Helper(box, new Color(255, 255, 0)))
-    ModelScreener.captureImage(
+    ThreeUtils.captureImage(
       object.clone(),
-      ModelScreener.getTopDownCamera(object)
+      ThreeUtils.getSideCamera(object)
     )
-    const cam = ModelScreener.getTopDownCamera(object)
+    */
+    const cam = ThreeUtils.getSideCamera(object)
 
     this.scene.add(
       new ArrowHelper(cam.getWorldDirection(new Vector3()), cam.position)

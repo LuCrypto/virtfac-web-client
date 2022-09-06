@@ -87,7 +87,7 @@
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import ActionContainer from '@/components/ActionContainer.vue'
-import { APIAsset } from '@/utils/models'
+import { APIAsset, APIBoundingBox } from '@/utils/models'
 
 import SelectPopUp from '@/components/popup/SelectPopUp.vue'
 import InputFieldPopUp from '@/components/popup/InputFieldPopUp.vue'
@@ -105,6 +105,7 @@ import { TDSLoader } from 'three/examples/jsm/loaders/TDSLoader'
 import MaximizableContainer from '@/components/MaximizableContainer.vue'
 
 import {
+  Box3,
   BufferGeometry,
   Group,
   Loader,
@@ -176,6 +177,12 @@ export default class ErgonomIOAssetContainer extends Vue {
   currentAssetApiId = -1
   currentAssetName = ''
   currentAssetPicture = ''
+  currentLayoutSprite = ''
+  currentBoundingBox: APIBoundingBox = new APIBoundingBox(
+    { x: 0, y: 0, z: 0 },
+    { x: 0, y: 0, z: 0 }
+  )
+
   inputField: InputFieldPopUp | null = null
 
   // @vuese
@@ -218,7 +225,7 @@ export default class ErgonomIOAssetContainer extends Vue {
       })
     )
     this.menuItemList.push(
-      new MenuItem('Save Asset', 'mdi-content-save-edit', () => {
+      new MenuItem('Asset Data', 'mdi-content-save-edit', () => {
         // this.patchFileFromAsset()
         (this.$refs.assetInfo as PopUp).open()
         requestAnimationFrame(() => {
@@ -228,7 +235,9 @@ export default class ErgonomIOAssetContainer extends Vue {
                 this.currentAssetName,
                 this.currentAssetPicture,
                 gltf,
-                this.currentAssetApiId
+                this.currentAssetApiId,
+                this.currentLayoutSprite,
+                this.currentBoundingBox
               )
             })
           } else {
@@ -236,7 +245,9 @@ export default class ErgonomIOAssetContainer extends Vue {
               this.currentAssetName,
               this.currentAssetPicture,
               null,
-              this.currentAssetApiId
+              this.currentAssetApiId,
+              this.currentLayoutSprite,
+              this.currentBoundingBox
             )
           }
         })
@@ -597,6 +608,11 @@ export default class ErgonomIOAssetContainer extends Vue {
           this.currentAssetApiId = file.id
           this.currentAssetName = file.name
           this.currentAssetPicture = file.picture
+          this.currentLayoutSprite = file.layoutSprite
+          this.currentBoundingBox = JSON.parse(
+            file.boundingBox
+          ) as APIBoundingBox
+          console.log(this.currentBoundingBox)
         }
       })
     } else {
@@ -688,7 +704,9 @@ export default class ErgonomIOAssetContainer extends Vue {
             const apiFile = new APIAsset({
               name: this.currentAssetName,
               uri: fileString,
-              picture: this.currentAssetPicture
+              picture: this.currentAssetPicture,
+              boundingBox: JSON.stringify(this.currentBoundingBox),
+              layoutSprite: this.currentLayoutSprite
             })
             API.patch(
               this,

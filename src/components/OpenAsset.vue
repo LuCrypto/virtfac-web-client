@@ -150,6 +150,14 @@
                 @click="openFileSettings(item)"
                 v-text="'mdi-dots-horizontal'"
               ></v-icon>
+              <v-icon
+                @click="downloadFileData(item)"
+                v-text="'mdi-download'"
+              ></v-icon>
+              <v-icon
+                @click="openFileSettings(item)"
+                v-text="'mdi-delete-forever'"
+              ></v-icon>
             </template>
           </v-data-table>
 
@@ -300,7 +308,14 @@
 import { Component, Prop, Vue } from 'vue-property-decorator'
 import { DataTableHeader } from 'vuetify/types'
 import API from '@/utils/api'
-import { APIGroupItem, APIFileMIME, APIAsset } from '@/utils/models'
+import {
+  APIGroupItem,
+  APIFileMIME,
+  APIAsset,
+  APIBoundingBox
+} from '@/utils/models'
+import ThreeUtils from '@/utils/threeUtils'
+import { Box3, Group, Vector3 } from 'three'
 
 class DataTableHeaderSelector {
   active = true
@@ -564,12 +579,43 @@ export default class OpenAssetPopUp extends Vue {
         const reader = new FileReader()
         reader.onload = () => {
           const fileString = reader.result as string
-          this.uploadFile(
-            new APIAsset({
-              name: f.name,
-              uri: fileString
+
+          ThreeUtils.loadGLTFFromPath(fileString).then(object => {
+            const sprite = ThreeUtils.captureImage(
+              object.scene,
+              ThreeUtils.getTopDownCamera(object.scene)
+            )
+            const box = new Box3()
+            box.setFromObject(object.scene)
+            const c = new Vector3(0, 0, 0)
+            const s = new Vector3(0, 0, 0)
+            const min = box.getCenter(c).sub(box.getSize(s).divideScalar(2))
+            const max = box
+              .getCenter(new Vector3())
+              .add(box.getSize(new Vector3()).divideScalar(2))
+            const b = new APIBoundingBox(
+              { x: min.x, y: min.y, z: min.z },
+              { x: max.x, y: max.y, z: max.z }
+            )
+
+            const scene = ThreeUtils.defaultScene().then(scene => {
+              scene.add(object.scene)
+              const icon = ThreeUtils.capture(
+                ThreeUtils.defaultRenderer(512, 512),
+                scene,
+                ThreeUtils.getSideCamera(object.scene)
+              )
+              this.uploadFile(
+                new APIAsset({
+                  name: f.name,
+                  uri: fileString,
+                  boundingBox: JSON.stringify(b),
+                  layoutSprite: sprite,
+                  picture: icon
+                })
+              )
             })
-          )
+          })
         }
         reader.onerror = error => {
           console.error(error)
@@ -606,6 +652,24 @@ export default class OpenAssetPopUp extends Vue {
   openFileSettings (item: APIAsset): void {
     this.fileSettings = new APIAsset(item)
     this.fileSettingsPopUp = true
+  }
+
+  downloadFileData (item: APIAsset): void {
+    API.post(
+      this,
+      '/resources/assets',
+      JSON.stringify({
+        where: { id: item.id },
+        select: ['uri']
+      })
+    ).then(asset => {
+      const res = asset as unknown as APIAsset[]
+      console.log(res[0].uri)
+      const a = document.createElement('a')
+      a.href = res[0].uri
+      a.download = item.name + '.gltf'
+      a.click()
+    })
   }
 
   saveFileSettings (): void {
