@@ -37,18 +37,19 @@
                 {{ profile.name }}
               </v-card-title>
               <v-card-subtitle>
-                <!-- <v-chip-group>
-                <v-chip
-                  :key="indexTag"
-                  v-for="(tag, indexTag) in profile.parsedTags"
-                  class="mr-2 overflow-y-auto"
-                >
-                  {{ tag }}
-                </v-chip>
-              </v-chip-group> -->
+                <v-chip-group>
+                  <v-chip
+                    :key="indexTag"
+                    v-for="(tag, indexTag) in JSON.parse(profile.tags || '[]')"
+                    class="overflow-y-auto"
+                  >
+                    {{ tag }}
+                  </v-chip>
+                </v-chip-group>
               </v-card-subtitle>
               <v-card-text class="ma-0">
-                Creation date : {{ profile.formatedCreationDate }}<br />
+                Creation date :
+                {{ new Date(profile.creationDate).toLocaleString() }}<br />
                 Last Modification :
                 {{ new Date(profile.modificationDate).toLocaleString() }}
               </v-card-text>
@@ -61,7 +62,7 @@
                     justify="space-between"
                     class="pt-3 flex-wrap"
                   >
-                    <v-btn @click="deleteObjet(scene, $event)" icon>
+                    <v-btn @click="deleteProfile(profile)" icon>
                       <v-icon v-text="'mdi-delete'"></v-icon>
                     </v-btn>
                     <v-btn
@@ -97,7 +98,7 @@
 import API from '@/utils/api'
 import Vue from 'vue'
 import Component from 'vue-class-component'
-import CardProfile from '@/utils/cardProfile'
+import { APIProfile } from '@/utils/models'
 import Unreal from '@/utils/unreal'
 
 @Component({
@@ -123,22 +124,22 @@ import Unreal from '@/utils/unreal'
 // @group COMPONENTS
 // Display all information of an asset
 export default class AvatarManager extends Vue {
-  private name = ''
-  private iconUri = ''
   private isMobileView = false
   show = false
-  private profiles: CardProfile[] = []
+  private profiles: APIProfile[] = []
 
   unreal = Unreal
 
   mounted (): void {
-    this.requeteAPI()
+    this.getAPIProfiles()
   }
 
+  // @vuese
   // Get all profiles from API
   // @arg No arguments required
-  requeteAPI (): void {
-    let tmpProfiles: CardProfile[] = []
+  getAPIProfiles (): void {
+    this.profiles = []
+    const tmpProfiles: APIProfile[] = []
     API.post(
       this,
       '/resources/ergonomio-profiles',
@@ -147,12 +148,14 @@ export default class AvatarManager extends Vue {
         where: []
       })
     ).then((response: Response) => {
-      tmpProfiles = ((response as unknown) as Array<Partial<CardProfile>>).map(
-        (profile: Partial<CardProfile>) => new CardProfile(profile)
-      )
-      for (let i = 0; i < tmpProfiles.length; i++) {
-        this.profiles.push(tmpProfiles[i])
-      }
+      const fileList = (response as unknown) as APIProfile[]
+      this.profiles = []
+      fileList.forEach((fileInfo: Partial<APIProfile>) => {
+        if (fileInfo.name && fileInfo.creationDate) {
+          const profileItem = new APIProfile(fileInfo)
+          this.profiles.push(profileItem)
+        }
+      })
     })
   }
 
@@ -160,7 +163,10 @@ export default class AvatarManager extends Vue {
     console.log('TODO')
   }
 
-  loadProfile (indexProfile: number) {
+  // @vuese
+  // Load profile in Unreal application or Avatar Manager
+  // @arg indexProfile : id of chosen profile
+  loadProfile (indexProfile: number): void {
     console.log(this.profiles[indexProfile])
     if (Unreal.check()) {
       Unreal.send(this.profiles[indexProfile])
@@ -168,6 +174,24 @@ export default class AvatarManager extends Vue {
       this.$emit('fileInput', this.profiles[indexProfile])
       this.$emit('close')
     }
+  }
+
+  // @vuese
+  // Delete profile from API
+  // @arg profile : profile to delete
+  deleteProfile (profile: APIProfile): void {
+    console.log(profile)
+    API.delete(this, `/resources/ergonomio-profiles/${profile.id}`, '')
+      .then((response: Response) => {
+        this.$root.$emit(
+          'bottom-message',
+          'Profile ' + profile.name + ' removed with success'
+        )
+        this.getAPIProfiles()
+      })
+      .catch(() => {
+        console.error('Fail delete profile :', profile.name)
+      })
   }
 }
 </script>

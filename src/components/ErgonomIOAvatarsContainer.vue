@@ -47,10 +47,13 @@
 
 <template>
   <maximizable-container>
-    <!--v-card of component-->
-    <v-card elevation="3" height="700" class="d-flex flex-row flex-grow-1">
+    <!--v-card of -->
+    <v-card
+      elevation="3"
+      height="700"
+      class="d-flex flex-row flex-grow-1 pa-0 ma-0"
+    >
       <!-- Popup windows-->
-
       <!--Open avatar profile pop-up-->
       <pop-up ref="avatarManager" width="500px">
         <avatar-manager
@@ -71,6 +74,7 @@
       <pop-up ref="avatarInfo">
         <avatar-info
           ref="avatarInfoComponent"
+          @save="addProfileAPI"
           @close="$refs.avatarInfo.close()"
         ></avatar-info>
       </pop-up>
@@ -99,7 +103,6 @@
               </v-list-item-content>
             </v-list-item>
           </v-list-item-group>
-
           <v-list-item-group class="mt-auto">
             <v-list-item
               class="justify-start"
@@ -116,7 +119,6 @@
           </v-list-item-group>
         </v-list>
       </v-navigation-drawer>
-
       <!--Main Components-->
       <v-col class="pa-0 d-flex flex-column">
         <!--Three.js View-->
@@ -183,26 +185,15 @@
                 </v-text-field>
               </div>
             </v-row>
-            <v-row>
-              <v-col>
-                <v-btn
-                  color="primary"
-                  class="black--text"
-                  @click="loadPlayerData()"
-                >
-                  Load Data (XML/JSon)
-                </v-btn></v-col
+            <v-row class="flex-grow-1 justify-center">
+              <v-btn
+                color="primary"
+                class="black--text"
+                @click="loadPlayerData()"
               >
-              <v-col>
-                <v-btn
-                  color="primary"
-                  class="black--text"
-                  @click="saveProfile()"
-                >
-                  Save Profile
-                </v-btn></v-col
-              ></v-row
-            >
+                Load Data (XML/JSon)
+              </v-btn>
+            </v-row>
           </v-col>
         </v-row>
         <!-- Hair and beard custom colorization -->
@@ -312,8 +303,7 @@
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import ActionContainer from '@/components/ActionContainer.vue'
-import { APIAsset } from '@/utils/models'
-import CardProfile from '@/utils/cardProfile'
+import { APIProfile } from '@/utils/models'
 
 // Usefull for PopUp windows
 import SelectPopUp from '@/components/popup/SelectPopUp.vue'
@@ -339,6 +329,7 @@ import AvatarInfo from '@/components/AvatarInfo.vue'
 import MaximizableContainer from './MaximizableContainer.vue'
 
 import API from '@/utils/api'
+
 import OpenFile from '@/components/OpenFile.vue'
 import AvatarManager from '@/components/AvatarManager.vue'
 
@@ -401,44 +392,6 @@ class PlayerData {
   }
 }
 
-class Avatar {
-  // Name
-  name = ''
-  // Meshes names
-  beardName = ''
-  hairName = ''
-  shirtName = ''
-  pantName = ''
-  headName = ''
-  shoesName = ''
-  // Player Data values
-  hipWidth = 0
-  body = 0
-  neck = 0
-  head = 0
-  shoulderWidth = 0
-  upperArm = 0
-  foreArm = 0
-  palm = 0
-  upperLeg = 0
-  lowerLeg = 0
-  footLength = 0
-  heelHeight = 0
-  // morph Values
-  femaleFace = 0
-  armSize = 0
-  breastSize = 0
-  bellySize = 0
-  lowerBackSize = 0
-  hipSize = 0
-  buttockSize = 0
-  legSize = 0
-  // Colors Values
-  skinColor = 0
-  hairColor = 0
-  beardColor = 0
-}
-
 @Component({
   name: 'ErgonomioAvatarsContainer',
   components: {
@@ -490,17 +443,6 @@ export default class ErgonomIOAvatarsContainer extends Vue {
     13468460,
     7810846,
     1511697
-  ]
-
-  hairHexColors = [
-    'e4e1cd',
-    '988880',
-    'dfa345',
-    '53381a',
-    '9e6730',
-    'cd832c',
-    '772f1e',
-    '171111'
   ]
 
   beardNamesArray = [
@@ -568,6 +510,21 @@ export default class ErgonomIOAvatarsContainer extends Vue {
     'Hair_054.fbx'
   ]
 
+  private dataNames = [
+    'hipWidth',
+    'body',
+    'neck',
+    'head',
+    'shoulderWidth',
+    'upperArm',
+    'foreArm',
+    'palm',
+    'upperLeg',
+    'lowerLeg',
+    'footLength',
+    'heelHeight'
+  ]
+
   pantsNamesArray = ['pants.fbx']
   shirtNamesArray = ['shirt.fbx']
   shoesNamesArray = ['shoes.fbx']
@@ -575,12 +532,11 @@ export default class ErgonomIOAvatarsContainer extends Vue {
 
   primaryColor = this.$vuetify.theme.themes.dark.primary
 
-  hairHexColor = '#e4e1cd'
-  hairColor = 15000013
-  beardHexColor = '#e4e1cd'
-  beardColor = 0xe4e1cd
+  hairColor = this.hairColors[0]
+  beardColor = this.hairColors[0]
+  skinColor = this.skinColors[0]
 
-  profiles: CardProfile[] = []
+  profiles: APIProfile[] = []
 
   hairMesh: Group = new Group()
   beardMesh: Group = new Group()
@@ -610,7 +566,7 @@ export default class ErgonomIOAvatarsContainer extends Vue {
   viewer: ModelViewer2 | null = null
   inputField: InputFieldPopUp | null = null
   openFilePopUp: OpenFile | null = null
-  avatarManager: AvatarManager | null = null
+  avatarManager: AvatarManager = this.$refs.avatarManager as AvatarManager
 
   inputFile (): void {
     const input = this.$refs.inputFile as HTMLInputElement
@@ -942,12 +898,8 @@ export default class ErgonomIOAvatarsContainer extends Vue {
     console.log('Main menu is updated.')
     // Skin Menu :  Change the skin body color by the new selected one
     if (this.mainMenu.selected === 0) {
-      this.materialArray[1].color.setHex(
-        parseInt(
-          '0x' +
-            this.mainMenu.items[0].items[this.mainMenu.items[0].selected].value
-        )
-      )
+      this.skinColor = this.skinColors[this.mainMenu.items[0].selected]
+      this.materialArray[1].color.setHex(this.skinColor)
     }
     if (this.mainMenu.selected === 1) {
       this.loadMesh(
@@ -1011,13 +963,11 @@ export default class ErgonomIOAvatarsContainer extends Vue {
   // @arg No arguments needed
   updateColor (): void {
     if (this.mainMenu.selected === 2) {
-      this.hairMaterial.color.setHex(this.hairColors[this.colorMenu.selected])
-
-      this.hairHexColor = '#' + this.hairHexColors[this.colorMenu.selected]
       this.hairColor = this.hairColors[this.colorMenu.selected]
+      this.hairMaterial.color.setHex(this.hairColor)
     } else if (this.mainMenu.selected === 3) {
-      this.beardMaterial.color.setHex(this.hairColors[this.colorMenu.selected])
       this.beardColor = this.hairColors[this.colorMenu.selected]
+      this.beardMaterial.color.setHex(this.beardColor)
     }
   }
 
@@ -1037,9 +987,29 @@ export default class ErgonomIOAvatarsContainer extends Vue {
     )
   }
 
-  setPlayerData (data: PlayerData): void {
-    console.log(data)
-    this.playerData = data
+  setDataField (data: PlayerData, fieldName: string): void {
+    // To format the fieldname in right format
+    const lowerFieldName = fieldName.toLowerCase()
+    const length = data.values.find(element => element.name === lowerFieldName)
+      ?.length
+    if (length !== undefined) {
+      const id = this.playerData.values.findIndex(object => {
+        return object.name === fieldName
+      })
+      if (id !== -1) {
+        this.playerData.values[id].length = length
+      }
+    }
+  }
+
+  private setPlayerData (data: PlayerData): void {
+    // Take rid of json file format values
+    data.values.forEach(element => {
+      element.name = element.name.replace(' ', '').toLowerCase()
+    })
+    this.dataNames.forEach(element => {
+      this.setDataField(data, element)
+    })
   }
 
   // @vuese
@@ -1071,7 +1041,7 @@ export default class ErgonomIOAvatarsContainer extends Vue {
   // @vuese
   // Update function called when selecting a main menu element
   // @arg No arguments needed
-  parseXMLData (xml: string): PlayerData {
+  private parseXMLData (xml: string): PlayerData {
     const a = [
       ...xml.matchAll(/(name="[\w\s]*"(\s)*length="[0-9]*(.[0-9]*)")+/gm)
     ].map(i => {
@@ -1085,12 +1055,12 @@ export default class ErgonomIOAvatarsContainer extends Vue {
     return { name: tmp[1], values: a }
   }
 
-  saveProfile (): void {
-    var profile = new Avatar()
+  saveProfile (): APIProfile {
+    var profile = new APIProfile()
     profile.name = this.playerData.name
     // Hair Mesh Case
     if (this.mainMenu.items[2].selected === 0) {
-      profile.hairName = ''
+      profile.hairName = 'NULL'
     } else {
       profile.hairName = this.hairNamesArray[
         this.mainMenu.items[2].selected - 1
@@ -1113,7 +1083,7 @@ export default class ErgonomIOAvatarsContainer extends Vue {
     ].split('.fbx')[0]
     // Beard mesh case
     if (this.mainMenu.items[3].selected === 0) {
-      profile.beardName = ''
+      profile.beardName = 'NULL'
     } else {
       profile.beardName = this.beardNamesArray[
         this.mainMenu.items[3].selected - 1
@@ -1148,86 +1118,99 @@ export default class ErgonomIOAvatarsContainer extends Vue {
     profile.hairColor = this.hairColor
     profile.beardColor = this.beardColor
 
-    const json = JSON.stringify(profile)
-    console.log(json)
-  }
-
-  // Get all profiles from API
-  // @arg No arguments required
-  requeteAPI (): void {
-    let tmpProfiles: CardProfile[] = []
-    API.post(
-      this,
-      '/resources/ergonomio-profiles',
-      JSON.stringify({
-        select: [],
-        where: []
-      })
-    ).then((response: Response) => {
-      tmpProfiles = ((response as unknown) as Array<Partial<CardProfile>>).map(
-        (profile: Partial<CardProfile>) => new CardProfile(profile)
-      )
-      for (let i = 0; i < tmpProfiles.length; i++) {
-        this.profiles.push(tmpProfiles[i])
-      }
-    })
+    return profile
   }
 
   // @vuese
   // Used to load Profile sent by AvatarManager PopUp
   // @arg profile loaded
-  loadProfile (profile: CardProfile): void {
+  loadProfile (profile: APIProfile): void {
+    // Set avatar meshes
     this.loadMesh('./Avatars/Shirt/'.concat(profile.shirtName, '.fbx'), 1)
-    this.loadMesh('./Avatars/Hairs/'.concat(profile.hairName, '.fbx'), 2)
-    this.loadMesh('./Avatars/Beard/'.concat(profile.beardName, '.fbx'), 3)
+    this.mainMenu.items[1].selected = this.shirtNamesArray.findIndex(element =>
+      element.includes(profile.shirtName)
+    )
+    // Case when hair are undefined (bold)
+    if (profile.hairName === 'NULL') {
+      this.hairMesh.clear()
+      this.mainMenu.items[2].selected = 0
+    } else {
+      this.loadMesh('./Avatars/Hairs/'.concat(profile.hairName, '.fbx'), 2)
+      this.mainMenu.items[2].selected =
+        this.hairNamesArray.findIndex(element =>
+          element.includes(profile.hairName)
+        ) + 1
+    }
+    if (profile.beardName === 'NULL') {
+      this.beardMesh.clear()
+      this.mainMenu.items[3].selected = 0
+    } else {
+      this.loadMesh('./Avatars/Beard/'.concat(profile.beardName, '.fbx'), 3)
+      this.mainMenu.items[3].selected =
+        this.beardNamesArray.findIndex(element =>
+          element.includes(profile.beardName)
+        ) + 1
+    }
     this.loadMesh('./Avatars/Pants/'.concat(profile.pantName, '.fbx'), 4)
+    this.mainMenu.items[4].selected = this.pantsNamesArray.findIndex(element =>
+      element.includes(profile.pantName)
+    )
     this.loadMesh('./Avatars/Shoes/'.concat(profile.shoesName, '.fbx'), 5)
+    this.mainMenu.items[5].selected = this.shoesNamesArray.findIndex(element =>
+      element.includes(profile.shoesName)
+    )
     this.loadMesh('./Avatars/Head/'.concat(profile.headName, '.fbx'), 6)
+    this.mainMenu.items[6].selected = this.headNamesArray.findIndex(element =>
+      element.includes(profile.headName)
+    )
 
+    // Set matetrials colors
     this.hairColor = profile.hairColor
+    this.hairMaterial.color.setHex(this.hairColor)
     this.beardColor = profile.beardColor
-    this.updateColor()
+    this.beardMaterial.color.setHex(this.beardColor)
+    this.skinColor = profile.skinColor
+    this.mainMenu.items[0].selected = this.skinColors.findIndex(
+      element => element === profile.skinColor
+    )
+    this.materialArray[1].color.setHex(this.skinColor)
+
+    // Set morphs values
+    this.morphList[0].value = profile.femaleFace * 100
+    this.morphList[1].value = profile.armSize * 100
+    this.morphList[2].value = profile.breastSize * 100
+    this.morphList[3].value = profile.bellySize * 100
+    this.morphList[4].value = profile.lowerBackSize * 100
+    this.morphList[5].value = profile.hipSize * 100
+    this.morphList[6].value = profile.buttockSize * 100
+    this.morphList[7].value = profile.legSize * 100
+
+    // Set player Data
+    this.playerData.values[0].length = profile.hipWidth
+    this.playerData.values[1].length = profile.body
+    this.playerData.values[2].length = profile.neck
+    this.playerData.values[3].length = profile.head
+    this.playerData.values[4].length = profile.shoulderWidth
+    this.playerData.values[5].length = profile.upperArm
+    this.playerData.values[6].length = profile.foreArm
+    this.playerData.values[7].length = profile.palm
+    this.playerData.values[8].length = profile.upperLeg
+    this.playerData.values[9].length = profile.lowerLeg
+    this.playerData.values[10].length = profile.footLength
+    this.playerData.values[11].length = profile.heelHeight
   }
 
-  // Create an empty scene
+  // Create api request to add a new Profile
   // @arg No arguments required
-  createProfile (): void {
-    const profile = new CardProfile({ id: this.profiles.length })
-    profile.parsedTags.push('vide')
-    this.profiles.push(profile)
-    this.addProfileAPI(profile)
-  }
-
-  // Create api request for add a new scene
-  // @arg No arguments required
-  addProfileAPI (profile: CardProfile): void {
-    API.put(
-      this,
-      '/resources/ergonomio-profiles',
-      JSON.stringify({
-        assetsNumber: profile.assetsNumber,
-        color: profile.color,
-        creationDate: profile.creationDate,
-        data: profile.data,
-        id: profile.id,
-        idProject: profile.idProject,
-        idUserOwner: profile.idUserOwner,
-        modificationDate: profile.modificationDate,
-        name: profile.name,
-        picture: profile.picture,
-
-        tags: JSON.stringify(profile.parsedTags)
+  addProfileAPI (tags: Array<string>): void {
+    const profile = this.saveProfile()
+    API.put(this, '/resources/ergonomio-profiles', JSON.stringify(profile))
+      .then((response: Response) => {
+        this.$root.$emit('bottom-message', 'Profile added with success')
       })
-    ).then((response: Response) => {
-      this.refreshProfiles()
-    })
-  }
-
-  // Refresh scenes
-  // @arg No arguments required
-  refreshProfiles (): void {
-    this.profiles = []
-    this.requeteAPI()
+      .catch(() => {
+        console.error('Fail to add resource :', profile)
+      })
   }
 }
 </script>
