@@ -8,7 +8,7 @@
   <v-container
     fluid
     style="height: 100%; max-height: 100%"
-    class="overflow-y-auto black rounded-lg"
+    class="overflow-y-auto rounded-lg"
   >
     <!-- To assign a position to an event -->
     <v-dialog v-model="modifyPositionBooleen">
@@ -254,7 +254,7 @@
           </v-btn>
           <v-btn icon>
             <v-icon
-              @click="moveToEvent(child)"
+              @click="moveToEvent(child, false)"
               class="ml-2"
               v-text="'mdi-map-marker'"
               left
@@ -433,15 +433,23 @@
         </v-col>
 
         <!-- Allows to listen on the server -->
-        <v-col align="center">
+        <v-col
+          align="center"
+          style="display: flex; align-items: center; justify-content: center; "
+        >
           <v-btn
             class="primary black--text my-2"
             @click="listenServer()"
             large
             elevation="2"
           >
-            Listen id of server (do nothing)
+            Listen id of server
           </v-btn>
+          <div
+            class="rounded-circle ma-5"
+            :class="activeListenOpcua"
+            style="width: 30px; height: 30px;"
+          ></div>
         </v-col>
       </v-row>
     </v-container>
@@ -468,6 +476,7 @@ import Unreal from '@/utils/unreal'
 import VueRouter from 'vue-router'
 import { Vector3 } from 'three'
 import CardModel from '@/utils/cardmodel'
+import { floorPowerOfTwo } from 'three/src/math/MathUtils'
 
 // Classe d'un évènement
 interface evenementClass {
@@ -510,7 +519,9 @@ class Values {
   datetime = -1
   idParent = -1
   position: Vector3 = new Vector3(0)
+  modificationPosition = false
   rotation: Vector3 = new Vector3(0)
+  modificationRotation = false
 
   constructor (params: Partial<Values>) {
     Object.assign(this, params)
@@ -551,7 +562,7 @@ export default class ErgonomIOAssets extends Vue {
 
   transformArray = ['Location', 'Rotation', 'Scale']
   axesArray = ['', 'X', 'Y', 'Z']
-  axesColorsArray = ['black', 'red', 'green', 'blue']
+  axesColorsArray = ['black', 'red', 'green', 'green']
   textFieldValue = ''
   counter = 0
   positionEvent = new Vector3(0, 0, 0)
@@ -562,6 +573,7 @@ export default class ErgonomIOAssets extends Vue {
   scenes: CardModel[] = []
   firstTime = true
   editProfilBooleen = false
+  activeListenOpcua = 'red'
   selectedObjectDynamique = false
   profilEdit: Profil = new Profil({})
 
@@ -574,7 +586,9 @@ export default class ErgonomIOAssets extends Vue {
           name: 'Evenement 1',
           values: new Values({
             position: new Vector3(0.0, 0.0, 0.0),
+            modificationPosition: false,
             rotation: new Vector3(0.0, 0.0, 0.0),
+            modificationRotation: false,
             idParent: -1,
             datetime: -1
           })
@@ -583,7 +597,9 @@ export default class ErgonomIOAssets extends Vue {
           name: 'Evenement 2',
           values: new Values({
             position: new Vector3(100.0, 0.0, 0.0),
+            modificationPosition: true,
             rotation: new Vector3(0.0, 0.0, 0.0),
+            modificationRotation: false,
             idParent: -1,
             datetime: -1
           })
@@ -592,7 +608,9 @@ export default class ErgonomIOAssets extends Vue {
           name: 'Evenement 3',
           values: new Values({
             position: new Vector3(0.0, 300.0, 0.0),
+            modificationPosition: true,
             rotation: new Vector3(0.0, 0.0, 0.0),
+            modificationRotation: false,
             idParent: -1,
             datetime: -1
           })
@@ -617,8 +635,31 @@ export default class ErgonomIOAssets extends Vue {
       }
 
       const test = data as message
-      // When we get an event
-      if (test.message === 'envoieEvenement') {
+
+      // When get event, go active him
+      if (test.message === 'activeEvent') {
+        const test2 = test.object as evenementClass
+
+        // Find selected profil
+        let trouver = -1
+        for (let i = 0; i < this.profils.length; i++) {
+          const element = this.profils[i].active
+          if (element) trouver = i
+        }
+
+        // Find event from string
+        let indexEvent = -1
+        for (let i = 0; i < this.profils[trouver].items.length; i++) {
+          const element = this.profils[trouver].items[i]
+          if (element.name === test2.evenement) {
+            indexEvent = i
+          }
+        }
+
+        // Move selected object to the value of the event
+        this.moveToEvent(this.profils[trouver].items[indexEvent], true)
+        // Not used, obsolete
+      } else if (test.message === 'envoieEvenement') {
         const test2 = test.object as evenementClass
         Unreal.send(test2)
 
@@ -631,7 +672,9 @@ export default class ErgonomIOAssets extends Vue {
           name: test2.evenement,
           values: new Values({
             position: new Vector3(0.0, 0.0, 0.0),
+            modificationPosition: false,
             rotation: new Vector3(0.0, 0.0, 0.0),
+            modificationRotation: false,
             idParent: -1,
             datetime: -1
           })
@@ -675,6 +718,7 @@ export default class ErgonomIOAssets extends Vue {
             }
           }
         }
+        // Get the event list opc ua with profil index/id
       } else if (test.message === 'envoieListeEvenementProfil') {
         let indiceChercher = -1
         for (let i = 0; i < this.profils.length; i++) {
@@ -704,7 +748,9 @@ export default class ErgonomIOAssets extends Vue {
       } else if (test.message === 'selectedObjectDynamique') {
         Unreal.send('selectedObjectDynamique')
         this.selectedObjectDynamique = true
+        // Get information of selected asset
       } else if (test.message === 'infosObjetDynamique') {
+        Unreal.send('DEBUT INFOS')
         const indiceProfil = test.object.idProfil
 
         let indiceProfilTableau = -1
@@ -731,6 +777,12 @@ export default class ErgonomIOAssets extends Vue {
               this.profils[indiceProfilTableau].items[
                 i
               ].values.rotation = new Vector3(0.0, 0.0, 0.0)
+              this.profils[indiceProfilTableau].items[
+                i
+              ].values.modificationPosition = false
+              this.profils[indiceProfilTableau].items[
+                i
+              ].values.modificationRotation = false
             }
           } else {
             // Update array
@@ -743,6 +795,14 @@ export default class ErgonomIOAssets extends Vue {
                 test.object.tableau_position[i]
               this.profils[indiceProfilTableau].items[i].values.rotation =
                 test.object.tableau_rotation[i]
+              this.profils[indiceProfilTableau].items[
+                i
+              ].values.modificationPosition =
+                test.object.tableau_modification_pos[i]
+              this.profils[indiceProfilTableau].items[
+                i
+              ].values.modificationRotation =
+                test.object.tableau_modification_rot[i]
             }
           }
 
@@ -851,6 +911,7 @@ export default class ErgonomIOAssets extends Vue {
       if (element) trouver = i
     }
 
+    // Passing of parameters
     this.editProfilBooleen = true
     this.profilEdit = this.profils[trouver]
   }
@@ -955,7 +1016,9 @@ export default class ErgonomIOAssets extends Vue {
               name: evenementName,
               values: new Values({
                 position: new Vector3(0.0, 0.0, 0.0),
+                modificationPosition: false,
                 rotation: new Vector3(0.0, 0.0, 0.0),
+                modificationRotation: false,
                 idParent: -1,
                 datetime: datetimeInput
               })
@@ -1058,11 +1121,13 @@ export default class ErgonomIOAssets extends Vue {
                   elementObjet.values.position.y,
                   elementObjet.values.position.z
                 ),
+                modificationPosition: false,
                 rotation: new Vector3(
                   elementObjet.values.rotation.x,
                   elementObjet.values.rotation.y,
                   elementObjet.values.rotation.z
                 ),
+                modificationRotation: false,
                 idParent: elementObjet.values.idParent,
                 datetime: -1
               })
@@ -1076,11 +1141,13 @@ export default class ErgonomIOAssets extends Vue {
                   elementObjet.values.position[1],
                   elementObjet.values.position[2]
                 ),
+                modificationPosition: false,
                 rotation: new Vector3(
                   elementObjet.values.rotation[0],
                   elementObjet.values.rotation[1],
                   elementObjet.values.rotation[2]
                 ),
+                modificationRotation: false,
                 idParent: elementObjet.values.idParent,
                 datetime: -1
               })
@@ -1179,6 +1246,20 @@ export default class ErgonomIOAssets extends Vue {
   // @arg No arguments required
   listenServer (): void {
     console.log('listenServer !')
+
+    this.activeListenOpcua = this.activeListenOpcua === 'red' ? 'green' : 'red'
+
+    const objectOpcua = {
+      action: 'listenServer'
+    }
+
+    const object = {
+      menu: 'opcua',
+      objet: objectOpcua
+    }
+
+    // On envoie la position de l'évènement
+    Unreal.send(object)
   }
 
   // Delete an event of a profil
@@ -1210,11 +1291,17 @@ export default class ErgonomIOAssets extends Vue {
 
   // For start an event
   // @arg No arguments required
-  moveToEvent (child: Evenement): void {
+  moveToEvent (child: Evenement, opcua: boolean): void {
     const objectOpcua = {
       action: 'bougerEvenement',
-      position: child.values.position
+      position: child.values.position,
+      rotation: child.values.rotation,
+      modificationPosition: child.values.modificationPosition,
+      modificationRotation: child.values.modificationRotation,
+      isOpcua: opcua
     }
+
+    console.log(this.profils)
 
     const object = {
       menu: 'opcua',
