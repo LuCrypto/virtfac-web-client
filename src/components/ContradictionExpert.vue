@@ -163,7 +163,7 @@ import NV from '@/components/NV.vue'
 import { APIFile } from '@/utils/models'
 
 import { ConstraintGraph } from '@/utils/graph/constraintGraph'
-import { Graph } from '@/utils/graph/graph'
+import { Graph, GraphJSON } from '@/utils/graph/graph'
 import { IWorkBook } from 'ts-xlsx'
 import API from '@/utils/api'
 import SelectPopUp from '@/components/popup/SelectPopUp.vue'
@@ -171,6 +171,7 @@ import InputFieldPopUp from '@/components/popup/InputFieldPopUp.vue'
 import { GraphLayout } from '@/utils/graph/graphLayout'
 import PopUp from '@/components/PopUp.vue'
 import MaximizableContainer from './MaximizableContainer.vue'
+import V from '@/utils/vector'
 
 class MenuItem {
   text: string
@@ -238,6 +239,9 @@ export default class ContradictionExpert extends Vue {
   }
 
   mounted (): void {
+    const v = { x: 5, y: 10 }
+    console.log(typeof (v as V))
+    console.log(new V(5, 10))
     // this.constraintGraph = new ConstraintGraph()
     this.nodeViewer = this.$refs.nodeViewer as NV
     this.actionContainer = this.$refs.actionContainer as ActionContainer
@@ -490,10 +494,7 @@ export default class ContradictionExpert extends Vue {
         item => {
           if (item != null) {
             this.getGraph().applyJson(
-              (item as Record<string, unknown>).return as Record<
-                string,
-                unknown
-              >
+              (item as Record<string, unknown>).return as GraphJSON
             )
           }
         },
