@@ -359,10 +359,10 @@ export default class RULA {
       ): void => {
         // Inclinaison de la tete
         let score1 = 0
-        if (angles.x > 0) score1 += 4
-        if (angles.x <= 0 && angles.x >= -10) score1 += 1
-        if (angles.x < -10 && angles.x >= -20) score1 += 2
-        if (angles.x < -20) score1 += 3
+        if (angles.x < -20) score1 += 4
+        if (angles.x >= -20 && angles.x < 10) score1 += 1
+        if (angles.x >= 10 && angles.x < 20) score1 += 2
+        if (angles.x > 20) score1 += 3
         scores.set(RULA_LABELS.NECK_ANGLE_1.key, angles.x)
         scores.set(RULA_LABELS.NECK_SCORE_1.key, score1)
 
@@ -374,7 +374,7 @@ export default class RULA {
 
         // Inclinaison de la nuque
         let score3 = 0
-        if (angles.y < -5 || angles.y > 5) score3 += 1
+        if (angles.y < -20 || angles.y > 20) score3 += 1
         scores.set(RULA_LABELS.NECK_ANGLE_3.key, angles.y)
         scores.set(RULA_LABELS.NECK_SCORE_3.key, score3)
 
@@ -391,7 +391,7 @@ export default class RULA {
         angles: THREE.Vector3,
         scores: Map<string, number>
       ): void => {
-        // Position avant arriere du bras
+        // Position avant arriere du bras droit
         let score1 = 0
         if (angles.y < -20) score1 += 2
         if (angles.y > -20 && angles.y < 20) score1 += 1
@@ -403,7 +403,7 @@ export default class RULA {
 
         // Abduction du bras droit
         let score2 = 0
-        if (angles.z < -10 || angles.z > 10) score2 += 1
+        if (angles.z < 50) score2 += 1
         scores.set(RULA_LABELS.RIGHT_SHOULDER_ANGLE_2.key, angles.z)
         scores.set(RULA_LABELS.RIGHT_SHOULDER_SCORE_2.key, score2)
 
@@ -420,17 +420,16 @@ export default class RULA {
         angles: THREE.Vector3,
         scores: Map<string, number>
       ): void => {
-        // Orientation avant arriete du coude
+        // Orientation avant arriere du coude
         let score1 = 0
-        if (angles.y < 60) score1 += 2
-        if (angles.y >= 60 && angles.y < 100) score1 += 1
+        if (angles.y < 100) score1 += 1
         if (angles.y >= 100) score1 += 2
         scores.set(RULA_LABELS.RIGHT_ELBOW_ANGLE_1.key, angles.y)
         scores.set(RULA_LABELS.RIGHT_ELBOW_SCORE_1.key, score1)
 
         // Abduction du coude
         let score2 = 0
-        if (angles.x < -10 || angles.x > 10) score2 += 1
+        if (angles.x < -20 || angles.x > 20) score2 += 1
         scores.set(RULA_LABELS.RIGHT_ELBOW_ANGLE_2.key, angles.x)
         scores.set(RULA_LABELS.RIGHT_ELBOW_SCORE_2.key, score2)
 
@@ -448,12 +447,11 @@ export default class RULA {
         scores: Map<string, number>
       ): void => {
         // Lever / baisser la main (neutre autour de 25°)
-        const neutral = -25
         let score1 = 0
-        if (angles.z > neutral - 5 && angles.z < neutral + 5) score1 += 1
-        if (angles.z <= neutral - 5 && angles.z > neutral - 15) score1 += 2
-        if (angles.z <= neutral - 15) score1 += 3
-        if (angles.z >= neutral + 5) score1 += 3
+        if (angles.z > -15 && angles.z < 15) score1 += 1
+        if (angles.z <= -15 && angles.z > -25) score1 += 2
+        if (angles.z <= -25) score1 += 3
+        if (angles.z >= 15) score1 += 3
         scores.set(RULA_LABELS.RIGHT_WRIST_ANGLE_1.key, angles.z)
         scores.set(RULA_LABELS.RIGHT_WRIST_SCORE_1.key, score1)
 
@@ -469,7 +467,7 @@ export default class RULA {
 
         // Torsion du poignet (difference partielle/extreme jugee à +-5)
         let score3 = 0
-        if (angles.x > -5 && angles.x <= 5) score3 += 1
+        if (angles.x > -10 && angles.x <= 10) score3 += 1
         else score3 += 2
         scores.set(RULA_LABELS.RIGHT_WRIST_TWIST_ANGLE.key, angles.x)
         scores.set(RULA_LABELS.RIGHT_WRIST_TWIST.key, score3)
@@ -483,19 +481,20 @@ export default class RULA {
         angles: THREE.Vector3,
         scores: Map<string, number>
       ): void => {
-        // Position avant arriere du bras droit
+        // Position avant arriere du bras gauche
         let score1 = 0
         if (angles.y > 20) score1 += 2
         if (angles.y > -20 && angles.y < 20) score1 += 1
         if (angles.y <= -20 && angles.y > -45) score1 += 2
         if (angles.y <= -45 && angles.y > -90) score1 += 3
         if (angles.y <= -90) score1 += 4
+
         scores.set(RULA_LABELS.LEFT_SHOULDER_ANGLE_1.key, angles.y)
         scores.set(RULA_LABELS.LEFT_SHOULDER_SCORE_1.key, score1)
 
         // Abduction du bras gauche
         let score2 = 0
-        if (angles.z < -10 || angles.z > 10) score2 += 1
+        if (angles.z > -50) score2 += 1
         scores.set(RULA_LABELS.LEFT_SHOULDER_ANGLE_2.key, angles.z)
         scores.set(RULA_LABELS.LEFT_SHOULDER_SCORE_2.key, score2)
 
@@ -512,17 +511,16 @@ export default class RULA {
         angles: THREE.Vector3,
         scores: Map<string, number>
       ): void => {
-        // Orientation avant arriete du coude
+        // Orientation avant arriere du coude gauche
         let score1 = 0
-        if (angles.y > -60) score1 += 2
-        if (angles.y <= -60 && angles.y > -100) score1 += 1
+        if (angles.y > -100) score1 += 1
         if (angles.y <= -100) score1 += 2
         scores.set(RULA_LABELS.LEFT_ELBOW_ANGLE_1.key, angles.y)
         scores.set(RULA_LABELS.LEFT_ELBOW_SCORE_1.key, score1)
 
         // Abduction du coude
         let score2 = 0
-        if (angles.x < -10 || angles.x > 10) score2 += 1
+        if (angles.x < -20 || angles.x > 20) score2 += 1
         scores.set(RULA_LABELS.LEFT_ELBOW_ANGLE_2.key, angles.x)
         scores.set(RULA_LABELS.LEFT_ELBOW_SCORE_2.key, score2)
 
@@ -541,11 +539,10 @@ export default class RULA {
       ): void => {
         // Lever / baisser la main
         let score1 = 0
-        const neutral = 25
-        if (angles.z > neutral - 5 && angles.z < neutral + 5) score1 += 1
-        if (angles.z >= neutral + 5 && angles.z < neutral + 15) score1 += 2
-        if (angles.z >= neutral + 15) score1 += 3
-        if (angles.z <= neutral - 5) score1 += 3
+        if (angles.z > -15 && angles.z < 15) score1 += 1
+        if (angles.z >= 15 && angles.z < 25) score1 += 2
+        if (angles.z >= 25) score1 += 3
+        if (angles.z <= -15) score1 += 3
         scores.set(RULA_LABELS.LEFT_WRIST_ANGLE_1.key, angles.z)
         scores.set(RULA_LABELS.LEFT_WRIST_SCORE_1.key, score1)
 
@@ -561,7 +558,7 @@ export default class RULA {
 
         // Torsion du poignet (difference partielle/extreme jugee à +-5)
         let score3 = 0
-        if (angles.x > -5 && angles.x <= 5) score3 += 1
+        if (angles.x > -10 && angles.x <= 10) score3 += 1
         else score3 += 2
         scores.set(RULA_LABELS.LEFT_WRIST_TWIST_ANGLE.key, angles.x)
         scores.set(RULA_LABELS.LEFT_WRIST_TWIST.key, score3)
@@ -687,7 +684,8 @@ export default class RULA {
 
   /* This method attaches a marker to each bone, which is then used as a
    * reference for calculating the RULA score */
-  createRULAMarkers (skeleton: THREE.SkeletonHelper): void {
+  createRULAMarkers (skeleton: THREE.SkeletonHelper): THREE.AxesHelper[] {
+    const markers: THREE.AxesHelper[] = []
     skeleton.bones.map(bone => {
       const setting = this.boneSettings
         .filter(setting => setting.boneName === bone.name)
@@ -699,6 +697,7 @@ export default class RULA {
         axeMarker.parent = bone
         axeMarker.name = bone.name
         setting.axeMarker = axeMarker
+        markers.push(axeMarker)
 
         // Create point marker
         const geometry = new THREE.SphereGeometry(5, 8, 6)
@@ -710,69 +709,119 @@ export default class RULA {
         setting.pointMarker = pointMarker
       }
     })
+
+    return markers
   }
 
   removeRULAMarkers (skeleton: THREE.SkeletonHelper) {
     console.log('TODO : Remove rula markers', skeleton)
   }
 
-  static getMarkerColor (value: number): number {
-    return value <= 2
-      ? 0x1b7570
-      : value <= 4
-        ? 0xe9ce09
-        : value <= 6
-          ? 0xe8a30a
-          : 0xba2d52
+  static getMarkerColor (value: number, max = 7): number {
+    const colors = [
+      0x1b7570, // green
+      0xe9ce09, // yellow
+      0xe8a30a, // orange
+      0xba2d52 // red
+    ]
+
+    const colorMap = [
+      [0, 3],
+      [0, 2, 3],
+      [0, 1, 2, 3],
+      [0, 1, 2, 2, 3],
+      [0, 1, 1, 2, 2, 3],
+      [0, 0, 1, 1, 2, 2, 3]
+    ]
+
+    const range = (v: number, a: number, b: number) =>
+      v < a ? a : v > b ? b : v
+    const mapIndex = range(max, 2, 7) - 2
+    const colorsIndexes = colorMap[mapIndex]
+    const colorIndex = colorsIndexes[range(value, 1, colorsIndexes.length) - 1]
+    return colors[colorIndex]
   }
 
   updateRULAMarkers (
     markerValues: Map<string, number>,
-    markerType: number
+    markerType: number,
+    selectedMarker: THREE.AxesHelper | null
   ): void {
-    const getScoreLabelByBoneName = {
-      Spine: 'TRUNK_POSTURE',
-      Head: 'NECK',
-      RightArm: 'RIGHT_SHOULDER',
-      RightForeArm: 'RIGHT_ELBOW',
-      RightHand: 'RIGHT_WRIST',
-      LeftArm: 'LEFT_SHOULDER',
-      LeftForeArm: 'LEFT_ELBOW',
-      LeftHand: 'LEFT_WRIST'
+    const getScoreParamsByBoneName = {
+      Spine: {
+        label: 'TRUNK_POSTURE',
+        max: 6
+      },
+      Head: {
+        label: 'NECK',
+        max: 6
+      },
+      RightArm: {
+        label: 'RIGHT_SHOULDER',
+        max: 6
+      },
+      RightForeArm: {
+        label: 'RIGHT_ELBOW',
+        max: 3
+      },
+      RightHand: {
+        label: 'RIGHT_WRIST',
+        max: 2
+      },
+      LeftArm: {
+        label: 'LEFT_SHOULDER',
+        max: 6
+      },
+      LeftForeArm: {
+        label: 'LEFT_ELBOW',
+        max: 3
+      },
+      LeftHand: {
+        label: 'LEFT_WRIST',
+        max: 2
+      }
     }
 
     this.boneSettings.forEach(setting => {
       if (!setting.pointMarker || !setting.axeMarker) return
+
+      let show = true
+      if (
+        selectedMarker != null &&
+        setting.axeMarker.name !== selectedMarker.name
+      ) {
+        show = false
+      }
       switch (markerType) {
         case 0:
           setting.pointMarker.visible = false
           setting.axeMarker.visible = false
           break
         case 1:
-          setting.pointMarker.visible = true
+          setting.pointMarker.visible = show
           setting.axeMarker.visible = false
           break
         case 2:
           setting.pointMarker.visible = false
-          setting.axeMarker.visible = true
+          setting.axeMarker.visible = show
           break
         case 3:
-          setting.pointMarker.visible = true
-          setting.axeMarker.visible = true
+          setting.pointMarker.visible = show
+          setting.axeMarker.visible = show
           break
       }
 
       const marker = setting.pointMarker
       if (marker instanceof THREE.Mesh) {
         const name = setting.boneName
-        if (name in getScoreLabelByBoneName) {
-          const key = name as keyof typeof getScoreLabelByBoneName
-          const label = getScoreLabelByBoneName[key]
+        if (name in getScoreParamsByBoneName) {
+          const key = name as keyof typeof getScoreParamsByBoneName
+          const scoreParams = getScoreParamsByBoneName[key]
 
-          if (markerValues.has(label)) {
-            const value = markerValues.get(label) as number
+          if (markerValues.has(scoreParams.label)) {
+            const value = markerValues.get(scoreParams.label) as number
             marker.material = new THREE.MeshBasicMaterial({
-              color: RULA.getMarkerColor(value)
+              color: RULA.getMarkerColor(value, scoreParams.max)
             })
           }
         }
