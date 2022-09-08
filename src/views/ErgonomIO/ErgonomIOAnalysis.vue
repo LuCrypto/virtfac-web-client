@@ -2,12 +2,15 @@
 .v-badge * {
   color: black !important;
 }
-.score-value {
+.bottom-informations {
   position: absolute;
+  width: 100%;
   bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  margin: 20px;
+  left: 0;
+  padding: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
 }
 </style>
 
@@ -101,18 +104,44 @@
                     ref="viewer"
                     statsPosition="TOP_RIGHT"
                   ></model-viewer-2>
-                  <v-card
-                    class="score-value pa-3 text-h5"
-                    v-if="rulaValue >= 0"
+
+                  <div
+                    class="bottom-informations"
+                    v-if="settingsReferences.inputSkeleton"
                   >
-                    <v-sheet
-                      width="auto"
-                      height="10"
-                      class="mb-3"
-                      :color="getMarkerColor(rulaValue)"
-                    ></v-sheet>
-                    RULA : {{ rulaValue }} / 7
-                  </v-card>
+                    <!-- Score and time display -->
+                    <v-card class="score-value pa-3" width="200">
+                      <v-sheet
+                        width="auto"
+                        height="10"
+                        class="mb-3"
+                        :color="getMarkerColor(rulaValue)"
+                      ></v-sheet>
+                      <h3>RULA : {{ rulaValue }} / 7</h3>
+                      <h4>
+                        TIME : {{ animationTime.toFixed(2) }}s /
+                        {{ animationDuration.toFixed(2) }}s
+                      </h4>
+                    </v-card>
+
+                    <!-- Marker debuger -->
+                    <v-card
+                      class="score-value pa-3"
+                      width="300"
+                      v-if="toggleAngleInspector"
+                    >
+                      <v-select
+                        :items="markers"
+                        v-model="selectedMarker"
+                        item-text="name"
+                        label="Inspect angles"
+                        return-object
+                      ></v-select>
+                      <h3>Angle X : {{ selectedMarkerAngles[0] }}</h3>
+                      <h3>Angle Y : {{ selectedMarkerAngles[1] }}</h3>
+                      <h3>Angle Z : {{ selectedMarkerAngles[2] }}</h3>
+                    </v-card>
+                  </div>
                 </v-row>
               </v-col>
 
@@ -315,7 +344,20 @@ export default class AvatarAnimationComponent extends Vue {
   data: DataFrame[] = []
   rula: RULA | null = null
   rulaValue = 0
+  timeValue = 0
+  timeMax = 0
   rulaMarkerType = 0
+  markers: THREE.AxesHelper[] = []
+  selectedMarker: THREE.AxesHelper | null = null
+  selectedMarkerAngles = ['0', '0', '0']
+  toggleAngleInspector = false
+  updateSelectedMarkerAngles (): void {
+    if (!this.selectedMarker || !this.selectedMarker.parent) return
+    this.selectedMarkerAngles = this.selectedMarker.parent.rotation
+      .toArray()
+      .slice(0, 3)
+      .map(v => ((360 * v) / (2 * Math.PI)).toFixed(2))
+  }
 
   gltf: GLTF | null = null
   gltfHipsPosition: THREE.Vector3 = new THREE.Vector3()
@@ -550,6 +592,16 @@ export default class AvatarAnimationComponent extends Vue {
         () => this.settingsReferences.inputSkeleton == null
       )
     )
+    this.menuItemList.push(
+      new MenuItem(
+        'Toggle angle inspector',
+        'mdi-angle-acute',
+        () => {
+          this.toggleAngleInspector = !this.toggleAngleInspector
+        },
+        () => this.settingsReferences.inputSkeleton == null
+      )
+    )
   }
 
   computeData (
@@ -565,7 +617,11 @@ export default class AvatarAnimationComponent extends Vue {
     skeleton.matrixAutoUpdate = false
 
     this.rula = new RULA(this.viewer.scene)
-    this.rula.createRULAMarkers(this.settingsReferences.inputSkeleton)
+    this.markers = this.rula.createRULAMarkers(
+      this.settingsReferences.inputSkeleton
+    )
+    this.selectedMarker = this.markers[0]
+    console.log(this.selectedMarker)
 
     const frameNumber = duration * fps
 
@@ -835,9 +891,19 @@ export default class AvatarAnimationComponent extends Vue {
 
     if (!this.rula) return
 
-    const frame = (Math.floor(this.animationTime) * 30) % this.data.length
+    const frame = Math.floor(this.animationTime * 30) % this.data.length
     this.rulaValue = this.data[frame].getRulaScore()
-    this.rula.updateRULAMarkers(this.data[frame].rula, this.rulaMarkerType)
+
+    let selectedMarker: THREE.AxesHelper | null = null
+    if (this.toggleAngleInspector) {
+      selectedMarker = this.selectedMarker
+    }
+    this.rula.updateRULAMarkers(
+      this.data[frame].rula,
+      this.rulaMarkerType,
+      selectedMarker
+    )
+    this.updateSelectedMarkerAngles()
   }
 
   getMarkerColor (value: number): string {
