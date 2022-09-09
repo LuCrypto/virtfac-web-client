@@ -11,6 +11,7 @@ import { BpWindow, Destroyable } from './bp_window'
 import { LocalEvent } from '../graph/localEvent'
 import { Session } from '../session'
 import V from '@/utils/vector'
+import { APIAsset, APIBoundingBox } from '../models'
 
 class Grid {
   private center: V
@@ -89,6 +90,12 @@ class Grid {
   }
 }
 
+export interface BlueprintAPIAsset {
+  id: number
+  sprite: string
+  box: APIBoundingBox
+}
+
 /**
  * manage nodes and links of the blueprint editor.
  */
@@ -113,6 +120,10 @@ export class BlueprintContainer {
     | 'SUPP_FURNITURE'
     | 'SCALE' {
     return this.mode
+  }
+
+  public getSelectedAsset (): BlueprintAPIAsset|null {
+    return this.selectedAsset
   }
 
   public onModeChanged = new LocalEvent<
@@ -141,6 +152,8 @@ export class BlueprintContainer {
     this.updateTransform()
     this.onModeChanged.notify(this.mode)
   }
+
+  public selectedAsset: BlueprintAPIAsset | null = null
 
   // #region SETTINGS
   /**

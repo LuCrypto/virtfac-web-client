@@ -6,6 +6,16 @@ import { Link } from '../graph/link'
 import { MetaData } from '../graph/metadata'
 import { LocalEvent, MapLocalEvent } from '../graph/localEvent'
 import { max } from 'd3'
+import { Destroyable } from './bp_window'
+
+export class BpWallFurniture {
+  public xpos: number
+  public assetId = -1
+
+  public constructor (xpos: number, assetId: number) {
+    this.xpos = xpos
+  }
+}
 
 export class Blueprint extends MetaData {
   private wallGraph: Graph
@@ -133,7 +143,25 @@ export class Blueprint extends MetaData {
   public toJSON (): GraphJSON {
     this.wallGraph.nodeFields.set('position', 'Vec2')
     this.wallGraph.graphFields.set('scale', 'number')
+    this.wallGraph.linkFields.set(
+      'furniture',
+      '{ xpos: number, assetId: number }[]'
+    )
     this.wallGraph.nodeIdField = 'id'
+
+    this.wallGraph.foreachLink(l => {
+      l.setData(
+        'furniture',
+        Array.from(
+          l
+            .getDataOrDefault<Map<Destroyable, BpWallFurniture>>(
+              'furnitures',
+              new Map<Destroyable, BpWallFurniture>()
+            )
+            .values()
+        )
+      )
+    })
     return this.wallGraph.toJsonOBJ()
   }
 

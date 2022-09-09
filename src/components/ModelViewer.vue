@@ -68,11 +68,11 @@
     <v-container
       ref="hierarchy"
       style="max-width:50%; height: 100%; width:500px; right:0%; overflow-y: auto; overflow-x: hidden;"
-      class="ma-0 pa-0"
+      class="ma-0 pa-0 d-flex flex-column"
       v-if="inspectorActive"
     >
       <!-- Hierarchy -->
-      <v-card height="50%" width="100%" class="mb-12">
+      <v-card height="50%" width="100%" class="mb-12 flex-grow-1">
         <v-toolbar dense color="primary" flat>
           <v-toolbar-title dense class="black--text">
             <v-icon left v-text="'mdi-file-tree'"></v-icon>
@@ -101,7 +101,7 @@
 
       <!-- Transform -->
       <!-- <v-card width="100%" flat> -->
-      <v-toolbar dense color="primary" flat>
+      <v-toolbar dense color="primary" flat style="flex-grow: unset;">
         <v-toolbar-title dense class="black--text">
           <v-icon left v-text="'mdi-axis'"></v-icon>
           Transform
@@ -110,7 +110,7 @@
 
       <v-card flat>
         <v-simple-table
-          ><template v-slot:default>
+          dense><template v-slot:default>
             <thead>
               <tr>
                 <th class="text-left">
@@ -165,8 +165,8 @@
           </template>
         </v-simple-table>
       </v-card>
-      <v-btn dense color="primary" class="ma-2 black--text" style="width:100%">
-        <v-toolbar-title dense class="black--text">
+      <v-btn dense color="primary" class="ma-2 black--text d-flex flex-row">
+        <v-toolbar-title dense class="black--text" style="width:100%">
           <v-icon left v-text="'mdi-plus'"></v-icon>
         </v-toolbar-title>
       </v-btn>
