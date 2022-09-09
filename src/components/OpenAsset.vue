@@ -1,5 +1,32 @@
 <template>
   <v-card>
+    <PopUp ref="confirmAction">
+      <v-card style="overflow-y:hidden;">
+        <v-toolbar color="primary" flat>
+          <v-toolbar-title class="black--text">
+            <v-icon left v-text="'mdi-check'"></v-icon>
+            {{ confirmActionMessage }}
+          </v-toolbar-title>
+        </v-toolbar>
+
+        <v-layout row style="max-width:100%; max-height:100%" class="px-6 pb-6">
+          <v-btn
+            class="ml-6 mt-6 flex-grow-1"
+            text
+            @click="$refs.confirmAction.close()"
+          >
+            Cancel
+          </v-btn>
+          <v-btn
+            class="ml-6 mt-6 flex-grow-1 black--text"
+            color="primary"
+            @click="confirmAction()"
+          >
+            Confirm
+          </v-btn>
+        </v-layout>
+      </v-card>
+    </PopUp>
     <!-- Header -->
     <v-toolbar color="primary" flat>
       <v-toolbar-title class="black--text">
@@ -146,10 +173,24 @@
 
             <!-- Custom item for "actions" columns -->
             <template v-slot:[`item.actions`]="{ item }">
-              <v-icon
-                @click="openFileSettings(item)"
-                v-text="'mdi-dots-horizontal'"
-              ></v-icon>
+              <v-btn class="ml-1" fab x-small color="primary" elevation="1">
+                <v-icon
+                  @click="deleteFile(item)"
+                  v-text="'mdi-delete-forever'"
+                ></v-icon>
+              </v-btn>
+              <v-btn class="ml-1" fab x-small color="primary" elevation="1">
+                <v-icon
+                  @click="downloadFileData(item)"
+                  v-text="'mdi-download'"
+                ></v-icon>
+              </v-btn>
+              <v-btn class="ml-1" fab x-small color="primary" elevation="1">
+                <v-icon
+                  @click="openFileSettings(item)"
+                  v-text="'mdi-dots-horizontal'"
+                ></v-icon>
+              </v-btn>
             </template>
           </v-data-table>
 
@@ -300,7 +341,15 @@
 import { Component, Prop, Vue } from 'vue-property-decorator'
 import { DataTableHeader } from 'vuetify/types'
 import API from '@/utils/api'
-import { APIGroupItem, APIFileMIME, APIAsset } from '@/utils/models'
+import {
+  APIGroupItem,
+  APIFileMIME,
+  APIAsset,
+  APIBoundingBox
+} from '@/utils/models'
+import ThreeUtils from '@/utils/threeUtils'
+import { Box3, Group, Vector3 } from 'three'
+import PopUp from './PopUp.vue'
 
 class DataTableHeaderSelector {
   active = true
@@ -312,7 +361,10 @@ class DataTableHeaderSelector {
 }
 
 @Component({
-  name: 'OpenAssetPopUp'
+  name: 'OpenAssetPopUp',
+  components: {
+    PopUp
+  }
 })
 // @vuese
 // @group COMPONENTS
@@ -564,12 +616,43 @@ export default class OpenAssetPopUp extends Vue {
         const reader = new FileReader()
         reader.onload = () => {
           const fileString = reader.result as string
-          this.uploadFile(
-            new APIAsset({
-              name: f.name,
-              uri: fileString
+
+          ThreeUtils.loadGLTFFromPath(fileString).then(object => {
+            const sprite = ThreeUtils.captureImage(
+              object.scene,
+              ThreeUtils.getTopDownCamera(object.scene)
+            )
+            const box = new Box3()
+            box.setFromObject(object.scene)
+            const c = new Vector3(0, 0, 0)
+            const s = new Vector3(0, 0, 0)
+            const min = box.getCenter(c).sub(box.getSize(s).divideScalar(2))
+            const max = box
+              .getCenter(new Vector3())
+              .add(box.getSize(new Vector3()).divideScalar(2))
+            const b = new APIBoundingBox(
+              { x: min.x, y: min.y, z: min.z },
+              { x: max.x, y: max.y, z: max.z }
+            )
+
+            const scene = ThreeUtils.defaultScene().then(scene => {
+              scene.add(object.scene)
+              const icon = ThreeUtils.capture(
+                ThreeUtils.defaultRenderer(512, 512),
+                scene,
+                ThreeUtils.getSideCamera(object.scene)
+              )
+              this.uploadFile(
+                new APIAsset({
+                  name: f.name,
+                  uri: fileString,
+                  boundingBox: JSON.stringify(b),
+                  layoutSprite: sprite,
+                  picture: icon
+                })
+              )
             })
-          )
+          })
         }
         reader.onerror = error => {
           console.error(error)
@@ -606,6 +689,37 @@ export default class OpenAssetPopUp extends Vue {
   openFileSettings (item: APIAsset): void {
     this.fileSettings = new APIAsset(item)
     this.fileSettingsPopUp = true
+  }
+
+  downloadFileData (item: APIAsset): void {
+    API.post(
+      this,
+      '/resources/assets',
+      JSON.stringify({
+        where: { id: item.id },
+        select: ['uri']
+      })
+    ).then(asset => {
+      const res = (asset as unknown) as APIAsset[]
+      const a = document.createElement('a')
+      a.href = res[0].uri
+      a.download = item.name + '.gltf'
+      a.click()
+    })
+  }
+
+  confirmActionMessage = ''
+  confirmAction: { (): void } | undefined = undefined
+
+  deleteFile (item: APIAsset): void {
+    this.confirmAction = () => {
+      API.delete(this, `/resources/assets/${item.id}`, '').then(res => {
+        this.myfileList.splice(this.myfileList.indexOf(item, 0), 1)
+      })
+      ;(this.$refs.confirmAction as PopUp).close()
+    }
+    this.confirmActionMessage = 'Delete "' + item.name + '" premanently ?'
+    ;(this.$refs.confirmAction as PopUp).open()
   }
 
   saveFileSettings (): void {

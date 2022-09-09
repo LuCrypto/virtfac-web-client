@@ -1,5 +1,32 @@
 <template>
   <v-card flat>
+    <PopUp ref="confirmAction">
+      <v-card style="overflow-y:hidden;">
+        <v-toolbar color="primary" flat>
+          <v-toolbar-title class="black--text">
+            <v-icon left v-text="'mdi-check'"></v-icon>
+            {{ confirmActionMessage }}
+          </v-toolbar-title>
+        </v-toolbar>
+
+        <v-layout row style="max-width:100%; max-height:100%" class="px-6 pb-6">
+          <v-btn
+            class="ml-6 mt-6 flex-grow-1"
+            text
+            @click="$refs.confirmAction.close()"
+          >
+            Cancel
+          </v-btn>
+          <v-btn
+            class="ml-6 mt-6 flex-grow-1 black--text"
+            color="primary"
+            @click="confirmAction()"
+          >
+            Confirm
+          </v-btn>
+        </v-layout>
+      </v-card>
+    </PopUp>
     <!-- Header -->
     <v-toolbar color="primary" flat v-if="this.header">
       <v-toolbar-title class="black--text">
@@ -145,10 +172,31 @@
 
             <!-- Custom item for "actions" columns -->
             <template v-slot:[`item.actions`]="{ item }">
-              <v-icon
-                @click="openFileSettings(item)"
-                v-text="'mdi-dots-horizontal'"
-              ></v-icon>
+              <v-btn class="ml-2" fab x-small color="primary" elevation="3">
+                <v-icon
+                  @click="deleteFile(item)"
+                  v-text="'mdi-delete-forever'"
+                ></v-icon>
+              </v-btn>
+              <v-btn
+                class="ml-2"
+                elevation="3"
+                fab
+                x-small
+                color="primary"
+                :disabled="mimeToExtension.get(item.mime) === undefined"
+              >
+                <v-icon
+                  @click="downloadFileData(item)"
+                  v-text="'mdi-download'"
+                ></v-icon>
+              </v-btn>
+              <v-btn class="ml-2" fab x-small color="primary" elevation="3">
+                <v-icon
+                  @click="openFileSettings(item)"
+                  v-text="'mdi-dots-horizontal'"
+                ></v-icon>
+              </v-btn>
             </template>
           </v-data-table>
 
@@ -298,6 +346,8 @@ import { Component, Prop, Vue } from 'vue-property-decorator'
 import { DataTableHeader } from 'vuetify/types'
 import API from '@/utils/api'
 import { APIFileItem, APIGroupItem, APIFile, APIFileMIME } from '@/utils/models'
+import { resolve } from 'path'
+import PopUp from './PopUp.vue'
 
 class DataTableHeaderSelector {
   active = true
@@ -313,7 +363,10 @@ export type FileProcessing = {
 } | null
 
 @Component({
-  name: 'OpenFilePopUp'
+  name: 'OpenFilePopUp',
+  components: {
+    PopUp
+  }
 })
 // @vuese
 // @group COMPONENTS
@@ -359,6 +412,48 @@ export default class OpenFilePopUp extends Vue {
   /* Table row filter */
   rowFilterPopUp = false
   rowFilter = []
+
+  /*
+  downloadableMime = new Map<string,{(fileid:number):void}>(
+    [
+      ['g',(id) => {
+
+      }]
+    ])
+*/
+  mimeToExtension = new Map<string, string>([
+    ['application/json', 'json'],
+    ['text/csv', 'csv'],
+    [
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'xlsx'
+    ],
+    ['application/xlsx', 'xlsx'],
+    ['application/json;application=virtfac/constraint', 'xlsx'],
+    ['application/json;application=virtfac/routing', 'xlsx']
+  ])
+
+  downloadOverideFunctions = new Map<
+    string,
+    {(fileId: number): Promise<string> }
+      >([
+        [
+          'application/json;application=virtfac/constraint',
+          id => {
+            return new Promise<string>(resolve => {
+              resolve('')
+            })
+          }
+        ],
+        [
+          'application/json;application=virtfac/routing',
+          id => {
+            return new Promise<string>(resolve => {
+              resolve('')
+            })
+          }
+        ]
+      ])
 
   /* Table properties */
   refreshTableKey = 0
@@ -647,6 +742,48 @@ export default class OpenFilePopUp extends Vue {
         }
       })
     }
+  }
+
+  async downloadFileData (item: APIFile): Promise<void> {
+    const dataFunction = this.downloadOverideFunctions.get(item.mime)
+    let uri = ''
+    if (dataFunction !== undefined) {
+      await dataFunction(item.id).then(data => {
+        uri = data
+      })
+    } else {
+      await API.post(
+        this,
+        '/resources/files',
+        JSON.stringify({
+          where: { id: item.id },
+          select: ['uri']
+        })
+      ).then(asset => {
+        const res = (asset as unknown) as APIFile[]
+        uri = res[0].uri
+      })
+    }
+    const a = document.createElement('a')
+    a.href = uri
+    a.download = (item.name +
+      '.' +
+      this.mimeToExtension.get(item.mime)) as string
+    a.click()
+  }
+
+  confirmActionMessage = ''
+  confirmAction: { (): void } | undefined = undefined
+
+  deleteFile (item: APIFile): void {
+    this.confirmAction = () => {
+      API.delete(this, `/resources/files/${item.id}`, '').then(res => {
+        this.myfileList.splice(this.myfileList.indexOf(item, 0), 1)
+      })
+      ;(this.$refs.confirmAction as PopUp).close()
+    }
+    this.confirmActionMessage = 'Delete "' + item.name + '" premanently ?'
+    ;(this.$refs.confirmAction as PopUp).open()
   }
 
   // Toggle row selection on click
