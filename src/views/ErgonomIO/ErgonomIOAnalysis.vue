@@ -2,6 +2,16 @@
 .v-badge * {
   color: black !important;
 }
+.bottom-informations {
+  position: absolute;
+  width: 100%;
+  bottom: 0;
+  left: 0;
+  padding: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+}
 </style>
 
 <template>
@@ -38,11 +48,14 @@
                 <v-list-item-group v-model="selectedMenuItem" color="primary">
                   <v-list-item
                     v-for="(menuItem, i) in menuItemList"
+                    :disabled="menuItem.disabled()"
                     :key="i"
                     class="justify-start"
                     @click.stop="menuItem.action"
                   >
-                    <v-list-item-icon>
+                    <v-list-item-icon
+                      :style="{ opacity: menuItem.disabled() ? 0.5 : 1 }"
+                    >
                       <v-icon v-text="menuItem.icon"></v-icon>
                     </v-list-item-icon>
                     <v-list-item-content>
@@ -78,93 +91,119 @@
             </v-navigation-drawer>
 
             <v-col class="pa-0 d-flex flex-column" style="overflow: hidden;">
-              <!-- Rows -->
-              <v-row class="ma-0 flex-grow-1">
-                <model-viewer-2
-                  :displayFog="true"
-                  ref="viewer"
-                ></model-viewer-2>
-              </v-row>
-              <v-row class="ma-0 flex-grow-0">
-                <v-container class="flex-grow-0 ma-0 pa-0" fluid>
-                  <v-row no-gutters class="align-center justify-center">
-                    <!-- Player control -->
-                    <v-col no-gutters class="flex-grow-0">
-                      <v-row no-gutters class="flex-nowrap pa-2 align-center">
-                        <v-btn fab x-small class="mr-2 primary--text">
-                          <v-icon>mdi-format-list-bulleted-square</v-icon>
-                        </v-btn>
-                        <v-btn fab x-small class="mr-2">
-                          <v-icon>mdi-skip-next</v-icon>
-                        </v-btn>
-                        <v-btn fab small class="mr-2 primary black--text">
-                          <v-icon>mdi-play</v-icon>
-                        </v-btn>
-                        <v-btn fab x-small class="mr-2">
-                          <v-icon>mdi-pause</v-icon>
-                        </v-btn>
+              <!-- Model viewer -->
+              <v-col class="flex-grow-1">
+                <v-row
+                  no-gutters
+                  class="ma-0"
+                  style="position: relative; width: 100%; height: 100%"
+                >
+                  <model-viewer-2
+                    :depthWriteFloor="true"
+                    :displayFog="true"
+                    ref="viewer"
+                    statsPosition="TOP_RIGHT"
+                  ></model-viewer-2>
 
-                        <v-btn fab x-small>
-                          <v-icon>mdi-skip-previous</v-icon>
-                        </v-btn>
-                      </v-row>
-                    </v-col>
-                    <v-col no-gutters>
-                      <v-tabs show-arrows align-with-title>
-                        <v-tabs-slider></v-tabs-slider>
-                        <v-tab>
-                          <v-badge
-                            :color="this.data[this.frame].getRulaColor()"
-                            inline
-                            :value="this.data[this.frame].getRulaScore() >= 0"
-                            :content="this.data[this.frame].getRulaScore()"
-                          >
-                            Rula
-                          </v-badge>
-                        </v-tab>
-                        <v-tab
-                          ><v-badge color="primary" value="" content="0">
-                            Input
-                          </v-badge></v-tab
-                        >
-                        <v-tab
-                          ><v-badge color="primary" value="" content="0">
-                            Output
-                          </v-badge></v-tab
-                        >
-                      </v-tabs>
-                    </v-col>
-                  </v-row>
-                  <v-row no-gutters>
-                    <v-col
-                      no-gutters
-                      class="flex-grow-0 ma-2"
-                      style="min-width: 250px; max-height: 400px; overflow: auto"
+                  <div
+                    class="bottom-informations"
+                    v-if="settingsReferences.inputSkeleton"
+                  >
+                    <!-- Score and time display -->
+                    <v-card class="score-value pa-3" width="200">
+                      <v-sheet
+                        width="auto"
+                        height="10"
+                        class="mb-3"
+                        :color="getMarkerColor(rulaValue)"
+                      ></v-sheet>
+                      <h3>RULA : {{ rulaValue }} / 7</h3>
+                      <h4>
+                        TIME : {{ animationTime.toFixed(2) }}s /
+                        {{ animationDuration.toFixed(2) }}s
+                      </h4>
+                    </v-card>
+
+                    <!-- Marker debuger -->
+                    <v-card
+                      class="score-value pa-3"
+                      width="300"
+                      v-if="toggleAngleInspector"
                     >
-                      <v-expansion-panels flat tile>
-                        <v-expansion-panel
-                          v-for="(item, i) in axisNeuronSkeleton"
-                          :key="i"
-                          class="ma-0"
-                        >
-                          <v-expansion-panel-header
-                            ripple
-                            expand-icon="mdi-menu-down"
-                          >
-                            {{ item }}
-                          </v-expansion-panel-header>
-                          <v-expansion-panel-content
-                            >Rotation</v-expansion-panel-content
-                          >
-                        </v-expansion-panel>
-                      </v-expansion-panels>
-                    </v-col>
-                    <v-col no-gutters class="d-flex">
-                      <graph-chart></graph-chart>
-                    </v-col>
-                  </v-row>
-                </v-container>
-              </v-row>
+                      <v-select
+                        :items="markers"
+                        v-model="selectedMarker"
+                        item-text="name"
+                        label="Inspect angles"
+                        return-object
+                      ></v-select>
+                      <h3>Angle X : {{ selectedMarkerAngles[0] }}</h3>
+                      <h3>Angle Y : {{ selectedMarkerAngles[1] }}</h3>
+                      <h3>Angle Z : {{ selectedMarkerAngles[2] }}</h3>
+                    </v-card>
+                  </div>
+                </v-row>
+              </v-col>
+
+              <!-- Player controls -->
+              <v-col class="flex-grow-0 px-1 pt-0">
+                <v-row
+                  no-gutters
+                  class="flex-nowrap px-2 pb-2 justify-center align-center"
+                >
+                  <input
+                    ref="timeRange"
+                    class="my-2"
+                    type="range"
+                    style="width: 100%;"
+                    v-model="animation"
+                    name=""
+                    id=""
+                    value="0"
+                    min="0"
+                    max="0.999"
+                    step="0.001"
+                    :disabled="this.settingsReferences.inputSkeleton == null"
+                  />
+                </v-row>
+                <v-row
+                  no-gutters
+                  class="flex-nowrap pa-2 justify-center align-center"
+                >
+                  <v-btn
+                    fab
+                    x-small
+                    class="mr-2"
+                    @click="
+                      play = false
+                      animation = 0
+                    "
+                    :disabled="this.settingsReferences.inputSkeleton == null"
+                  >
+                    <v-icon>mdi-skip-previous</v-icon>
+                  </v-btn>
+                  <v-btn
+                    fab
+                    small
+                    class="mr-2 primary black--text"
+                    @click="play = !play"
+                    :disabled="this.settingsReferences.inputSkeleton == null"
+                  >
+                    <v-icon>{{ play ? 'mdi-pause' : 'mdi-play' }}</v-icon>
+                  </v-btn>
+                  <v-btn
+                    fab
+                    x-small
+                    @click="
+                      play = false
+                      animation = 0.999
+                    "
+                    :disabled="this.settingsReferences.inputSkeleton == null"
+                  >
+                    <v-icon>mdi-skip-next</v-icon>
+                  </v-btn>
+                </v-row>
+              </v-col>
             </v-col>
           </v-layout>
         </v-card-text>
@@ -175,6 +214,7 @@
         <open-file
           @close="$refs.openFilePopUp.close()"
           application="ERGONOM_IO_ANALYSIS"
+          :fileProcessing="blenderFileProcessing"
           :singleSelect="true"
           :openFile="true"
           @fileInput="onFileInput"
@@ -188,16 +228,23 @@
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import ModelViewer2 from '@/components/ModelViewer2.vue'
-import OpenFile from '@/components/OpenFile.vue'
+import OpenFile, { FileProcessing } from '@/components/OpenFile.vue'
 import { APIFile } from '@/utils/models'
 import * as THREE from 'three'
 import RULA, { RULA_LABELS } from '@/utils/rula'
+
 import PopUp from '@/components/PopUp.vue'
 import GraphChart from '@/components/charts/graphChart.vue'
-import { AxisNeuronSkeleton, UnrealSkeleton } from '@/utils/avatar'
+// import { AxisNeuronSkeleton, UnrealSkeleton } from '@/utils/avatar'
 import T from '@/utils/transform'
-
+import { GLTF } from 'three/examples/jsm/loaders/GLTFLoader'
+import { BVH } from 'three/examples/jsm/loaders/BVHLoader'
 import * as SkeletonUtils from 'three/examples/jsm/utils/SkeletonUtils'
+import { TransformControls } from 'three/examples/jsm/controls/TransformControls.js'
+
+import V from '@/utils/vector'
+import DynamicChart from '@/components/dynamicChart/DynamicChart.vue'
+import DynamicChartCurveTimeline from '@/components/dynamicChart/DynamicChartCurveTimeline.vue'
 
 class SkeletonHelper extends THREE.SkeletonHelper {
   skeleton: THREE.Skeleton | null = null
@@ -207,17 +254,23 @@ class MenuItem {
   text: string
   icon: string
   action: () => void
-  constructor (text: string, icon: string, action: () => void) {
+  disabled: () => boolean
+  constructor (
+    text: string,
+    icon: string,
+    action: () => void,
+    disabled: () => boolean = () => false
+  ) {
     this.text = text
     this.icon = icon
     this.action = action
+    this.disabled = disabled
   }
 }
 
 class DataFrame {
+  time = 0
   rula: Map<string, number> = new Map<string, number>()
-  input: Map<string, T> = new Map<string, T>()
-  output: Map<string, T> = new Map<string, T>()
 
   constructor (data: Partial<DataFrame> | null = null) {
     Object.assign(this, data)
@@ -226,25 +279,23 @@ class DataFrame {
   getRulaScore (): number {
     return this.rula.get('FINAL_SCORE') || -1
   }
-
-  getRulaColor (): string {
-    const score = this.getRulaScore()
-    return score <= 2
-      ? 'green'
-      : score <= 4
-        ? 'yellow'
-        : score <= 6
-          ? 'orange'
-          : 'red'
-  }
 }
 
 interface SkeletonUtilsModule {
-  retarget: (
-    target: THREE.Object3D | THREE.Skeleton,
-    source: THREE.Object3D | THREE.Skeleton,
-    options: any
-  ) => void
+  retargetClip: (
+    target: THREE.Skeleton | THREE.Object3D,
+    source: THREE.Skeleton | THREE.Object3D,
+    clip: THREE.AnimationClip,
+    options: Record<string, unknown>
+  ) => THREE.AnimationClip
+}
+
+interface Settings {
+  showInput: boolean
+  showSkeleton: boolean
+  transformType: number
+  showRula: boolean
+  showAvatar: boolean
 }
 
 @Component({
@@ -253,7 +304,9 @@ interface SkeletonUtilsModule {
     ModelViewer2,
     OpenFile,
     PopUp,
-    GraphChart
+    GraphChart,
+    DynamicChart,
+    DynamicChartCurveTimeline
   }
 })
 // @vuese
@@ -264,71 +317,159 @@ export default class AvatarAnimationComponent extends Vue {
   menuItemList: MenuItem[] = []
   viewer: ModelViewer2 | null = null
   animationValue = 0
-  rula: RULA | null = null
-  bvhSkeletonHelper: SkeletonHelper | null = null
-  unrealSkeletonHelper: SkeletonHelper | null = null
-  mixer: THREE.AnimationMixer | null = null
+
+  // Time controlers
   animationTime = 0
   animationDuration = 0
+  play = true
   clock = new THREE.Clock()
+  set animation (value: number) {
+    this.animationTime = value * this.animationDuration
+    this.updateRangeTime()
+  }
+
+  get animation (): number {
+    return this.animationValue
+  }
+
+  updateRangeTime (): void {
+    const value = this.animationValue
+    const element = this.$refs.timeRange as HTMLInputElement
+    if (!element) return
+    const width = Math.ceil(element.offsetWidth * value)
+    element.setAttribute('style', `box-shadow: inset ${width}px 0 0 #ffb000;`)
+  }
 
   // Analysed data
-  data: DataFrame[] = [new DataFrame()]
-  frame = 0
+  data: DataFrame[] = []
+  rula: RULA | null = null
+  rulaValue = 0
+  timeValue = 0
+  timeMax = 0
+  rulaMarkerType = 0
+  markers: THREE.AxesHelper[] = []
+  selectedMarker: THREE.AxesHelper | null = null
+  selectedMarkerAngles = ['0', '0', '0']
+  toggleAngleInspector = false
+  updateSelectedMarkerAngles (): void {
+    if (!this.selectedMarker || !this.selectedMarker.parent) return
+    this.selectedMarkerAngles = this.selectedMarker.parent.rotation
+      .toArray()
+      .slice(0, 3)
+      .map(v => ((360 * v) / (2 * Math.PI)).toFixed(2))
+  }
 
-  axisNeuronSkeleton = AxisNeuronSkeleton
-  unrealSkeleton = UnrealSkeleton
-  rulaLabels = Object.keys(RULA_LABELS)
+  gltf: GLTF | null = null
+  gltfHipsPosition: THREE.Vector3 = new THREE.Vector3()
+  gltfMixer: THREE.AnimationMixer | null = null
+  bvhMixer: THREE.AnimationMixer | null = null
+  gltfAction: THREE.AnimationAction | null = null
+  bvhAction: THREE.AnimationAction | null = null
+  updateAvatarGizmo: () => void = () => null
+
+  transportChartCurves: {
+    name: string
+    data: V[]
+  }[] = []
 
   // Bone reatrgeting
   options = {
-    hip: 'pelvis',
+    useFirstFramePosition: true,
+    preserveHipPosition: false,
+    hip: 'Hips',
+    offsets: [] as THREE.Matrix4[],
+    fps: 30,
     names: {
-      pelvis: 'Spine',
-      spine_01: 'Spine1',
-      spine_02: 'Spine2',
-      spine_03: 'Spine3',
-      neck_01: 'Neck',
-      head: 'Head',
-
-      upperarm_r: 'RightArm',
-      lowerarm_r: 'RightForeArm',
-      hand_r: 'RightHand',
-
+      pelvis: 'Hips',
+      spine_01: 'Spine',
+      spine_02: 'Spine1',
+      spine_03: 'Spine2',
+      clavicle_l: 'LeftShoulder',
       upperarm_l: 'LeftArm',
       lowerarm_l: 'LeftForeArm',
       hand_l: 'LeftHand',
-
-      thigh_r: 'RightUpLeg',
-      calf_r: 'RightLeg',
-      foot_r: 'RightFoot',
-
+      index_01_l: 'LeftHandIndex1',
+      index_02_l: 'LeftHandIndex2',
+      index_03_l: 'LeftHandIndex3',
+      middle_01_l: 'LeftHandMiddle1',
+      middle_02_l: 'LeftHandMiddle2',
+      middle_03_l: 'LeftHandMiddle3',
+      pinky_01_l: 'LeftHandPinky1',
+      pinky_02_l: 'LeftHandPinky2',
+      pinky_03_l: 'LeftHandPinky3',
+      ring_01_l: 'LeftHandRing1',
+      ring_02_l: 'LeftHandRing2',
+      ring_03_l: 'LeftHandRing3',
+      thumb_01_l: 'LeftHandThumb1',
+      thumb_02_l: 'LeftHandThumb2',
+      thumb_03_l: 'LeftHandThumb3',
+      lowerarm_twist_01_l: null,
+      upperarm_twist_01_l: null,
+      clavicle_r: 'RightShoulder',
+      upperarm_r: 'RightArm',
+      lowerarm_r: 'RightForeArm',
+      hand_r: 'RightHand',
+      index_01_r: 'RightHandIndex1',
+      index_02_r: 'RightHandIndex2',
+      index_03_r: 'RightHandIndex3',
+      middle_01_r: 'RightHandMiddle1',
+      middle_02_r: 'RightHandMiddle2',
+      middle_03_r: 'RightHandMiddle3',
+      pinky_01_r: 'RightHandPinky1',
+      pinky_02_r: 'RightHandPinky2',
+      pinky_03_r: 'RightHandPinky3',
+      ring_01_r: 'RightHandRing1',
+      ring_02_r: 'RightHandRing2',
+      ring_03_r: 'RightHandRing3',
+      thumb_01_r: 'RightHandThumb1',
+      thumb_02_r: 'RightHandThumb2',
+      thumb_03_r: 'RightHandThumb3',
+      lowerarm_twist_01_r: null,
+      upperarm_twist_01_r: null,
+      neck_01: 'Neck',
+      head: 'Head',
       thigh_l: 'LeftUpLeg',
       calf_l: 'LeftLeg',
-      foot_l: 'LeftFoot'
+      calf_twist_01_l: null,
+      foot_l: 'LeftFoot',
+      ball_l: null,
+      thigh_twist_01_l: null,
+      thigh_r: 'RightUpLeg',
+      calf_r: 'RightLeg',
+      calf_twist_01_r: null,
+      foot_r: 'RightFoot',
+      ball_r: null,
+      thigh_twist_01_r: null,
+      ik_foot_root: null,
+      ik_foot_l: null,
+      ik_foot_r: null,
+      ik_hand_root: null,
+      ik_hand_gun: null,
+      ik_hand_l: null,
+      ik_hand_r: null
     }
+  }
 
-    // hip: 'pelvis',
-    // names: {
-    //   Spine: 'pelvis'
-    //   // Spine1: 'spine_01',
-    //   // Spine2: 'spine_02',
-    //   // Spine3: 'spine_03',
-    //   // Neck: 'neck_01',
-    //   // Head: 'head',
-    //   // RightArm: 'upperarm_r',
-    //   // RightForeArm: 'lowerarm_r',
-    //   // RightHand: 'hand_r',
-    //   // LeftArm: 'upperarm_l',
-    //   // LeftForeArm: 'lowerarm_l',
-    //   // LeftHand: 'hand_l',
-    //   // RightUpLeg: 'thigh_r',
-    //   // RightLeg: 'calf_r',
-    //   // RightFoot: 'foot_r',
-    //   // LeftUpLeg: 'thigh_l',
-    //   // LeftLeg: 'calf_l',
-    //   // LeftFoot: 'foot_l'
-    // }
+  action: THREE.AnimationAction | null = null
+
+  settings: Settings = {
+    showInput: false,
+    showSkeleton: true,
+    transformType: 0,
+    showRula: true,
+    showAvatar: true
+  }
+
+  settingsReferences: {
+    inputSkeleton: THREE.SkeletonHelper | null
+    outputSkeleton: THREE.SkeletonHelper | null
+    transform: TransformControls | null
+    avatar: THREE.Group | null
+  } = {
+    inputSkeleton: null,
+    outputSkeleton: null,
+    transform: null,
+    avatar: null
   }
 
   mounted (): void {
@@ -337,87 +478,204 @@ export default class AvatarAnimationComponent extends Vue {
     this.createAvatar()
   }
 
+  updateSettings (settings: Partial<Settings>): void {
+    if (settings.transformType) {
+      settings.transformType = settings.transformType % 3
+    }
+    Object.assign(this.settings, settings)
+
+    if (this.settingsReferences.inputSkeleton) {
+      this.settingsReferences.inputSkeleton.visible = this.settings.showInput
+    }
+    if (this.settingsReferences.outputSkeleton) {
+      this.settingsReferences.outputSkeleton.visible = this.settings.showSkeleton
+    }
+    if (this.settingsReferences.outputSkeleton) {
+      this.settingsReferences.outputSkeleton.visible = this.settings.showSkeleton
+    }
+    if (this.settingsReferences.avatar) {
+      this.settingsReferences.avatar.visible = this.settings.showAvatar
+    }
+    if (this.settingsReferences.transform) {
+      switch (this.settings.transformType) {
+        case 1:
+          this.settingsReferences.transform.showX = true
+          this.settingsReferences.transform.showY = true
+          this.settingsReferences.transform.showZ = true
+          this.settingsReferences.transform.enabled = true
+          this.settingsReferences.transform.visible = true
+          this.settingsReferences.transform.setMode('translate')
+          break
+        case 2:
+          this.settingsReferences.transform.showX = false
+          this.settingsReferences.transform.showY = true
+          this.settingsReferences.transform.showZ = false
+          this.settingsReferences.transform.enabled = true
+          this.settingsReferences.transform.visible = true
+          this.settingsReferences.transform.setMode('rotate')
+          break
+        default:
+          this.settingsReferences.transform.visible = false
+          this.settingsReferences.transform.enabled = false
+      }
+    }
+  }
+
   createMenu (): void {
     this.menuItemList.push(
-      new MenuItem('Open BVH File', 'mdi-file-document', () => {
+      new MenuItem('Open classic BVH', 'mdi-file-document', () => {
         (this.$refs.openFilePopUp as PopUp).open()
       })
     )
     this.menuItemList.push(
-      new MenuItem('Download RULA analysis', 'mdi-download', () => true)
+      new MenuItem(
+        'Open blender BVH',
+        'mdi-blender-software',
+        () => {
+          (this.$refs.openFilePopUp as PopUp).open()
+        },
+        () => true
+      )
     )
-  }
-
-  createAvatar (): void {
-    if (this.viewer == null) return
-    const viewer = this.viewer
-    const material = new THREE.MeshStandardMaterial({
-      color: 0x683e00, // Burned orange
-      metalness: 0,
-      roughness: 1
-    })
-    this.viewer
-      .loadGLTFFromPath('./avatar.gltf')
-      .then(gltf => {
-        gltf.scene.children[0].position.set(0, 0, -2)
-        gltf.scene.children[0].scale.set(100, 100, 100)
-
-        console.log(gltf)
-        const bones: THREE.Bone[] = []
-        gltf.scene.traverse(child => {
-          if (child instanceof THREE.Mesh) {
-            child.material = material
-          }
-
-          if (child instanceof THREE.Bone) {
-            bones.push(child)
-
-            // Color in yellow and create skelton helper on root bone
-            if (child.name === 'pelvis') {
-              const helper = new THREE.SkeletonHelper(child)
-              this.unrealSkeletonHelper = helper as SkeletonHelper
-              const mat = helper.material as THREE.LineBasicMaterial
-              mat.linewidth = 3
-              helper.visible = true
-              viewer.scene.add(helper)
-            }
-          }
-        })
-
-        // Create skeleton from bone list
-        if (this.unrealSkeletonHelper) {
-          this.unrealSkeletonHelper.skeleton = new THREE.Skeleton(bones)
+    this.menuItemList.push(
+      new MenuItem('Download RULA analysis', 'mdi-download', () =>
+        this.downloadRULA()
+      )
+    )
+    this.menuItemList.push(
+      new MenuItem('Toggle avatar', 'mdi-human', () =>
+        this.updateSettings({ showAvatar: !this.settings.showAvatar })
+      )
+    )
+    this.menuItemList.push(
+      new MenuItem(
+        'Input skeleton',
+        'mdi-eye-arrow-left',
+        () => this.updateSettings({ showInput: !this.settings.showInput }),
+        () => this.settingsReferences.inputSkeleton == null
+      )
+    )
+    this.menuItemList.push(
+      new MenuItem('Output skeleton', 'mdi-eye-arrow-right', () =>
+        this.updateSettings({ showSkeleton: !this.settings.showSkeleton })
+      )
+    )
+    this.menuItemList.push(
+      new MenuItem(
+        'Add asset',
+        'mdi-archive-plus',
+        () => true,
+        () => true
+      )
+    )
+    this.menuItemList.push(
+      new MenuItem('Toggle transform', 'mdi-rotate-orbit', () =>
+        this.updateSettings({ transformType: this.settings.transformType + 1 })
+      )
+    )
+    this.menuItemList.push(
+      new MenuItem('Reset transform', 'mdi-undo', () => {
+        const transform = this.settingsReferences.transform
+        if (transform && transform.object) {
+          transform.object.position.set(0, 0, 0)
+          transform.object.rotation.set(0, 0, 0)
         }
       })
-      .catch(e => console.error('Cannot load GLTF', e))
+    )
+    this.menuItemList.push(
+      new MenuItem(
+        'Toggle RULA markers',
+        'mdi-eye-circle',
+        () => {
+          this.rulaMarkerType = (this.rulaMarkerType + 1) % 4
+        },
+        () => this.settingsReferences.inputSkeleton == null
+      )
+    )
+    this.menuItemList.push(
+      new MenuItem(
+        'Toggle angle inspector',
+        'mdi-angle-acute',
+        () => {
+          this.toggleAngleInspector = !this.toggleAngleInspector
+        },
+        () => this.settingsReferences.inputSkeleton == null
+      )
+    )
   }
 
   computeData (
     skeleton: THREE.Bone,
     animation: THREE.AnimationMixer,
-    duration: number,
+    duration: number, // animation duration in seconds
     fps = 30
   ): void {
-    if (!this.viewer || !this.bvhSkeletonHelper) {
+    if (!this.viewer || !this.settingsReferences.inputSkeleton) {
       return
     }
 
     skeleton.matrixAutoUpdate = false
 
-    const rula = new RULA(this.viewer.scene)
-    rula.createRULAMarkers(this.bvhSkeletonHelper)
+    this.rula = new RULA(this.viewer.scene)
+    this.markers = this.rula.createRULAMarkers(
+      this.settingsReferences.inputSkeleton
+    )
+    this.selectedMarker = this.markers[0]
+    console.log(this.selectedMarker)
 
-    for (let frame = 1; frame <= duration * fps; frame++) {
-      animation.update((frame * duration) / fps)
+    const frameNumber = duration * fps
+
+    for (let frame = 1; frame <= frameNumber; frame++) {
+      const time = (frame / frameNumber) * duration
+      animation.setTime(time)
       skeleton.updateMatrix()
       this.data.push(
         new DataFrame({
-          rula: rula.compute()
+          time: time,
+          rula: this.rula.compute()
         })
       )
       console.log('Compute...')
     }
     skeleton.matrixAutoUpdate = true
+  }
+
+  blenderFileProcessing (file: File): Promise<File> {
+    return new Promise<File>(resolve => {
+      const extension = (file.name.split('.').pop() as string).toLowerCase()
+      console.log('Blender file processing : ', extension)
+
+      if (extension !== 'bvh') {
+        this.$root.$emit(
+          'bottom-message',
+          'Cannot upload file with another extention than "bvh".'
+        )
+      }
+
+      // const blobFile = URL.createObjectURL(file)
+      const reader = new FileReader()
+
+      // This fires after the blob has been read/loaded.
+      reader.addEventListener('load', e => {
+        if (!e.target) return
+        const text = e.target.result
+        console.log(text)
+        resolve(file)
+      })
+
+      // Start reading the blob as text.
+      reader.readAsText(file)
+
+      // const blob = new Blob([JSON.stringify(gltf)], {
+      //   type: 'model/gltf+json'
+      // })
+      // const f = new File(
+      //   [blob],
+      //   file.name.substring(0, file.name.length - extension.length) + 'gltf',
+      //   { type: 'model/gltf+json' }
+      // )
+      // resolve(f)
+    })
   }
 
   download (filename: string, text: string): void {
@@ -433,62 +691,223 @@ export default class AvatarAnimationComponent extends Vue {
     document.body.removeChild(element)
   }
 
-  export (): void {
-    const csv = ''
-    // const header = [...this.data[0].keys()].join(',')
-    // const values = this.data.map(o => [...o.values()].join(',')).join('\n')
-    // csv += header + '\n' + values
-    this.download('data.csv', csv)
+  downloadRULA (): void {
+    let csv = ''
+    const header = ['time (in seconds)', ...this.data[0].rula.keys()]
+      .map(key => {
+        const keyName = key as keyof typeof RULA_LABELS
+        return key in RULA_LABELS ? RULA_LABELS[keyName].name.fr : key
+      })
+      .join(';')
+    const values = this.data
+      .map(o => [o.time.toFixed(2), ...o.rula.values()].join(';'))
+      .join('\n')
+    csv += header + '\n' + values.replaceAll('.', ',') // For Excel CSV compatibility
+    this.download(`RULA_Results_${Date.now()}.csv`, csv)
+  }
+
+  createAvatarGizmo (attach: THREE.Group): void {
+    if (!this.viewer) return
+    // Create control
+    const viewer = this.viewer
+    const control = new TransformControls(
+      viewer.camera,
+      viewer.renderer.domElement
+    )
+    control.addEventListener('change', () => viewer.draw())
+    control.addEventListener('dragging-changed', event => {
+      viewer.controls.enabled = !event.value
+    })
+    control.setMode('translate')
+    control.attach(attach)
+    viewer.scene.add(control)
+    this.settingsReferences.transform = control
+  }
+
+  createAvatar (): void {
+    if (this.viewer == null) return
+    const viewer = this.viewer
+
+    // Create orange flat material
+    const material = new THREE.MeshStandardMaterial({
+      color: 0x683e00,
+      metalness: 0,
+      roughness: 1
+    })
+
+    // Load, setup and add avatar to viewer
+    this.viewer
+      .loadGLTFFromPath('./avatar.gltf')
+      .then(gltf => {
+        // Avatar container
+        const avatar = new THREE.Group()
+        avatar.add(gltf.scene)
+        this.settingsReferences.avatar = gltf.scene
+        viewer.scene.add(avatar)
+
+        // Global container
+        const container = new THREE.Group()
+        container.add(avatar)
+        container.scale.set(0.01, 0.01, 0.01)
+        viewer.scene.add(container)
+        this.createAvatarGizmo(container)
+
+        // Keep gltf reference
+        this.gltf = gltf
+
+        // Loop on all hierarchy
+        gltf.scene.traverse(child => {
+          // Set material for all meshes
+          if (child instanceof THREE.Mesh) {
+            child.material = material
+          }
+
+          // Get all bones
+          if (child instanceof THREE.Bone && child.name === 'pelvis') {
+            this.updateAvatarGizmo = () => {
+              avatar.position.set(
+                child.position.x,
+                child.position.y,
+                child.position.z
+              )
+            }
+
+            const skeletonHelper = new THREE.SkeletonHelper(child)
+            this.settingsReferences.outputSkeleton = skeletonHelper
+            const skeletonMaterial = skeletonHelper.material as THREE.LineBasicMaterial
+            skeletonMaterial.linewidth = 3
+            skeletonMaterial.color = new THREE.Color(0x000000)
+            skeletonHelper.visible = true
+            viewer.scene.add(skeletonHelper)
+          }
+        })
+
+        // Update settings
+        this.updateSettings({})
+      })
+      .catch(e => console.error('Cannot load GLTF', e))
+  }
+
+  retargetBVH (result: BVH, model: THREE.SkinnedMesh): THREE.AnimationClip {
+    // Set skeleton for GLTF
+    if (!model.skeleton) {
+      model.traverse(child => {
+        const skeleton = (child as THREE.SkinnedMesh).skeleton
+        if (skeleton) {
+          model.skeleton = skeleton
+        }
+      })
+    }
+
+    // Recompute fps by
+    const clip = result.clip
+    const fps = 1 / clip.tracks[0].times[1] || 1
+    clip.duration += 1 / fps
+    this.options.fps = fps
+
+    // Retarget animation
+    const utils = (SkeletonUtils as unknown) as SkeletonUtilsModule
+    const newClip = utils.retargetClip(
+      model,
+      result.skeleton,
+      clip,
+      this.options
+    )
+
+    // Reset all body parts
+    model.traverse(child => {
+      if (child.type === 'SkinnedMesh') {
+        (child as THREE.SkinnedMesh).pose()
+      }
+    })
+
+    return newClip
   }
 
   loadBVHAndAnimate (content: string): void {
     if (this.viewer == null) return
     if (this.viewer.scene == null) return
-
-    const scene = this.viewer.scene
+    if (!this.gltf) return
 
     // Load BVH
     const bvh = this.viewer.loadBVHFromContent(content)
+    const bvhHelper = new SkeletonHelper(bvh.skeleton.bones[0])
+    this.settingsReferences.inputSkeleton = bvhHelper
+    bvhHelper.skeleton = bvh.skeleton
+    const skeletonMaterial = bvhHelper.material as THREE.LineBasicMaterial
+    skeletonMaterial.linewidth = 3
+    skeletonMaterial.color = new THREE.Color(0x000000)
+    const helperScale = new THREE.Group()
+    helperScale.add(bvh.skeleton.bones[0])
+    helperScale.scale.set(0.009, 0.009, 0.009)
+    helperScale.position.set(0, -1, 0)
+    this.viewer.scene.add(bvhHelper)
+    this.viewer.scene.add(helperScale)
 
-    this.bvhSkeletonHelper = new SkeletonHelper(bvh.skeleton.bones[0])
-    this.bvhSkeletonHelper.skeleton = bvh.skeleton
-    scene.add(this.bvhSkeletonHelper)
+    this.updateAvatarGizmo()
 
-    const boneContainer = new THREE.Group()
-    boneContainer.add(bvh.skeleton.bones[0])
-    // boneContainer.scale.set(0.005, 0.005, 0.005)
-    scene.add(boneContainer)
-
-    this.mixer = new THREE.AnimationMixer(this.bvhSkeletonHelper)
+    // Setup animation
+    const model = (this.gltf.scene as THREE.Object3D) as THREE.SkinnedMesh
+    const newClip = this.retargetBVH(bvh, model)
     this.animationDuration = bvh.clip.duration
     this.animationTime = 0
-    this.mixer
+    this.gltfMixer = new THREE.AnimationMixer(this.gltf.scene)
+    this.gltfAction = this.gltfMixer
+      .clipAction(newClip)
+      .setLoop(THREE.LoopRepeat, Infinity)
+      .setEffectiveWeight(1.0)
+      .play()
+
+    this.bvhMixer = new THREE.AnimationMixer(bvhHelper)
+    this.bvhAction = this.bvhMixer
       .clipAction(bvh.clip)
       .setLoop(THREE.LoopRepeat, Infinity)
       .setEffectiveWeight(1.0)
       .play()
 
-    // Convert BVH to data
-    this.computeData(bvh.skeleton.bones[0], this.mixer, bvh.clip.duration, 30)
+    // Compute RULA
+    this.computeData(
+      model.skeleton.bones[0],
+      this.bvhMixer,
+      this.animationDuration
+    )
 
+    this.updateSettings({})
     this.viewer.update = () => this.update()
   }
 
   update (): void {
-    if (this.mixer == null) return
+    if (this.gltfMixer == null || this.bvhMixer == null) return
+
     const delta = this.clock.getDelta()
-    this.animationTime = (this.animationTime + delta) % this.animationDuration
+    const playDelta = this.play ? delta : 0
+
+    this.animationTime =
+      (this.animationTime + playDelta) % this.animationDuration
     this.animationValue = this.animationTime / this.animationDuration
-    this.mixer.setTime(this.animationTime)
-    // Retarget animation
-    // left is UnrealBoneNames and right is BVH bones names
-    if (this.bvhSkeletonHelper && this.unrealSkeletonHelper) {
-      ((SkeletonUtils as unknown) as SkeletonUtilsModule).retarget(
-        this.unrealSkeletonHelper,
-        this.bvhSkeletonHelper,
-        this.options
-      )
+    this.updateRangeTime()
+    this.gltfMixer.setTime(this.animationTime)
+    this.bvhMixer.setTime(this.animationTime)
+
+    if (!this.rula) return
+
+    const frame = Math.floor(this.animationTime * 30) % this.data.length
+    this.rulaValue = this.data[frame].getRulaScore()
+
+    let selectedMarker: THREE.AxesHelper | null = null
+    if (this.toggleAngleInspector) {
+      selectedMarker = this.selectedMarker
     }
+    this.rula.updateRULAMarkers(
+      this.data[frame].rula,
+      this.rulaMarkerType,
+      selectedMarker
+    )
+    this.updateSelectedMarkerAngles()
+  }
+
+  getMarkerColor (value: number): string {
+    return `#${RULA.getMarkerColor(value).toString(16)}`
   }
 
   onFileInput (files: APIFile[]): void {

@@ -373,7 +373,7 @@ export default class OpenAssetPopUp extends Vue {
   @Prop({ default: () => true }) private singleSelect!: boolean
   @Prop({ default: () => false }) private openFile!: boolean
   @Prop({ default: () => '' }) private accept!: string
-  @Prop({ default: () => null }) private uploadPipeline!: {
+  @Prop({ default: () => null }) private fileProcessing!: {
     (file: File): Promise<File>
   } | null
 
@@ -661,8 +661,8 @@ export default class OpenAssetPopUp extends Vue {
         reader.readAsDataURL(f)
       }
       ;[...target.files].forEach(file => {
-        if (this.uploadPipeline !== null) {
-          this.uploadPipeline(file).then(uploadFileFunc)
+        if (this.fileProcessing !== null) {
+          this.fileProcessing(file).then(uploadFileFunc)
         } else {
           uploadFileFunc(file)
         }

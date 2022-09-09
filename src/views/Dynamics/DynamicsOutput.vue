@@ -256,7 +256,6 @@
 import { Component, Vue } from 'vue-property-decorator'
 import * as XLSX from 'ts-xlsx'
 import DynamicChart from '@/components/dynamicChart/DynamicChart.vue'
-import DynamicChartSvg from '@/components/dynamicChart/DynamicChartSvg.vue'
 import DynamicChartPlot from '@/components/dynamicChart/DynamicChartPlot.vue'
 import V from '@/utils/vector'
 import OpenFile from '@/components/OpenFile.vue'

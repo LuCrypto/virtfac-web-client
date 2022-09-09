@@ -13,7 +13,7 @@
             >Your scenes</v-row
           >
 
-          <!-- Les différentes scènes -->
+          <!-- The different scene -->
           <v-row
             no-gutters
             class="overflow-y-auto flex-grow-1 ma-4"
@@ -29,7 +29,7 @@
             >
               <v-img height="200" :src="scene.picture">
                 <v-btn
-                  @click="editNameScene(scene)"
+                  @click="editNameScene(scene, $event)"
                   class="ma-2"
                   fab
                   dark
@@ -59,15 +59,20 @@
                 </v-chip-group>
               </v-card-subtitle>
               <v-card-text>
-                {{ scene.formatedCreationDate }}, nombre assets :
-                {{ scene.assetsNumber }}, id : {{ scene.id }}
+                {{ scene.formatedCreationDate }}, assets number :
+                {{ scene.assetsNumber }}, id : {{ scene.id }}, owner :
+                {{ scene.idUserOwner }}, profil id : {{ scene.idProfile }}
               </v-card-text>
 
               <v-card-actions class="flex-wrap">
                 <v-container fluid class="pa-0">
                   <v-col class="pa-0">
                     <v-row no-gutters>
-                      <v-btn color="primary" text @click="ergonomioLayout()">
+                      <v-btn
+                        color="primary"
+                        text
+                        @click="ergonomioLayout($event)"
+                      >
                         Open in layout
                       </v-btn>
                     </v-row>
@@ -75,7 +80,7 @@
                       <v-btn
                         color="primary"
                         text
-                        @click="ergonomioVirtualTwin()"
+                        @click="ergonomioVirtualTwin($event)"
                       >
                         Open in virtual twin
                       </v-btn>
@@ -85,16 +90,16 @@
                       justify="space-between"
                       class="pt-3 flex-wrap"
                     >
-                      <v-btn @click="downloadScene(scene)" icon>
+                      <v-btn @click="downloadScene(scene, $event)" icon>
                         <v-icon v-text="'mdi-download'"></v-icon>
                       </v-btn>
-                      <v-btn @click="outline(scene)" icon>
+                      <v-btn @click="outline(scene, $event)" icon>
                         <v-icon v-text="'mdi-eye'"></v-icon>
                       </v-btn>
-                      <v-btn @click="clickScene(scene)" icon>
+                      <v-btn @click="clickScene(scene, $event)" icon>
                         <v-icon v-text="'mdi-information'"></v-icon>
                       </v-btn>
-                      <v-btn @click="deleteObjet(scene)" icon>
+                      <v-btn @click="deleteObjet(scene, $event)" icon>
                         <v-icon v-text="'mdi-delete'"></v-icon>
                       </v-btn>
                     </v-row>
@@ -104,8 +109,8 @@
             </v-card>
           </v-row>
 
-          <!-- Les différents boutons -->
-          <v-container class="mt-8" fluid>
+          <!-- The different button -->
+          <v-container fluid class="mt-8">
             <v-col>
               <v-row
                 no-gutters
@@ -144,19 +149,27 @@
                 >
                   Add object in scene
                 </v-btn>
+                <v-btn
+                  @click="saveCurrentScene"
+                  class="primary black--text flex-grow-1"
+                  large
+                  elevation="2"
+                >
+                  Save current scene
+                </v-btn>
               </v-row>
               <v-row no-gutters>
                 <v-select
                   :items="scenes.map(item => item.name)"
                   v-model="sceneForModif"
-                  label="Scène visée"
+                  label="Target scene"
                   dense
                 ></v-select>
               </v-row>
             </v-col>
           </v-container>
 
-          <!-- Popup permettant d'afficher des informations sur une scène -->
+          <!-- Display information on a scene -->
           <v-dialog v-model="popup" max-width="780">
             <v-card>
               <v-card-title> {{ titlePopup }} </v-card-title>
@@ -173,7 +186,7 @@
             </v-card>
           </v-dialog>
 
-          <!-- Popup permettant d'afficher de créer une scène avec json -->
+          <!-- For create a scene with json -->
           <v-dialog v-model="createSceneJson" max-width="780">
             <v-card>
               <v-card-title> Glisser un fichier scene json </v-card-title>
@@ -205,7 +218,7 @@
             </v-card>
           </v-dialog>
 
-          <!-- Popup permettant de modifier des données de la scène -->
+          <!-- For modify the data of the scene -->
           <v-dialog v-model="modifyScene" max-width="780">
             <v-card>
               <v-card-title> Modifier des données </v-card-title>
@@ -214,7 +227,7 @@
                 <v-row no-gutters>
                   <v-col cols="3">
                     <v-card-text>
-                      Nouveau titre :
+                      New title :
                     </v-card-text>
                   </v-col>
 
@@ -228,7 +241,7 @@
                 <v-row no-gutters>
                   <v-col cols="3">
                     <v-card-text>
-                      Nouveau tag :
+                      New tag :
                     </v-card-text>
                   </v-col>
 
@@ -288,7 +301,7 @@
                   text
                   @click="copyScene(sceneChoose)"
                 >
-                  Faire une copie de la scène
+                  Do copy of scene
                 </v-btn>
                 <v-spacer></v-spacer>
                 <v-btn color="primary darken-1" text @click="save(sceneChoose)">
@@ -307,48 +320,11 @@
 import { Component, Vue } from 'vue-property-decorator'
 import API from '@/utils/api'
 import Unreal from '@/utils/unreal'
-import { imageAsset, haguenauImageAsset } from '@/utils/defaultData'
-
-class CardModel {
-  // Initialisation
-  name = ''
-  picture = imageAsset
-  tags = '[]'
-  id = 0
-  color = 0
-  assetsNumber = 0
-  creationDate = 0
-  data = '{}'
-  idProject = 0
-  idUserOwner = 0
-  modificationDate = 0
-
-  parsedData: any = null
-  parsedTags: string[] = []
-
-  // Permet de récupérer une date en format string
-  get formatedCreationDate (): string {
-    return new Date(this.creationDate).toLocaleString()
-  }
-
-  // Permet de construire une scène
-  constructor (params: Partial<CardModel>) {
-    this.name = `NewScene_${String(Date.now()).slice(-7)}`
-    this.color = Math.floor(Math.random() * 16777215)
-    Object.assign(this, params)
-    try {
-      console.log(params.tags)
-      this.parsedData = JSON.parse(this.data || '[]')
-      this.parsedTags = JSON.parse(this.tags || '[]')
-      console.log(this.parsedTags)
-    } catch (e) {
-      console.error(e)
-    }
-  }
-}
+import CardScene from '@/utils/cardmodel'
+import { haguenauImageAsset } from '@/utils/defaultData'
 
 // Scene recue d'unreal
-class SceneRecue {
+class SceneReceived {
   name = ''
   position = []
   rotation = []
@@ -362,6 +338,9 @@ class SceneRecue {
 class SceneInfo {
   nombreAssets = 0
   idScene = 0
+  spawnX = 0
+  spawnY = 0
+  spawnZ = 0
 
   constructor () {
     Object.assign(this)
@@ -370,34 +349,19 @@ class SceneInfo {
 
 class Autre {
   scene: SceneInfo = new SceneInfo()
-  assets: SceneRecue[] = []
+  assets: SceneReceived[] = []
+  name = ''
 
-  constructor (params: Partial<SceneRecue>) {
+  constructor (params: Partial<SceneReceived>) {
     Object.assign(this, params)
   }
 }
 
-// Message venant d'Unreal
-class messageUnreal {
-  // message = ''
-  nomScene = ''
-  // dataRoom: CardModel = new CardModel({})
-  data: Autre = new Autre({})
-
-  constructor (params: Partial<Autre>) {
-    Object.assign(this, params)
-  }
-}
-
-@Component({
-  name: 'ErgonomIOScenes'
-})
-// @vuese
-// @group VIEWS
-export default class ErgonomIOScenes extends Vue {
+@Component
+export default class ErgonomIOAssets extends Vue {
   // Initialisation
-  scenes: CardModel[] = []
-  scenes2: CardModel[] = []
+  scenes: CardScene[] = []
+  scenes2: CardScene[] = []
 
   titlePopup = ''
   textPopup = ''
@@ -407,7 +371,7 @@ export default class ErgonomIOScenes extends Vue {
   modifyScene = false
 
   search = ''
-  sceneChoose: any = new CardModel({ id: 2 })
+  sceneChoose: CardScene = new CardScene({ id: 2 })
 
   newTag = ''
   newImage = ''
@@ -418,50 +382,23 @@ export default class ErgonomIOScenes extends Vue {
   sceneForModif = ''
   unreal = Unreal
 
-  haguenauExample = new CardModel({
-    name: 'IUT Haguenau',
-    picture: haguenauImageAsset,
-    tags: '["exemple"]',
-    id: 13,
-    color: 0,
-    assetsNumber: 93,
-    creationDate: 1651300387714,
-    data: '{}',
-    idProject: 0,
-    idUserOwner: 0,
-    modificationDate: 1651300387714
-  })
-
-  // Begin
   mounted (): void {
     this.requeteAPI()
 
-    // TODO : remove this
-    this.scenes.push(this.haguenauExample)
-
-    // Permet de récupérer la réponse d'Unreal
+    // Get unreal answer
     Unreal.callback.$on('unreal-message', (data: unknown) => {
       this.$root.$emit('bottom-message', `Unreal : ${JSON.stringify(data)}`)
-      // Unreal.send('Message recu !')
-      // Unreal.send(data)
 
-      var maScene
+      let maScene
       try {
         maScene = data as Autre
       } catch (e) {
         this.$root.$emit('bottom-message', `Unreal : ${e}`)
       }
 
-      // Unreal.send(maScene.assets[0].name)
-      Unreal.send(maScene?.scene.nombreAssets.toString())
-      Unreal.send(maScene?.scene.idScene.toString())
-      // Unreal.send(maScene.scene.idScene.toString())
-      // Unreal.send(maScene?.assets)
-
-      var maCard = new CardModel({
+      const maCard = new CardScene({
         assetsNumber: maScene?.scene.nombreAssets,
         id: maScene?.scene.idScene,
-        name: 'example',
         data: JSON.stringify(maScene?.assets)
       })
 
@@ -469,9 +406,9 @@ export default class ErgonomIOScenes extends Vue {
     })
   }
 
-  // Requête API permettant de récupérer toutes les scènes
+  // Get all scenes of API
+  // @arg No arguments required
   requeteAPI (): void {
-    console.log('api ')
     API.post(
       this,
       '/resources/ergonomio-scenes',
@@ -480,9 +417,8 @@ export default class ErgonomIOScenes extends Vue {
         where: []
       })
     ).then((response: Response) => {
-      console.log('response ', response)
-      this.scenes2 = ((response as unknown) as Array<Partial<CardModel>>).map(
-        (scene: Partial<CardModel>) => new CardModel(scene)
+      this.scenes2 = ((response as unknown) as Array<Partial<CardScene>>).map(
+        (scene: Partial<CardScene>) => new CardScene(scene)
       )
       for (let i = 0; i < this.scenes2.length; i++) {
         this.scenes.push(this.scenes2[i])
@@ -491,27 +427,30 @@ export default class ErgonomIOScenes extends Vue {
     })
   }
 
-  // Boutons scènes scenes
-  ergonomioLayout (): void {
-    console.log('ergonomioLayout !')
+  // Stop the event
+  // @arg No arguments required
+  ergonomioLayout (event: Event): void {
+    event.stopPropagation()
   }
 
-  ergonomioVirtualTwin (): void {
-    console.log('ergonomioVirtualTwin !')
+  // Stop the event
+  // @arg No arguments required
+  ergonomioVirtualTwin (event: Event): void {
+    event.stopPropagation()
   }
 
-  // Permet de créer une scène vide
+  // Create an empty scene
+  // @arg No arguments required
   createEmptyScene (): void {
-    console.log('creerSceneVide')
-    const scene = new CardModel({ id: this.scenes.length })
+    const scene = new CardScene({ id: this.scenes.length })
     scene.parsedTags.push('vide')
     this.scenes.push(scene)
-
     this.addSceneAPI(scene)
   }
 
-  // Permet de faire une requête API pour ajouter une scène
-  addSceneAPI (scene: CardModel): void {
+  // Create api request for add a new scene
+  // @arg No arguments required
+  addSceneAPI (scene: CardScene): void {
     API.put(
       this,
       '/resources/ergonomio-scenes',
@@ -526,35 +465,36 @@ export default class ErgonomIOScenes extends Vue {
         modificationDate: scene.modificationDate,
         name: scene.name,
         picture: scene.picture,
-        tags: JSON.stringify(scene.parsedTags)
+        spawnX: scene.spawnX,
+        spawnY: scene.spawnY,
+        spawnZ: scene.spawnZ,
+        tags: JSON.stringify(scene.parsedTags),
+        idProfile: scene.idProfile
       })
     ).then((response: Response) => {
-      console.log('api modif scene')
       this.refreshScenes()
     })
   }
 
-  // Permet de faire une requête API pour supprimer une scène
+  // Create api request for delete a scene
+  // @arg No arguments required
   deleteSceneAPi (id: number): void {
     API.delete(this, `/resources/ergonomio-scenes/${id}`, '').then(
       (response: Response) => {
-        console.log('supprimer scene')
+        console.log('supprimer scene : ', response)
       }
     )
   }
 
-  // Permet de charger une scène à partir d'un fichier scène
+  // Load scene from a scene file
+  // @arg No arguments required
   loadScene (): void {
-    console.log('Charger scene')
     this.openUploadFile()
   }
 
-  // Permet d'activer le fait de pouvoir ajouter un objet
+  // Allow adding objects
+  // @arg No arguments required
   addObjectInScene (): void {
-    console.log('addObjectInScene')
-
-    console.log('sceneForModif : ', this.sceneForModif)
-
     let idSceneModif
     for (let i = 0; i < this.scenes.length; i++) {
       if (this.sceneForModif === this.scenes[i].name) {
@@ -563,18 +503,14 @@ export default class ErgonomIOScenes extends Vue {
       }
     }
 
-    Unreal.send('addObjectInScene')
-    Unreal.send(idSceneModif)
-
     if (this.sceneForModif !== '') {
-      // Activer le mode pour ajouter des objets dans la scène
-      var objectAsset = {
+      const objectAsset = {
         name: this.sceneForModif,
         idScene: idSceneModif,
         action: 'ajouterObjetScene'
       }
 
-      var object = {
+      const object = {
         menu: 'scene',
         objet: objectAsset
       }
@@ -583,14 +519,31 @@ export default class ErgonomIOScenes extends Vue {
     }
   }
 
-  // Permet de mettre à jour la scène
+  // Save current scene
+  // @arg No arguments required
+  saveCurrentScene (): void {
+    const objectAsset = {
+      action: 'sauvegarderSceneCourante'
+    }
+
+    const object = {
+      menu: 'scene',
+      objet: objectAsset
+    }
+
+    Unreal.send(object)
+  }
+
+  // Update the scene
+  // @arg No arguments required
   releaseSceneFichier (data: unknown): void {
     console.log('data : ', data)
   }
 
-  // Permet de supprimer la scène en question
-  deleteObjet (scene: CardModel): void {
-    console.log('Supprimer objet ')
+  // Delete the selected scene
+  // @arg No arguments required
+  deleteObjet (scene: CardScene, event: Event): void {
+    event.stopPropagation()
 
     const index2 = this.scenes.indexOf(scene, 0)
 
@@ -599,51 +552,54 @@ export default class ErgonomIOScenes extends Vue {
     }
 
     this.deleteSceneAPi(scene.id)
-
-    console.log('length : ', this.scenes.length)
-    console.log('length : ', this.scenes)
   }
 
-  // Permet d'afficher dans une popup des informations sur la scene
-  clickScene (scene: CardModel): void {
-    console.log('clickScene : ', scene.id)
+  // Display popup with information of scene
+  // @arg No arguments required
+  clickScene (scene: CardScene, event: Event): void {
+    event.stopPropagation()
+
     this.popup = true
     this.titlePopup = scene.name
 
     this.textPopup = scene.data
-    this.releaseScene(new CardModel({ id: 1 }))
+    this.releaseScene(new CardScene({ id: 1 }))
   }
 
   // Aymeric todo
-  outline (scene: CardModel): void {
-    console.log('Aymeric todo !')
+  // @arg No arguments required
+  outline (scene: CardScene, event: Event): void {
+    event.stopPropagation()
   }
 
-  // Permet de modifier le nom d'une scène
-  editNameScene (scene: CardModel): void {
-    console.log('editNameScene ')
+  // Modify the name of scene
+  // @arg No arguments required
+  editNameScene (scene: CardScene, event: Event): void {
+    event.stopPropagation()
     this.modifyScene = true
     this.sceneChoose = scene
   }
 
-  // Permet de télécharger une scène
-  downloadScene (scene: CardModel): void {
-    console.log('downloadScene ! ')
+  // Download a scene
+  // @arg No arguments required
+  downloadScene (scene: CardScene, event: Event): void {
+    event.stopPropagation()
 
     const data = JSON.stringify(scene)
     const blob = new Blob([data], { type: 'text/plain' })
 
-    var url = URL.createObjectURL(blob)
-    var pom = document.createElement('a')
+    const url = URL.createObjectURL(blob)
+    const pom = document.createElement('a')
+
     pom.setAttribute('style', 'display: none;')
     pom.href = url
     pom.setAttribute('download', scene.name + '.json')
     pom.click()
   }
 
-  // Permet de modifier une scene
-  save (scene: CardModel): void {
-    console.log('save : ', this.search)
+  // Modify a scene
+  // @arg No arguments required
+  save (scene: CardScene): void {
     this.modifyScene = false
 
     if (this.newImage !== '') {
@@ -652,29 +608,25 @@ export default class ErgonomIOScenes extends Vue {
 
     if (this.search.length !== 0) scene.name = this.search
     this.releaseScene(scene)
-
     this.newImage = ''
   }
 
-  // Permet de copier la scène
-  copyScene (scene: CardModel): void {
-    console.log('copyScene !')
-
+  // Copy scene
+  // @arg No arguments required
+  copyScene (scene: CardScene): void {
     this.scenes.push(scene)
     this.addSceneAPI(scene)
   }
 
-  // Permet d'ajouter un tag à une scène
-  addTag (scene: CardModel, tag: string): void {
-    console.log('addTag')
-
+  // Add tag to scene
+  // @arg No arguments required
+  addTag (scene: CardScene, tag: string): void {
     scene.parsedTags.push(tag)
   }
 
-  // Permet de supprimer un tab d'une scène
-  deleteTag (scene: CardModel, tags: string): void {
-    console.log('deleteTag')
-
+  // Delete tag from scene
+  // @arg No arguments required
+  deleteTag (scene: CardScene, tags: string): void {
     const index = scene.parsedTags.indexOf(tags, 0)
 
     if (index > -1) {
@@ -683,58 +635,35 @@ export default class ErgonomIOScenes extends Vue {
     this.releaseScene(scene)
   }
 
-  // Permet de mettre à jour une scène
-  releaseScene (scene: CardModel): void {
+  // Update a scene
+  // @arg No arguments required
+  releaseScene (scene: CardScene): void {
     // Requête API pour mettre à jour la scène
     API.patch(
       this,
       `/resources/ergonomio-scenes/${scene.id}`,
       JSON.stringify({
         assetsNumber: scene.assetsNumber,
-        // color: scene.color,
-        // creationDate: scene.creationDate,
-        data: scene.data,
-        // id: scene.id,
-        // idProject: scene.idProject,
-        // idUserOwner: scene.idUserOwner,
-        // modificationDate: scene.modificationDate,
-        name: scene.name
-        // picture: scene.picture,
-        // tags: JSON.stringify(scene.parsedTags)
+        data: scene.data
       })
     )
       .then((response: Response) => {
-        console.log('api modif scene')
         Unreal.send(response)
-        // On mets à jour les cartes
+        // Refresh scenes
         this.refreshScenes()
       })
       .catch(e => console.error(e))
   }
 
+  // Refresh scenes
+  // @arg No arguments required
   refreshScenes (): void {
-    this.scenes = [this.haguenauExample]
-
-    this.scenes.push(
-      new CardModel({
-        name: 'IUT Haguenau',
-        picture: haguenauImageAsset,
-        tags: '["exemple"]',
-        id: 13,
-        color: 0,
-        assetsNumber: 93,
-        creationDate: 1651300387714,
-        data: '{}',
-        idProject: 0,
-        idUserOwner: 0,
-        modificationDate: 1651300387714
-      })
-    )
-
+    this.scenes = []
     this.requeteAPI()
   }
 
-  // Permet de récupérer le fichier qu'on veut upload
+  // Get file that is upload
+  // @arg No arguments required
   openUploadFile (): void {
     const uploadFileInput = this.$refs.uploadFileInput as HTMLInputElement
     if (uploadFileInput == null) return
@@ -742,7 +671,8 @@ export default class ErgonomIOScenes extends Vue {
     uploadFileInput.click()
   }
 
-  // Charger une scène
+  // Load a scene
+  // @arg No arguments required
   onUploadSceneUpdate (e: Event): void {
     if (e.target == null) return
     const target = e.target as HTMLInputElement
@@ -750,20 +680,8 @@ export default class ErgonomIOScenes extends Vue {
       [...target.files].forEach(file => {
         const reader = new FileReader()
         reader.onload = e => {
-          console.log(reader.result)
-          console.log('============')
-          console.log('============')
-          console.log('============')
-          console.log(JSON.parse(reader.result as string))
-
           const test = new Autre(JSON.parse(reader.result as string))
-
-          console.log('============')
-          console.log('============')
-
-          console.log('test : ', test)
-
-          const maCarte = new CardModel({
+          const maCarte = new CardScene({
             id: test.scene.idScene,
             assetsNumber: test.scene.nombreAssets,
             data: JSON.stringify(test.assets)
@@ -771,9 +689,6 @@ export default class ErgonomIOScenes extends Vue {
 
           this.scenes.push(maCarte)
           this.addSceneAPI(maCarte)
-
-          // console.log('test name : ', test.name)
-          // console.log('test name : ', test)
         }
 
         reader.onerror = error => {
@@ -785,7 +700,8 @@ export default class ErgonomIOScenes extends Vue {
     }
   }
 
-  // Permet de lire le fichier uploadé
+  // Read upload file
+  // @arg No arguments required
   updateUploadFile (e: Event): void {
     if (e.target == null) return
     const target = e.target as HTMLInputElement
@@ -796,7 +712,6 @@ export default class ErgonomIOScenes extends Vue {
           const fileString = reader.result as string
 
           this.newImage = fileString
-          console.log('fileString : ', fileString)
         }
         reader.onerror = error => {
           console.error(error)
@@ -807,7 +722,8 @@ export default class ErgonomIOScenes extends Vue {
     }
   }
 
-  // Permet de lire le fichier uploadé
+  // Read upload file scne
+  // @arg No arguments required
   updateUploadFileSceneJson (e: Event): void {
     if (e.target == null) return
     const target = e.target as HTMLInputElement
@@ -818,7 +734,6 @@ export default class ErgonomIOScenes extends Vue {
           const fileString = reader.result as string
 
           // this.newImage = fileString
-          console.log('fileString : ', fileString)
         }
         reader.onerror = error => {
           console.error(error)
@@ -829,27 +744,24 @@ export default class ErgonomIOScenes extends Vue {
     }
   }
 
-  // Permet d'envoyer un message à l'instance unreal
-  // Permet de charger sur la scène cliquée
-  sendUnreal (scene: CardModel): void {
-    // console.log('asset.name : ', scene.name)
-    // console.log('asset.id : ', scene.id)
-    // console.log('asset : ', scene)
-
-    var objectAsset = {
+  // Load selected scene
+  // @arg No arguments required
+  sendUnreal (scene: CardScene): void {
+    const objectAsset = {
       name: scene.name,
       assetsNumber: scene.assetsNumber,
       assets: JSON.parse(scene.data),
       idScene: scene.id,
-      action: 'chargerScene'
+      action: 'chargerScene',
+      nomRoom: '',
+      creerRoom: 0,
+      idProfil: scene.idProfile
     }
 
-    var object = {
+    const object = {
       menu: 'scene',
       objet: objectAsset
     }
-
-    // console.log('data : ', scene.data)
 
     Unreal.send(object)
   }

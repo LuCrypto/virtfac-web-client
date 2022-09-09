@@ -2,9 +2,14 @@
   <v-container
     class="pa-0 ma-0"
     ref="container"
-    style="max-width: 100%; max-height: 100%; position: relative;"
+    style="max-width: 100%; max-height: 100%; position: relative"
   >
-    <model-viewer-stats ref="stats" :pannelIds="[0, 1, 2]"></model-viewer-stats>
+    <model-viewer-stats
+      v-if="!hideStats"
+      ref="stats"
+      :pannelIds="[0, 1, 2]"
+      :position="statsPosition"
+    ></model-viewer-stats>
   </v-container>
 </template>
 
@@ -19,6 +24,7 @@ import { studioEnvMap } from '@/utils/imageData'
 
 // Loaders
 import { GLTFLoader, GLTF } from 'three/examples/jsm/loaders/GLTFLoader'
+import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader'
 import { BVHLoader, BVH } from 'three/examples/jsm/loaders/BVHLoader'
 import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader'
 
@@ -37,11 +43,17 @@ import ModelViewerStats from '@/components/ModelViewerStats.vue'
 export default class ModelViewer2 extends Vue {
   @Prop({ default: () => false }) private displayInspector!: boolean
   @Prop({ default: () => false }) private displayFog!: boolean
+  @Prop({ default: () => false }) private displayGrid!: boolean
+  @Prop({ default: () => false }) private depthWriteFloor!: boolean
+  @Prop({ default: () => false }) private hideStats!: boolean
+  @Prop({ default: () => 'TOP_LEFT' }) private statsPosition!:
+    | 'TOP_RIGHT'
+    | 'TOP_LEFT'
+    | 'BOTTOM_RIGHT'
+    | 'BOTTOM_LEFT'
 
   container: HTMLElement | null = null
 
-  selectedMenuItem = -1
-  menuCollapse = false
   size: V = new V(0, 0)
   controls: OrbitControls
   mixer: THREE.AnimationMixer | null = null
@@ -72,7 +84,7 @@ export default class ModelViewer2 extends Vue {
     if (active) {
       const fogColor = new THREE.Color(color)
       // this.scene.background = fogColor
-      this.scene.fog = new THREE.Fog(fogColor, 0.0025, 20)
+      this.scene.fog = new THREE.Fog(fogColor, 1, 15)
     } else {
       const fogColor = new THREE.Color(color)
       // this.scene.background = fogColor
@@ -109,7 +121,10 @@ export default class ModelViewer2 extends Vue {
     // Create floor
     this.floor = new THREE.Mesh(
       new THREE.PlaneGeometry(size, size),
-      new THREE.MeshPhongMaterial({ color: backgroundColor })
+      new THREE.MeshPhongMaterial({
+        color: backgroundColor,
+        depthWrite: this.depthWriteFloor
+      })
     )
     this.floor.rotation.x = -Math.PI / 2
     this.floor.receiveShadow = true
@@ -125,6 +140,12 @@ export default class ModelViewer2 extends Vue {
     // Create camera
     this.camera.position.set(1.5, 2.5, 1.5)
     this.camera.lookAt(new THREE.Vector3(0, 5, 0))
+
+    const canvas = this.renderer.domElement as HTMLCanvasElement
+    canvas.setAttribute(
+      'style',
+      'position: absolute; top: 0; left: 0; width: 100%; height: 100%;'
+    )
 
     this.container = this.$refs.container as HTMLElement
     this.container.appendChild(this.renderer.domElement)
@@ -143,8 +164,7 @@ export default class ModelViewer2 extends Vue {
     // Create sun visualizer
     // const sunHelper = new THREE.DirectionalLightHelper(sun, 4, 0xffb000)
     // this.scene.add(sunHelper)
-    this.setGrid(100, 100, 0xaaaaaa, 0xfefefe)
-
+    this.setGrid(100, 100, 0xaaaaaa, 0x363636)
     this.setEnvMap(studioEnvMap, 'HDR')
 
     if (this.displayFog) {
@@ -163,10 +183,10 @@ export default class ModelViewer2 extends Vue {
 
   updateTheme (): void {
     if (this.$vuetify.theme.dark) {
-      this.setFogActive(false, 0x1e1e1e)
+      this.setFogActive(this.displayFog, 0x1e1e1e)
       this.setGrid(100, 100, 0x555555, 0x1e1e1e, 0xeeeeee)
     } else {
-      this.setFogActive(false, 0xfefefe)
+      this.setFogActive(this.displayFog, 0xfefefe)
       this.setGrid(100, 100, 0xaaaaaa, 0xfefefe, 0x111111)
     }
   }
@@ -192,13 +212,11 @@ export default class ModelViewer2 extends Vue {
   }
 
   updateSize () {
-    // Hide and show canvas for correct size computation
-    this.renderer.domElement.setAttribute('style', 'display: none;')
+    // Compute new canvas size from container
     const size = new V(
       this.container ? this.container.offsetWidth : 0,
       this.container ? this.container.offsetHeight : 0
     )
-    this.renderer.domElement.setAttribute('style', 'display: block;')
 
     if (!this.size.equal(size)) {
       this.size = size
@@ -223,6 +241,21 @@ export default class ModelViewer2 extends Vue {
             }
           })
           if (this.scene != null) this.scene.add(object.scene)
+          resolve(object)
+        },
+        undefined,
+        error => reject(error)
+      )
+    )
+  }
+
+  loadFBXFromPath (path: string): Promise<THREE.Group> {
+    const fbxLoader = new FBXLoader()
+    return new Promise((resolve, reject) =>
+      fbxLoader.load(
+        path,
+        object => {
+          if (this.scene != null) this.scene.add(object)
           resolve(object)
         },
         undefined,

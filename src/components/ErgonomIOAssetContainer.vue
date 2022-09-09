@@ -6,7 +6,7 @@
           @close="$refs.openFilePopUp.close()"
           application="ERGONOM_IO"
           accept=".gltf, .obj, .fbx, .stl, .wrl, .glb"
-          :uploadPipeline="onFileUpload"
+          :fileProcessing="onFileUpload"
           :singleSelect="true"
           :openFile="true"
           @fileInput="onFileInput"
@@ -622,7 +622,7 @@ export default class ErgonomIOAssetContainer extends Vue {
   }
 
   // @vuese
-  // Pipeline to convert the uploaded file to a gltf file
+  // Convert the uploaded file to a gltf file
   onFileUpload (file: File): Promise<File> {
     return new Promise<File>(resolve => {
       const extension = (file.name.split('.').pop() as string).toLowerCase()

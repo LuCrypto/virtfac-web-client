@@ -1,0 +1,242 @@
+[
+  {
+    "name": "Un palet est pris du Convoyeur Lean",
+    "values": {
+      "position": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "idParent": null
+    }
+  },
+  {
+    "name": "Un palet arrive sur le premier Convoyeur droit BS 2-R",
+    "values": {
+      "position": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "idParent": null
+    }
+  },
+  {
+    "name": "Un palet arrive sur le premier Poste de travail Activ Assist",
+    "values": {
+      "position": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "idParent": null
+    }
+  },
+  {
+    "name": "Un palet arrive sur le deuxième Convoyeur droit BS 2-R",
+    "values": {
+      "position": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "idParent": null
+    }
+  },
+  {
+    "name": "Un palet sort du deuxième Convoyeur droit BS 2-R",
+    "values": {
+      "position": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "idParent": null
+    }
+  },
+  {
+    "name": "Un palet arrive sur le deuxième Poste de travail Activ Assist",
+    "values": {
+      "position": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "idParent": null
+    }
+  },
+  {
+    "name": "Un palet arrive sur le troisième Convoyeur droit BS 2-R",
+    "values": {
+      "position": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "idParent": null
+    }
+  },
+  {
+    "name": "Un palet sort du troisième Convoyeur droit BS 2-R",
+    "values": {
+      "position": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "idParent": null
+    }
+  },
+  {
+    "name": "Un palet arrive sur le quatrième Convoyeur droit BS 2-R",
+    "values": {
+      "position": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "idParent": null
+    }
+  },
+  {
+    "name": "Un palet sort du quatrième Convoyeur droit BS 2-R",
+    "values": {
+      "position": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "idParent": null
+    }
+  },
+  {
+    "name": "Un palet arrive sur le troisième Poste de travail Activ Assist",
+    "values": {
+      "position": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "idParent": null
+    }
+  },
+  {
+    "name": "Un produit arrive au APAS (Bras robotisé)",
+    "values": {
+      "position": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "idParent": null
+    }
+  },
+  {
+    "name": "Un palet est posé sur le Sherpa",
+    "values": {
+      "position": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "idParent": null
+    }
+  },
+  {
+    "name": "Un produit arrive sur le premier Poste de travail réglable en hauteur",
+    "values": {
+      "position": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "idParent": null
+    }
+  },
+  {
+    "name": "Un palet est posé sur le Convoyeur Lean",
+    "values": {
+      "position": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "idParent": null
+    }
+  }
+]
