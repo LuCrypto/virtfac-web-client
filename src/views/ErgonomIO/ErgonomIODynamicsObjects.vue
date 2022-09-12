@@ -7,7 +7,7 @@
 <template>
   <v-container
     fluid
-    style="height: 100%; max-height: 100%"
+    style="height: 100%; max-height: 100%; padding: 0;"
     class="overflow-y-auto rounded-lg"
   >
     <!-- To assign a position to an event -->
@@ -273,168 +273,125 @@
     </v-list>
 
     <!-- The different buttons -->
-    <v-container class="d-flex flex-wrap flex-nowrap">
-      <v-row align="center">
+    <v-container
+      fluid
+      class="d-flex flex-wrap justify-center align-center"
+      style="padding: 0;"
+    >
+      <v-container
+        class="d-flex justify-space-around align-center"
+        style="background-color: rgb(45,45,45); margin: 0; max-width: 100%;"
+      >
         <!-- Allows you to start a profile with the selected object -->
-        <v-col align="center">
-          <v-btn
-            class="primary black--text my-2"
-            @click="startProfil()"
-            large
-            elevation="2"
-          >
-            Start profil
-          </v-btn>
-        </v-col>
+        <v-btn
+          class="primary black--text my-2"
+          @click="startProfil()"
+          large
+          elevation="2"
+        >
+          Start profil
+        </v-btn>
         <!-- Allows to start with all the objects of the scene -->
-        <v-col align="center">
-          <v-btn
-            class="primary black--text my-2"
-            @click="startProfilGlobal()"
-            large
-            elevation="2"
-          >
-            Start global profil
-          </v-btn>
-        </v-col>
-        <!-- Allows you to delete the active profile -->
-        <v-col align="center">
-          <v-btn
-            class="primary black--text my-2"
-            @click="deleteProfil()"
-            large
-            elevation="2"
-          >
-            Delete profil
-          </v-btn>
-        </v-col>
-        <!-- Allows you to attach one object to another -->
-        <v-col align="center">
-          <v-btn
-            class="primary black--text my-2"
-            @click="attacherObjet()"
-            large
-            elevation="2"
-          >
-            Attach an object
-          </v-btn>
-        </v-col>
-        <!-- Add an event -->
-        <v-col align="center">
-          <v-btn
-            @click="addEvent"
-            class="primary black--text my-2"
-            large
-            elevation="2"
-          >
-            Add an event
-          </v-btn>
-        </v-col>
+        <v-btn
+          class="primary black--text my-2"
+          @click="startProfilGlobal()"
+          large
+          elevation="2"
+        >
+          Start global profil
+        </v-btn>
+      </v-container>
 
-        <v-col align="center">
-          <v-btn
-            @click="pathObjectSelected"
-            class="primary black--text my-2"
-            large
-            elevation="2"
-          >
-            Selected path asset
-          </v-btn>
-        </v-col>
+      <v-container
+        class="d-flex justify-space-around align-center"
+        style="background-color: rgb(30,30,30); margin: 0; max-width: 100%;"
+      >
+        <v-btn
+          @click="pathObjectSelected"
+          class="primary black--text my-2"
+          large
+          elevation="2"
+        >
+          Selected path asset
+        </v-btn>
+        <v-btn
+          @click="globalPath"
+          class="primary black--text my-2"
+          large
+          elevation="2"
+        >
+          Global path
+        </v-btn>
+      </v-container>
 
-        <v-col align="center">
-          <v-btn
-            @click="globalPath"
-            class="primary black--text my-2"
-            large
-            elevation="2"
-          >
-            Global path
-          </v-btn>
-        </v-col>
-      </v-row>
-    </v-container>
-
-    <!-- Second button bar -->
-    <v-container class="d-flex flex-wrap flex-nowrap">
-      <v-row align="center">
-        <v-col align="center">
-          <v-btn
-            class="primary black--text my-2"
-            @click="assignProfilScene()"
-            large
-            elevation="2"
-          >
-            Assign a profil to scene
-          </v-btn>
-        </v-col>
-
-        <!-- Selected profile -->
-        <v-col align="center">
-          <v-select
-            class="black--text"
-            label="Selected profil"
-            v-model="selectedProfil"
-            :items="this.profils.map(item => item.title)"
-            dense
-          >
-          </v-select>
-        </v-col>
-
-        <!-- Selected scene -->
-        <v-col align="center">
-          <v-select
-            class="black--text"
-            label="Selected scene"
-            v-model="selectedScene"
-            :items="this.scenes.map(item => item.name)"
-            dense
-          >
-          </v-select>
-        </v-col>
-      </v-row>
-    </v-container>
-
-    <!-- Third button bar -->
-    <!-- v-if="!unrealContext.check()" -->
-    <v-container class="d-flex flex-wrap flex-nowrap">
-      <v-row align="center">
+      <v-container
+        class="d-flex justify-space-around align-center"
+        style="background-color: rgb(45,45,45); margin: 0; max-width: 100%;"
+      >
         <!-- Allows you to load a witness file for a profile -->
-        <v-col align="center">
-          <v-btn
-            @click="openUploadFile"
-            class="primary black--text my-2"
-            large
-            elevation="2"
-          >
-            Load a profil file
-            <input
-              accept="application/JSON"
-              ref="uploadFileInput"
-              hidden
-              type="file"
-              @change="onUploadSceneUpdate"
-            />
-          </v-btn>
-        </v-col>
+        <v-btn
+          @click="openUploadFile"
+          class="primary black--text my-2"
+          large
+          elevation="2"
+        >
+          Load a profil file
+          <input
+            accept="application/JSON"
+            ref="uploadFileInput"
+            hidden
+            type="file"
+            @change="onUploadSceneUpdate"
+          />
+        </v-btn>
 
         <!-- Allows you to edit the current profile -->
-        <v-col align="center">
-          <v-btn
-            @click="editProfil"
-            class="primary black--text my-2"
-            large
-            elevation="2"
-          >
-            Edit the current profil
-          </v-btn>
-        </v-col>
-
-        <!-- Allows to listen on the server -->
-        <v-col
-          align="center"
-          style="display: flex; align-items: center; justify-content: center; "
+        <v-btn
+          @click="editProfil"
+          class="primary black--text my-2"
+          large
+          elevation="2"
         >
+          Edit the current profil
+        </v-btn>
+
+        <!-- Allows you to delete the active profile -->
+        <v-btn
+          class="primary black--text my-2"
+          @click="deleteProfil()"
+          large
+          elevation="2"
+        >
+          Delete profil
+        </v-btn>
+      </v-container>
+
+      <v-container
+        class="d-flex justify-space-around align-center"
+        style="background-color: rgb(30,30,30); margin: 0; max-width: 100%;"
+      >
+        <!-- Add an event -->
+        <v-btn
+          @click="addEvent"
+          class="primary black--text my-2"
+          large
+          elevation="2"
+        >
+          Add an event
+        </v-btn>
+
+        <!-- Allows you to attach one object to another -->
+        <v-btn
+          class="primary black--text my-2"
+          @click="attacherObjet()"
+          large
+          elevation="2"
+        >
+          Attach an object
+        </v-btn>
+
+        <div class="d-flex">
+          <!-- Allows to listen on the server -->
           <v-btn
             class="primary black--text my-2"
             @click="listenServer()"
@@ -443,15 +400,46 @@
           >
             Listen id of server
           </v-btn>
+
           <div
             class="rounded-circle ma-5"
             :class="activeListenOpcua"
             style="width: 30px; height: 30px;"
           ></div>
-        </v-col>
-      </v-row>
-    </v-container>
+        </div>
+      </v-container>
 
+      <v-container
+        class="d-flex justify-space-around align-center"
+        style="background-color: rgb(45,45,45); margin: 0; max-width: 100%;"
+      >
+        <v-btn
+          class="primary black--text mx-2"
+          @click="assignProfilScene()"
+          large
+          elevation="2"
+        >
+          Assign a profil to scene
+        </v-btn>
+
+        <!-- Selected profile -->
+        <v-select
+          class="black--text mx-2"
+          label="Selected profil"
+          v-model="selectedProfil"
+          :items="this.profils.map(item => item.title)"
+        >
+        </v-select>
+        <!-- Selected scene -->
+        <v-select
+          class="black--text mx-2"
+          label="Selected scene"
+          v-model="selectedScene"
+          :items="this.scenes.map(item => item.name)"
+        >
+        </v-select>
+      </v-container>
+    </v-container>
     <!-- Dynamique object -->
     <v-container
       v-if="selectedObjectDynamique"
