@@ -85,7 +85,7 @@
       <v-row
         no-gutters
         class="overflow-y-auto flex-grow-1 my-2 rounded-lg"
-        style="max-height: 800px;"
+        style="min-height: 800px;"
       >
         <v-row no-gutters dense class="pa-2">
           <v-alert

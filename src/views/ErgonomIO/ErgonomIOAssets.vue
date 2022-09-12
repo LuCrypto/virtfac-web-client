@@ -1,7 +1,7 @@
 <template>
   <v-container
     fluid
-    style="max-height: 100%; overflow: auto;"
+    style="max-height: 100%; overflow: auto; padding: 0;"
     class="rounded-lg"
   >
     <pop-up ref="assetInfo">
@@ -13,10 +13,11 @@
     <!-- Title -->
     <v-container
       v-if="!this.fullpage"
-      class="spacing-playground pa-6 contradiction-analysis"
+      class="spacing-playground contradiction-analysis"
+      style="padding: 0;"
       fluid
     >
-      <v-card elevation="3" class="mx-auto mb-6 flex-grow-1">
+      <v-card elevation="3" class="mb-2 flex-grow-1">
         <v-card-title> Asset library </v-card-title>
         <v-card-subtitle> List of all assets </v-card-subtitle>
       </v-card>
@@ -120,12 +121,12 @@
       :rounded="unrealContext.check() ? 'xl' : 'md'"
     >
       <v-card
-        :class="!this.fullpage ? 'ma-10' : 'my-8'"
-        class="d-flex flex-row"
-        width="95%"
+        :class="!this.fullpage ? 'my-8' : 'my-8'"
+        class="d-flex justify-space-around"
+        width="100%"
         :height="!this.fullpage ? '700' : '850'"
-        style="overflow:hidden"
         :rounded="unrealContext.check() ? 'xl' : 'md'"
+        style="overflow:hidden"
         elevation="0"
       >
         <!-- The different categories -->
@@ -158,11 +159,16 @@
         </v-card>
 
         <!-- The different assets -->
-        <v-container class="d-flex flex-wrap overflow-y-auto">
+        <v-container
+          class="d-flex flex-wrap justify-space-around overflow-y-auto"
+          style="background-color: rgb(45, 45, 45); width: 75%;"
+        >
           <v-card
             :width="sizeCardString"
             :key="indexCard"
             v-for="(asset, indexCard) in useCategory ? cardsSort : assets"
+            style="background-color: rgb(45, 45, 45);"
+            class="mx-2 my-2"
           >
             <v-list-item :key="asset.name">
               <!-- Asset image  -->
@@ -209,26 +215,27 @@
       </v-card>
 
       <!-- The different buttons -->
-      <v-layout justify-center>
-        <v-flex class="flex-grow-0 mx-5">
-          <!-- Button to load an asset -->
-          <v-btn
-            v-on:click="loadAsset"
-            class="primary black--text"
-            large
-            elevation="2"
-          >
-            Load an asset
-            <input
-              accept="application/JSON"
-              ref="uploadFileInput"
-              hidden
-              type="file"
-              @change="updateUploadFileChargerAsset"
-            />
-          </v-btn>
-        </v-flex>
-        <v-flex class="flex-grow-0 mx-5">
+      <v-container
+        class="d-flex justify-space-around align-center"
+        style="width: 75%; margin-left: 25%;"
+      >
+        <!-- Button to load an asset -->
+        <v-btn
+          v-on:click="loadAsset"
+          class="primary black--text"
+          large
+          elevation="2"
+        >
+          Load an asset
+          <input
+            accept="application/JSON"
+            ref="uploadFileInput"
+            hidden
+            type="file"
+            @change="updateUploadFileChargerAsset"
+          />
+        </v-btn>
+        <div>
           <!-- Allows you to reduce the size of your assets -->
           <v-btn v-on:click="decreaseSizeCard()" icon>
             <v-icon v-text="'mdi-minus'"></v-icon>
@@ -237,8 +244,8 @@
           <v-btn v-on:click="increaseSizeCard()" icon>
             <v-icon v-text="'mdi-plus'"></v-icon>
           </v-btn>
-        </v-flex>
-      </v-layout>
+        </div>
+      </v-container>
     </v-card>
   </v-container>
 </template>
