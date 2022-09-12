@@ -1,7 +1,7 @@
 <template>
-  <v-container fluid>
+  <v-container fluid style="padding: 0;">
     <!-- Title -->
-    <v-container v-if="!this.fullpage" fluid class="text-h3 text-center py-8">
+    <v-container v-if="!this.fullpage" fluid class="text-h3 text-center py-6">
       Collaborative sessions
     </v-container>
 
@@ -84,7 +84,7 @@
       <!-- The different rooms -->
       <v-row
         no-gutters
-        class="overflow-y-auto flex-grow-1 ma-4 rounded-lg"
+        class="overflow-y-auto flex-grow-1 my-2 rounded-lg"
         style="max-height: 800px;"
       >
         <v-row no-gutters dense class="pa-2">
@@ -143,7 +143,9 @@
         </v-card>
 
         <!-- The different buttons -->
-        <v-container>
+        <v-container
+          style="background-color: rgb(45, 45, 45); margin: 0; max-width: 100%"
+        >
           <v-row align="center">
             <v-col>
               <v-btn
