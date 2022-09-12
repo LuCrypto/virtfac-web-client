@@ -20,7 +20,7 @@
               large
               elevation="2"
             >
-              Copy
+              {{ setInPaperPressValue }}
             </v-btn>
           </v-col>
 
@@ -38,8 +38,8 @@
       </v-container>
     </v-dialog>
 
-    <!-- For join a room -->
-    <v-dialog width="50%" v-model="joinRoomWithToken">
+    <!-- For join a room with a token-->
+    <v-dialog hide-overlay width="50%" v-model="joinRoomWithToken">
       <v-container fluid class="d-flex flex-column align-center">
         <div>
           <h3>
@@ -58,7 +58,7 @@
               large
               elevation="2"
             >
-              Paste
+              {{ getInPaperPressValue }}
             </v-btn>
           </div>
         </div>
@@ -223,11 +223,10 @@ import Unreal from '@/utils/unreal'
 import VueRouter from 'vue-router'
 import CardScene from '@/utils/cardmodel'
 import { Session, User } from '@/utils/session'
-import { NumberKeyframeTrack } from 'three'
-import T from '@/utils/transform'
 
 class Room {
   name = 'room'
+  tokenRoom = 'None'
   nameScene = ''
   host = ''
   action = 'quitRoom'
@@ -262,6 +261,8 @@ export default class ErgonomIORooms extends Vue {
   joinRoomWithToken = false
   sendToken = ''
   tokenRoom = 'testfezfez'
+  getInPaperPressValue = 'Paste'
+  setInPaperPressValue = 'Copy'
   roomVisee: Room = new Room({})
 
   unrealContext = Unreal
@@ -279,6 +280,9 @@ export default class ErgonomIORooms extends Vue {
 
       // For debugging
       Unreal.send(data)
+
+      let roomChoisie = 0
+      let nameRoom = ''
 
       // We treat the different cases of message
       switch (data.message) {
@@ -306,7 +310,17 @@ export default class ErgonomIORooms extends Vue {
           this.setRoomToken(data.nameTokenRoom as string)
           break
         case 'joinRoomGoodToken':
-          this.joinSession1(this.roomVisee)
+          nameRoom = data.nameRoom as string
+
+          // Find room with his name
+          for (let i = 0; i < this.rooms.length; i++) {
+            if (this.rooms[i].name === nameRoom) {
+              roomChoisie = i
+              break
+            }
+          }
+
+          this.joinSession1(this.rooms[roomChoisie])
           break
         default:
       }
@@ -315,6 +329,8 @@ export default class ErgonomIORooms extends Vue {
 
   // Set the room token in the paper press
   setInPaperPress (): void {
+    this.setInPaperPressValue = 'Done !'
+
     const objectAsset = {
       action: 'setInPaperPress',
       token: this.tokenRoom
@@ -330,6 +346,8 @@ export default class ErgonomIORooms extends Vue {
 
   // Get the room token from the paper press
   getInPaperPress (): void {
+    this.getInPaperPressValue = 'Done !'
+
     const objectAsset = {
       action: 'getInPaperPress'
     }
@@ -438,6 +456,18 @@ export default class ErgonomIORooms extends Vue {
         // this.login = ''
         // this.password = ''
         this.$emit('close')
+
+        const objectAsset = {
+          action: 'refreshAllConnectAsInvite'
+        }
+
+        const object = {
+          menu: 'room',
+          objet: objectAsset
+        }
+
+        // Load scene
+        Unreal.send(object)
       })
       .catch(e => {
         this.$root.$emit('bottom-message', 'Login or password are incorrect.')

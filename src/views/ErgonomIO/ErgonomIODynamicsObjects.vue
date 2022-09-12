@@ -396,10 +396,8 @@
     </v-container>
 
     <!-- Third button bar -->
-    <v-container
-      v-if="!unrealContext.check()"
-      class="d-flex flex-wrap flex-nowrap"
-    >
+    <!-- v-if="!unrealContext.check()" -->
+    <v-container class="d-flex flex-wrap flex-nowrap">
       <v-row align="center">
         <!-- Allows you to load a witness file for a profile -->
         <v-col align="center">
@@ -476,7 +474,6 @@ import Unreal from '@/utils/unreal'
 import VueRouter from 'vue-router'
 import { Vector3 } from 'three'
 import CardModel from '@/utils/cardmodel'
-import { floorPowerOfTwo } from 'three/src/math/MathUtils'
 
 // Classe d'un évènement
 interface evenementClass {

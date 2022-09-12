@@ -26,8 +26,9 @@
               width="300px"
               elevation="5"
               @click="sendUnreal(scene)"
+              :id="'scene-' + scene.id"
             >
-              <v-img height="200" :src="scene.picture">
+              <v-img height="200" :src="scene.picture" :id="scene - scene.id">
                 <v-btn
                   @click="editNameScene(scene, $event)"
                   class="ma-2"
@@ -408,7 +409,7 @@ export default class ErgonomIOAssets extends Vue {
 
   // Get all scenes of API
   // @arg No arguments required
-  requeteAPI (): void {
+  requeteAPI (createNewScene = false): void {
     API.post(
       this,
       '/resources/ergonomio-scenes',
@@ -424,6 +425,19 @@ export default class ErgonomIOAssets extends Vue {
         this.scenes.push(this.scenes2[i])
       }
       this.scenes2 = []
+
+      // Scroll to this.scenes[this.scenes.length - 1]
+      if (createNewScene) {
+        this.$nextTick(() => {
+          const el = document.getElementById(
+            `scene-${this.scenes[this.scenes.length - 1].id}`
+          )
+
+          if (el) {
+            el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+          }
+        })
+      }
     })
   }
 
@@ -444,7 +458,7 @@ export default class ErgonomIOAssets extends Vue {
   createEmptyScene (): void {
     const scene = new CardScene({ id: this.scenes.length })
     scene.parsedTags.push('vide')
-    this.scenes.push(scene)
+    // this.scenes.push(scene)
     this.addSceneAPI(scene)
   }
 
@@ -472,7 +486,7 @@ export default class ErgonomIOAssets extends Vue {
         idProfile: scene.idProfile
       })
     ).then((response: Response) => {
-      this.refreshScenes()
+      this.refreshScenes(true)
     })
   }
 
@@ -657,9 +671,9 @@ export default class ErgonomIOAssets extends Vue {
 
   // Refresh scenes
   // @arg No arguments required
-  refreshScenes (): void {
+  refreshScenes (createNewScene = false): void {
     this.scenes = []
-    this.requeteAPI()
+    this.requeteAPI(createNewScene)
   }
 
   // Get file that is upload
