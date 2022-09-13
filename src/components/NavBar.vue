@@ -1,3 +1,11 @@
+<style scoped>
+.rounded-icon {
+  border-radius: 50%;
+  overflow: hidden;
+  box-shadow: 0 0 0 3px white;
+}
+</style>
+
 <template>
   <nav class="nav-bar">
     <!-- Vertical bar -->
@@ -50,6 +58,25 @@
         :color="$vuetify.theme.dark ? 'white' : 'black'"
       >
         <v-icon>mdi-circle-half-full</v-icon>
+      </v-btn>
+
+      <!-- Language selection -->
+      <v-btn icon @click="toggleDarkMode">
+        <v-icon class="rounded-icon">$vuetify.icons.flagEnglish</v-icon>
+      </v-btn>
+      <v-btn
+        icon
+        @click="toggleDarkMode"
+        :color="$vuetify.theme.dark ? 'white' : 'black'"
+      >
+        <v-icon class="rounded-icon">$vuetify.icons.flagFrench</v-icon>
+      </v-btn>
+      <v-btn
+        icon
+        @click="toggleDarkMode"
+        :color="$vuetify.theme.dark ? 'white' : 'black'"
+      >
+        <v-icon class="rounded-icon">$vuetify.icons.flagGerman</v-icon>
       </v-btn>
     </v-app-bar>
 
