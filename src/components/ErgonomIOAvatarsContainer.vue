@@ -258,7 +258,7 @@
         </v-row>
 
         <!--Row of buttons to switch between bodyPart list-->
-        <v-row class="ma-3 flex-grow-0 align-center justify-center">
+        <v-row class="ma-1 flex-grow-0 align-center justify-center">
           <v-slide-group show-arrows center-active>
             <v-slide-item
               v-for="(parentMenu, parentIndex) in mainMenu.items"
@@ -266,7 +266,7 @@
               v-slot="{ toggle }"
             >
               <v-btn
-                class="mx-2 black--text"
+                class="ma-1 black--text"
                 fab
                 :color="
                   parentMenu.type === 'COLOR' ? parentMenu.value : 'primary'
@@ -1125,6 +1125,7 @@ export default class ErgonomIOAvatarsContainer extends Vue {
   // Used to load Profile sent by AvatarManager PopUp
   // @arg profile loaded
   loadProfile (profile: APIProfile): void {
+    console.log(JSON.stringify(profile))
     // Set avatar meshes
     this.loadMesh('./Avatars/Shirt/'.concat(profile.shirtName, '.fbx'), 1)
     this.mainMenu.items[1].selected = this.shirtNamesArray.findIndex(element =>

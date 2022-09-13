@@ -30,6 +30,7 @@ import ErgonomIODynamicsObjects from '@/views/ErgonomIO/ErgonomIODynamicsObjects
 import ErgonomIOAvatars from '@/views/ErgonomIO/ErgonomIOAvatars.vue'
 import ErgonomIOLogin from '@/views/ErgonomIO/ErgonomIOLogin.vue'
 import ErgonomioMainMenu from '@/components/ergonomio_ui/ErgonomioMainMenu.vue'
+import ErgonomIOProfiles from '@/views/WebMenus/WebMenuProfilesManager.vue'
 
 // Documentation
 import DatabaseViewer from '@/views/APIDocumentation/DatabaseViewer.vue'
@@ -226,6 +227,14 @@ export const routes: Array<Route> = [
     path: '/ergonom-io-avatars',
     category: 'Ergonom.io',
     component: ErgonomIOAvatars
+  }),
+  new Route({
+    icon: 'mdi-human',
+    name: 'Avatars',
+    subname: 'Profiles manager',
+    path: '/ergonom-io-profiles-manager',
+    category: 'Ergonom.io',
+    component: ErgonomIOProfiles
   }),
 
   // Documentation
