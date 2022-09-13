@@ -141,7 +141,6 @@ export const routes: Array<Route> = [
     subname: 'Share dynamics files',
     path: '/dynamics-input',
     category: 'Dynamics Analysis',
-    restricted: false,
     component: DynamicsInput
   }),
   new Route({
