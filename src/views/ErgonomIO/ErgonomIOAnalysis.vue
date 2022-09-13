@@ -538,11 +538,6 @@ export default class AvatarAnimationComponent extends Vue {
       )
     )
     this.menuItemList.push(
-      new MenuItem('Download RULA analysis', 'mdi-download', () =>
-        this.downloadRULA()
-      )
-    )
-    this.menuItemList.push(
       new MenuItem('Toggle avatar', 'mdi-human', () =>
         this.updateSettings({ showAvatar: !this.settings.showAvatar })
       )
@@ -601,6 +596,17 @@ export default class AvatarAnimationComponent extends Vue {
         },
         () => this.settingsReferences.inputSkeleton == null
       )
+    )
+    this.menuItemList.push(
+      new MenuItem('Get CSV data', 'mdi-text-box', () => this.downloadRULA())
+    )
+    this.menuItemList.push(
+      new MenuItem('Get XLSM analyser', 'mdi-text-box-search', () => {
+        this.download(
+          'RULA_AnalysisGenerator.xlsm',
+          'RULA_AnalysisGenerator.xlsm'
+        )
+      })
     )
   }
 
@@ -678,12 +684,9 @@ export default class AvatarAnimationComponent extends Vue {
     })
   }
 
-  download (filename: string, text: string): void {
+  download (filename: string, href: string): void {
     const element = document.createElement('a')
-    element.setAttribute(
-      'href',
-      'data:text/plain;charset=utf-8,' + encodeURIComponent(text)
-    )
+    element.setAttribute('href', href)
     element.setAttribute('download', filename)
     element.style.display = 'none'
     document.body.appendChild(element)
@@ -693,6 +696,7 @@ export default class AvatarAnimationComponent extends Vue {
 
   downloadRULA (): void {
     let csv = ''
+    const newline = '\r\n'
     const header = ['time (in seconds)', ...this.data[0].rula.keys()]
       .map(key => {
         const keyName = key as keyof typeof RULA_LABELS
@@ -701,9 +705,10 @@ export default class AvatarAnimationComponent extends Vue {
       .join(';')
     const values = this.data
       .map(o => [o.time.toFixed(2), ...o.rula.values()].join(';'))
-      .join('\n')
-    csv += header + '\n' + values.replaceAll('.', ',') // For Excel CSV compatibility
-    this.download(`RULA_Results_${Date.now()}.csv`, csv)
+      .join(newline)
+    csv += header + newline + values.replaceAll('.', ',') // For Excel CSV compatibility
+    const href = 'data:text/plain;charset=utf-8,' + encodeURIComponent(csv)
+    this.download(`RULA_Results_${Date.now()}.csv`, href)
   }
 
   createAvatarGizmo (attach: THREE.Group): void {
