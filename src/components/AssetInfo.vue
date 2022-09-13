@@ -27,11 +27,20 @@
                 >
                   <v-img
                     flex-grow-1
-                    :src="this.iconUri"
+                    :src="
+                      this.imageMode === 'icon'
+                        ? this.iconUri
+                        : this.layoutSprite
+                    "
                     width="100%"
                     height="100%"
                     max-width="512"
                     max-height="512"
+                    @click="
+                      imageMode === 'icon'
+                        ? (imageMode = 'sprite')
+                        : (imageMode = 'icon')
+                    "
                   ></v-img
                 ></v-card>
               </v-layout>
@@ -86,7 +95,7 @@
 
 <script lang="ts">
 import API from '@/utils/api'
-import { APIAsset } from '@/utils/models'
+import { APIAsset, APIBoundingBox } from '@/utils/models'
 import Vue from 'vue'
 import Component from 'vue-class-component'
 
@@ -120,6 +129,13 @@ export default class AssetInfo extends Vue {
   private knownTagsSet = new Set<string>()
   private id = -1
   private gltfUri: string | null = null
+  private layoutSprite = ''
+  private boundingBox: APIBoundingBox = new APIBoundingBox(
+    { x: 0, y: 0, z: 0 },
+    { x: 0, y: 0, z: 0 }
+  )
+
+  private imageMode: 'icon' | 'sprite' = 'icon'
 
   private isMobileView = false
 
@@ -171,7 +187,13 @@ export default class AssetInfo extends Vue {
         response => {
           this.tags = new Array<string>()
           const r = (response as unknown) as [
-            { tags: string; name: string; picture: string }
+            {
+              tags: string
+              name: string
+              picture: string
+              boundingBox: string
+              layoutSprite: string
+            }
           ]
           r[0].tags
             .slice(1, -1)
@@ -185,6 +207,12 @@ export default class AssetInfo extends Vue {
           this.name = r[0].name
           this.iconUri = r[0].picture
           this.id = id
+          try {
+            this.boundingBox = JSON.parse(r[0].boundingBox)
+          } catch {
+            console.warn('invalid boundingbox')
+          }
+          this.layoutSprite = r[0].layoutSprite
           this.onTagChanged()
         },
         reject => {
@@ -200,12 +228,16 @@ export default class AssetInfo extends Vue {
     name: string,
     iconUri: string,
     gltfUri: string | null,
-    id: number
+    id: number,
+    layoutSprite: string,
+    boundingBox: APIBoundingBox
   ): void {
     this.name = name
     this.iconUri = iconUri
     this.id = id
     this.gltfUri = gltfUri
+    this.layoutSprite = layoutSprite
+    this.boundingBox = boundingBox
 
     this.tags = new Array<string>()
     if (id !== -1) {
@@ -267,13 +299,17 @@ export default class AssetInfo extends Vue {
           name: this.name,
           uri: this.gltfUri,
           picture: this.iconUri,
-          tags: JSON.stringify(this.tags)
+          tags: JSON.stringify(this.tags),
+          layoutSprite: this.layoutSprite,
+          boundingBox: JSON.stringify(this.boundingBox)
         })
       } else {
         apiFile = {
           name: this.name,
           picture: this.iconUri,
-          tags: JSON.stringify(this.tags)
+          tags: JSON.stringify(this.tags),
+          layoutSprite: this.layoutSprite,
+          boundingBox: JSON.stringify(this.boundingBox)
         }
       }
       console.log(apiFile)

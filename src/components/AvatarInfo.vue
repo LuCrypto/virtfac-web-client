@@ -86,7 +86,7 @@
 
 <script lang="ts">
 import API from '@/utils/api'
-import { APIAsset } from '@/utils/models'
+import { APIProfile } from '@/utils/models'
 import Vue from 'vue'
 import Component from 'vue-class-component'
 
@@ -115,9 +115,38 @@ export default class AvatarInfo extends Vue {
   private knownTags = new Array<string>()
   private knownTagsSet = new Set<string>()
   private id = -1
-  private gltfUri: string | null = null
 
   private isMobileView = false
+
+  mounted (): void {
+    console.log('mounted')
+    API.post(
+      this,
+      '/resources/ergonomio-profiles',
+      JSON.stringify({ select: ['tags'] })
+    ).then(
+      response => {
+        const r = (response as unknown) as [{ tags: string }]
+        r.forEach(item => {
+          item.tags
+            .slice(1, -1)
+            .split(',')
+            .forEach(e => {
+              const t = e.replaceAll('"', '')
+              if (t.length > 0) {
+                if (!this.knownTagsSet.has(t)) {
+                  this.knownTagsSet.add(t)
+                  this.knownTags.push(t)
+                }
+              }
+            })
+        })
+      },
+      reject => {
+        console.error(reject)
+      }
+    )
+  }
 
   cancel (): void {
     this.$emit('cancel')
@@ -126,6 +155,7 @@ export default class AvatarInfo extends Vue {
 
   save (): void {
     console.log('TODO : Save Avatar profile')
+    this.$emit('save', this.tags)
     this.$emit('close')
   }
 
