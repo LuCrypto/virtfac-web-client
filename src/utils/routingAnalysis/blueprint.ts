@@ -1,10 +1,21 @@
-import { Graph } from '@/utils/graph/graph'
+import { Graph, GraphJSON } from '@/utils/graph/graph'
 import { Node } from '../graph/node'
 // import { Vec2, Vector2 } from '@/utils/graph/Vec'
 import V from '@/utils/vector'
 import { Link } from '../graph/link'
 import { MetaData } from '../graph/metadata'
 import { LocalEvent, MapLocalEvent } from '../graph/localEvent'
+import { max } from 'd3'
+import { Destroyable } from './bp_window'
+
+export class BpWallFurniture {
+  public xpos: number
+  public assetId = -1
+
+  public constructor (xpos: number, assetId: number) {
+    this.xpos = xpos
+  }
+}
 
 export class Blueprint extends MetaData {
   private wallGraph: Graph
@@ -67,11 +78,13 @@ export class Blueprint extends MetaData {
 
   public addWall (n1: Node, n2: Node): void {
     const l = n1.addLink(n2)
+    /*
     n2.getOrAddData<Set<Node>>('targetBy', new Set<Node>()).add(n1)
     l.setData<number>(
       'length',
       n1.getData<V>('position').distanceTo(n2.getData<V>('position'))
     )
+    */
   }
 
   public removeWall (link: Link): void {
@@ -125,6 +138,44 @@ export class Blueprint extends MetaData {
       bottomCount % 2 === 0 // &&
       // Math.min(leftCount, rightCount, topCount, bottomCount) > 0
     )
+  }
+
+  public toJSON (): GraphJSON {
+    this.wallGraph.nodeFields.set('position', 'Vec2')
+    this.wallGraph.graphFields.set('scale', 'number')
+    this.wallGraph.linkFields.set(
+      'furniture',
+      '{ xpos: number, assetId: number }[]'
+    )
+    this.wallGraph.nodeIdField = 'id'
+
+    this.wallGraph.foreachLink(l => {
+      l.setData(
+        'furniture',
+        Array.from(
+          l
+            .getDataOrDefault<Map<Destroyable, BpWallFurniture>>(
+              'furnitures',
+              new Map<Destroyable, BpWallFurniture>()
+            )
+            .values()
+        )
+      )
+    })
+    return this.wallGraph.toJsonOBJ()
+  }
+
+  public applyJSON (jsonObj: GraphJSON): void {
+    //
+    this.wallGraph.applyJson(jsonObj)
+    let maxId = this.nextId
+    this.wallGraph.foreachNode(n => {
+      const id = n.getData<number>('id')
+      if (id >= maxId) {
+        maxId = id + 1
+      }
+    })
+    this.nextId = maxId
   }
 
   public constructor () {
@@ -185,5 +236,16 @@ export class Blueprint extends MetaData {
       },
       this
     )
+
+    this.wallGraph.onLinkAdded().addListener(arg => {
+      const l = arg.link
+      const n1 = arg.link.getOriginNode()
+      const n2 = arg.link.getNode()
+      n2.getOrAddData<Set<Node>>('targetBy', new Set<Node>()).add(n1)
+      l.setData<number>(
+        'length',
+        n1.getData<V>('position').distanceTo(n2.getData<V>('position'))
+      )
+    })
   }
 }

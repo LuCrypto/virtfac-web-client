@@ -90,6 +90,19 @@ export class MetaData {
     }
     return tmp as T
   }
+
+  /*
+  public getOrCreateData<T> (key: string): T {
+    let tmp = this.data.get(key)
+    if (tmp === undefined) {
+      tmp = new T()
+      this.data.set(key, tmp)
+      this.dataChanged.notify({ key: key, arg: { value: tmp } })
+      console.log(tmp)
+    }
+    return tmp as T
+  }
+  */
   // #endregion
   ///
 

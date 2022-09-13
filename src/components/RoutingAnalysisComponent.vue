@@ -57,7 +57,7 @@
           application="ROUTING_ANALYSIS"
           :singleSelect="true"
           :openFile="true"
-          :uploadPipeline="changeMime"
+          :fileProcessing="changeMime"
           @fileInput="handleFile"
         ></open-file>
       </pop-up>
