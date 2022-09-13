@@ -1,3 +1,4 @@
+import { imageAsset } from '@/utils/defaultData'
 /**
  * Models.ts lists all the structures resulting from the API requests
  */
@@ -215,5 +216,95 @@ export class APIFile extends APIFileItem {
     const regexp = /data:(.*);base64,/g
     const result = regexp.exec(this.uri) || [null, null]
     return result[1] || ''
+  }
+}
+
+export class APIProfile {
+  id = 0
+  idUserOwner = 0
+  idProject = 0
+  creationDate = 0
+  modificationDate = 0
+
+  name = ''
+  color = 0x000000
+  tags = '[]'
+
+  picture = imageAsset
+  hairName = ''
+  pantName = ''
+  shirtName = ''
+  headName = ''
+  shoesName = ''
+  beardName = ''
+  hipWidth = 0
+  body = 0
+  neck = 0
+  head = 0
+  shoulderWidth = 0
+  upperArm = 0
+  foreArm = 0
+  palm = 0
+  upperLeg = 0
+  lowerLeg = 0
+  heelHeight = 0
+  footLength = 0
+  femaleFace = 0
+  armSize = 0
+  breastSize = 0
+  bellySize = 0
+  lowerBackSize = 0
+  hipSize = 0
+  buttockSize = 0
+  legSize = 0
+  skinColor = 0
+  hairColor = 0
+  beardColor = 0
+  eyesColor = 0
+  shirtColor1 = 0
+  shirtColor2 = 0
+  shirtColor3 = 0
+  shirtColor4 = 0
+  shirtColor5 = 0
+  pantsColor1 = 0
+  pantsColor2 = 0
+  pantsColor3 = 0
+  pantsColor4 = 0
+  pantsColor5 = 0
+  shoesColor1 = 0
+  shoesColor2 = 0
+  shoesColor3 = 0
+
+  constructor (attributes?: Partial<APIFileItem>) {
+    Object.assign(this, attributes)
+  }
+
+  getDate (dateValue: number): string {
+    const date = new Date(dateValue).toLocaleString().split(', ')
+    return (
+      date[1] ||
+      ''
+        .split(':')
+        .slice(0, -1)
+        .join(':') +
+        ' ' +
+        date[0]
+    )
+  }
+
+  getModificationDate (): string {
+    return this.getDate(this.modificationDate)
+  }
+
+  getCreationDate (): string {
+    return this.getDate(this.creationDate)
+  }
+
+  getName (): string {
+    return this.name
+  }
+
+  getTags (): string[] {
+    return this.tags.split(',')
   }
 }

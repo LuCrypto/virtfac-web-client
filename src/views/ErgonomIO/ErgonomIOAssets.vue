@@ -161,6 +161,7 @@
         <v-container class="d-flex flex-wrap overflow-y-auto">
           <v-card
             :width="sizeCardString"
+            class="ma-1"
             :key="indexCard"
             v-for="(asset, indexCard) in useCategory ? cardsSort : assets"
           >
