@@ -24,6 +24,86 @@ export class BpAPICache {
 
   private assetRequestsMap = new Map<number, Array<{(): void }>>()
 
+  public selectItems (
+    fields: (
+      | 'id'
+      | 'picture'
+      | 'layoutSprite'
+      | 'behaviours'
+      | 'name'
+      | 'boundingBox'
+    )[],
+    selection: { id: number }[]
+  ) {
+    return new Promise<unknown[]>(resolve => {
+      if (this.component === undefined) throw new Error('no Vue environment')
+      const select: { id: number }[] = []
+      const result: unknown[] = []
+      selection.forEach(item => {
+        const asset = this.assetMap.get(item.id)
+        if (asset === undefined) {
+          select.push(item)
+        } else {
+          const r = {} as Record<string, unknown>
+          console.log(asset)
+          fields.forEach(field => {
+            r[field] = ((asset as unknown) as Record<string, unknown>)[field]
+          })
+          console.log(r)
+          result.push(r)
+        }
+      })
+      if (select.length > 0) {
+        API.post(
+          this.component,
+          '/resources/assets',
+          JSON.stringify({
+            select: fields,
+            where: select
+          })
+        ).then(response => {
+          console.log(response)
+          ;((response as unknown) as Record<string, unknown>[]).forEach(
+            asset => {
+              const r = {} as Record<string, unknown>
+              fields.forEach(field => {
+                switch (field) {
+                  case 'behaviours': {
+                    const map = new Map<string, BehaviourInstance>()
+                    ;(JSON.parse(
+                      asset.behaviours as string
+                    ) as BehaviourInstance[]).forEach(elem => {
+                      map.set(elem.name, elem)
+                    })
+                    r.behaviours = map
+                    break
+                  }
+                  case 'boundingBox': {
+                    r.boundingBox = JSON.parse(
+                      asset.boundingBox as string
+                    ) as APIBoundingBox
+                    break
+                  }
+                  default: {
+                    r[field] = asset[field]
+                  }
+                }
+              })
+              result.push(r)
+            }
+          )
+          resolve(result)
+        })
+      } else {
+        resolve(result)
+      }
+    })
+  }
+
+  public directGetAsset (id: number): BpAssetCache | undefined {
+    return this.assetMap.get(id)
+  }
+
   public getAsset (id: number): Promise<BpAssetCache> {
     return new Promise<BpAssetCache>(resolve => {
       if (this.component === undefined) throw new Error('no Vue environment')
@@ -37,7 +117,14 @@ export class BpAPICache {
             this.component,
             '/resources/assets',
             JSON.stringify({
-              select: ['name', 'picture', 'behaviours'],
+              select: [
+                'id',
+                'boundingBox',
+                'name',
+                'picture',
+                'behaviours',
+                'layoutSprite'
+              ],
               where: { id: id }
             })
           ).then(response => {

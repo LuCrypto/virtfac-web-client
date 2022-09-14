@@ -55,6 +55,10 @@ export class Blueprint extends MetaData {
     this.wallGraph.foreachNode(func)
   }
 
+  public foreachWallLink (func: { (link: Link): void }): void {
+    this.wallGraph.foreachLink(func)
+  }
+
   private nextId = 0
 
   public addWallNode (pos: V): Node {
