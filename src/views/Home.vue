@@ -1,5 +1,5 @@
 <template>
-  <odoo-i-frame src="/"></odoo-i-frame>
+  <odoo-i-frame src=""></odoo-i-frame>
 </template>
 
 <script lang="ts">
