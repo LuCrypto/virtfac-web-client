@@ -76,7 +76,7 @@ export default class OdooIFrame extends Vue {
     let languagePath = ''
     switch (language) {
       case 'french':
-        languagePath = '/' // french is default language
+        languagePath = '/fr'
         break
       case 'english':
         languagePath = '/en'
