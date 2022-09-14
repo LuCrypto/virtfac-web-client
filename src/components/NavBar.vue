@@ -2,6 +2,8 @@
 .rounded-icon {
   border-radius: 50%;
   overflow: hidden;
+}
+.rounded-icon.selected {
   box-shadow: 0 0 0 3px white;
 }
 </style>
@@ -61,22 +63,26 @@
       </v-btn>
 
       <!-- Language selection -->
-      <v-btn icon @click="toggleDarkMode">
-        <v-icon class="rounded-icon">$vuetify.icons.flagEnglish</v-icon>
+      <v-btn icon @click="setLanguage('english')">
+        <v-icon
+          class="rounded-icon"
+          :class="language === 'english' ? 'selected' : ''"
+          >$vuetify.icons.flagEnglish</v-icon
+        >
       </v-btn>
-      <v-btn
-        icon
-        @click="toggleDarkMode"
-        :color="$vuetify.theme.dark ? 'white' : 'black'"
-      >
-        <v-icon class="rounded-icon">$vuetify.icons.flagFrench</v-icon>
+      <v-btn icon @click="setLanguage('french')">
+        <v-icon
+          class="rounded-icon"
+          :class="language === 'french' ? 'selected' : ''"
+          >$vuetify.icons.flagFrench</v-icon
+        >
       </v-btn>
-      <v-btn
-        icon
-        @click="toggleDarkMode"
-        :color="$vuetify.theme.dark ? 'white' : 'black'"
-      >
-        <v-icon class="rounded-icon">$vuetify.icons.flagGerman</v-icon>
+      <v-btn icon @click="setLanguage('german')">
+        <v-icon
+          class="rounded-icon"
+          :class="language === 'german' ? 'selected' : ''"
+          >$vuetify.icons.flagGerman</v-icon
+        >
       </v-btn>
     </v-app-bar>
 
@@ -149,8 +155,10 @@ export default class NavBar extends Vue {
   categories: Map<string, Route[]> = new Map()
   avatar: string | null = null
   clickTitleNumber = 0
+  language = ''
 
   created (): void {
+    this.updateLanguage()
     this.updateMenu()
     // this.getMainMenu()
   }
@@ -230,6 +238,17 @@ export default class NavBar extends Vue {
     ).then(response => {
       response.text().then(text => this.$root.$emit('bottom-message', text))
     })
+  }
+
+  setLanguage (language: string): void {
+    this.language = language
+    Session.setLanguage(language)
+    this.$root.$emit('changeLanguage')
+    console.log('Change language')
+  }
+
+  updateLanguage (): void {
+    this.language = Session.getLanguage()
   }
 }
 </script>

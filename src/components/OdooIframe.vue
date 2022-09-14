@@ -22,68 +22,7 @@ iframe {
 
 <script lang="ts">
 import { Component, Prop, Vue } from 'vue-property-decorator'
-
-/*
-// In Odoo, this custom script is added to dynamicly update theme :
-
-function GetIframeAttributes () {
-  if (window.parent) {
-    let json = {}
-    try {
-      json = JSON.parse(window.name)
-    } catch (e) {
-      return {}
-    }
-    return json
-  }
-  return {}
-}
-
-function SetTheme() {
-    const attributes = GetIframeAttributes()
-    console.log('Iframe parent attributes :', attributes)
-    const theme = attributes.theme
-    if(theme) {
-        document.querySelector('body').classList.add(theme)
-    }
-}
-
-SetTheme()
-
-// And this custom style manage dark theme :
-#top {
-    display: none;
-}
-
-::-webkit-scrollbar {
-  width: 4px;
-  height: 4px;
-}
-
-::-webkit-scrollbar-thumb {
-  background: #ffb000;
-}
-
-// Dark theme
-body.dark,
-.dark #wrap,
-.dark .s_text_image,
-.dark .s_banner *,
-.dark .s_three_columns,
-.dark .s_title,
-.dark .s_text_block,
-.dark footer,
-.dark .s_picture {
-    background-color: #121212;
-    color: white;
-}
-.dark figcaption * {
-    color: white !important;
-}
-.dark .o_we_shape {
-    display: none;
-}
-*/
+import { Session } from '@/utils/session'
 
 @Component({
   name: 'OdooIFrame'
@@ -91,17 +30,23 @@ body.dark,
 // @vuese
 // @group VIEWS
 export default class OdooIFrame extends Vue {
-  @Prop({ default: () => 'http://10.244.77.203/' })
+  private base = 'http://10.244.77.203'
+
+  @Prop({ default: () => '' })
   private src!: string
 
   getIframeNameAttributes (): string {
     return JSON.stringify({
-      theme: this.$vuetify.theme.dark ? 'dark' : 'light'
+      theme: this.$vuetify.theme.dark ? 'dark' : 'light',
+      hideFooter: true
     })
   }
 
   mounted (): void {
     this.$root.$on('changeDarkMode', () => {
+      this.createIFrame()
+    })
+    this.$root.$on('changeLanguage', () => {
       this.createIFrame()
     })
     this.createIFrame()
@@ -127,11 +72,25 @@ export default class OdooIFrame extends Vue {
 
   createIFrame (): void {
     const iframe = document.createElement('iframe') as HTMLIFrameElement
-    if (this.src) {
+    const language = Session.getLanguage()
+    let languagePath = ''
+    switch (language) {
+      case 'french':
+        languagePath = '/' // french is default language
+        break
+      case 'english':
+        languagePath = '/en'
+        break
+      case 'german':
+        languagePath = '/de'
+        break
+    }
+    const src = `${this.base}${languagePath}${this.src}`
+    if (src) {
       iframe.classList.add('hide')
       iframe.setAttribute('name', this.getIframeNameAttributes())
       iframe.onload = () => this.removeLastIFrame(iframe)
-      iframe.src = `${this.src}`
+      iframe.src = `${src}`
       this.$el.appendChild(iframe)
     }
   }
