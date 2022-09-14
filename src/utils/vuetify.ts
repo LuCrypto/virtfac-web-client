@@ -18,6 +18,10 @@ import IconFlagEnglish from '@/components/icons/IconFlagEnglish.vue'
 import IconFlagGerman from '@/components/icons/IconFlagGerman.vue'
 import IconFlagFrench from '@/components/icons/IconFlagFrench.vue'
 
+import english from '@/utils/translations/english'
+import german from '@/utils/translations/german'
+import french from '@/utils/translations/french'
+
 class Themes {
   static themes = {
     dark: {
@@ -66,6 +70,15 @@ export default new Vuetify({
     },
     dark: Session.getTheme() === 'dark',
     themes: Themes.themes
+  },
+
+  lang: {
+    locales: {
+      english,
+      french,
+      german
+    },
+    current: Session.getLanguage()
   },
 
   icons: {

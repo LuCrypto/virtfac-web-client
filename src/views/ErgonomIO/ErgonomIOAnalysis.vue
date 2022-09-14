@@ -26,9 +26,9 @@
       fluid
     >
       <v-card class="flex-grow-1 d-flex flex-column" style="overflow: auto;">
-        <v-card-title class="pa-2 primary black--text"
-          >Gesture analysis</v-card-title
-        >
+        <v-card-title class="pa-2 primary black--text">{{
+          $vuetify.lang.t('$vuetify.gestureAnalysis.gestureAnalysis')
+        }}</v-card-title>
 
         <v-card-text class="pa-0" style="height: 100%;">
           <v-layout row class="ma-0" fill-height>
@@ -36,6 +36,7 @@
             <v-navigation-drawer
               class="ma-0 pa-0"
               stateless
+              dense
               permanent
               :mini-variant="menuCollapse"
             >
@@ -60,7 +61,11 @@
                     </v-list-item-icon>
                     <v-list-item-content>
                       <v-list-item-title
-                        v-text="menuItem.text"
+                        v-text="
+                          $vuetify.lang.t(
+                            `$vuetify.gestureAnalysis.${menuItem.text}`
+                          )
+                        "
                       ></v-list-item-title>
                     </v-list-item-content>
                   </v-list-item>
@@ -82,7 +87,9 @@
                     </v-list-item-icon>
                     <v-list-item-content>
                       <v-list-item-title
-                        v-text="'Menu labels'"
+                        v-text="
+                          $vuetify.lang.t('$vuetify.gestureAnalysis.menuLabels')
+                        "
                       ></v-list-item-title>
                     </v-list-item-content>
                   </v-list-item>
@@ -119,7 +126,8 @@
                       ></v-sheet>
                       <h3>RULA : {{ rulaValue }} / 7</h3>
                       <h4>
-                        TIME : {{ animationTime.toFixed(2) }}s /
+                        {{ $vuetify.lang.t('$vuetify.gestureAnalysis.time') }} :
+                        {{ animationTime.toFixed(2) }}s /
                         {{ animationDuration.toFixed(2) }}s
                       </h4>
                     </v-card>
@@ -523,13 +531,13 @@ export default class AvatarAnimationComponent extends Vue {
 
   createMenu (): void {
     this.menuItemList.push(
-      new MenuItem('Open classic BVH', 'mdi-file-document', () => {
+      new MenuItem('openClassicBVH', 'mdi-file-document', () => {
         (this.$refs.openFilePopUp as PopUp).open()
       })
     )
     this.menuItemList.push(
       new MenuItem(
-        'Open blender BVH',
+        'openBlenderBVH',
         'mdi-blender-software',
         () => {
           (this.$refs.openFilePopUp as PopUp).open()
@@ -538,38 +546,38 @@ export default class AvatarAnimationComponent extends Vue {
       )
     )
     this.menuItemList.push(
-      new MenuItem('Toggle avatar', 'mdi-human', () =>
+      new MenuItem('toggleAvatar', 'mdi-human', () =>
         this.updateSettings({ showAvatar: !this.settings.showAvatar })
       )
     )
     this.menuItemList.push(
       new MenuItem(
-        'Input skeleton',
+        'inputSkeleton',
         'mdi-eye-arrow-left',
         () => this.updateSettings({ showInput: !this.settings.showInput }),
         () => this.settingsReferences.inputSkeleton == null
       )
     )
     this.menuItemList.push(
-      new MenuItem('Output skeleton', 'mdi-eye-arrow-right', () =>
+      new MenuItem('outputSkeleton', 'mdi-eye-arrow-right', () =>
         this.updateSettings({ showSkeleton: !this.settings.showSkeleton })
       )
     )
     this.menuItemList.push(
       new MenuItem(
-        'Add asset',
+        'addAsset',
         'mdi-archive-plus',
         () => true,
         () => true
       )
     )
     this.menuItemList.push(
-      new MenuItem('Toggle transform', 'mdi-rotate-orbit', () =>
+      new MenuItem('toggleTransform', 'mdi-rotate-orbit', () =>
         this.updateSettings({ transformType: this.settings.transformType + 1 })
       )
     )
     this.menuItemList.push(
-      new MenuItem('Reset transform', 'mdi-undo', () => {
+      new MenuItem('resetTransform', 'mdi-undo', () => {
         const transform = this.settingsReferences.transform
         if (transform && transform.object) {
           transform.object.position.set(0, 0, 0)
@@ -579,7 +587,7 @@ export default class AvatarAnimationComponent extends Vue {
     )
     this.menuItemList.push(
       new MenuItem(
-        'Toggle RULA markers',
+        'toggleRULAMArkers',
         'mdi-eye-circle',
         () => {
           this.rulaMarkerType = (this.rulaMarkerType + 1) % 4
@@ -589,7 +597,7 @@ export default class AvatarAnimationComponent extends Vue {
     )
     this.menuItemList.push(
       new MenuItem(
-        'Toggle angle inspector',
+        'toggleAngleInspector',
         'mdi-angle-acute',
         () => {
           this.toggleAngleInspector = !this.toggleAngleInspector
@@ -598,10 +606,10 @@ export default class AvatarAnimationComponent extends Vue {
       )
     )
     this.menuItemList.push(
-      new MenuItem('Get CSV data', 'mdi-text-box', () => this.downloadRULA())
+      new MenuItem('getCSVData', 'mdi-text-box', () => this.downloadRULA())
     )
     this.menuItemList.push(
-      new MenuItem('Get XLSM analyser', 'mdi-text-box-search', () => {
+      new MenuItem('getXLSMAnalyser', 'mdi-text-box-search', () => {
         this.download(
           'RULA_AnalysisGenerator.xlsm',
           'RULA_AnalysisGenerator.xlsm'

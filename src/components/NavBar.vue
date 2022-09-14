@@ -66,21 +66,21 @@
       <v-btn icon @click="setLanguage('english')">
         <v-icon
           class="rounded-icon"
-          :class="language === 'english' ? 'selected' : ''"
+          :class="this.$vuetify.lang.current === 'english' ? 'selected' : ''"
           >$vuetify.icons.flagEnglish</v-icon
         >
       </v-btn>
       <v-btn icon @click="setLanguage('french')">
         <v-icon
           class="rounded-icon"
-          :class="language === 'french' ? 'selected' : ''"
+          :class="this.$vuetify.lang.current === 'french' ? 'selected' : ''"
           >$vuetify.icons.flagFrench</v-icon
         >
       </v-btn>
       <v-btn icon @click="setLanguage('german')">
         <v-icon
           class="rounded-icon"
-          :class="language === 'german' ? 'selected' : ''"
+          :class="this.$vuetify.lang.current === 'german' ? 'selected' : ''"
           >$vuetify.icons.flagGerman</v-icon
         >
       </v-btn>
@@ -155,7 +155,6 @@ export default class NavBar extends Vue {
   categories: Map<string, Route[]> = new Map()
   avatar: string | null = null
   clickTitleNumber = 0
-  language = ''
 
   created (): void {
     this.updateLanguage()
@@ -241,14 +240,13 @@ export default class NavBar extends Vue {
   }
 
   setLanguage (language: string): void {
-    this.language = language
     Session.setLanguage(language)
+    this.updateLanguage()
     this.$root.$emit('changeLanguage')
-    console.log('Change language')
   }
 
   updateLanguage (): void {
-    this.language = Session.getLanguage()
+    this.$vuetify.lang.current = Session.getLanguage()
   }
 }
 </script>
