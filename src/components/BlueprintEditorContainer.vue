@@ -1,3 +1,9 @@
+<style>
+.machin::before {
+  opacity: 0.08 !important;
+}
+</style>
+
 <template>
   <maximizable-container>
     <v-card elevation="3" class="d-flex flex-row flex-grow-1">
@@ -20,6 +26,29 @@
               </v-list-item-icon>
               <v-list-item-content>
                 <v-list-item-title v-text="menuItem.text"></v-list-item-title>
+              </v-list-item-content>
+            </v-list-item>
+            <v-list-item v-if="mySelectedFurniture === null">
+              <v-list-item-icon>
+                <v-icon>mdi-chair-rolling</v-icon>
+              </v-list-item-icon>
+              <v-list-item-content>
+                <v-list-item-title>Select Furniture</v-list-item-title>
+              </v-list-item-content>
+            </v-list-item>
+            <v-list-item v-if="mySelectedFurniture !== null" class="machin">
+              <v-list-item-icon>
+                <v-icon>mdi-chair-rolling</v-icon>
+              </v-list-item-icon>
+              <v-list-item-content>
+                <v-list-item-title>Selected Furniture</v-list-item-title>
+                <v-list-item-subtitle>{{
+                  mySelectedFurniture.name.split('.')[0]
+                }}</v-list-item-subtitle>
+                <v-img
+                  :src="mySelectedFurniture.picture"
+                  style="max-width:100%; box-shadow: inset 0 0 3px -1px currentColor"
+                ></v-img>
               </v-list-item-content>
             </v-list-item>
           </v-list-item-group>
@@ -69,6 +98,8 @@ import MaximizableContainer from './MaximizableContainer.vue'
 
 import { BlueprintContainer } from '@/utils/routingAnalysis/blueprintContainer'
 import { BlueprintExporter } from '@/utils/routingAnalysis/blueprintExporter'
+import { APIAsset } from '@/utils/models'
+import API from '@/utils/api'
 
 class MenuItem {
   text: string
@@ -82,7 +113,7 @@ class MenuItem {
 }
 
 @Component({
-  name: 'DrawingShopComponent',
+  name: 'BlueprintEditorContainer',
   components: {
     BlueprintEditor,
     InputFieldPopUp,
@@ -94,7 +125,7 @@ class MenuItem {
 // @vuese
 // @group COMPONENTS
 // Content component to the blueprint-editor page
-export default class DrawingShopComponent extends Vue {
+export default class BlueprintEditorContainer extends Vue {
   selectedMenuItem = -1
   nodeViewer: BlueprintEditor | null = null
   actionContainer: ActionContainer | null = null
@@ -103,10 +134,32 @@ export default class DrawingShopComponent extends Vue {
 
   inputField: InputFieldPopUp | null = null
 
+  mySelectedFurniture: APIAsset | null = null
+  public get selectedFurniture (): APIAsset | null {
+    return this.mySelectedFurniture
+  }
+
   mounted (): void {
     this.nodeViewer = this.$refs.nodeViewer as BlueprintEditor
     this.actionContainer = this.$refs.actionContainer as ActionContainer
     this.inputField = this.$refs.inputFieldPopUp as InputFieldPopUp
+
+    API.post(
+      this,
+      '/resources/assets',
+      JSON.stringify({
+        select: ['id', 'name', 'picture', 'behaviours'],
+        where: { id: 52 }
+      })
+    ).then(asset => {
+      this.mySelectedFurniture = new APIAsset(
+        ((asset as unknown) as [
+          { id: number, name: string; picture: string; behaviours: string }
+        ])[0]
+      )
+      ;(this
+        .nodeViewer as BlueprintEditor).selectedFurniture = this.mySelectedFurniture
+    })
     /*
     this.menuItemList.push(
       new MenuItem('Open File', 'mdi-file-document', () => {
@@ -203,7 +256,8 @@ export default class DrawingShopComponent extends Vue {
       this.nodeViewer.update(data)
     }
   }
-*/
+  */
+
   inputFile (): void {
     const input = this.$refs.inputFile as HTMLInputElement
     input.value = ''

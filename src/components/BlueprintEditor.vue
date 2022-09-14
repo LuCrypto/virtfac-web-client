@@ -73,6 +73,8 @@ import { Graph } from '@/utils/graph/graph'
 import { BlueprintContainer } from '@/utils/routingAnalysis/blueprintContainer'
 
 import Component from 'vue-class-component'
+import { APIAsset } from '@/utils/models'
+import { BpAPICache } from '@/utils/routingAnalysis/bp_APICache'
 
 @Component({
   name: 'BlueprintEditor',
@@ -102,7 +104,18 @@ export default class BlueprintEditor extends Vue {
     return this.bpContainer
   }
 
+  private _selectedFurniture: APIAsset | null = null
+  public get selectedFurniture (): APIAsset | null {
+    return this._selectedFurniture
+  }
+
+  public set selectedFurniture (value: APIAsset | null) {
+    this._selectedFurniture = value
+    ;(this.bpContainer as BlueprintContainer).selectedAsset = value
+  }
+
   mounted (): void {
+    BpAPICache.instance().component = this
     this.container = this.$refs.container as Element
     this.bpContainer = new BlueprintContainer(this.container as HTMLElement)
     this.bpContainer.onModeChanged.addListener(mode => {

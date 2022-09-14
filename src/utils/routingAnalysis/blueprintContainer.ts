@@ -122,8 +122,12 @@ export class BlueprintContainer {
     return this.mode
   }
 
-  public getSelectedAsset (): BlueprintAPIAsset|null {
-    return this.selectedAsset
+  public get selectedAsset (): APIAsset | null {
+    return this._selectedAsset
+  }
+
+  public set selectedAsset (value: APIAsset | null) {
+    this._selectedAsset = value
   }
 
   public onModeChanged = new LocalEvent<
@@ -153,7 +157,7 @@ export class BlueprintContainer {
     this.onModeChanged.notify(this.mode)
   }
 
-  public selectedAsset: BlueprintAPIAsset | null = null
+  public _selectedAsset: APIAsset | null = null
 
   // #region SETTINGS
   /**
