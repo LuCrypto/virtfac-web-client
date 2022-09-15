@@ -28,7 +28,10 @@
                 <v-list-item-title v-text="menuItem.text"></v-list-item-title>
               </v-list-item-content>
             </v-list-item>
-            <v-list-item v-if="mySelectedFurniture === null">
+            <v-list-item
+              v-if="mySelectedFurniture === null"
+              @click.stop="furnitureButtonClick"
+            >
               <v-list-item-icon>
                 <v-icon>mdi-chair-rolling</v-icon>
               </v-list-item-icon>
@@ -36,7 +39,11 @@
                 <v-list-item-title>Select Furniture</v-list-item-title>
               </v-list-item-content>
             </v-list-item>
-            <v-list-item v-if="mySelectedFurniture !== null" class="machin">
+            <v-list-item
+              v-if="mySelectedFurniture !== null"
+              class="machin"
+              @click.stop="furnitureButtonClick"
+            >
               <v-list-item-icon>
                 <v-icon>mdi-chair-rolling</v-icon>
               </v-list-item-icon>
@@ -68,8 +75,15 @@
           </v-list-item-group>
         </v-list>
       </v-navigation-drawer>
-      <v-container style="width: auto; margin: 0; flex-grow: 1;">
-        <blueprint-editor ref="nodeViewer"></blueprint-editor>
+      <v-container
+        style="width: auto; margin: 0; padding: 0px; flex-grow: 1;"
+        fluid
+      >
+        <blueprint-editor ref="blueprintEditor"></blueprint-editor>
+        <asset-library
+          ref="assetLibrary"
+          :categories="assetCategories"
+        ></asset-library>
       </v-container>
       <input-field-pop-up ref="inputFieldPopUp"></input-field-pop-up>
       <pop-up ref="filePopUp">
@@ -100,6 +114,8 @@ import { BlueprintContainer } from '@/utils/routingAnalysis/blueprintContainer'
 import { BlueprintExporter } from '@/utils/routingAnalysis/blueprintExporter'
 import { APIAsset } from '@/utils/models'
 import API from '@/utils/api'
+import { Behaviour, BehaviourInstance } from '@/utils/assets/behaviour'
+import AssetLibrary from './AssetLibrary.vue'
 
 class MenuItem {
   text: string
@@ -119,46 +135,142 @@ class MenuItem {
     InputFieldPopUp,
     OpenFile,
     PopUp,
-    MaximizableContainer
+    MaximizableContainer,
+    AssetLibrary
   }
 })
 // @vuese
 // @group COMPONENTS
 // Content component to the blueprint-editor page
 export default class BlueprintEditorContainer extends Vue {
+  openedContent: 'DRAWER' | 'LIBRARY' = 'DRAWER'
+
   selectedMenuItem = -1
-  nodeViewer: BlueprintEditor | null = null
+  contentContainer: Element | null = null
+  blueprintEditor: BlueprintEditor | null = null
+  assetLibrary: AssetLibrary | null = null
   actionContainer: ActionContainer | null = null
   menuCollapse = false
   menuItemList: MenuItem[] = []
 
+  assetsInfo = new Map<
+    string,
+    {
+      id: number
+      name: string
+      behaviours: Record<string, unknown>
+      picture: string
+      category: string
+    }[]
+  >([
+    ['Objects', []],
+    ['Doors', []],
+    ['Windows', []]
+  ])
+
+  assetCategories = [
+    { name: 'Objects', icon: 'mdi-cube-outline' },
+    { name: 'Windows', icon: 'mdi-window-closed-variant' },
+    { name: 'Doors', icon: 'mdi-door-closed' }
+  ]
+
   inputField: InputFieldPopUp | null = null
+
+  private furnitureButtonClick () {
+    if (this.openedContent === 'DRAWER') {
+      this.openedContent = 'LIBRARY'
+      ;(this.contentContainer as Element).removeChild(
+        (this.blueprintEditor as BlueprintEditor).$el
+      )
+      ;(this.contentContainer as Element).appendChild(
+        (this.assetLibrary as AssetLibrary).$el
+      )
+    } else {
+      this.openedContent = 'DRAWER'
+      ;(this.contentContainer as Element).appendChild(
+        (this.blueprintEditor as BlueprintEditor).$el
+      )
+      ;(this.contentContainer as Element).removeChild(
+        (this.assetLibrary as AssetLibrary).$el
+      )
+    }
+  }
 
   mySelectedFurniture: APIAsset | null = null
   public get selectedFurniture (): APIAsset | null {
     return this.mySelectedFurniture
   }
 
+  private set selectedFurniture (value: APIAsset | null) {
+    this.mySelectedFurniture = value
+    ;(this.blueprintEditor as BlueprintEditor).selectedFurniture = value
+  }
+
   mounted (): void {
-    this.nodeViewer = this.$refs.nodeViewer as BlueprintEditor
+    this.blueprintEditor = this.$refs.blueprintEditor as BlueprintEditor
+    this.assetLibrary = this.$refs.assetLibrary as AssetLibrary
     this.actionContainer = this.$refs.actionContainer as ActionContainer
     this.inputField = this.$refs.inputFieldPopUp as InputFieldPopUp
 
+    this.contentContainer = this.blueprintEditor.$el.parentElement
+    ;(this.contentContainer as Element).removeChild(this.assetLibrary.$el)
     API.post(
       this,
       '/resources/assets',
       JSON.stringify({
         select: ['id', 'name', 'picture', 'behaviours'],
-        where: { id: 38 }
+        where: { id: 54 }
       })
     ).then(asset => {
-      this.mySelectedFurniture = new APIAsset(
+      this.selectedFurniture = new APIAsset(
         ((asset as unknown) as [
-          { id: number, name: string; picture: string; behaviours: string }
+          { id: number; name: string; picture: string; behaviours: string }
         ])[0]
       )
+      /*
       ;(this
         .nodeViewer as BlueprintEditor).selectedFurniture = this.mySelectedFurniture
+      */
+    })
+
+    API.post(
+      this,
+      '/resources/assets',
+      JSON.stringify({ select: ['id', 'name', 'behaviours'] })
+    ).then(response => {
+      ((response as unknown) as {
+        id: number
+        name: string
+        behaviours: string
+      }[]).forEach(item => {
+        let categ = 'Objects'
+        const r = {} as Record<string, unknown>
+        if (
+          item.behaviours !== '' &&
+          item.behaviours !== null &&
+          item.behaviours !== undefined
+        ) {
+          const behaviours = JSON.parse(item.behaviours) as BehaviourInstance[]
+          if (behaviours.forEach !== undefined) {
+            console.log(behaviours)
+            behaviours.forEach(b => {
+              if (b.name === 'Wall/Door') categ = 'Doors'
+              else if (b.name === 'Wall/Window') categ = 'Windows'
+              r[b.name] = b.data
+            })
+          }
+        }
+        const categList = this.assetsInfo.get(categ)
+        if (categList !== undefined) {
+          categList.push({
+            id: item.id,
+            name: item.name,
+            behaviours: r,
+            picture: '',
+            category: categ
+          })
+        }
+      })
     })
     /*
     this.menuItemList.push(
@@ -198,10 +310,11 @@ export default class BlueprintEditorContainer extends Vue {
                   .replaceAll(' ', '')
                   .replaceAll('m', '')
                 if (
-                  (this.nodeViewer as BlueprintEditor).getBpContainer() != null
+                  (this.blueprintEditor as BlueprintEditor).getBpContainer() !=
+                  null
                 ) {
                   ((this
-                    .nodeViewer as BlueprintEditor).getBpContainer() as BlueprintContainer).defineScaleMode(
+                    .blueprintEditor as BlueprintEditor).getBpContainer() as BlueprintContainer).defineScaleMode(
                     dist
                   )
                 }
@@ -215,14 +328,14 @@ export default class BlueprintEditorContainer extends Vue {
       new MenuItem('export GLTF', 'mdi-cube-scan', () => {
         BlueprintExporter.exportGeometry(
           ((this
-            .nodeViewer as BlueprintEditor).getBpContainer() as BlueprintContainer).getBlueprint()
+            .blueprintEditor as BlueprintEditor).getBpContainer() as BlueprintContainer).getBlueprint()
         )
       })
     )
     this.menuItemList.push(
       new MenuItem('Download blueprint', 'mdi-download', () => {
         const json = ((this
-          .nodeViewer as BlueprintEditor).getBpContainer() as BlueprintContainer)
+          .blueprintEditor as BlueprintEditor).getBpContainer() as BlueprintContainer)
           .getBlueprint()
           .toJSON()
         const a = document.createElement('a')

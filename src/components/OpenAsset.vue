@@ -638,7 +638,7 @@ export default class OpenAssetPopUp extends Vue {
             const scene = ThreeUtils.defaultScene().then(scene => {
               scene.add(object.scene)
               const icon = ThreeUtils.capture(
-                ThreeUtils.defaultRenderer(512, 512),
+                ThreeUtils.defaultRenderer(256, 256),
                 scene,
                 ThreeUtils.getSideCamera(object.scene)
               )

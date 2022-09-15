@@ -940,6 +940,10 @@ export class BlueprintExporter {
           },
           {}
         )
+
+        blueprint.foreachWallLink(l => {
+          l.setData('__holes', undefined)
+        })
         // end then of promise
       })
   }

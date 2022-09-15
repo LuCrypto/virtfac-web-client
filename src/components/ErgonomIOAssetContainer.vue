@@ -300,8 +300,8 @@ export default class ErgonomIOAssetContainer extends Vue {
               dlLink.click()
               */
             },
-            512,
-            512,
+            256,
+            256,
             true,
             true
           )
