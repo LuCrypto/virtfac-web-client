@@ -342,6 +342,7 @@ export default class NV extends Vue {
     this.graph.nodeFields.set('position', 'Vec2')
     // this.graph.nodeFields.set('color', 'string')
     this.graph.nodeIdField = 'name'
+    this.graph.linkFields.set('color', 'string')
 
     this.graph.setData<{(): void }>('upload', () => {
       const input = document.createElement('input')

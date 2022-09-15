@@ -1,3 +1,13 @@
+<style scoped>
+.rounded-icon {
+  border-radius: 50%;
+  overflow: hidden;
+}
+.rounded-icon.selected {
+  box-shadow: 0 0 0 3px white;
+}
+</style>
+
 <template>
   <nav class="nav-bar">
     <!-- Vertical bar -->
@@ -50,6 +60,29 @@
         :color="$vuetify.theme.dark ? 'white' : 'black'"
       >
         <v-icon>mdi-circle-half-full</v-icon>
+      </v-btn>
+
+      <!-- Language selection -->
+      <v-btn icon @click="setLanguage('english')">
+        <v-icon
+          class="rounded-icon"
+          :class="this.$vuetify.lang.current === 'english' ? 'selected' : ''"
+          >$vuetify.icons.flagEnglish</v-icon
+        >
+      </v-btn>
+      <v-btn icon @click="setLanguage('french')">
+        <v-icon
+          class="rounded-icon"
+          :class="this.$vuetify.lang.current === 'french' ? 'selected' : ''"
+          >$vuetify.icons.flagFrench</v-icon
+        >
+      </v-btn>
+      <v-btn icon @click="setLanguage('german')">
+        <v-icon
+          class="rounded-icon"
+          :class="this.$vuetify.lang.current === 'german' ? 'selected' : ''"
+          >$vuetify.icons.flagGerman</v-icon
+        >
       </v-btn>
     </v-app-bar>
 
@@ -124,6 +157,7 @@ export default class NavBar extends Vue {
   clickTitleNumber = 0
 
   created (): void {
+    this.updateLanguage()
     this.updateMenu()
     // this.getMainMenu()
   }
@@ -203,6 +237,16 @@ export default class NavBar extends Vue {
     ).then(response => {
       response.text().then(text => this.$root.$emit('bottom-message', text))
     })
+  }
+
+  setLanguage (language: string): void {
+    Session.setLanguage(language)
+    this.updateLanguage()
+    this.$root.$emit('changeLanguage')
+  }
+
+  updateLanguage (): void {
+    this.$vuetify.lang.current = Session.getLanguage()
   }
 }
 </script>

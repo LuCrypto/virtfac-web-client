@@ -166,6 +166,21 @@ export default class DrawingShopComponent extends Vue {
         )
       })
     )
+    this.menuItemList.push(
+      new MenuItem('Download blueprint', 'mdi-download', () => {
+        const json = ((this
+          .nodeViewer as BlueprintEditor).getBpContainer() as BlueprintContainer)
+          .getBlueprint()
+          .toJSON()
+        const a = document.createElement('a')
+        const file = new Blob([JSON.stringify(json)], {
+          type: 'text/plain'
+        })
+        a.href = URL.createObjectURL(file)
+        a.download = 'blueprint.json'
+        a.click()
+      })
+    )
 
     // const mapper = new Mapper(CAEExampleFormat1)
   }

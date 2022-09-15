@@ -1,7 +1,5 @@
 <template>
-  <odoo-i-frame
-    src="http://10.244.77.203/about-routing-analysis"
-  ></odoo-i-frame>
+  <odoo-i-frame src="/about-routing-analysis"></odoo-i-frame>
 </template>
 
 <script lang="ts">

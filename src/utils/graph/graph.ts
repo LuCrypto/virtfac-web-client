@@ -2,13 +2,19 @@ import { MetaData } from '@/utils/graph/metadata'
 import { LocalEvent, MapLocalEvent } from '@/utils/graph//localEvent'
 import { Node } from '@/utils/graph/node'
 import { Link } from '@/utils/graph/link'
+import V from '@/utils/vector'
 
-interface savedObject {
+export interface GraphJSON {
   nodeIdField: string
+  graphFields: Record<string, unknown>
   nodeFields: Record<string, unknown>
   linkFields: Record<string, unknown>
-  nodes: Array<{ id: string; data: unknown }>
-  links: Set<unknown>
+  graphData: unknown
+  nodes: Array<{
+    id: string
+    data: unknown
+    links: { targetId: string; data: unknown }[]
+  }>
 }
 
 /**
@@ -150,7 +156,7 @@ export class Graph extends MetaData {
   public nodeFields: Map<string, string> = new Map<string, string>()
   public linkFields: Map<string, string> = new Map<string, string>()
 
-  public nodeIdField: string | undefined = ''
+  public nodeIdField: string | undefined = undefined
 
   public download (name = 'graph.json') {
     const a = document.createElement('a')
@@ -162,14 +168,25 @@ export class Graph extends MetaData {
     a.click()
   }
 
-  public toJsonOBJ (): unknown {
+  public toJsonOBJ (): GraphJSON {
+    const graphData = {} as Record<string, unknown>
+
+    this.graphFields.forEach((value, key) => {
+      graphData[key] = this.getData(key)
+    })
+
     const saveObject = {
       nodeIdField: this.nodeIdField || 'DEFAULT_ID',
+      graphFields: Object.fromEntries(this.graphFields),
       nodeFields: Object.fromEntries(this.nodeFields),
       linkFields: Object.fromEntries(this.linkFields),
-      nodes: new Array<{ id: string; data: unknown }>(),
-      links: new Set<unknown>()
-    }
+      graphData: graphData,
+      nodes: new Array<{
+        id: string
+        data: unknown
+        links: { targetId: string; data: unknown }[]
+      }>()
+    } as GraphJSON
 
     if (this.nodeIdField === undefined) {
       let i = 0
@@ -185,34 +202,127 @@ export class Graph extends MetaData {
         const v = node.getData<unknown | undefined>(key)
         if (v !== undefined) nodeMap.set(key, v)
       })
+      const links: { targetId: string; data: unknown }[] = new Array<{
+        targetId: string
+        data: unknown
+      }>()
+      node.foreachLink(l => {
+        const linkData = new Map<string, unknown>()
+        this.linkFields.forEach((value, key) => {
+          linkData.set(key, l.getData(key))
+        })
+        links.push({
+          targetId: '' + l.getNode().getData<unknown>(saveObject.nodeIdField),
+          data: Object.fromEntries(linkData)
+        })
+      })
       saveObject.nodes.push({
-        id: node.getData<string>(saveObject.nodeIdField),
-        data: Object.fromEntries(nodeMap)
+        id: '' + node.getData<unknown>(saveObject.nodeIdField),
+        data: Object.fromEntries(nodeMap),
+        links: links
       })
     })
     return saveObject
   }
 
-  public applyJson (json: Record<string, unknown>) {
+  public applyJson (json: GraphJSON) {
     // const object = JSON.parse(json) as savedObject
-    const object = (json as unknown) as savedObject
+    const object = json
+
+    const nodeFieldsCasterMap = new Map<string, {(json: unknown): unknown }>()
+    const linkFieldsCasterMap = new Map<string, {(json: unknown): unknown }>()
+    const graphFieldsCasterMap = new Map<string, {(json: unknown): unknown }>()
+
+    const fillCaster = (
+      types: Record<string, unknown>,
+      map: Map<string, { (json: unknown): unknown }>
+    ) => {
+      Object.entries(types).forEach(entry => {
+        let caster: { (json: unknown): unknown } | undefined
+        switch (entry[1]) {
+          case 'Vec2':
+            caster = (json: unknown) => {
+              const vals = json as { x: number; y: number }
+              return new V(vals.x, vals.y)
+            }
+            break
+          default:
+            break
+        }
+        if (caster !== undefined) {
+          map.set(entry[0], caster)
+        }
+      })
+    }
+
+    fillCaster(object.nodeFields, nodeFieldsCasterMap)
+    fillCaster(object.linkFields, linkFieldsCasterMap)
+    fillCaster(object.graphFields, graphFieldsCasterMap)
+
+    const setMetaData = (
+      casters: Map<string, { (json: unknown): unknown }>,
+      metadata: MetaData,
+      key: string,
+      value: unknown
+    ) => {
+      const caster = casters.get(key)
+      let v = value
+      if (caster !== undefined) {
+        v = caster(v)
+      }
+      metadata.setData(key, v)
+    }
 
     const nodeMap = new Map<string, Node>()
     this.foreachNode(node => {
-      nodeMap.set(node.getData<string>(object.nodeIdField), node)
+      nodeMap.set('' + node.getData<unknown>(object.nodeIdField), node)
     })
 
     object.nodes.forEach(data => {
-      const node = nodeMap.get(data.id)
-      if (node !== undefined) {
-        const dArray = data.data as Record<string, unknown>
-        if (dArray !== null && dArray !== undefined) {
-          Object.entries(dArray).forEach(metaData => {
-            node.setData(metaData[0], metaData[1])
-          })
-        }
+      let node = nodeMap.get(data.id)
+      if (node === undefined) {
+        node = this.addNode(new Node())
+        node.setData(object.nodeIdField, data.id)
+        nodeMap.set(data.id, node)
+      }
+      const dArray = data.data as Record<string, unknown>
+      if (dArray !== null && dArray !== undefined) {
+        Object.entries(dArray).forEach(metaData => {
+          setMetaData(
+            nodeFieldsCasterMap,
+            node as Node,
+            metaData[0],
+            metaData[1]
+          )
+        })
       }
     })
+
+    object.nodes.forEach(nodeData => {
+      const node = nodeMap.get(nodeData.id) as Node
+      nodeData.links.forEach(linkData => {
+        const targetNode = nodeMap.get(linkData.targetId)
+        if (targetNode === undefined) {
+          throw new Error('invalid target link : ' + linkData.targetId)
+        }
+        let link = node.getLink(targetNode)
+        if (link === undefined) {
+          link = node.addLink(targetNode)
+        }
+        Object.entries(linkData.data as Record<string, unknown>).forEach(
+          metadata => {
+            setMetaData(
+              linkFieldsCasterMap,
+              link as Link,
+              metadata[0],
+              metadata[1]
+            )
+          }
+        )
+      })
+    })
+
+    console.log(this)
   }
   // #endregion
   ///

@@ -11,6 +11,7 @@ import { BpWindow, Destroyable } from './bp_window'
 import { LocalEvent } from '../graph/localEvent'
 import { Session } from '../session'
 import V from '@/utils/vector'
+import { APIAsset, APIBoundingBox } from '../models'
 
 class Grid {
   private center: V
@@ -89,6 +90,12 @@ class Grid {
   }
 }
 
+export interface BlueprintAPIAsset {
+  id: number
+  sprite: string
+  box: APIBoundingBox
+}
+
 /**
  * manage nodes and links of the blueprint editor.
  */
@@ -113,6 +120,10 @@ export class BlueprintContainer {
     | 'SUPP_FURNITURE'
     | 'SCALE' {
     return this.mode
+  }
+
+  public getSelectedAsset (): BlueprintAPIAsset|null {
+    return this.selectedAsset
   }
 
   public onModeChanged = new LocalEvent<
@@ -141,6 +152,8 @@ export class BlueprintContainer {
     this.updateTransform()
     this.onModeChanged.notify(this.mode)
   }
+
+  public selectedAsset: BlueprintAPIAsset | null = null
 
   // #region SETTINGS
   /**
@@ -357,13 +370,15 @@ export class BlueprintContainer {
       e.preventDefault()
     }
     this.container.getDom().ondragover = e => {
+      /*
       if (e.dataTransfer != null && e.dataTransfer.files.length > 0) {
         e.preventDefault()
         console.log('data transfer')
       } else {
         console.log('no data transfer')
-        e.preventDefault()
       }
+      */
+      e.preventDefault()
     }
     this.container.getDom().ondrop = e => {
       // enable import of blueprint image from drag and drop
@@ -371,11 +386,19 @@ export class BlueprintContainer {
         const f: File | null = e.dataTransfer.files.item(0)
         try {
           if (f != null) {
-            const fr = new FileReader()
-            fr.onload = () => {
-              this.img.getDom().setAttribute('src', fr.result as string)
+            if (f.name.endsWith('.json')) {
+              const fr = new FileReader()
+              fr.onload = () => {
+                this.bp.applyJSON(JSON.parse(fr.result as string))
+              }
+              fr.readAsText(f, 'utf8')
+            } else {
+              const fr = new FileReader()
+              fr.onload = () => {
+                this.img.getDom().setAttribute('src', fr.result as string)
+              }
+              fr.readAsDataURL(f)
             }
-            fr.readAsDataURL(f)
           }
         } catch (error) {
           console.error(error)
@@ -410,7 +433,9 @@ export class BlueprintContainer {
 
     // refresh wall link display when a wall node is moved in the blueprint
     this.bp.onWallLinkDataChanged().addMappedListener('length', arg => {
-      (this.wallLinkMap.get(arg.link) as BpWallLink).refreshPos()
+      if (this.wallLinkMap.get(arg.link) !== undefined) {
+        (this.wallLinkMap.get(arg.link) as BpWallLink).refreshPos()
+      }
     })
 
     // remove wall node display when a node is removed in the blueprint

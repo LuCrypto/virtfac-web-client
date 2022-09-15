@@ -5,48 +5,7 @@ import { BlueprintContainer } from './blueprintContainer'
 // import { Vec2, Vector2 } from '@/utils/graph/Vec'
 import { BpWindow, Destroyable } from '@/utils/routingAnalysis/bp_window'
 import V from '@/utils/vector'
-
-export class BpWallHole {
-  private xpos: { (link: Link): number }
-  private xSize: { (link: Link): number }
-  private yBottomPos: { (link: Link): number }
-  private ytopPos: { (link: Link): number }
-  private tunnelId: number
-
-  public x (l: Link): number {
-    return this.xpos(l)
-  }
-
-  public xsize (l: Link): number {
-    return this.xSize(l)
-  }
-
-  public yBottom (l: Link): number {
-    return this.yBottomPos(l)
-  }
-
-  public yTop (l: Link): number {
-    return this.ytopPos(l)
-  }
-
-  public tunnel (): number {
-    return this.tunnelId
-  }
-
-  constructor (
-    xpos: { (link: Link): number },
-    xSize: { (link: Link): number },
-    yBottomPos: { (link: Link): number },
-    ytopPos: { (link: Link): number },
-    tunnelId = -1
-  ) {
-    this.xpos = xpos
-    this.xSize = xSize
-    this.yBottomPos = yBottomPos
-    this.ytopPos = ytopPos
-    this.tunnelId = tunnelId
-  }
-}
+import { BpWallFurniture } from './blueprint'
 
 export class BpWallLink {
   private link: Link
@@ -83,6 +42,20 @@ export class BpWallLink {
     this.length.setStyle({ 'pointer-events': 'none' })
     this.line.setStyle({ 'pointer-events': 'none' })
     this.doubleLine.setStyle({ 'pointer-events': 'none' })
+
+    link.onDataChanged().addMappedListener('furniture', args => {
+      this.furnitures.forEach(el => {
+        el.destroy()
+      })
+      this.furnitures.clear()
+      link.setData<Map<Destroyable, BpWallFurniture>>(
+        'furnitures',
+        new Map<Destroyable, BpWallFurniture>()
+      )
+      ;(args.value as BpWallFurniture[]).forEach(furniture => {
+        this.addFurniture(furniture.xpos, furniture.assetId)
+      })
+    })
 
     link
       .getNode()
@@ -123,8 +96,10 @@ export class BpWallLink {
           this.container.getMode() === 'DOOR')
       ) {
         // user input : add window or door
+        /*
         const w = new BpWindow(this.container)
         this.furnitures.add(w)
+        */
 
         const dist =
           link
@@ -135,6 +110,8 @@ export class BpWallLink {
             .getOriginNode()
             .getData<V>('position')
             .distanceTo(link.getNode().getData<V>('position'))
+
+        /*
         w.setPosition(
           link.getOriginNode(),
           this.link,
@@ -142,8 +119,28 @@ export class BpWallLink {
           150,
           this.container.getMode() === 'DOOR'
         )
+        */
+        this.addFurniture(dist, -1)
 
+        /*
+        link
+          .getOrAddData<Map<Destroyable, BpWallFurniture>>(
+            'furnitures',
+            new Map<Destroyable, BpWallFurniture>()
+          )
+          .set(w, new BpWallFurniture(dist, 0))
+        */
+
+        /*
+        link
+          .getOrCreateData<Map<Destroyable, BpWallFurniture>>('furnitures')
+          .set(
+            w,
+            new BpWallFurniture(dist, this.container.getSelectedAsset().id)
+          )
+        */
         // searching for tunnel
+        /*
         const dir = link
           .getNode()
           .getData<V>('position')
@@ -273,6 +270,7 @@ export class BpWallLink {
               tunnelId
             )
           )
+          */
       } else if (this.container.getMode() === 'SUPP_WALL') {
         this.container.getBlueprint().removeWall(this.link)
       } else {
@@ -494,6 +492,20 @@ export class BpWallLink {
         'd',
         `M${new V(p1.x, p1.y).toString()} L${new V(p2.x, p2.y).toString()}`
       )
+  }
+
+  addFurniture (xpos: number, assetId: number): void {
+    const w = new BpWindow(this.container)
+    this.furnitures.add(w)
+
+    w.setPosition(this.link.getOriginNode(), this.link, xpos, 150, false)
+
+    this.link
+      .getOrAddData<Map<Destroyable, BpWallFurniture>>(
+        'furnitures',
+        new Map<Destroyable, BpWallFurniture>()
+      )
+      .set(w, new BpWallFurniture(xpos, assetId))
   }
 
   destroy (): void {
