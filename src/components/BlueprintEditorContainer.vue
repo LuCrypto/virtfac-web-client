@@ -149,7 +149,7 @@ export default class BlueprintEditorContainer extends Vue {
       '/resources/assets',
       JSON.stringify({
         select: ['id', 'name', 'picture', 'behaviours'],
-        where: { id: 52 }
+        where: { id: 38 }
       })
     ).then(asset => {
       this.mySelectedFurniture = new APIAsset(

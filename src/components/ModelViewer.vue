@@ -283,6 +283,10 @@ export default class ModelViewer extends Vue {
     this.behaviours = JSON.parse(
       this.apiAsset.behaviours
     ) as BehaviourInstance[]
+
+    if (this.behaviours.push === undefined) {
+      this.behaviours = new Array<BehaviourInstance>()
+    }
   }
 
   // @vuese
@@ -342,7 +346,7 @@ export default class ModelViewer extends Vue {
   mixer: THREE.AnimationMixer | null = null
   clock = new THREE.Clock()
 
-  private behaviours: BehaviourInstance[] = []
+  private behaviours: Array<BehaviourInstance> = new Array<BehaviourInstance>()
 
   private userObjects = new Set<Group>()
   private boxHelpers = new Map<Group, BoxHelper>()
@@ -1009,6 +1013,7 @@ export default class ModelViewer extends Vue {
 
   onBehaviourSelected (behaviour: Behaviour) {
     (this.$refs.addBehaviour as PopUp).close()
+    console.log(this.behaviours, this.behaviours.push, typeof this.behaviours)
     this.behaviours.push(
       behaviour.createBehaviourInstance(this.apiAsset as APIAsset)
     )

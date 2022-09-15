@@ -142,8 +142,8 @@ export class BlueprintExporter {
 
                 let tunnelId = -1
                 if (otherLink !== null && pos !== null) {
-                  console.log('create tunnel between : ', otherLink, link)
                   tunnelId = nextTunnelId++
+                  console.log('create tunnel between : ' + tunnelId, otherLink, link)
                   const l = otherLink as Link
                   const p = pos as V
                   const xpos2 =
