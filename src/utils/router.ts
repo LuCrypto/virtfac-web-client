@@ -212,7 +212,7 @@ export const routes: Array<Route> = [
     component: ErgonomIORooms
   }),
   new Route({
-    icon: 'mdi-account-supervisor-circle',
+    icon: 'mdi-factory',
     name: 'Dynamics objects',
     subname: 'OPC UA',
     path: '/ergonom-io-opcua',

@@ -145,6 +145,7 @@
         <!-- The different buttons -->
         <v-container
           style="background-color: rgb(45, 45, 45); margin: 0; max-width: 100%"
+          class="rounded-lg my-2"
         >
           <v-row align="center">
             <v-col>
@@ -300,9 +301,7 @@ export default class ErgonomIORooms extends Vue {
           // this.quitRoomCurrent()
           break
         case 'changeName':
-          // this.changeNameCurrentRoom(data.nameRoom)
           Unreal.send('AVANT BG')
-          // Unreal.send('APRES BG : ' + (data.nameRoom as string))
           this.changeNameCurrentRoom(data.nameRoom as string)
           break
         case 'setTokenRoom':

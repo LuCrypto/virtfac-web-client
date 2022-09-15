@@ -115,8 +115,19 @@
       </v-dialog>
     </v-row>
 
-    <!-- Middle of the page: the different scene cards -->
+    <!-- Middle of the page: the different assets cards -->
+    <v-container
+      v-if="this.multi"
+      class="d-flex align-center justify-center"
+      style="height: 100%;"
+    >
+      <h1>
+        You can't use the asset manager in multiplayer
+      </h1>
+    </v-container>
+
     <v-card
+      v-if="!this.multi"
       class="d-flex flex-column"
       :rounded="unrealContext.check() ? 'xl' : 'md'"
     >
@@ -191,7 +202,11 @@
               </v-hover>
 
               <v-list-item-content>
-                <v-list-item-title v-html="asset.name"> </v-list-item-title>
+                <v-list-item-title
+                  style="margin-left: 10px;"
+                  v-html="asset.name"
+                >
+                </v-list-item-title>
 
                 <v-container v-if="displayTag" class="flex-row">
                   <v-chip
@@ -301,7 +316,7 @@ interface TreeItem {
   asset: CardAsset
 }
 
-class messageAsset {
+class MessageAsset {
   message = ''
   id = 0
   position = []
@@ -351,6 +366,7 @@ export default class ErgonomIOAssets extends Vue {
   router: VueRouter = this.$router
   query = this.router.currentRoute.query
   fullpage: boolean = this.query.fullpage === 'true'
+  multi = false
 
   rootItem: TreeItem = {
     id: 0,
@@ -364,42 +380,52 @@ export default class ErgonomIOAssets extends Vue {
   mounted (): void {
     this.requeteAPI()
 
-    Unreal.callback.$on('unreal-message', (data: unknown) => {
+    Unreal.callback.$on('unreal-message', (data: any) => {
       this.$root.$emit('bottom-message', `Unreal : ${JSON.stringify(data)}`)
 
-      const monObjet = data as messageAsset
+      let monObjet: MessageAsset = new MessageAsset()
+      switch (data.message) {
+        case 'recupererAsset':
+          monObjet = data as MessageAsset
 
-      API.post(
-        this,
-        '/resources/assets',
-        JSON.stringify({
-          select: [],
-          where: [{ id: monObjet.id }]
-        })
-      ).then((response: Response) => {
-        const monAssetTableau = ((response as unknown) as Array<
-          Partial<CardAsset>
-        >).map((asset: Partial<CardAsset>) => new CardAsset(asset))
+          API.post(
+            this,
+            '/resources/assets',
+            JSON.stringify({
+              select: [],
+              where: [{ id: monObjet.id }]
+            })
+          ).then((response: Response) => {
+            const monAssetTableau = ((response as unknown) as Array<
+              Partial<CardAsset>
+            >).map((asset: Partial<CardAsset>) => new CardAsset(asset))
 
-        const monAsset = monAssetTableau[0]
+            const monAsset = monAssetTableau[0]
 
-        const objectAsset = {
-          action: 'aRecup',
-          name: monAsset.name,
-          id: monAsset.id,
-          uri: monAsset.uri,
-          position: monObjet.position,
-          rotation: monObjet.rotation,
-          scale: monObjet.scale
-        }
+            const objectAsset = {
+              action: 'aRecup',
+              name: monAsset.name,
+              id: monAsset.id,
+              uri: monAsset.uri,
+              position: monObjet.position,
+              rotation: monObjet.rotation,
+              scale: monObjet.scale
+            }
 
-        const object = {
-          menu: 'asset',
-          objet: objectAsset
-        }
+            const object = {
+              menu: 'asset',
+              objet: objectAsset
+            }
 
-        Unreal.send(object)
-      })
+            Unreal.send(object)
+          })
+          break
+        case 'infosMulti':
+          this.multi = data.multi
+          break
+        default:
+          console.error('Unknown message', data)
+      }
     })
   }
 

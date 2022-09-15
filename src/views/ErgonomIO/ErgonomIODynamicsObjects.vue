@@ -330,6 +330,7 @@
       >
         <!-- Allows you to load a witness file for a profile -->
         <v-btn
+          v-if="!unrealContext.check()"
           @click="openUploadFile"
           class="primary black--text my-2"
           large
@@ -390,10 +391,10 @@
           Attach an object
         </v-btn>
 
-        <div class="d-flex">
+        <div class="d-flex justify-space-around align-center mx-1">
           <!-- Allows to listen on the server -->
           <v-btn
-            class="primary black--text my-2"
+            class="primary black--text mx-1"
             @click="listenServer()"
             large
             elevation="2"
@@ -402,7 +403,7 @@
           </v-btn>
 
           <div
-            class="rounded-circle ma-5"
+            class="rounded-circle mx-1"
             :class="activeListenOpcua"
             style="width: 30px; height: 30px;"
           ></div>

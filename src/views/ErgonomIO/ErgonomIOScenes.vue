@@ -132,6 +132,7 @@
                   class="primary black--text flex-grow-1"
                   large
                   elevation="2"
+                  v-if="!unreal.check()"
                 >
                   Load scene
                   <input
@@ -147,6 +148,7 @@
                   class="primary black--text flex-grow-1"
                   large
                   elevation="2"
+                  v-if="!this.multi"
                 >
                   Add object in scene
                 </v-btn>
@@ -154,12 +156,21 @@
                   @click="saveCurrentScene"
                   class="primary black--text flex-grow-1"
                   large
+                  v-if="!this.multi"
                   elevation="2"
                 >
                   Save current scene
                 </v-btn>
+                <v-btn
+                  @click="backToHome"
+                  class="primary black--text flex-grow-1"
+                  large
+                  elevation="2"
+                >
+                  Back to home
+                </v-btn>
               </v-row>
-              <v-row no-gutters>
+              <v-row no-gutters v-if="!this.multi">
                 <v-select
                   :items="scenes.map(item => item.name)"
                   v-model="sceneForModif"
@@ -322,7 +333,6 @@ import { Component, Vue } from 'vue-property-decorator'
 import API from '@/utils/api'
 import Unreal from '@/utils/unreal'
 import CardScene from '@/utils/cardmodel'
-import { haguenauImageAsset } from '@/utils/defaultData'
 
 // Scene recue d'unreal
 class SceneReceived {
@@ -379,6 +389,7 @@ export default class ErgonomIOAssets extends Vue {
 
   sizeCard = 30
   sizeCardString = '30%'
+  multi = false
 
   sceneForModif = ''
   unreal = Unreal
@@ -387,23 +398,29 @@ export default class ErgonomIOAssets extends Vue {
     this.requeteAPI()
 
     // Get unreal answer
-    Unreal.callback.$on('unreal-message', (data: unknown) => {
+    Unreal.callback.$on('unreal-message', (data: any) => {
       this.$root.$emit('bottom-message', `Unreal : ${JSON.stringify(data)}`)
 
-      let maScene
-      try {
-        maScene = data as Autre
-      } catch (e) {
-        this.$root.$emit('bottom-message', `Unreal : ${e}`)
+      let maScene: Autre = new Autre({})
+      let maCard = new CardScene({})
+
+      if (data.message === 'infosMulti') {
+        this.multi = data.multi
+      } else {
+        try {
+          maScene = data as Autre
+        } catch (e) {
+          this.$root.$emit('bottom-message', `Unreal : ${e}`)
+        }
+
+        maCard = new CardScene({
+          assetsNumber: maScene?.scene.nombreAssets,
+          id: maScene?.scene.idScene,
+          data: JSON.stringify(maScene?.assets)
+        })
+
+        this.releaseScene(maCard)
       }
-
-      const maCard = new CardScene({
-        assetsNumber: maScene?.scene.nombreAssets,
-        id: maScene?.scene.idScene,
-        data: JSON.stringify(maScene?.assets)
-      })
-
-      this.releaseScene(maCard)
     })
   }
 
@@ -460,6 +477,20 @@ export default class ErgonomIOAssets extends Vue {
     scene.parsedTags.push('vide')
     // this.scenes.push(scene)
     this.addSceneAPI(scene)
+  }
+
+  // Back to home and leave multi if needed
+  backToHome (): void {
+    const objectAsset = {
+      action: 'backToHome'
+    }
+
+    const object = {
+      menu: 'scene',
+      objet: objectAsset
+    }
+
+    Unreal.send(object)
   }
 
   // Create api request for add a new scene
