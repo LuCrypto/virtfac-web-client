@@ -109,8 +109,8 @@
       </v-toolbar>
 
       <v-card flat>
-        <v-simple-table
-          dense><template v-slot:default>
+        <v-simple-table dense
+          ><template v-slot:default>
             <thead>
               <tr>
                 <th class="text-left">
