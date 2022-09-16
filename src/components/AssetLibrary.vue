@@ -43,8 +43,42 @@
       ></v-list>
     </v-navigation-drawer>
     <v-container fluid class="d-flex pa-0">
-      <v-container class="mt-8 mb-8"></v-container>
+      <v-container class="mt-8 mb-8 d-flex" style="position: relative;">
+        <v-row
+          v-if="selectedCategory >= 0"
+          style="position:absolute; overflow-y: scroll; top: 6px; left: 6px; right: 6px; bottom: 6px;"
+          class="ma-0 pa-0"
+          ref="row"
+        >
+          <v-col
+            :cols="colSize"
+            v-for="asset in content.get(
+              categories[Math.max(selectedCategory, 0)].name
+            )"
+            :key="asset.id"
+            class="ma-0 pa-0"
+          >
+            <v-container
+              class="ma-0 d-flex"
+              style="min-width:128px; min-height:128px; aspect-ratio: 1;"
+            >
+              <v-hover v-slot="{ hover }">
+                <v-card
+                  :elevation="hover ? 4 : 2"
+                  height="100%"
+                  width="100%"
+                  :img="asset.picture"
+                  style="position:relative"
+                  @click="onSelect(asset.id)"
+                >
+                </v-card
+              ></v-hover>
+            </v-container>
+          </v-col>
+        </v-row>
+      </v-container>
       <v-chip
+        v-if="false"
         style="position: absolute; right: 6px; bottom: 6px; z-index:100;"
         class="pa-0 primary black--text"
         small
@@ -52,7 +86,12 @@
         <v-btn icon :disabled="currentPage === 1" @click.stop="previousPage()"
           ><v-icon>{{ 'mdi-chevron-left' }}</v-icon></v-btn
         >
-        <v-chip class="" left style="min-width:80px; display: block; text-align: center;">{{ currentPage + ' / ' + nbPages }}</v-chip>
+        <v-chip
+          class=""
+          left
+          style="min-width:80px; display: block; text-align: center;"
+          >{{ currentPage + ' / ' + nbPages }}</v-chip
+        >
         <v-btn icon :disabled="currentPage === nbPages" @click.stop="nextPage()"
           ><v-icon>{{ 'mdi-chevron-right' }}</v-icon></v-btn
         >
@@ -83,7 +122,16 @@ export default class AssetLibrary extends Vue {
   }[]
 
   @Prop({ default: () => new Map<string, { name: string; id: number }[]>() })
-  private contents!: Map<string, { name: string; id: number }[]>
+  private content!: Map<string, { name: string; id: number }[]>
+
+  @Prop({
+    default: () => () => {
+      /**/
+    }
+  })
+  private onSelect!: {
+    (id: number): void
+  }
 
   private menuCollapse = false
 
@@ -115,8 +163,14 @@ export default class AssetLibrary extends Vue {
 
   private nbPages = 5
   private currentPage = 1
+  private colSize = 3
+
+  private hello () {
+    console.log('hello')
+  }
 
   private previousPage () {
+    // console.log(this.content[this.categories[this.selectedCategory].name])
     this.currentPage--
   }
 
@@ -124,14 +178,20 @@ export default class AssetLibrary extends Vue {
     this.currentPage++
   }
 
-  selectedCategory = 0
-
-  private selectCategory (name: string) {
-    console.log(name)
+  selectedCategory = -1
+  listener = () => {
+    const row = (this.$refs.row as Element).getBoundingClientRect()
+    const nbcol = row.width / 129
+    this.colSize = Math.min(Math.max(Math.ceil(12 / nbcol), 1), 12)
   }
 
   mounted (): void {
-    //
+    console.log(this.content)
+    addEventListener('resize', () => {
+      const row = (this.$refs.row as Element).getBoundingClientRect()
+      const nbcol = row.width / 129
+      this.colSize = Math.min(Math.max(Math.ceil(12 / nbcol), 1), 12)
+    })
   }
 }
 </script>

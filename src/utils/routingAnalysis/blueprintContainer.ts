@@ -12,6 +12,7 @@ import { LocalEvent } from '../graph/localEvent'
 import { Session } from '../session'
 import V from '@/utils/vector'
 import { APIAsset, APIBoundingBox } from '../models'
+import { BpAssetCache } from './bp_APICache'
 
 class Grid {
   private center: V
@@ -122,11 +123,11 @@ export class BlueprintContainer {
     return this.mode
   }
 
-  public get selectedAsset (): APIAsset | null {
+  public get selectedAsset (): BpAssetCache | null {
     return this._selectedAsset
   }
 
-  public set selectedAsset (value: APIAsset | null) {
+  public set selectedAsset (value: BpAssetCache | null) {
     this._selectedAsset = value
   }
 
@@ -157,7 +158,7 @@ export class BlueprintContainer {
     this.onModeChanged.notify(this.mode)
   }
 
-  public _selectedAsset: APIAsset | null = null
+  public _selectedAsset: BpAssetCache | null = null
 
   // #region SETTINGS
   /**

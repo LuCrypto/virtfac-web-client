@@ -177,14 +177,18 @@ export default class ThreeUtils {
     const size = new Vector3()
     box.getSize(size)
 
-    const width = Math.sqrt(size.x * size.x + size.z * size.z) * 1.2
+    const width = Math.max(
+      Math.sqrt(size.x * size.x + size.z * size.z) * 1.2,
+      Math.sqrt(size.y * size.y + size.z * size.z) * 1.2
+    )
     const s = size.clone()
     s.x = -s.x
     const camPos = center.clone().sub(
       s
         .clone()
         .divideScalar(2)
-        .add(new Vector3(-0.2, 0, 0.2))
+        .multiply(new Vector3(0.8, 0, 2))
+        .add(new Vector3(-0.2, 0, Math.max(s.x, s.z) + 0.2))
     )
     camPos.y = 1.7
     const camera = new OrthographicCamera(
@@ -192,8 +196,8 @@ export default class ThreeUtils {
       width / 2,
       width / 2,
       width / -2,
-      0.1,
-      Math.max(size.length() * 1.1 + 0.2, 3)
+      0.01,
+      Math.max(size.length() * 3 + 0.2, 3)
     )
     camera.position.copy(camPos)
     // camera.rotation.set(-90, 0, 0)

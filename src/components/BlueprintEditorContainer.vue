@@ -83,6 +83,8 @@
         <asset-library
           ref="assetLibrary"
           :categories="assetCategories"
+          :content="assetsInfo"
+          :onSelect="selectAsset"
         ></asset-library>
       </v-container>
       <input-field-pop-up ref="inputFieldPopUp"></input-field-pop-up>
@@ -116,6 +118,7 @@ import { APIAsset } from '@/utils/models'
 import API from '@/utils/api'
 import { Behaviour, BehaviourInstance } from '@/utils/assets/behaviour'
 import AssetLibrary from './AssetLibrary.vue'
+import { BpAPICache, BpAssetCache } from '@/utils/routingAnalysis/bp_APICache'
 
 class MenuItem {
   text: string
@@ -196,12 +199,12 @@ export default class BlueprintEditorContainer extends Vue {
     }
   }
 
-  mySelectedFurniture: APIAsset | null = null
-  public get selectedFurniture (): APIAsset | null {
+  mySelectedFurniture: BpAssetCache | null = null
+  public get selectedFurniture (): BpAssetCache | null {
     return this.mySelectedFurniture
   }
 
-  private set selectedFurniture (value: APIAsset | null) {
+  private set selectedFurniture (value: BpAssetCache | null) {
     this.mySelectedFurniture = value
     ;(this.blueprintEditor as BlueprintEditor).selectedFurniture = value
   }
@@ -214,6 +217,7 @@ export default class BlueprintEditorContainer extends Vue {
 
     this.contentContainer = this.blueprintEditor.$el.parentElement
     ;(this.contentContainer as Element).removeChild(this.assetLibrary.$el)
+    /*
     API.post(
       this,
       '/resources/assets',
@@ -227,12 +231,10 @@ export default class BlueprintEditorContainer extends Vue {
           { id: number; name: string; picture: string; behaviours: string }
         ])[0]
       )
-      /*
-      ;(this
-        .nodeViewer as BlueprintEditor).selectedFurniture = this.mySelectedFurniture
-      */
     })
+    */
 
+    const map = new Map<number, { id: number; picture: string }>()
     API.post(
       this,
       '/resources/assets',
@@ -252,7 +254,6 @@ export default class BlueprintEditorContainer extends Vue {
         ) {
           const behaviours = JSON.parse(item.behaviours) as BehaviourInstance[]
           if (behaviours.forEach !== undefined) {
-            console.log(behaviours)
             behaviours.forEach(b => {
               if (b.name === 'Wall/Door') categ = 'Doors'
               else if (b.name === 'Wall/Window') categ = 'Windows'
@@ -262,15 +263,49 @@ export default class BlueprintEditorContainer extends Vue {
         }
         const categList = this.assetsInfo.get(categ)
         if (categList !== undefined) {
-          categList.push({
+          const obj = {
             id: item.id,
             name: item.name,
             behaviours: r,
             picture: '',
             category: categ
-          })
+          }
+          categList.push(obj)
+          map.set(obj.id, obj)
         }
       })
+      const array = new Array<{ id: number; picture: string }>()
+      map.forEach(value => {
+        array.push(value)
+      })
+      const packetSize = 20
+      for (let i = 0; i < Math.ceil(array.length / packetSize); i++) {
+        const where = []
+        for (
+          let j = i * packetSize;
+          j < (i + 1) * packetSize && j < array.length;
+          j++
+        ) {
+          where.push({ id: array[j].id })
+        }
+        if (where.length > 0) {
+          API.post(
+            this,
+            '/resources/assets',
+            JSON.stringify({ select: ['id', 'picture'], where: where })
+          ).then(response => {
+            ((response as unknown) as {
+              id: number
+              picture: string
+            }[]).forEach(r => {
+              const asset = map.get(r.id)
+              if (asset !== undefined) {
+                asset.picture = r.picture
+              }
+            })
+          })
+        }
+      }
     })
     /*
     this.menuItemList.push(
@@ -370,6 +405,12 @@ export default class BlueprintEditorContainer extends Vue {
     }
   }
   */
+
+  selectAsset (id: number): void {
+    BpAPICache.instance().getAsset(id).then(asset => {
+      this.selectedFurniture = asset
+    })
+  }
 
   inputFile (): void {
     const input = this.$refs.inputFile as HTMLInputElement

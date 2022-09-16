@@ -74,7 +74,7 @@ import { BlueprintContainer } from '@/utils/routingAnalysis/blueprintContainer'
 
 import Component from 'vue-class-component'
 import { APIAsset } from '@/utils/models'
-import { BpAPICache } from '@/utils/routingAnalysis/bp_APICache'
+import { BpAPICache, BpAssetCache } from '@/utils/routingAnalysis/bp_APICache'
 
 @Component({
   name: 'BlueprintEditor',
@@ -104,12 +104,12 @@ export default class BlueprintEditor extends Vue {
     return this.bpContainer
   }
 
-  private _selectedFurniture: APIAsset | null = null
-  public get selectedFurniture (): APIAsset | null {
+  private _selectedFurniture: BpAssetCache | null = null
+  public get selectedFurniture (): BpAssetCache | null {
     return this._selectedFurniture
   }
 
-  public set selectedFurniture (value: APIAsset | null) {
+  public set selectedFurniture (value: BpAssetCache | null) {
     this._selectedFurniture = value
     ;(this.bpContainer as BlueprintContainer).selectedAsset = value
   }
