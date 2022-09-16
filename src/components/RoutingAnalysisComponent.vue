@@ -65,6 +65,7 @@
         <matrix-viewer ref="matrixViewer"></matrix-viewer>
       </pop-up>
       <select-pop-up ref="selectPopUp"></select-pop-up>
+      <input-field-pop-up ref="inputFieldPopUp"></input-field-pop-up>
     </v-card>
   </maximizable-container>
 </template>
@@ -89,6 +90,7 @@ import SelectPopUp from './popup/SelectPopUp.vue'
 import MaximizableContainer from './MaximizableContainer.vue'
 import { VAlert } from 'vuetify/lib'
 import { APIFile } from '@/utils/models'
+import InputFieldPopUp from './popup/InputFieldPopUp.vue'
 
 class Poste {
   name: string
@@ -132,7 +134,8 @@ interface ClassifSolution {
     PopUp,
     MatrixViewer,
     SelectPopUp,
-    MaximizableContainer
+    MaximizableContainer,
+    InputFieldPopUp
   }
 })
 // @vuese
@@ -169,6 +172,26 @@ export default class RoutingAnalysisComponent extends Vue {
     this.menuItemList.push(
       new MenuItem('Open File', 'mdi-file-document', () => {
         (this.$refs.filePopUp as PopUp).open()
+      }),
+      new MenuItem('Save Routing Graph', 'mdi-content-save', () => {
+        //
+        (this.$refs.inputFieldPopUp as InputFieldPopUp).open(
+          'Enter name',
+          'unnamed routing graph',
+          'unnamed routing graph',
+          value => {
+            if (value !== null && this.postPostGraph !== null) {
+              const json = JSON.stringify(this.postPostGraph.toJsonOBJ())
+              const file = new Blob([json], {
+                type: 'text/plain'
+              })
+              const a = document.createElement('a')
+              a.href = URL.createObjectURL(file)
+              a.download = value
+              a.click()
+            }
+          }
+        )
       }),
       new MenuItem('Import', 'mdi-application-import', () => {
         (this.$refs.selectPopUp as SelectPopUp).open(
@@ -1200,17 +1223,27 @@ export default class RoutingAnalysisComponent extends Vue {
       return XLSX.utils.encode_cell({ c: x, r: y })
     }
 
+    interface MachineData {
+      name: string
+      coord: { x: number; y: number }
+      size: { x: number; y: number }
+    }
     const itemRefMap = new Map<string, string>()
-    const posteRefMap = new Map<string, string>()
+    const posteRefMap = new Map<string, MachineData>()
 
     let i = 1
     while (itemSheet[nameOf(0, i)] !== undefined) {
       itemRefMap.set(itemSheet[nameOf(0, i)].v, itemSheet[nameOf(1, i)].v)
       i++
     }
+
     i = 1
     while (posteSheet[nameOf(0, i)] !== undefined) {
-      posteRefMap.set(posteSheet[nameOf(0, i)].v, posteSheet[nameOf(1, i)].v)
+      posteRefMap.set(posteSheet[nameOf(0, i)].v, {
+        name: posteSheet[nameOf(1, i)].v,
+        coord: { x: posteSheet[nameOf(3, i)].v, y: posteSheet[nameOf(4, i)].v },
+        size: { x: posteSheet[nameOf(5, i)].v, y: posteSheet[nameOf(6, i)].v }
+      })
       i++
     }
 
@@ -1225,15 +1258,28 @@ export default class RoutingAnalysisComponent extends Vue {
 
     const orderGraph = GraphUtils.genOrderGraph()
     this.postPostGraph = orderGraph.graph
+    this.postPostGraph.nodeFields.set('name', 'string')
+    this.postPostGraph.nodeFields.set('color', 'string')
+    this.postPostGraph.nodeFields.set('position', '{x: number, y:number}')
+    this.postPostGraph.nodeFields.set('xlsxPosition', '{x: number, y:number}')
+    this.postPostGraph.nodeFields.set('dimension', '{x:number, y:number}')
+    this.postPostGraph.nodeFields.set('classifGroup', 'number')
     this.articlePostGraph = new Graph()
 
+    const _machineData = posteRefMap.get(nodeValue) as MachineData
     posteMap.set(
       nodeValue,
       orderGraph.graph.addNode(
-        new Node().setData<string>(
-          'name',
-          posteRefMap.get(nodeValue) as string
-        ) as Node
+        new Node()
+          .setData<string>('name', _machineData.name)
+          .setData('xlsxPosition', {
+            x: _machineData.coord.x,
+            y: _machineData.coord.y
+          })
+          .setData('dimension', {
+            x: _machineData.size.x,
+            y: _machineData.size.y
+          }) as Node
       )
     )
 
@@ -1250,7 +1296,7 @@ export default class RoutingAnalysisComponent extends Vue {
       nodeValue,
       this.articlePostGraph.addNode(
         new Node()
-          .setData<string>('name', posteRefMap.get(nodeValue) as string)
+          .setData<string>('name', _machineData.name)
           .setData<'row' | 'col'>('matCelltype', 'col')
           .setData<number>('nbOF', 1)
           .setData<Set<Node>>(
@@ -1285,20 +1331,27 @@ export default class RoutingAnalysisComponent extends Vue {
         }
         if (!posteMap.has(nextNode)) {
           // console.log(('add Node : ' + posteRefMap.get(nextNode)) as string)
+          const machineData = posteRefMap.get(nextNode) as MachineData
           posteMap.set(
             nextNode,
             orderGraph.graph.addNode(
-              new Node().setData<string>(
-                'name',
-                posteRefMap.get(nextNode) as string
-              ) as Node
+              new Node()
+                .setData<string>('name', machineData.name)
+                .setData('xlsxPosition', {
+                  x: machineData.coord.x,
+                  y: machineData.coord.y
+                })
+                .setData('dimension', {
+                  x: machineData.size.x,
+                  y: machineData.size.y
+                }) as Node
             )
           )
           posteMapforArticle.set(
             nextNode,
             this.articlePostGraph.addNode(
               new Node()
-                .setData<string>('name', posteRefMap.get(nextNode) as string)
+                .setData<string>('name', machineData.name)
                 .setData<'row' | 'col'>('matCelltype', 'col')
                 .setData<number>('nbOF', 1)
                 .setData<Set<Node>>(
