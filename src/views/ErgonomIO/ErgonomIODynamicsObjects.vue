@@ -85,7 +85,7 @@
           <!-- To save the position of the event -->
           <v-col align="center">
             <v-btn color="primary" text @click="save()">
-              Save
+              {{ $vuetify.lang.t('$vuetify.assetLibrary.save') }}
             </v-btn>
           </v-col>
         </v-row>
@@ -99,7 +99,7 @@
           <!-- For the title -->
           <v-row align="center" no-gutters>
             <v-col cols="1" align="center">
-              Title :
+              {{ $vuetify.lang.t('$vuetify.dynamicsObject.title') }} :
             </v-col>
             <v-col cols="11" align="center">
               <v-text-field
@@ -128,7 +128,7 @@
               </v-col>
               <!-- Position -->
               <v-col align="center">
-                Position :
+                {{ $vuetify.lang.t('$vuetify.dynamicsObject.position') }} :
               </v-col>
               <v-col align="center">
                 <v-text-field
@@ -159,7 +159,7 @@
               </v-col>
               <!-- Rotation -->
               <v-col align="center">
-                Rotation :
+                {{ $vuetify.lang.t('$vuetify.dynamicsObject.rotation') }} :
               </v-col>
               <v-col align="center">
                 <v-text-field
@@ -201,7 +201,7 @@
               small
               @click="saveProfil"
             >
-              Save Profil
+              {{ $vuetify.lang.t('$vuetify.dynamicsObject.saveProfil') }}
             </v-btn>
           </v-col>
         </v-row>
@@ -289,7 +289,7 @@
           large
           elevation="2"
         >
-          Start profil
+          {{ $vuetify.lang.t('$vuetify.dynamicsObject.startProfil') }}
         </v-btn>
         <!-- Allows to start with all the objects of the scene -->
         <v-btn
@@ -298,7 +298,7 @@
           large
           elevation="2"
         >
-          Start global profil
+          {{ $vuetify.lang.t('$vuetify.dynamicsObject.startGlobalProfil') }}
         </v-btn>
       </v-container>
 
@@ -312,7 +312,7 @@
           large
           elevation="2"
         >
-          Selected path asset
+          {{ $vuetify.lang.t('$vuetify.dynamicsObject.selectedPathAsset') }}
         </v-btn>
         <v-btn
           @click="globalPath"
@@ -320,7 +320,7 @@
           large
           elevation="2"
         >
-          Global path
+          {{ $vuetify.lang.t('$vuetify.dynamicsObject.globalPath') }}
         </v-btn>
       </v-container>
 
@@ -336,7 +336,7 @@
           large
           elevation="2"
         >
-          Load a profil file
+          {{ $vuetify.lang.t('$vuetify.dynamicsObject.loadAProfilFile') }}
           <input
             accept="application/JSON"
             ref="uploadFileInput"
@@ -353,7 +353,7 @@
           large
           elevation="2"
         >
-          Edit the current profil
+          {{ $vuetify.lang.t('$vuetify.dynamicsObject.editTheCurrentProfil') }}
         </v-btn>
 
         <!-- Allows you to delete the active profile -->
@@ -363,7 +363,7 @@
           large
           elevation="2"
         >
-          Delete profil
+          {{ $vuetify.lang.t('$vuetify.dynamicsObject.deleteProfil') }}
         </v-btn>
       </v-container>
 
@@ -378,7 +378,7 @@
           large
           elevation="2"
         >
-          Add an event
+          {{ $vuetify.lang.t('$vuetify.dynamicsObject.addAnEvent') }}
         </v-btn>
 
         <!-- Allows you to attach one object to another -->
@@ -388,7 +388,7 @@
           large
           elevation="2"
         >
-          Attach an object
+          {{ $vuetify.lang.t('$vuetify.dynamicsObject.attachAnObject') }}
         </v-btn>
 
         <div class="d-flex justify-space-around align-center mx-1">
@@ -399,7 +399,7 @@
             large
             elevation="2"
           >
-            Listen id of server
+            {{ $vuetify.lang.t('$vuetify.dynamicsObject.listenIdOfServer') }}
           </v-btn>
 
           <div
@@ -420,13 +420,13 @@
           large
           elevation="2"
         >
-          Assign a profil to scene
+          {{ $vuetify.lang.t('$vuetify.dynamicsObject.assignAProfilToScene') }}
         </v-btn>
 
         <!-- Selected profile -->
         <v-select
           class="black--text mx-2"
-          label="Selected profil"
+          :label="$vuetify.lang.t('$vuetify.dynamicsObject.selectedProfil')"
           v-model="selectedProfil"
           :items="this.profils.map(item => item.title)"
         >
@@ -434,7 +434,7 @@
         <!-- Selected scene -->
         <v-select
           class="black--text mx-2"
-          label="Selected scene"
+          :label="$vuetify.lang.t('$vuetify.dynamicsObject.selectedScene')"
           v-model="selectedScene"
           :items="this.scenes.map(item => item.name)"
         >
@@ -449,7 +449,7 @@
       <v-row align="center">
         <!-- Allows you to load a witness file for a profile -->
         <v-col align="center">
-          Object dynamique selected !
+          {{ $vuetify.lang.t('$vuetify.dynamicsObject.objetDynamicSelected') }}
         </v-col>
       </v-row>
     </v-container>

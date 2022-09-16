@@ -108,7 +108,9 @@
               <v-icon>{{ route.icon }}</v-icon>
             </v-list-item-action>
             <v-list-item-content>
-              <v-list-item-title>{{ route.name }}</v-list-item-title>
+              <v-list-item-title>{{
+                $vuetify.lang.t(`$vuetify.mainMenu.${route.name}`)
+              }}</v-list-item-title>
               <v-list-item-subtitle v-if="route.subname != null">{{
                 route.subname
               }}</v-list-item-subtitle>

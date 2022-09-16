@@ -18,8 +18,12 @@
       fluid
     >
       <v-card elevation="3" class="mb-2 flex-grow-1">
-        <v-card-title> Asset library </v-card-title>
-        <v-card-subtitle> List of all assets </v-card-subtitle>
+        <v-card-title>
+          {{ $vuetify.lang.t('$vuetify.assetLibrary.assetLibrary') }}
+        </v-card-title>
+        <v-card-subtitle>
+          {{ $vuetify.lang.t('$vuetify.assetLibrary.listOfAllAssets') }}
+        </v-card-subtitle>
       </v-card>
     </v-container>
 
@@ -27,14 +31,16 @@
     <v-row justify="center">
       <v-dialog v-model="modifyAsset" max-width="780">
         <v-card>
-          <v-card-title> Modify data </v-card-title>
+          <v-card-title>
+            {{ $vuetify.lang.t('$vuetify.assetLibrary.assetData') }}
+          </v-card-title>
 
           <!-- Change title of asset -->
           <v-container fluid>
             <v-row>
               <v-col cols="3">
                 <v-card-text>
-                  New title :
+                  {{ $vuetify.lang.t('$vuetify.assetLibrary.newTitle') }} :
                 </v-card-text>
               </v-col>
 
@@ -49,7 +55,7 @@
             <v-row>
               <v-col cols="3">
                 <v-card-text>
-                  New tag :
+                  {{ $vuetify.lang.t('$vuetify.assetLibrary.newTags') }} :
                 </v-card-text>
               </v-col>
 
@@ -73,7 +79,7 @@
               @click="openUploadFile"
             >
               <v-icon v-text="'mdi-upload'"></v-icon>
-              Upload new
+              {{ $vuetify.lang.t('$vuetify.assetLibrary.uploadNew') }}
               <input
                 ref="uploadFileInput"
                 hidden
@@ -108,7 +114,7 @@
           <v-card-actions>
             <v-spacer></v-spacer>
             <v-btn color="primary" text @click="save(assetChoose)">
-              Save
+              {{ $vuetify.lang.t('$vuetify.assetLibrary.save') }}
             </v-btn>
           </v-card-actions>
         </v-card>
@@ -122,7 +128,7 @@
       style="height: 100%;"
     >
       <h1>
-        You can't use the asset manager in multiplayer
+        {{ $vuetify.lang.t('$vuetify.assetLibrary.uCantUse') }}
       </h1>
     </v-container>
 
@@ -143,14 +149,16 @@
         <!-- The different categories -->
         <v-card width="25%">
           <v-btn width="90%" class="ma-2" v-on:click="clearCategory()">
-            Reset filter
+            {{ $vuetify.lang.t('$vuetify.assetLibrary.resetFilter') }}
           </v-btn>
           <v-checkbox
             class="mx-2"
             v-model="displayTag"
-            label="Display tags"
+            :label="$vuetify.lang.t('$vuetify.assetLibrary.displayTags')"
           ></v-checkbox>
-          <v-card-title> Categories : </v-card-title>
+          <v-card-title>
+            {{ $vuetify.lang.t('$vuetify.assetLibrary.categories') }} :
+          </v-card-title>
 
           <v-card-text>
             <v-treeview
@@ -241,7 +249,7 @@
           large
           elevation="2"
         >
-          Load an asset
+          {{ $vuetify.lang.t('$vuetify.assetLibrary.loadAnAsset') }}
           <input
             accept="application/JSON"
             ref="uploadFileInput"

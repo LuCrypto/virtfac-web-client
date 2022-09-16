@@ -2,14 +2,16 @@
   <v-container fluid style="padding: 0;">
     <!-- Title -->
     <v-container v-if="!this.fullpage" fluid class="text-h3 text-center py-6">
-      Collaborative sessions
+      {{ $vuetify.lang.t('$vuetify.rooms.collaborativesSessions') }}
     </v-container>
 
     <!-- For get the room token -->
     <v-dialog width="50%" v-model="getRoomTokenBoolean">
       <v-container fluid class="d-flex flex-column align-center">
         <v-row no-gutters dense class="pa-2" style="width: 100%;">
-          <v-col> Token room : {{ tokenRoom }} </v-col>
+          <v-col>
+            {{ $vuetify.lang.t('$vuetify.rooms.tokenRoom') }} : {{ tokenRoom }}
+          </v-col>
         </v-row>
 
         <v-row no-gutters dense class="pa-2">
@@ -31,7 +33,7 @@
               large
               elevation="2"
             >
-              Close
+              {{ $vuetify.lang.t('$vuetify.rooms.close') }}
             </v-btn>
           </v-col>
         </v-row>
@@ -43,7 +45,7 @@
       <v-container fluid class="d-flex flex-column align-center">
         <div>
           <h3>
-            Join room with token
+            {{ $vuetify.lang.t('$vuetify.rooms.joinRoomWithToken') }}
           </h3>
         </div>
 
@@ -72,7 +74,7 @@
               large
               elevation="2"
             >
-              Join
+              {{ $vuetify.lang.t('$vuetify.rooms.join') }}
             </v-btn>
           </v-col>
         </v-row>
@@ -99,7 +101,8 @@
                 <v-icon left color="black"
                   >mdi-account-supervisor-circle</v-icon
                 >
-                Current session : {{ nameCurrentRoom }}
+                {{ $vuetify.lang.t('$vuetify.rooms.currentSession') }} :
+                {{ nameCurrentRoom }}
               </v-col>
               <v-col class="shrink">
                 <v-btn @click="leaveSession">Leave session</v-btn>
@@ -125,7 +128,8 @@
             <v-card-title> {{ room.name }} </v-card-title>
             <v-card-subtitle> </v-card-subtitle>
             <v-card-text>
-              {{ room.host }}, scene : {{ room.nameScene }}
+              {{ room.host }}, {{ $vuetify.lang.t('$vuetify.rooms.scene') }} :
+              {{ room.nameScene }}
             </v-card-text>
 
             <v-card-actions>
@@ -136,7 +140,7 @@
                 large
                 elevation="2"
               >
-                Join
+                {{ $vuetify.lang.t('$vuetify.rooms.join') }}
               </v-btn>
             </v-card-actions>
           </v-card>
@@ -155,14 +159,14 @@
                 large
                 elevation="2"
               >
-                Create new session
+                {{ $vuetify.lang.t('$vuetify.rooms.createNewSession') }}
               </v-btn>
             </v-col>
 
             <v-col>
               <v-select
                 class="black--text"
-                label="Selected scene"
+                :label="$vuetify.lang.t('$vuetify.rooms.selectedScene')"
                 v-model="sceneSelected"
                 :items="this.scenes.map(item => item.name)"
                 dense
@@ -179,14 +183,14 @@
                 large
                 elevation="2"
               >
-                Delete session
+                {{ $vuetify.lang.t('$vuetify.rooms.deleteSession') }}
               </v-btn>
             </v-col>
 
             <v-col>
               <v-select
                 class="black--text"
-                label="Room to delete"
+                :label="$vuetify.lang.t('$vuetify.rooms.roomToDelete')"
                 v-model="roomSelectedDelete"
                 :items="this.rooms.map(item => item.name)"
                 densed

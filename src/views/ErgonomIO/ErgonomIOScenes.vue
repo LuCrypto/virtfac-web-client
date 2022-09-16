@@ -9,8 +9,10 @@
       <v-container fluid style="max-height: 100%; overflow: auto;" class="pa-0">
         <v-col class="ma-0 pa-0">
           <!-- Title -->
-          <v-row no-gutters class="text-h5 text-center pa-4 primary black--text"
-            >Your scenes</v-row
+          <v-row
+            no-gutters
+            class="text-h5 text-center pa-4 primary black--text"
+            >{{ $vuetify.lang.t('$vuetify.scenes.yourScenes') }}</v-row
           >
 
           <!-- The different scene -->
@@ -60,9 +62,13 @@
                 </v-chip-group>
               </v-card-subtitle>
               <v-card-text>
-                {{ scene.formatedCreationDate }}, assets number :
-                {{ scene.assetsNumber }}, id : {{ scene.id }}, owner :
-                {{ scene.idUserOwner }}, profil id : {{ scene.idProfile }}
+                {{ scene.formatedCreationDate }},
+                {{ $vuetify.lang.t('$vuetify.scenes.assetsNumber') }} :
+                {{ scene.assetsNumber }}, id : {{ scene.id }},
+                {{ $vuetify.lang.t('$vuetify.scenes.owner') }} :
+                {{ scene.idUserOwner }},
+                {{ $vuetify.lang.t('$vuetify.scenes.profil') }} id :
+                {{ scene.idProfile }}
               </v-card-text>
 
               <v-card-actions class="flex-wrap">
@@ -74,7 +80,7 @@
                         text
                         @click="ergonomioLayout($event)"
                       >
-                        Open in layout
+                        {{ $vuetify.lang.t('$vuetify.scenes.openInLayout') }}
                       </v-btn>
                     </v-row>
                     <v-row no-gutters>
@@ -83,7 +89,9 @@
                         text
                         @click="ergonomioVirtualTwin($event)"
                       >
-                        Open in virtual twin
+                        {{
+                          $vuetify.lang.t('$vuetify.scenes.openInVirtualTwin')
+                        }}
                       </v-btn>
                     </v-row>
                     <v-row
@@ -125,7 +133,7 @@
                   large
                   elevation="2"
                 >
-                  Create new empty scene
+                  {{ $vuetify.lang.t('$vuetify.scenes.createNewEmptyScene') }}
                 </v-btn>
                 <v-btn
                   @click="openUploadFile"
@@ -134,7 +142,7 @@
                   elevation="2"
                   v-if="!unreal.check()"
                 >
-                  Load scene
+                  {{ $vuetify.lang.t('$vuetify.scenes.loadScene') }}
                   <input
                     accept="application/JSON"
                     ref="uploadFileInput"
@@ -150,7 +158,7 @@
                   elevation="2"
                   v-if="!this.multi"
                 >
-                  Add object in scene
+                  {{ $vuetify.lang.t('$vuetify.scenes.addObjectInScene') }}
                 </v-btn>
                 <v-btn
                   @click="saveCurrentScene"
@@ -159,7 +167,7 @@
                   v-if="!this.multi"
                   elevation="2"
                 >
-                  Save current scene
+                  {{ $vuetify.lang.t('$vuetify.scenes.saveCurrentScene') }}
                 </v-btn>
                 <v-btn
                   @click="backToHome"
@@ -167,14 +175,14 @@
                   large
                   elevation="2"
                 >
-                  Back to home
+                  {{ $vuetify.lang.t('$vuetify.scenes.backToHome') }}
                 </v-btn>
               </v-row>
               <v-row no-gutters v-if="!this.multi">
                 <v-select
                   :items="scenes.map(item => item.name)"
                   v-model="sceneForModif"
-                  label="Target scene"
+                  :label="$vuetify.lang.t('$vuetify.scenes.targetScene')"
                   dense
                 ></v-select>
               </v-row>
@@ -201,7 +209,9 @@
           <!-- For create a scene with json -->
           <v-dialog v-model="createSceneJson" max-width="780">
             <v-card>
-              <v-card-title> Glisser un fichier scene json </v-card-title>
+              <v-card-title>
+                {{ $vuetify.lang.t('$vuetify.scenes.glisserJson') }}
+              </v-card-title>
 
               <v-card-actions>
                 <v-btn
@@ -210,7 +220,7 @@
                   @click="openUploadFile"
                 >
                   <v-icon v-text="'mdi-upload'"></v-icon>
-                  Upload new
+                  {{ $vuetify.lang.t('$vuetify.assetLibrary.uploadNew') }}
                   <input
                     ref="uploadFileInput"
                     hidden
@@ -233,13 +243,15 @@
           <!-- For modify the data of the scene -->
           <v-dialog v-model="modifyScene" max-width="780">
             <v-card>
-              <v-card-title> Modifier des données </v-card-title>
+              <v-card-title>
+                {{ $vuetify.lang.t('$vuetify.scenes.modifyData') }}
+              </v-card-title>
 
               <v-container fluid>
                 <v-row no-gutters>
                   <v-col cols="3">
                     <v-card-text>
-                      New title :
+                      {{ $vuetify.lang.t('$vuetify.assetLibrary.newTitle') }} :
                     </v-card-text>
                   </v-col>
 
@@ -253,7 +265,7 @@
                 <v-row no-gutters>
                   <v-col cols="3">
                     <v-card-text>
-                      New tag :
+                      {{ $vuetify.lang.t('$vuetify.assetLibrary.newTags') }} :
                     </v-card-text>
                   </v-col>
 
@@ -277,7 +289,7 @@
                   @click="openUploadFile"
                 >
                   <v-icon v-text="'mdi-upload'"></v-icon>
-                  Upload new
+                  {{ $vuetify.lang.t('$vuetify.assetLibrary.uploadNew') }}
                   <input
                     ref="uploadFileInput"
                     hidden
@@ -313,11 +325,11 @@
                   text
                   @click="copyScene(sceneChoose)"
                 >
-                  Do copy of scene
+                  {{ $vuetify.lang.t('$vuetify.scenes.doCopyOfScene') }}
                 </v-btn>
                 <v-spacer></v-spacer>
                 <v-btn color="primary darken-1" text @click="save(sceneChoose)">
-                  Save
+                  {{ $vuetify.lang.t('$vuetify.assetLibrary.save') }}
                 </v-btn>
               </v-card-actions>
             </v-card>
