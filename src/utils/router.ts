@@ -65,7 +65,7 @@ export const routes: Array<Route> = [
   // Web front pages
   new Route({
     icon: 'mdi-home',
-    name: 'Home',
+    name: 'home',
     path: '/home',
     alias: '/',
     category: 'About us',
@@ -76,7 +76,7 @@ export const routes: Array<Route> = [
   // Contradiction analyse
   new Route({
     icon: 'mdi-information-outline',
-    name: 'About contradiction',
+    name: 'aboutContradiction',
     subname: '',
     path: '/about-contradiction-analysis-expert',
     category: 'Contradiction Analysis',
@@ -93,7 +93,7 @@ export const routes: Array<Route> = [
   // }),
   new Route({
     icon: 'mdi-graph',
-    name: 'Expert approach',
+    name: 'expertApproach',
     subname: '',
     path: '/contradiction-analysis-expert2',
     category: 'Contradiction Analysis',
@@ -101,7 +101,7 @@ export const routes: Array<Route> = [
   }),
   new Route({
     icon: 'mdi-robot',
-    name: 'Simulation approach',
+    name: 'simulationApproach',
     subname: '',
     path: '/contradiction-analysis-simulation',
     category: 'Contradiction Analysis',
@@ -111,7 +111,7 @@ export const routes: Array<Route> = [
   // Routing analysis
   new Route({
     icon: 'mdi-information-outline',
-    name: 'About routing analysis',
+    name: 'aboutRoutingAnalysis',
     subname: '',
     path: '/about-routing-analysis',
     category: 'Routing  Analysis',
@@ -120,7 +120,7 @@ export const routes: Array<Route> = [
   }),
   new Route({
     icon: 'mdi-arrow-decision',
-    name: 'Routing  Analysis',
+    name: 'routingAnalysis',
     subname: 'a.k.a. Drawing Shop',
     path: '/routing-analysis',
     category: 'Routing  Analysis',
@@ -128,7 +128,7 @@ export const routes: Array<Route> = [
   }),
   new Route({
     icon: 'mdi-floor-plan',
-    name: 'Blueprint Editor',
+    name: 'blueprintEditor',
     subname: 'a.k.a. Drawing Shop',
     path: '/blueprint-editor',
     category: 'Routing  Analysis',
@@ -138,15 +138,15 @@ export const routes: Array<Route> = [
   // Dynamics analysis
   new Route({
     icon: 'mdi-share-variant',
-    name: 'Input',
-    subname: 'Share dynamics files',
+    name: 'input',
+    subname: 'shareDynamicsFiles',
     path: '/dynamics-input',
     category: 'Dynamics Analysis',
     component: DynamicsInput
   }),
   new Route({
     icon: 'mdi-chart-box',
-    name: 'Output',
+    name: 'output',
     subname: 'Dynamics analysis',
     path: '/dynamics-output',
     category: 'Dynamics Analysis',
@@ -156,7 +156,7 @@ export const routes: Array<Route> = [
   // Ergonom.io
   new Route({
     icon: 'mdi-information-outline',
-    name: 'About Ergonom.io',
+    name: 'aboutErgonomIO',
     subname: '',
     path: '/about-ergonom-io',
     category: 'Ergonom.io',
@@ -165,7 +165,7 @@ export const routes: Array<Route> = [
   }),
   new Route({
     icon: 'mdi-factory',
-    name: 'Virtual Twin',
+    name: 'virtualTwin',
     subname: 'Virtual reality tool',
     path: '/ergonom-io',
     category: 'Ergonom.io',
@@ -173,7 +173,7 @@ export const routes: Array<Route> = [
   }),
   new Route({
     icon: 'mdi-finance',
-    name: 'Gesture analysis',
+    name: 'gestureAnalysis',
     subname: 'Tool for ergonomic analysis',
     path: '/ergonom-io-analysis',
     category: 'Ergonom.io',
@@ -181,7 +181,7 @@ export const routes: Array<Route> = [
   }),
   new Route({
     icon: 'mdi-nature-people',
-    name: 'Scenes',
+    name: 'scenes',
     subname: 'Scene management',
     path: '/ergonom-io-scene',
     category: 'Ergonom.io',
@@ -189,7 +189,7 @@ export const routes: Array<Route> = [
   }),
   new Route({
     icon: 'mdi-package-variant-closed',
-    name: 'Assets library',
+    name: 'assetsLibrary',
     subname: 'List of all assets',
     path: '/ergonom-io-assets',
     category: 'Ergonom.io',
@@ -197,7 +197,7 @@ export const routes: Array<Route> = [
   }),
   new Route({
     icon: 'mdi-cube-send',
-    name: 'Asset editor',
+    name: 'assetEditor',
     subname: 'Upload & edit assets',
     path: '/ergonom-io-asset',
     category: 'Ergonom.io',
@@ -205,15 +205,15 @@ export const routes: Array<Route> = [
   }),
   new Route({
     icon: 'mdi-account-supervisor-circle',
-    name: 'Collaborative sessions',
+    name: 'collaborativeSessions',
     subname: 'For virtual meetings',
     path: '/ergonom-io-rooms',
     category: 'Ergonom.io',
     component: ErgonomIORooms
   }),
   new Route({
-    icon: 'mdi-account-supervisor-circle',
-    name: 'Dynamics objetcs',
+    icon: 'mdi-factory',
+    name: 'dynamicsObjects',
     subname: 'OPC UA',
     path: '/ergonom-io-opcua',
     category: 'Ergonom.io',
@@ -221,7 +221,7 @@ export const routes: Array<Route> = [
   }),
   new Route({
     icon: 'mdi-human',
-    name: 'Avatars',
+    name: 'avatars',
     subname: 'Manage your avatars',
     path: '/ergonom-io-avatars',
     category: 'Ergonom.io',
@@ -229,7 +229,7 @@ export const routes: Array<Route> = [
   }),
   new Route({
     icon: 'mdi-human',
-    name: 'Avatars',
+    name: 'avatars',
     subname: 'Profiles manager',
     path: '/ergonom-io-profiles-manager',
     category: 'Ergonom.io',
@@ -239,7 +239,7 @@ export const routes: Array<Route> = [
   // Documentation
   new Route({
     icon: 'mdi-database',
-    name: 'Database',
+    name: 'database',
     subname: 'Show database structure',
     path: '/documentation-database',
     category: 'Documentation',
@@ -257,7 +257,7 @@ export const routes: Array<Route> = [
 
   new Route({
     icon: 'mdi-help-circle-outline',
-    name: 'Help',
+    name: 'help',
     subname: 'Applications guide',
     path: '/help-editor',
     category: 'Documentation',
@@ -265,7 +265,7 @@ export const routes: Array<Route> = [
   }),
   new Route({
     icon: 'mdi-xml',
-    name: 'Code structure',
+    name: 'codeStructure',
     subname: 'Of vue project',
     path: '/code-structure',
     category: 'Documentation',
@@ -275,7 +275,7 @@ export const routes: Array<Route> = [
   // Hidded menus
   new Route({
     icon: 'mdi-human',
-    name: 'ErgonomioLogin',
+    name: 'ergonomioLogin',
     subname: 'Ergonomics login',
     path: '/ergonom-io-login',
     category: 'Ergonom.io',
@@ -285,7 +285,7 @@ export const routes: Array<Route> = [
 
   new Route({
     icon: 'mdi-human',
-    name: 'ErgonomioMainMenu',
+    name: 'ergonomioMainMenu',
     subname: 'Ergonomics and flow analysis',
     path: '/ergonom-io-menu-main',
     category: 'Ergonom.io',
