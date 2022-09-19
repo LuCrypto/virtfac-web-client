@@ -119,7 +119,7 @@
     </v-navigation-drawer>
 
     <!-- Popups -->
-    <pop-up ref="loginPopUp">
+    <pop-up ref="loginPopUp" :maxWidth="'500px'">
       <login @close="$refs.loginPopUp.close()"></login>
     </pop-up>
 
@@ -232,10 +232,8 @@ export default class NavBar extends Vue {
 
   clickTitle (): void {
     if (this.clickTitleNumber++ < 10) return
-    fetch(
-      'https://v2.jokeapi.dev/joke/Any?lang=fr&format=txt&type=twopart'
-    ).then(response => {
-      response.text().then(text => this.$root.$emit('bottom-message', text))
+    fetch('https://v2.jokeapi.dev/joke/Any?lang=fr&format=txt').then(r => {
+      r.text().then(t => this.$root.$emit('bottom-message', t))
     })
   }
 

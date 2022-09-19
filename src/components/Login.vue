@@ -10,7 +10,7 @@
         Connexion
       </v-toolbar-title>
     </v-toolbar>
-    <v-card-text class="mt-5">
+    <v-card-text class="pt-5 px-5 pb-0">
       <v-form>
         <v-text-field
           prepend-icon="mdi-login"
@@ -36,14 +36,20 @@
         To create an account, you need an organization manager to send you a
         login link.
       </div>
+      <div class="red--text mt-3" v-if="redMessage">
+        {{ redMessage }}
+      </div>
     </v-card-text>
     <v-card-actions class="pb-5">
       <v-spacer></v-spacer>
+      <div v-if="waitingBeforeNewTry != 0" class="mr-2 red--text">
+        Next try in {{ waitingBeforeNewTry }} seconds
+      </div>
       <v-btn
         color="primary"
         @click="loginRequest"
-        dark
-        :disabled="!login || !password || waiting"
+        class="black--text"
+        :disabled="!login || !password || waiting || waitingBeforeNewTry != 0"
       >
         <v-progress-circular
           v-if="waiting"
@@ -63,7 +69,6 @@
 import { Component, Vue } from 'vue-property-decorator'
 import { Session, User } from '@/utils/session'
 import API from '@/utils/api'
-import PopUp from './PopUp.vue'
 import Unreal from '@/utils/unreal'
 
 @Component({
@@ -76,7 +81,10 @@ export default class Login extends Vue {
   password = ''
   waiting = false
   showPassword = false
+  redMessage = ''
+  waitingBeforeNewTry = 0
   unreal = Unreal
+  timeout: ReturnType<typeof setTimeout> | undefined = undefined
 
   loginRequest (): void {
     this.waiting = true
@@ -97,12 +105,24 @@ export default class Login extends Vue {
         this.password = ''
         this.$emit('close')
       })
-      .catch(e => {
-        this.$root.$emit('bottom-message', 'Login or password are incorrect.')
+      .catch((reason: any) => {
+        this.redMessage = reason.message
+        this.waitingBeforeNewTry = Math.ceil(reason.waiting / 1000)
+        if (this.timeout) {
+          clearTimeout(this.timeout)
+        }
+        this.updateTimer()
       })
       .finally(() => {
         this.waiting = false
       })
+  }
+
+  updateTimer () {
+    if (this.waitingBeforeNewTry > 0) {
+      this.waitingBeforeNewTry -= 1
+      this.timeout = setTimeout(() => this.updateTimer(), 1000)
+    }
   }
 }
 </script>

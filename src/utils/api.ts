@@ -14,89 +14,91 @@ export default class API {
   ): Promise<Response> {
     const apiIP = process.env.VUE_APP_API_SERVER_IP
     const apiPort = process.env.VUE_APP_API_SERVER_PORT
-    return new Promise((resolve, reject) => {
-      const token = Session.getToken()
-      const url =
-        `http://${apiIP}:${apiPort}${path}` +
-        (params != null ? `?${params}` : '')
-      const contentType: string =
-        params != null
-          ? 'application/x-www-form-urlencoded'
-          : 'application/json;charset=utf-8'
-      const request: RequestInit = {
-        mode: 'cors' as RequestMode,
-        headers: {
-          'Content-Type': contentType,
-          Authorization: `Bearer ${token}`
-        },
-        method: method
-      }
-      if (body != null) {
-        request.body = body
-      }
-      console.log(`%c${method} ${url}`, 'color: #bada55')
+    return new Promise(
+      (resolve: (body: any) => void, reject: (body: any) => void) => {
+        const token = Session.getToken()
+        const url =
+          `http://${apiIP}:${apiPort}${path}` +
+          (params != null ? `?${params}` : '')
+        const contentType: string =
+          params != null
+            ? 'application/x-www-form-urlencoded'
+            : 'application/json;charset=utf-8'
+        const request: RequestInit = {
+          mode: 'cors' as RequestMode,
+          headers: {
+            'Content-Type': contentType,
+            Authorization: `Bearer ${token}`
+          },
+          method: method
+        }
+        if (body != null) {
+          request.body = body
+        }
+        console.log(`%c${method} ${url}`, 'color: #bada55')
 
-      // Try to fetch
-      fetch(url, request)
-        .then(response => {
-          // Handle error in response
-          if (!response.ok) {
-            if (response.body) {
-              // Get JSON error message from API if exist
-              response
-                .json()
-                .then(json => {
-                  console.error(`API error response : ${json.message}.`)
-                  component.$root.$emit(
-                    'bottom-message',
-                    'Sorry, your request could not be executed'
-                  )
-                  reject(response)
-                })
-                .catch(_ => {
-                  console.error(response)
-                  component.$root.$emit(
-                    'bottom-message',
-                    'Sorry, your request could not be executed'
-                  )
-                })
-            } else {
-              // Show other API error type
-              console.error(response)
-              component.$root.$emit(
-                'bottom-message',
-                'Sorry, your request could not be executed'
-              )
-              reject(response)
+        // Try to fetch
+        fetch(url, request)
+          .then(response => {
+            // Handle error in response
+            if (!response.ok) {
+              if (response.body) {
+                // Get JSON error message from API if exist
+                response
+                  .json()
+                  .then(json => {
+                    console.error(`API error response : ${json.message}.`)
+                    component.$root.$emit(
+                      'bottom-message',
+                      'Sorry, your request could not be executed'
+                    )
+                    reject(json)
+                  })
+                  .catch(_ => {
+                    console.error(response)
+                    component.$root.$emit(
+                      'bottom-message',
+                      'Sorry, your request could not be executed'
+                    )
+                  })
+              } else {
+                // Show other API error type
+                console.error(response)
+                component.$root.$emit(
+                  'bottom-message',
+                  'Sorry, your request could not be executed'
+                )
+                reject(response)
+              }
+              return
             }
-            return
-          }
 
-          // Request response is 200 ok !
-          response
-            .json()
-            .then(json => {
-              resolve(json)
-            })
-            .catch(error => {
-              console.error(error)
-              component.$root.$emit(
-                'bottom-message',
-                'Sorry, your request could not be executed'
-              )
-            })
-        })
+            // Request response is 200 ok !
+            response
+              .json()
+              .then(json => {
+                resolve(json)
+              })
+              .catch(error => {
+                console.error(error)
+                component.$root.$emit(
+                  'bottom-message',
+                  'Sorry, your request could not be executed'
+                )
+              })
+          })
 
-        // Cannot fetch API
-        .catch(error => {
-          console.error(url, request, error)
-          component.$root.$emit(
-            'bottom-message',
-            'Unable to connect to VIRTFac server.'
-          )
-          reject(error)
-        })
-    })
+          // Cannot fetch API
+          .catch(error => {
+            console.error(url, request, error)
+            component.$root.$emit(
+              'bottom-message',
+              'Unable to connect to VIRTFac server.'
+            )
+            reject(error)
+          })
+      }
+    )
   }
 
   static error (component: Vue, message: string, error: any) {
