@@ -1,5 +1,5 @@
 <template>
-  <v-dialog v-model="isOpen" :width="width">
+  <v-dialog v-model="isOpen" :width="width" :max-width="maxWidth">
     <slot></slot>
   </v-dialog>
 </template>
@@ -15,7 +15,8 @@ import { Component, Prop, Vue } from 'vue-property-decorator'
 export default class PopUp extends Vue {
   // @vuese
   // Application reference to select only compatible files
-  @Prop({ default: () => '100%' }) private width!: string
+  @Prop({ default: () => undefined }) private width!: string
+  @Prop({ default: () => undefined }) private maxWidth!: string
   isOpen = false
 
   open (): void {
