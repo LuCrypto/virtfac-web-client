@@ -31,7 +31,8 @@ export default {
     newTitle: 'Nouveau titre',
     newTags: 'Nouveaux tags',
     uploadNew: 'Télécharger un nouveau',
-    uCantUse: 'Vous ne pouvez pas utiliser le gestionnaire d\'actifs en multijoueur'
+    uCantUse:
+      "Vous ne pouvez pas utiliser le gestionnaire d'actifs en multijoueur"
   },
   dynamicsObject: {
     dynamicsObjects: 'Objets dynamiques',
@@ -92,20 +93,20 @@ export default {
   mainMenu: {
     dynamicsObjects: 'Objets dynamiques',
     scenes: 'Scenes',
-    assetsLibrary: 'Bibliothèque d\'objets',
+    assetsLibrary: "Bibliothèque d'objets",
     gestureAnalysis: 'Analyse des gestes',
     collaborativeSessions: 'Sessions collaboratives',
     aboutContradiction: 'À propos de Contradiction',
     expertApproach: 'Approche experte',
     simulationApproach: 'Approche de simulation',
-    aboutRoutingAnalysis: 'À propos de l\'analyse de routage',
+    aboutRoutingAnalysis: "À propos de l'analyse de routage",
     routingAnalysis: 'Analyse de routage',
     blueprintEditor: 'Éditeur de plan',
     input: 'Entrée',
     output: 'Sortie',
-    aboutErgonomIO: 'À propos d\'ErgonomIO',
+    aboutErgonomIO: "À propos d'ErgonomIO",
     virtualTwin: 'Jumeau virtuel',
-    assetEditor: 'Éditeur d\'actifs',
+    assetEditor: "Éditeur d'actifs",
     avatars: 'Avatars',
     database: 'Base de données',
     API: 'API',
@@ -113,6 +114,26 @@ export default {
     codeStructure: 'Structure du code',
     ergonomioLogin: 'Connexion ErgonomIO',
     ergonomioMainMenu: 'Menu principal ErgonomIO',
-    home: 'Accueil'
+    home: 'Accueil',
+
+    // Subnames
+    akaDrawingShop: 'Alias Drawing Shop',
+    shareDynamicsFiles: 'Partager les flux',
+    DynamicsAnalysis: 'Analyse des flux',
+    VirtualRealityTool: 'Outil de réalité virtuelle',
+    ToolForErgonomicAnalysis: "Outil d'analyse ergonomique",
+    SceneManagement: 'Gestion des scènes',
+    ListOfAllAssets: 'Liste de tous les actifs',
+    UploadEditAssets: 'Chargement et modification des actifs',
+    ForVirtualMeetings: 'Réunions virtuelles',
+    OPCUA: 'OPC UA',
+    ManageYourAvatars: 'Avatars',
+    ProfilesManager: 'Profils',
+    ShowDatabaseStructure: 'Base de données',
+    InterfaceDocumentation: 'Documentation',
+    ApplicationsGuide: 'Guide',
+    OfVueProject: 'Projet de vue',
+    ErgonomicsLogin: "Connexion à l'ergonomie",
+    ErgonomicsAndFlowAnalysis: 'Ergonomie et analyse des flux'
   }
 }

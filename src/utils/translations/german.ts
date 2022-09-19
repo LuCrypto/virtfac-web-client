@@ -113,6 +113,26 @@ export default {
     codeStructure: 'Code-Struktur',
     ergonomioLogin: 'ErgonomIO-Login',
     ergonomioMainMenu: 'ErgonomIO-Hauptmenü',
-    home: 'Zuhause'
+    home: 'Zuhause',
+
+    // Subnames
+    akaDrawingShop: 'Alias Drawing Shop',
+    shareDynamicsFiles: 'Feeds teilen',
+    DynamicsAnalysis: 'Analyse von Flows',
+    VirtualRealityTool: 'Tool für virtuelle Realität',
+    ToolForErgonomicAnalysis: 'Tool zur ergonomischen Analyse',
+    SceneManagement: 'Verwaltung von Szenen',
+    ListOfAllAssets: 'Liste aller Assets',
+    UploadEditAssets: 'Laden und Bearbeiten von Assets',
+    ForVirtualMeetings: 'Virtuelle Besprechungen',
+    OPCUA: 'OPC UA',
+    ManageYourAvatars: 'Avatare',
+    ProfilesManager: 'Profile',
+    ShowDatabaseStructure: 'Datenbank',
+    InterfaceDocumentation: 'Dokumentation',
+    ApplicationsGuide: 'Leitfaden',
+    OfVueProject: 'Entwurf einer Ansicht',
+    ErgonomicsLogin: 'Anschluss an die Ergonomie',
+    ErgonomicsAndFlowAnalysis: 'Ergonomie und Flussanalyse'
   }
 }

@@ -31,7 +31,7 @@ export default {
     newTitle: 'New title',
     newTags: 'New tags',
     uploadNew: 'Upload new',
-    uCantUse: 'You can\'t use the asset manager in multiplayer'
+    uCantUse: "You can't use the asset manager in multiplayer"
   },
   dynamicsObject: {
     dynamicsObjects: 'Dynamics objects',
@@ -113,6 +113,26 @@ export default {
     codeStructure: 'Code structure',
     ergonomioLogin: 'ErgonomIO login',
     ergonomioMainMenu: 'ErgonomIO main menu',
-    home: 'Home'
+    home: 'Home',
+
+    // Subnames
+    akaDrawingShop: 'a.k.a. Drawing Shop',
+    shareDynamicsFiles: 'share Dynamics Files',
+    DynamicsAnalysis: 'Dynamics analysis',
+    VirtualRealityTool: 'Virtual reality tool',
+    ToolForErgonomicAnalysis: 'Tool for ergonomic analysis',
+    SceneManagement: 'Scene management',
+    ListOfAllAssets: 'List of all assets',
+    UploadEditAssets: 'Upload & edit assets',
+    ForVirtualMeetings: 'For virtual meetings',
+    OPCUA: 'OPC UA',
+    ManageYourAvatars: 'Manage your avatars',
+    ProfilesManager: 'Profiles manager',
+    ShowDatabaseStructure: 'Show database structure',
+    InterfaceDocumentation: 'Interface documentation',
+    ApplicationsGuide: 'Applications guide',
+    OfVueProject: 'Of vue project',
+    ErgonomicsLogin: 'Ergonomics login',
+    ErgonomicsAndFlowAnalysis: 'Ergonomics and flow analysis'
   }
 }
