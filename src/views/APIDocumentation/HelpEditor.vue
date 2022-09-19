@@ -43,6 +43,19 @@ export default class HelpEditor extends Vue {
   isLoaded = false
   tick = 0
 
+  id: number | undefined = undefined
+  unmounted (): void {
+    if (this.id) {
+      window.cancelAnimationFrame(this.id)
+      console.log(`Remove animation frame ${this.id}.`)
+    }
+    this.id = undefined
+  }
+
+  onDeactivated (): void {
+    this.unmounted()
+  }
+
   mounted (): void {
     console.log('mounted')
     this.parseLinksOnceLoaded()
@@ -60,7 +73,7 @@ export default class HelpEditor extends Vue {
       }
     }
     if (this.tick++ < 1000) {
-      requestAnimationFrame(() => this.parseLinksOnceLoaded())
+      this.id = requestAnimationFrame(() => this.parseLinksOnceLoaded())
     }
   }
 

@@ -44,6 +44,19 @@ export default class GraphChart extends Vue {
 
   theme = this.themes.dark
 
+  id: number | undefined = undefined
+  unmounted (): void {
+    if (this.id) {
+      window.cancelAnimationFrame(this.id)
+      console.log(`Remove animation frame ${this.id}.`)
+    }
+    this.id = undefined
+  }
+
+  onDeactivated (): void {
+    this.unmounted()
+  }
+
   mounted (): void {
     this.canvas = this.$refs.canvas as HTMLCanvasElement
 
@@ -189,7 +202,7 @@ export default class GraphChart extends Vue {
   loop () {
     this.updateSize()
     this.update()
-    requestAnimationFrame(() => this.loop())
+    this.id = requestAnimationFrame(() => this.loop())
   }
 }
 </script>
