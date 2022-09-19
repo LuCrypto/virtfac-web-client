@@ -135,32 +135,6 @@ export default class AssetLibrary extends Vue {
 
   private menuCollapse = false
 
-  viewedItems = [
-    '',
-    '',
-    '',
-    '',
-    '',
-    '',
-    '',
-    '',
-    '',
-    '',
-    '',
-    '',
-    '',
-    '',
-    '',
-    '',
-    '',
-    '',
-    '',
-    '',
-    ''
-  ].map((v, i) => {
-    return { name: 'item ' + i, id: i }
-  })
-
   private nbPages = 5
   private currentPage = 1
   private colSize = 3
@@ -188,9 +162,13 @@ export default class AssetLibrary extends Vue {
   mounted (): void {
     console.log(this.content)
     addEventListener('resize', () => {
-      const row = (this.$refs.row as Element).getBoundingClientRect()
-      const nbcol = row.width / 129
-      this.colSize = Math.min(Math.max(Math.ceil(12 / nbcol), 1), 12)
+      try {
+        const row = (this.$refs.row as Element).getBoundingClientRect()
+        const nbcol = row.width / 129
+        this.colSize = Math.min(Math.max(Math.ceil(12 / nbcol), 1), 12)
+      } catch (er) {
+        //
+      }
     })
   }
 }

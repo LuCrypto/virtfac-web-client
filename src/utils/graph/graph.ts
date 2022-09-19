@@ -240,6 +240,7 @@ export class Graph extends MetaData {
       Object.entries(types).forEach(entry => {
         let caster: { (json: unknown): unknown } | undefined
         switch (entry[1]) {
+          case '{x:number, y:number}':
           case 'Vec2':
             caster = (json: unknown) => {
               const vals = json as { x: number; y: number }

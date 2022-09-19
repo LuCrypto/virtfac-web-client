@@ -91,6 +91,7 @@ import MaximizableContainer from './MaximizableContainer.vue'
 import { VAlert } from 'vuetify/lib'
 import { APIFile } from '@/utils/models'
 import InputFieldPopUp from './popup/InputFieldPopUp.vue'
+import API from '@/utils/api'
 
 class Poste {
   name: string
@@ -183,12 +184,29 @@ export default class RoutingAnalysisComponent extends Vue {
             if (value !== null && this.postPostGraph !== null) {
               const json = JSON.stringify(this.postPostGraph.toJsonOBJ())
               const file = new Blob([json], {
-                type: 'text/plain'
+                type: 'application/json;application=virtfac/blueprint/routing'
               })
+              const reader = new FileReader()
+              reader.onload = () => {
+                const f = new APIFile({
+                  name: value,
+                  uri: reader.result as string
+                })
+                API.put(
+                  this,
+                  '/resources/files',
+                  JSON.stringify(f.toJSON())
+                ).catch(reason => {
+                  console.log(reason)
+                })
+              }
+              reader.readAsDataURL(file)
+              /*
               const a = document.createElement('a')
               a.href = URL.createObjectURL(file)
               a.download = value
               a.click()
+              */
             }
           }
         )
@@ -1260,8 +1278,8 @@ export default class RoutingAnalysisComponent extends Vue {
     this.postPostGraph = orderGraph.graph
     this.postPostGraph.nodeFields.set('name', 'string')
     this.postPostGraph.nodeFields.set('color', 'string')
-    this.postPostGraph.nodeFields.set('position', '{x: number, y:number}')
-    this.postPostGraph.nodeFields.set('xlsxPosition', '{x: number, y:number}')
+    this.postPostGraph.nodeFields.set('position', '{x:number, y:number}')
+    this.postPostGraph.nodeFields.set('xlsxPosition', '{x:number, y:number}')
     this.postPostGraph.nodeFields.set('dimension', '{x:number, y:number}')
     this.postPostGraph.nodeFields.set('classifGroup', 'number')
     this.articlePostGraph = new Graph()
@@ -1273,12 +1291,12 @@ export default class RoutingAnalysisComponent extends Vue {
         new Node()
           .setData<string>('name', _machineData.name)
           .setData('xlsxPosition', {
-            x: _machineData.coord.x,
-            y: _machineData.coord.y
+            x: _machineData.coord.x * 100,
+            y: _machineData.coord.y * 100
           })
           .setData('dimension', {
-            x: _machineData.size.x,
-            y: _machineData.size.y
+            x: _machineData.size.x * 100,
+            y: _machineData.size.y * 100
           }) as Node
       )
     )
@@ -1338,12 +1356,12 @@ export default class RoutingAnalysisComponent extends Vue {
               new Node()
                 .setData<string>('name', machineData.name)
                 .setData('xlsxPosition', {
-                  x: machineData.coord.x,
-                  y: machineData.coord.y
+                  x: machineData.coord.x * 100,
+                  y: machineData.coord.y * 100
                 })
                 .setData('dimension', {
-                  x: machineData.size.x,
-                  y: machineData.size.y
+                  x: machineData.size.x * 100,
+                  y: machineData.size.y * 100
                 }) as Node
             )
           )

@@ -91,7 +91,7 @@
       <pop-up ref="filePopUp">
         <open-file
           @close="$refs.filePopUp.close()"
-          application="ALL"
+          application="BLUEPRINT_EDITOR"
           :singleSelect="true"
           :openFile="true"
           @fileInput="handleFile"
@@ -114,7 +114,7 @@ import MaximizableContainer from './MaximizableContainer.vue'
 
 import { BlueprintContainer } from '@/utils/routingAnalysis/blueprintContainer'
 import { BlueprintExporter } from '@/utils/routingAnalysis/blueprintExporter'
-import { APIAsset } from '@/utils/models'
+import { APIAsset, APIFile } from '@/utils/models'
 import API from '@/utils/api'
 import { Behaviour, BehaviourInstance } from '@/utils/assets/behaviour'
 import AssetLibrary from './AssetLibrary.vue'
@@ -204,7 +204,7 @@ export default class BlueprintEditorContainer extends Vue {
     return this.mySelectedFurniture
   }
 
-  private set selectedFurniture (value: BpAssetCache | null) {
+  public set selectedFurniture (value: BpAssetCache | null) {
     this.mySelectedFurniture = value
     ;(this.blueprintEditor as BlueprintEditor).selectedFurniture = value
   }
@@ -331,6 +331,11 @@ export default class BlueprintEditorContainer extends Vue {
     )
     */
     this.menuItemList.push(
+      new MenuItem('Open File', 'mdi-file-document', () => {
+        (this.$refs.filePopUp as PopUp).open()
+      })
+    )
+    this.menuItemList.push(
       new MenuItem('Define Scale', 'mdi-pencil-ruler', () => {
         let dist = 1
         if (this.inputField != null) {
@@ -373,13 +378,42 @@ export default class BlueprintEditorContainer extends Vue {
           .blueprintEditor as BlueprintEditor).getBpContainer() as BlueprintContainer)
           .getBlueprint()
           .toJSON()
-        const a = document.createElement('a')
+        // const a = document.createElement('a')
         const file = new Blob([JSON.stringify(json)], {
-          type: 'text/plain'
+          type: 'application/json;application=virtfac/blueprint/building'
         })
+
+        if (this.inputField != null) {
+          this.inputField.open(
+            'Enter file name',
+            'blueprint',
+            'blueprint',
+            value => {
+              if (value !== null) {
+                const reader = new FileReader()
+                reader.onload = () => {
+                  const f = new APIFile({
+                    name: value,
+                    uri: reader.result as string
+                  })
+                  API.put(
+                    this,
+                    '/resources/files',
+                    JSON.stringify(f.toJSON())
+                  ).catch(reason => {
+                    console.log(reason)
+                  })
+                }
+                reader.readAsDataURL(file)
+              }
+            }
+          )
+        }
+        /*
         a.href = URL.createObjectURL(file)
         a.download = 'blueprint.json'
         a.click()
+        */
       })
     )
 
@@ -407,9 +441,11 @@ export default class BlueprintEditorContainer extends Vue {
   */
 
   selectAsset (id: number): void {
-    BpAPICache.instance().getAsset(id).then(asset => {
-      this.selectedFurniture = asset
-    })
+    BpAPICache.instance()
+      .getAsset(id)
+      .then(asset => {
+        this.selectedFurniture = asset
+      })
   }
 
   inputFile (): void {
@@ -418,28 +454,42 @@ export default class BlueprintEditorContainer extends Vue {
     input.click()
   }
 
-  handleFile (file: File | null): void {
+  handleFile (file: APIFile[]): void {
     if (file == null) {
       console.log('This type of file cannot be read yet.')
     } else {
-      const reader = new FileReader()
-      const name = file.name
-      reader.onload = e => {
-        if (e == null || e.target == null) {
-          console.error('Cannot read file...')
-          return
+      file.forEach(apiFile => {
+        if (
+          apiFile.mime ===
+          'application/json;application=virtfac/blueprint/building'
+        ) {
+          const json = JSON.parse(atob(apiFile.uri.split('base64,')[1]))
+          ;((this
+            .blueprintEditor as BlueprintEditor).getBpContainer() as BlueprintContainer)
+            .getBlueprint()
+            .applyJSON(json)
+        } else if (
+          apiFile.mime ===
+          'application/json;application=virtfac/blueprint/routing'
+        ) {
+          const json = JSON.parse(atob(apiFile.uri.split('base64,')[1]))
+          ;((this
+            .blueprintEditor as BlueprintEditor).getBpContainer() as BlueprintContainer).routingGraph.applyJson(
+            json
+          )
+          /*
+          ;((this
+            .blueprintEditor as BlueprintEditor).getBpContainer() as BlueprintContainer).routingGraph.foreachNode(
+            n => {
+              n.setData<{ x: number; y: number }>(
+                'position',
+                n.getData<{ x: number; y: number }>('xlsxPosition')
+              )
+            }
+          )
+          /**/
         }
-        var data = e.target.result
-        var workbook = XLSX.read(data, { type: 'binary' })
-        console.log(
-          'Excel File = ',
-          name,
-          workbook,
-          JSON.stringify(workbook.Sheets[workbook.SheetNames[0]])
-        )
-        // const mapper = new Mapper(workbook.Sheets[workbook.SheetNames[0]])
-      }
-      reader.readAsBinaryString(file)
+      })
     }
   }
 }

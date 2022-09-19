@@ -21,6 +21,10 @@ export class BpWallFurniture {
 export class Blueprint extends MetaData {
   private wallGraph: Graph
 
+  public getGraph (): Graph {
+    return this.wallGraph
+  }
+
   public onWallNodeAdded (): LocalEvent<{ graph: Graph; node: Node }> {
     return this.wallGraph.onNodeAdded()
   }
