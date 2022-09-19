@@ -17,6 +17,11 @@ const vue = new Vue({
   render: h => h(App)
 })
 
+router.beforeEach((to: any, from: any) => {
+  vue.$root.$emit('reload', to)
+  return false
+})
+
 Vue.config.devtools = false
 Vue.config.productionTip = false
 vue.$mount('#app')
