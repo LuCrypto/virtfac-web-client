@@ -1,9 +1,33 @@
+<style>
+#app {
+  font-family: 'Avenir', Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+</style>
+
 <template>
   <v-container
     fluid
     style="max-height: 100%; overflow: auto; padding: 0;"
     class="rounded-lg"
   >
+    <!-- <template>
+      <div id="app">
+        <input
+          :value="input"
+          class="input"
+          @input="onInputChange"
+          placeholder="Tap on the virtual keyboard to start"
+        />
+        <SimpleKeyboard
+          @onChange="onChange"
+          @onKeyPress="onKeyPress"
+          :input="input"
+        />
+      </div>
+    </template> -->
+
     <pop-up ref="assetInfo">
       <asset-info
         ref="assetInfoComponent"
@@ -281,6 +305,7 @@ import { APIAsset } from '@/utils/models'
 import AssetInfo from '@/components/AssetInfo.vue'
 import PopUp from '@/components/PopUp.vue'
 import VueRouter from 'vue-router'
+import SimpleKeyboard from '@/views/ErgonomIO/SimpleKeyboard.vue'
 
 // Classe pour les assets
 class CardAsset {
@@ -340,15 +365,19 @@ class MessageAsset {
   name: 'ErgonomIOAssets',
   components: {
     PopUp,
-    AssetInfo
+    AssetInfo,
+    SimpleKeyboard
   }
 })
+
 // @vuese
 // @group VIEWS
 export default class ErgonomIOAssets extends Vue {
   // Initialisation
   assets: CardAsset[] = []
   assets2: CardAsset[] = []
+
+  // keyboard: SimpleKeyboard | null = null
 
   useCategory = false
   cardsSort: CardAsset[] = []
@@ -357,6 +386,7 @@ export default class ErgonomIOAssets extends Vue {
   textPopup = 'texte popup'
   titlePopup = 'titre popup'
   search = ''
+  input = ''
 
   newTag = ''
   newImage = ''
@@ -435,6 +465,23 @@ export default class ErgonomIOAssets extends Vue {
           console.error('Unknown message', data)
       }
     })
+  }
+
+  // Keyboard
+  // Quand le input change
+  onChange (input: any): void {
+    console.log('input : ', input)
+    this.input = input
+  }
+
+  // Quand on appuie sur un bouton
+  onKeyPress (button: any): void {
+    console.log('button', button)
+  }
+
+  // Quand l'input change
+  onInputChange (input: any): void {
+    this.input = input.target.value
   }
 
   // Create example of the different categories with a hierarchy
