@@ -18,6 +18,7 @@
           label="Login"
           type="text"
           v-model="login"
+          @focus="changeFocus(true)"
           @keyup.enter="loginRequest"
         ></v-text-field>
         <v-text-field
@@ -30,6 +31,7 @@
           :append-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'"
           @click:append="() => (showPassword = !showPassword)"
           @keyup.enter="loginRequest"
+          @focus="changeFocus(false)"
         ></v-text-field>
       </v-form>
       <div>
@@ -62,6 +64,12 @@
         Sign in
       </v-btn>
     </v-card-actions>
+
+    <template v-if="unreal.check()">
+      <div id="app">
+        <SimpleKeyboard @onKeyPress="onKeyPress" />
+      </div>
+    </template>
   </v-card>
 </template>
 
@@ -70,21 +78,66 @@ import { Component, Vue } from 'vue-property-decorator'
 import { Session, User } from '@/utils/session'
 import API from '@/utils/api'
 import Unreal from '@/utils/unreal'
+import SimpleKeyboard from '@/views/ErgonomIO/SimpleKeyboard.vue'
 
 @Component({
-  name: 'Login'
+  name: 'Login',
+  components: {
+    SimpleKeyboard
+  }
 })
 // @vuese
 // @group COMPONENTS
 export default class Login extends Vue {
   login = ''
   password = ''
+  clicLogin = true
   waiting = false
   showPassword = false
   redMessage = ''
   waitingBeforeNewTry = 0
   unreal = Unreal
   timeout: ReturnType<typeof setTimeout> | undefined = undefined
+  input = ''
+
+  // Quand on appuie sur un bouton
+  onKeyPress (button: any): void {
+    console.log('button', button)
+    const maRegex = /\{.+\}/g
+
+    console.log('button.match(maRegex) : ', button.match(maRegex))
+
+    if (button === '{space}') {
+      button = ' '
+    } else if (button === '{enter}') {
+      this.loginRequest()
+      return
+    } else if (button === '{tab}') {
+      button = '    '
+    } else if (button === '{bksp}') {
+      if (this.clicLogin) {
+        this.login = this.login.slice(0, -1)
+      } else {
+        this.password = this.password.slice(0, -1)
+      }
+      return
+    } else if (button.match(maRegex)) {
+      button = ''
+    }
+
+    // this.input += button
+    if (this.clicLogin) {
+      this.login += button
+    } else {
+      this.password += button
+    }
+  }
+
+  changeFocus (login: boolean): void {
+    console.log('Change focus')
+    this.clicLogin = login
+    this.input = ''
+  }
 
   loginRequest (): void {
     this.waiting = true

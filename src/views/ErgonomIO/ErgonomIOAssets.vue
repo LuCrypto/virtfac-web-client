@@ -12,10 +12,6 @@
     style="max-height: 100%; overflow: auto; padding: 0;"
     class="rounded-lg"
   >
-    <!-- <template> -->
-    <!-- <div :class="keyboardClass"></div> -->
-    <!-- </template> -->
-
     <!-- <template>
       <div id="app">
         <input
