@@ -61,7 +61,7 @@ export default class ThreeUtils {
         uniform float bottom;
 
         void main() {
-            float depth = (pos.y+bottom)/(top-bottom);
+            float depth = clamp((pos.y+bottom)/(top-bottom), 0.0f, 1.0f);
             depth = 0.3f + depth*0.4f;
             gl_FragColor = vec4(depth, depth, depth, 1);
             // gl_FragColor = vec4(0.0f,pos.y,0.0f,1.0f);
@@ -76,6 +76,7 @@ export default class ThreeUtils {
     box.getSize(s)
     box.getCenter(c)
 
+    /* dynamic grey scale
     const mat = new ShaderMaterial({
       uniforms: {
         top: { value: c.y + s.y / 2 },
@@ -84,6 +85,18 @@ export default class ThreeUtils {
       vertexShader: shader.vertex,
       fragmentShader: shader.fragment
     })
+    */
+
+    //* static grey scale
+    const mat = new ShaderMaterial({
+      uniforms: {
+        top: { value: 2 },
+        bottom: { value: 0 }
+      },
+      vertexShader: shader.vertex,
+      fragmentShader: shader.fragment
+    })
+    /**/
 
     clone.traverse(obj => {
       if (obj instanceof Mesh) {

@@ -125,6 +125,8 @@ export class BlueprintContainer {
     return this.mode
   }
 
+  private askMachineAsset: { (node: Node): void }
+
   public get selectedAsset (): BpAssetCache | null {
     return this._selectedAsset
   }
@@ -266,6 +268,10 @@ export class BlueprintContainer {
     return this.bp
   }
 
+  public getContainer (): NvEl {
+    return this.container
+  }
+
   private _routingGraph: Graph
 
   public get routingGraph (): Graph {
@@ -333,8 +339,12 @@ export class BlueprintContainer {
     }
   }
 
-  public constructor (parentNode: HTMLElement) {
+  public constructor (
+    parentNode: HTMLElement,
+    selectMachineAsset: { (node: Node): void }
+  ) {
     // init UI elements
+    this.askMachineAsset = selectMachineAsset
     this.theme = new BpTheme()
     this.bp = new Blueprint()
     this.parentNode = parentNode
@@ -482,7 +492,27 @@ export class BlueprintContainer {
       text: NvEl
       move: NvEl
       edit: NvEl
+      sprite: NvEl
     }
+
+    this._routingGraph
+      .onNodeDataChanged()
+      .addMappedListener('assetCache', arg => {
+        const node = arg.node
+        const asset = node.getData<BpAssetCache>('assetCache')
+        node.setData('dimension', {
+          x:
+            (asset.boundingBox.maxCorner.x - asset.boundingBox.minCorner.x) *
+            100,
+          y:
+            (asset.boundingBox.maxCorner.z - asset.boundingBox.minCorner.z) *
+            100
+        })
+        const display = node.getData<RoutingNode>('blueprintDisplayer')
+        const sprite = display.sprite.getDom() as SVGImageElement
+        sprite.setAttribute('href', asset.layoutSprite)
+        // sprite.setAttribute('width', )
+      })
 
     this._routingGraph.onNodeAdded().addListener(arg => {
       const node = arg.node
@@ -490,8 +520,15 @@ export class BlueprintContainer {
       const text = new NvEl('text')
       const move = new NvEl('path')
       const edit = new NvEl('path')
+      const rotate = new NvEl('path')
+      const sprite = new NvEl('image')
       rect.setStyle({ 'pointer-events': 'none' })
       text.setStyle({ 'pointer-events': 'none', 'user-select': 'none' })
+      sprite.setStyle({
+        'pointer-events': 'none',
+        'user-select': 'none',
+        filter: 'drop-shadow(rgba(0, 0, 0, 0.2) 0px 0px 6px)'
+      })
       move
         .getDom()
         .setAttribute(
@@ -506,6 +543,7 @@ export class BlueprintContainer {
         )
       move.setStyle({ fill: 'currentColor', 'pointer-events': 'bounding-box' })
       edit.setStyle({ fill: 'currentColor', 'pointer-events': 'bounding-box' })
+      rotate.setStyle({ fill: 'currentColor', 'pointer-events': 'bounding-box' })
       text.setStyle({ fill: 'currentColor' })
       move.getDom().onmousedown = e => {
         if (e.button === 2) {
@@ -514,7 +552,7 @@ export class BlueprintContainer {
         e.preventDefault()
         // move.setStyle({ 'pointer-events': 'none' })
       }
-      ;[move, edit].forEach(elem => {
+      ;[move, edit, rotate].forEach(elem => {
         elem.getDom().onmouseenter = e => {
           elem.setStyle({ fill: '#f5a406' })
           e.preventDefault()
@@ -533,14 +571,32 @@ export class BlueprintContainer {
       edit.getDom().onmousedown = e => {
         e.preventDefault()
       }
+      edit.getDom().onmouseup = e => {
+        console.log('hello')
+        if (e.button === 1) {
+          console.log('hello 2')
+          this.askMachineAsset(node)
+
+          /* .then(res => {
+            if (res !== null) {
+              node.setData<{ x: number; y: number }>('dimension', {
+                x: res.boundingBox.maxCorner.x - res.boundingBox.minCorner.x,
+                y: res.boundingBox.maxCorner.y - res.boundingBox.minCorner.y
+              })
+            }
+          })
+          */
+        }
+      }
 
       move.getDom().onmousemove = this.container.getDom().onmousemove
-      this.svgRoutingLayer.appendChild(rect, text, move, edit)
+      this.svgRoutingLayer.appendChild(rect, sprite, text, move, edit)
       node.setData<RoutingNode>('blueprintDisplayer', {
         rect: rect,
         text: text,
         move: move,
-        edit: edit
+        edit: edit,
+        sprite: sprite
       })
       rect.getDom().setAttribute('stroke', 'currentColor')
       rect.setStyle({ fill: 'none' })
@@ -551,6 +607,7 @@ export class BlueprintContainer {
       const displayer = node.getData<RoutingNode>('blueprintDisplayer')
       const rect = displayer.rect.getDom() as SVGRectElement
       const text = displayer.text.getDom() as SVGTextElement
+      const sprite = displayer.sprite.getDom() as SVGImageElement
       const scale = this.bp.getData<number>('scale')
       {
         const val = node.getData<{ x: number; y: number } | undefined>(
@@ -559,6 +616,8 @@ export class BlueprintContainer {
         if (val !== undefined) {
           rect.setAttribute('width', val.x * scale + '')
           rect.setAttribute('height', val.y * scale + '')
+          sprite.setAttribute('width', val.x * scale + '')
+          sprite.setAttribute('height', val.y * scale + '')
         }
       }
       {
@@ -571,6 +630,10 @@ export class BlueprintContainer {
             `translate(${vec.x}px, ${vec.y}px)`
           )
           text.style.setProperty(
+            'transform',
+            `translate(${vec.x}px, ${vec.y}px)`
+          )
+          sprite.style.setProperty(
             'transform',
             `translate(${vec.x}px, ${vec.y}px)`
           )

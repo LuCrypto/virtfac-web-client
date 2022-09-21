@@ -1291,8 +1291,8 @@ export default class RoutingAnalysisComponent extends Vue {
         new Node()
           .setData<string>('name', _machineData.name)
           .setData('xlsxPosition', {
-            x: _machineData.coord.x * 100,
-            y: _machineData.coord.y * 100
+            x: _machineData.coord.x * 100 - _machineData.size.x * 50,
+            y: _machineData.coord.y * 100 - _machineData.size.y * 50
           })
           .setData('dimension', {
             x: _machineData.size.x * 100,
@@ -1356,8 +1356,8 @@ export default class RoutingAnalysisComponent extends Vue {
               new Node()
                 .setData<string>('name', machineData.name)
                 .setData('xlsxPosition', {
-                  x: machineData.coord.x * 100,
-                  y: machineData.coord.y * 100
+                  x: machineData.coord.x * 100 - machineData.size.x * 50,
+                  y: machineData.coord.y * 100 - machineData.size.y * 50
                 })
                 .setData('dimension', {
                   x: machineData.size.x * 100,

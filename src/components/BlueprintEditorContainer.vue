@@ -79,7 +79,10 @@
         style="width: auto; margin: 0; padding: 0px; flex-grow: 1;"
         fluid
       >
-        <blueprint-editor ref="blueprintEditor"></blueprint-editor>
+        <blueprint-editor
+          ref="blueprintEditor"
+          :selectAsset="selectMachine"
+        ></blueprint-editor>
         <asset-library
           ref="assetLibrary"
           :categories="assetCategories"
@@ -96,6 +99,21 @@
           :openFile="true"
           @fileInput="handleFile"
         ></open-file>
+      </pop-up>
+      <pop-up
+        ref="machineLibraryPopUp"
+        @close="machinePopupClose"
+        :expand="true"
+      >
+        <v-card style="height: 100%">
+          <asset-library
+            ref="machineLibrary"
+            :categories="popupAssetCategories"
+            :content="popupAssetsInfo"
+            :onSelect="machineAssetSelected"
+          >
+          </asset-library>
+        </v-card>
       </pop-up>
     </v-card>
   </maximizable-container>
@@ -119,6 +137,9 @@ import API from '@/utils/api'
 import { Behaviour, BehaviourInstance } from '@/utils/assets/behaviour'
 import AssetLibrary from './AssetLibrary.vue'
 import { BpAPICache, BpAssetCache } from '@/utils/routingAnalysis/bp_APICache'
+import { resolve } from 'path'
+import { Node } from '@/utils/graph/node'
+import domtoimage from 'dom-to-image'
 
 class MenuItem {
   text: string
@@ -142,6 +163,7 @@ class MenuItem {
     AssetLibrary
   }
 })
+
 // @vuese
 // @group COMPONENTS
 // Content component to the blueprint-editor page
@@ -177,6 +199,18 @@ export default class BlueprintEditorContainer extends Vue {
     { name: 'Doors', icon: 'mdi-door-closed' }
   ]
 
+  popupAssetsInfo = new Map<
+    string,
+    {
+      id: number
+      name: string
+      behaviours: Record<string, unknown>
+      picture: string
+      category: string
+    }[]
+  >([['', []]])
+
+  popupAssetCategories = [{ name: '', icon: '' }]
   inputField: InputFieldPopUp | null = null
 
   private furnitureButtonClick () {
@@ -262,7 +296,8 @@ export default class BlueprintEditorContainer extends Vue {
           }
         }
         const categList = this.assetsInfo.get(categ)
-        if (categList !== undefined) {
+        const all = this.popupAssetsInfo.get('')
+        if (categList !== undefined && all !== undefined) {
           const obj = {
             id: item.id,
             name: item.name,
@@ -271,6 +306,7 @@ export default class BlueprintEditorContainer extends Vue {
             category: categ
           }
           categList.push(obj)
+          all.push(obj)
           map.set(obj.id, obj)
         }
       })
@@ -417,6 +453,72 @@ export default class BlueprintEditorContainer extends Vue {
       })
     )
 
+    this.menuItemList.push(
+      new MenuItem('Save Scene', 'mdi-content-save', () => {
+        const graph = ((this
+          .blueprintEditor as BlueprintEditor).getBpContainer() as BlueprintContainer)
+          .routingGraph
+
+        const json = {
+          assets: new Array<{
+            idAsset: number
+            position: number[]
+            rotation: number[]
+            scale: number[]
+          }>()
+        }
+
+        graph.foreachNode(n => {
+          const position = n.getData<{ x: number; y: number }>('position')
+          const scale = n.getData<{ x: number; y: number }>('dimension')
+          const cache = n.getData<BpAssetCache | undefined>('assetCache')
+          const asset = {
+            idAsset: cache === undefined ? -1 : cache.id,
+            position: [position.x, position.y, 0],
+            rotation: [0, 0, 0],
+            scale: cache === undefined ? [scale.x, scale.y, 1] : [1, 1, 1]
+          }
+          json.assets.push(asset)
+        })
+
+        if (this.inputField != null) {
+          this.inputField.open('Enter scene name', 'scene', 'scene', value => {
+            if (value !== null) {
+              const v = value
+              domtoimage.toJpeg(
+                ((this
+                  .blueprintEditor as BlueprintEditor).getBpContainer() as BlueprintContainer)
+                  .getContainer()
+                  .getDom()
+              )
+              API.put(
+                this,
+                '/resources/ergonomio-scenes',
+                JSON.stringify({
+                  name: value,
+                  assetsNumber: json.assets.length,
+                  data: JSON.stringify(json),
+                  spawnX: 0,
+                  spawnY: 0,
+                  spawnZ: 0,
+                  idProject: 0,
+                  color: 0x3371ff,
+                  tags: '[]',
+                  picture: ''
+                })
+              ).catch(reason => {
+                console.log(reason)
+              })
+            }
+          })
+        }
+        /*
+        a.href = URL.createObjectURL(file)
+        a.download = 'blueprint.json'
+        a.click()
+        */
+      })
+    )
     // const mapper = new Mapper(CAEExampleFormat1)
   }
 
@@ -448,6 +550,43 @@ export default class BlueprintEditorContainer extends Vue {
       })
   }
 
+  private selectMachine (node: Node) {
+    this.machineSelectCallback = asset => {
+      if (asset !== null) {
+        node.setData<BpAssetCache>('assetCache', asset)
+      }
+    }
+
+    if (this.$refs.machineLibraryPopUp !== undefined) {
+      (this.$refs.machineLibraryPopUp as PopUp).open()
+    }
+    if (this.$refs.machineLibrary !== undefined) {
+      console.log('force update')
+      ;(this.$refs.machineLibrary as AssetLibrary).forceUpdateRender()
+    }
+  }
+
+  private machineSelectCallback: {
+    (res: BpAssetCache | null): void
+  } | null = null
+
+  private machinePopupClose (): void {
+    if (this.machineSelectCallback !== null) {
+      this.machineSelectCallback(null)
+    }
+  }
+
+  machineAssetSelected (id: number): void {
+    if (this.machineSelectCallback !== null) {
+      const callback = this.machineSelectCallback
+      BpAPICache.instance()
+        .getAsset(id)
+        .then(res => {
+          callback(res)
+        })
+    }
+  }
+
   inputFile (): void {
     const input = this.$refs.inputFile as HTMLInputElement
     input.value = ''
@@ -477,14 +616,15 @@ export default class BlueprintEditorContainer extends Vue {
             .blueprintEditor as BlueprintEditor).getBpContainer() as BlueprintContainer).routingGraph.applyJson(
             json
           )
-          /*
+          //*
           ;((this
             .blueprintEditor as BlueprintEditor).getBpContainer() as BlueprintContainer).routingGraph.foreachNode(
             n => {
-              n.setData<{ x: number; y: number }>(
-                'position',
-                n.getData<{ x: number; y: number }>('xlsxPosition')
-              )
+              const p = n.getData<{ x: number; y: number }>('xlsxPosition')
+              n.setData<{ x: number; y: number }>('position', {
+                x: p.x,
+                y: p.y
+              })
             }
           )
           /**/

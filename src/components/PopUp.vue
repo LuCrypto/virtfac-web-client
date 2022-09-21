@@ -1,11 +1,17 @@
+<style>
+.expand {
+  height: 90%;
+}
+</style>
+
 <template>
-  <v-dialog v-model="isOpen">
+  <v-dialog v-model="isOpen" :content-class="expand ? 'expand' : ''">
     <slot></slot>
   </v-dialog>
 </template>
 
 <script lang="ts">
-import { Component, Vue } from 'vue-property-decorator'
+import { Component, Prop, Vue } from 'vue-property-decorator'
 
 @Component({
   name: 'PopUp'
@@ -13,6 +19,8 @@ import { Component, Vue } from 'vue-property-decorator'
 // @vuese
 // @group COMPONENTS
 export default class PopUp extends Vue {
+  @Prop({ default: () => false }) expand!: boolean
+
   isOpen = false
 
   open (): void {

@@ -134,11 +134,15 @@ export class BpAPICache {
               ])[0]
             )
             const map = new Map<string, BehaviourInstance>()
-            ;(JSON.parse(asset.behaviours) as BehaviourInstance[]).forEach(
-              elem => {
-                map.set(elem.name, elem)
-              }
-            )
+            try {
+              (JSON.parse(asset.behaviours) as BehaviourInstance[]).forEach(
+                elem => {
+                  map.set(elem.name, elem)
+                }
+              )
+            } catch (e) {
+              console.warn('invalid behaviours', e)
+            }
             cache = {
               id: asset.id,
               name: asset.name,

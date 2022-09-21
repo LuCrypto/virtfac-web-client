@@ -5,10 +5,14 @@
     class="d-flex flex-row"
   >
     <v-navigation-drawer
+      v-if="!displayAll"
+      ref="nav"
       stateless
       permanent
       :mini-variant="menuCollapse"
       style="min-width:53"
+      :disable-resize-watcher="true"
+      :disable-roote-watcher="true"
     >
       <v-list
         nav
@@ -18,7 +22,7 @@
         ><v-list-item-group v-model="selectedCategory" color="primary">
           <v-list-item
             v-for="(category, i) in categories"
-            :key="i"
+            v-bind:key="i"
             class="justify-start"
           >
             <v-list-item-icon>
@@ -55,7 +59,7 @@
             v-for="asset in content.get(
               categories[Math.max(selectedCategory, 0)].name
             )"
-            :key="asset.id"
+            v-bind:key="asset.id"
             class="ma-0 pa-0"
           >
             <v-container
@@ -137,7 +141,7 @@ export default class AssetLibrary extends Vue {
 
   private nbPages = 5
   private currentPage = 1
-  private colSize = 3
+  private colSize = 1
 
   private hello () {
     console.log('hello')
@@ -159,8 +163,10 @@ export default class AssetLibrary extends Vue {
     this.colSize = Math.min(Math.max(Math.ceil(12 / nbcol), 1), 12)
   }
 
+  private displayAll = false
+
   mounted (): void {
-    console.log(this.content)
+    console.log('Asset Lib mounted')
     addEventListener('resize', () => {
       try {
         const row = (this.$refs.row as Element).getBoundingClientRect()
@@ -168,6 +174,41 @@ export default class AssetLibrary extends Vue {
         this.colSize = Math.min(Math.max(Math.ceil(12 / nbcol), 1), 12)
       } catch (er) {
         //
+      }
+      console.log(this.content, this.categories)
+    })
+    if (this.categories.length === 1 && this.categories[0].name === '') {
+      this.displayAll = true
+      this.selectedCategory = 0
+    }
+  }
+
+  unmounted () {
+    console.log('Asset Lib unmounted')
+  }
+
+  updated () {
+    try {
+      const row = (this.$refs.row as Element).getBoundingClientRect()
+      const nbcol = row.width / 129
+      this.colSize = Math.min(Math.max(Math.ceil(12 / nbcol), 1), 12)
+    } catch (er) {
+      console.warn(er)
+    }
+    console.log('updated')
+  }
+
+  public forceUpdateRender () {
+    this.menuCollapse = false
+    this.$forceUpdate()
+
+    requestAnimationFrame(() => {
+      try {
+        const row = (this.$refs.row as Element).getBoundingClientRect()
+        const nbcol = row.width / 129
+        this.colSize = Math.min(Math.max(Math.ceil(12 / nbcol), 1), 12)
+      } catch (er) {
+        console.warn(er)
       }
     })
   }
