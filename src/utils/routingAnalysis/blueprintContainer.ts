@@ -493,6 +493,7 @@ export class BlueprintContainer {
       move: NvEl
       edit: NvEl
       sprite: NvEl
+      rotate: NvEl
     }
 
     this._routingGraph
@@ -541,9 +542,18 @@ export class BlueprintContainer {
           'd',
           'M21,16.5C21,16.88 20.79,17.21 20.47,17.38L12.57,21.82C12.41,21.94 12.21,22 12,22C11.79,22 11.59,21.94 11.43,21.82L3.53,17.38C3.21,17.21 3,16.88 3,16.5V7.5C3,7.12 3.21,6.79 3.53,6.62L11.43,2.18C11.59,2.06 11.79,2 12,2C12.21,2 12.41,2.06 12.57,2.18L20.47,6.62C20.79,6.79 21,7.12 21,7.5V16.5M12,4.15L6.04,7.5L12,10.85L17.96,7.5L12,4.15Z'
         )
+      rotate
+        .getDom()
+        .setAttribute(
+          'd',
+          'M7.47,21.5C4.2,19.93 1.86,16.76 1.5,13H0C0.5,19.16 5.66,24 11.95,24C12.18,24 12.39,24 12.61,23.97L8.8,20.15L7.47,21.5M12.05,0C11.82,0 11.61,0 11.39,0.04L15.2,3.85L16.53,2.5C19.8,4.07 22.14,7.24 22.5,11H24C23.5,4.84 18.34,0 12.05,0M16,14H18V8C18,6.89 17.1,6 16,6H10V8H16V14M8,16V4H6V6H4V8H6V16A2,2 0 0,0 8,18H16V20H18V18H20V16H8Z'
+        )
       move.setStyle({ fill: 'currentColor', 'pointer-events': 'bounding-box' })
       edit.setStyle({ fill: 'currentColor', 'pointer-events': 'bounding-box' })
-      rotate.setStyle({ fill: 'currentColor', 'pointer-events': 'bounding-box' })
+      rotate.setStyle({
+        fill: 'currentColor',
+        'pointer-events': 'bounding-box'
+      })
       text.setStyle({ fill: 'currentColor' })
       move.getDom().onmousedown = e => {
         if (e.button === 2) {
@@ -588,26 +598,39 @@ export class BlueprintContainer {
           */
         }
       }
+      rotate.getDom().onmousedown = e => {
+        e.preventDefault()
+      }
+      rotate.getDom().onmouseup = e => {
+        node.setData<number>(
+          'rotation',
+          (node.getDataOrDefault<number>('rotation', 0) + 90) % 360
+        )
+      }
 
       move.getDom().onmousemove = this.container.getDom().onmousemove
-      this.svgRoutingLayer.appendChild(rect, sprite, text, move, edit)
+      this.svgRoutingLayer.appendChild(rect, sprite, text, move, edit, rotate)
       node.setData<RoutingNode>('blueprintDisplayer', {
         rect: rect,
         text: text,
         move: move,
         edit: edit,
-        sprite: sprite
+        sprite: sprite,
+        rotate: rotate
       })
       rect.getDom().setAttribute('stroke', 'currentColor')
       rect.setStyle({ fill: 'none' })
       // rect.getDom().setAttribute('fill', 'rgba(128,128,128,0.1)')
     })
 
+    // this._routingGraph.onNodeDataChanged('')
     const updateRoutingNode = (node: Node) => {
       const displayer = node.getData<RoutingNode>('blueprintDisplayer')
       const rect = displayer.rect.getDom() as SVGRectElement
       const text = displayer.text.getDom() as SVGTextElement
       const sprite = displayer.sprite.getDom() as SVGImageElement
+
+      const rotate = node.getDataOrDefault<number>('rotation', 0)
       const scale = this.bp.getData<number>('scale')
       {
         const val = node.getData<{ x: number; y: number } | undefined>(
@@ -618,33 +641,44 @@ export class BlueprintContainer {
           rect.setAttribute('height', val.y * scale + '')
           sprite.setAttribute('width', val.x * scale + '')
           sprite.setAttribute('height', val.y * scale + '')
-        }
-      }
-      {
-        const vec = node.getData<{ x: number; y: number } | undefined>(
-          'position'
-        )
-        if (vec !== undefined) {
-          rect.style.setProperty(
-            'transform',
-            `translate(${vec.x}px, ${vec.y}px)`
-          )
-          text.style.setProperty(
-            'transform',
-            `translate(${vec.x}px, ${vec.y}px)`
-          )
-          sprite.style.setProperty(
-            'transform',
-            `translate(${vec.x}px, ${vec.y}px)`
-          )
-          displayer.move.setStyle({
-            transform: `translate(${vec.x /** scale */ +
-              12}px, ${vec.y /** scale */ + 12}px)`
-          })
-          displayer.edit.setStyle({
-            transform: `translate(${vec.x /** scale */ +
-              36}px, ${vec.y /** scale */ + 12}px)`
-          })
+          {
+            const vec = node.getData<{ x: number; y: number } | undefined>(
+              'position'
+            )
+            if (vec !== undefined) {
+              rect.style.transformOrigin = `${val.x / 2}px ${val.y / 2}px`
+              rect.style.setProperty(
+                'transform',
+                `translate(${vec.x - val.x / 2}px, ${vec.y -
+                  val.y / 2}px) rotate(${rotate}deg)`
+              )
+              text.style.setProperty(
+                'transform',
+                `translate(${vec.x - val.x / 2}px, ${vec.y - val.y / 2}px)`
+              )
+              sprite.style.transformOrigin = `${val.x / 2}px ${val.y / 2}px`
+              sprite.style.setProperty(
+                'transform',
+                `translate(${vec.x - val.x / 2}px, ${vec.y -
+                  val.y / 2}px) rotate(${rotate}deg)`
+              )
+              displayer.move.setStyle({
+                transform: `translate(${vec.x -
+                val.x / 2 /** scale */ +
+                  2}px, ${vec.y - val.y / 2 /** scale */ + 2}px)`
+              })
+              displayer.edit.setStyle({
+                transform: `translate(${vec.x -
+                val.x / 2 /** scale */ +
+                  26}px, ${vec.y - val.y / 2 /** scale */ + 2}px)`
+              })
+              displayer.rotate.setStyle({
+                transform: `translate(${vec.x -
+                val.x / 2 /** scale */ +
+                  2}px, ${vec.y - val.y / 2 /** scale */ + 26}px)`
+              })
+            }
+          }
         }
       }
       {
@@ -683,6 +717,11 @@ export class BlueprintContainer {
         const vec = arg.value as { x: number; y: number }
         rect.style.setProperty('transform', `translate(${vec.x}px, ${vec.y}px)`)
         */
+        updateRoutingNode(arg.node)
+      })
+    this._routingGraph
+      .onNodeDataChanged()
+      .addMappedListener('rotation', arg => {
         updateRoutingNode(arg.node)
       })
     // alignement snapping display

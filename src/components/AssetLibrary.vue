@@ -175,7 +175,6 @@ export default class AssetLibrary extends Vue {
       } catch (er) {
         //
       }
-      console.log(this.content, this.categories)
     })
     if (this.categories.length === 1 && this.categories[0].name === '') {
       this.displayAll = true

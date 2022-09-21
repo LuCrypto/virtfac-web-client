@@ -475,40 +475,49 @@ export default class BlueprintEditorContainer extends Vue {
           const asset = {
             idAsset: cache === undefined ? -1 : cache.id,
             position: [position.x, position.y, 0],
-            rotation: [0, 0, 0],
+            rotation: [0, 0, n.getDataOrDefault<number>('rotation', 0)],
             scale: cache === undefined ? [scale.x, scale.y, 1] : [1, 1, 1]
           }
           json.assets.push(asset)
         })
-
+        
         if (this.inputField != null) {
           this.inputField.open('Enter scene name', 'scene', 'scene', value => {
             if (value !== null) {
               const v = value
-              domtoimage.toJpeg(
-                ((this
-                  .blueprintEditor as BlueprintEditor).getBpContainer() as BlueprintContainer)
-                  .getContainer()
-                  .getDom()
-              )
-              API.put(
-                this,
-                '/resources/ergonomio-scenes',
-                JSON.stringify({
-                  name: value,
-                  assetsNumber: json.assets.length,
-                  data: JSON.stringify(json),
-                  spawnX: 0,
-                  spawnY: 0,
-                  spawnZ: 0,
-                  idProject: 0,
-                  color: 0x3371ff,
-                  tags: '[]',
-                  picture: ''
+              domtoimage
+                .toJpeg(
+                  ((this
+                    .blueprintEditor as BlueprintEditor).getBpContainer() as BlueprintContainer)
+                    .getContainer()
+                    .getDom(),
+                  {
+                    width: 256,
+                    height: 256
+                  }
+                )
+                .then(res => {
+                  console.log(res)
+                  API.put(
+                    this,
+                    '/resources/ergonomio-scenes',
+                    JSON.stringify({
+                      name: value,
+                      assetsNumber: json.assets.length,
+                      data: JSON.stringify(json),
+                      spawnX: 0,
+                      spawnY: 0,
+                      spawnZ: 0,
+                      idProject: 0,
+                      color: 0x3371ff,
+                      tags: '[]',
+                      picture: res,
+                      idProfile: 0
+                    })
+                  ).catch(reason => {
+                    console.log(reason)
+                  })
                 })
-              ).catch(reason => {
-                console.log(reason)
-              })
             }
           })
         }
