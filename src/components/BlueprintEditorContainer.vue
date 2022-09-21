@@ -480,7 +480,7 @@ export default class BlueprintEditorContainer extends Vue {
           }
           json.assets.push(asset)
         })
-        
+
         if (this.inputField != null) {
           this.inputField.open('Enter scene name', 'scene', 'scene', value => {
             if (value !== null) {
