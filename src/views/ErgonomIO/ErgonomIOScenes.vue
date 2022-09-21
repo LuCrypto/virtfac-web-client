@@ -151,7 +151,7 @@
                     @change="onUploadSceneUpdate"
                   />
                 </v-btn>
-                <!-- <v-btn
+                <v-btn
                   @click="addObjectInScene"
                   class="primary black--text flex-grow-1"
                   large
@@ -159,7 +159,7 @@
                   v-if="!this.multi"
                 >
                   {{ $vuetify.lang.t('$vuetify.scenes.addObjectInScene') }}
-                </v-btn> -->
+                </v-btn>
                 <v-btn
                   @click="saveCurrentScene"
                   class="primary black--text flex-grow-1"
@@ -178,14 +178,14 @@
                   {{ $vuetify.lang.t('$vuetify.scenes.backToHome') }}
                 </v-btn>
               </v-row>
-              <!-- <v-row no-gutters v-if="!this.multi">
+              <v-row no-gutters v-if="!this.multi">
                 <v-select
                   :items="scenes.map(item => item.name)"
                   v-model="sceneForModif"
                   :label="$vuetify.lang.t('$vuetify.scenes.targetScene')"
                   dense
                 ></v-select>
-              </v-row> -->
+              </v-row>
             </v-col>
           </v-container>
 
