@@ -248,6 +248,8 @@ export class BlueprintContainer {
 
   private svgRoutingLayer: NvEl
 
+  private svgRoutingLinkLayer: NvEl
+
   /**
    * html components for the global scale displayer |--------|
    */
@@ -353,6 +355,7 @@ export class BlueprintContainer {
     this.svgLinkLayer = new NvEl('svg')
     this.svgFurnitureLayer = new NvEl('svg')
     this.svgRoutingLayer = new NvEl('svg')
+    this.svgRoutingLinkLayer = new NvEl('svg')
     this.img = new NvEl('img')
     this.content.appendChild(this.img)
     parentNode.appendChild(this.content.getDom())
@@ -360,6 +363,7 @@ export class BlueprintContainer {
     parentNode.appendChild(this.svgLinkLayer.getDom())
     parentNode.appendChild(this.svgNodeLayer.getDom())
     parentNode.appendChild(this.svgFurnitureLayer.getDom())
+    parentNode.appendChild(this.svgRoutingLinkLayer.getDom())
     parentNode.appendChild(this.svgRoutingLayer.getDom())
     this.updateTransform()
     this.defaultMode()
@@ -392,6 +396,7 @@ export class BlueprintContainer {
     this.svgNodeLayer.setStyle(layerStyle)
     this.svgFurnitureLayer.setStyle(layerStyle)
     this.svgRoutingLayer.setStyle(layerStyle)
+    this.svgRoutingLinkLayer.setStyle(layerStyle)
 
     // init inputs listeners
     this.container.getDom().oncontextmenu = e => {
@@ -514,6 +519,43 @@ export class BlueprintContainer {
         // sprite.setAttribute('width', )
       })
 
+    this._routingGraph.onLinkAdded().addListener(arg => {
+      const path = new NvEl('path')
+      path.setStyle({
+        'pointer-events': 'none',
+        opacity: '0.5',
+        stroke: 'currentColor',
+        'stroke-width': '2'
+      })
+      const refresh = () => {
+        const p1 = arg.link
+          .getOriginNode()
+          .getData<{ x: number; y: number }>('position')
+        const p2 = arg.link
+          .getNode()
+          .getData<{ x: number; y: number }>('position')
+        path
+          .getDom()
+          .setAttribute(
+            'd',
+            `M${new V(p1.x, p1.y).toString()} L${new V(p2.x, p2.y).toString()}`
+          )
+      }
+      refresh()
+      arg.link
+        .getNode()
+        .onDataChanged()
+        .addMappedListener('position', refresh)
+      arg.link
+        .getOriginNode()
+        .onDataChanged()
+        .addMappedListener('position', refresh)
+      arg.link
+        .getNode()
+        .onDataChanged()
+        .addMappedListener('position', refresh)
+      this.svgRoutingLinkLayer.appendChild(path)
+    })
     this._routingGraph.onNodeAdded().addListener(arg => {
       const node = arg.node
       const rect = new NvEl('rect')
@@ -628,16 +670,17 @@ export class BlueprintContainer {
       const sprite = displayer.sprite.getDom() as SVGImageElement
 
       const rotate = node.getDataOrDefault<number>('rotation', 0)
-      const scale = this.bp.getData<number>('scale')
+      const scale = this.bp.getDataOrDefault<number>('scale', 1)
       {
-        const val = node.getData<{ x: number; y: number } | undefined>(
+        const v = node.getData<{ x: number; y: number } | undefined>(
           'dimension'
         )
-        if (val !== undefined) {
-          rect.setAttribute('width', val.x * scale + '')
-          rect.setAttribute('height', val.y * scale + '')
-          sprite.setAttribute('width', val.x * scale + '')
-          sprite.setAttribute('height', val.y * scale + '')
+        if (v !== undefined) {
+          const val = { x: v.x * scale, y: v.y * scale }
+          rect.setAttribute('width', val.x + '')
+          rect.setAttribute('height', val.y + '')
+          sprite.setAttribute('width', val.x + '')
+          sprite.setAttribute('height', val.y + '')
           {
             const vec = node.getData<{ x: number; y: number } | undefined>(
               'position'
@@ -1252,6 +1295,7 @@ export class BlueprintContainer {
       this.svgLinkLayer,
       this.svgNodeLayer,
       this.svgFurnitureLayer,
+      this.svgRoutingLinkLayer,
       this.svgRoutingLayer
     ).forEach(htmlEl =>
       htmlEl.setStyle({
