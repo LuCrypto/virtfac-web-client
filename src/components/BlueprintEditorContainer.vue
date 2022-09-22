@@ -140,6 +140,8 @@ import { BpAPICache, BpAssetCache } from '@/utils/routingAnalysis/bp_APICache'
 import { resolve } from 'path'
 import { Node } from '@/utils/graph/node'
 import domtoimage from 'dom-to-image'
+import OpenAsset from '@/components/OpenAsset.vue'
+import V from '@/utils/vector'
 
 class MenuItem {
   text: string
@@ -405,7 +407,15 @@ export default class BlueprintEditorContainer extends Vue {
         BlueprintExporter.exportGeometry(
           ((this
             .blueprintEditor as BlueprintEditor).getBpContainer() as BlueprintContainer).getBlueprint()
-        )
+        ).then(gltf => {
+          const a = document.createElement('a')
+          const file = new Blob([gltf], {
+            type: 'text/plain'
+          })
+          a.href = URL.createObjectURL(file)
+          a.download = 'layout.gltf'
+          a.click()
+        })
       })
     )
     this.menuItemList.push(
@@ -459,66 +469,108 @@ export default class BlueprintEditorContainer extends Vue {
           .blueprintEditor as BlueprintEditor).getBpContainer() as BlueprintContainer)
           .routingGraph
 
-        const json = {
-          assets: new Array<{
-            idAsset: number
-            position: number[]
-            rotation: number[]
-            scale: number[]
-          }>()
-        }
-
-        graph.foreachNode(n => {
-          const position = n.getData<{ x: number; y: number }>('position')
-          const scale = n.getData<{ x: number; y: number }>('dimension')
-          const cache = n.getData<BpAssetCache | undefined>('assetCache')
-          const asset = {
-            idAsset: cache === undefined ? -1 : cache.id,
-            position: [position.x, position.y, 0],
-            rotation: [0, 0, n.getDataOrDefault<number>('rotation', 0)],
-            scale: cache === undefined ? [scale.x, scale.y, 1] : [1, 1, 1]
-          }
-          json.assets.push(asset)
-        })
+        const json = new Array<{
+          idAsset: number
+          position: number[]
+          rotation: number[]
+          scale: number[]
+        }>()
 
         if (this.inputField != null) {
           this.inputField.open('Enter scene name', 'scene', 'scene', value => {
-            if (value !== null) {
-              const v = value
-              domtoimage
-                .toJpeg(
-                  ((this
-                    .blueprintEditor as BlueprintEditor).getBpContainer() as BlueprintContainer)
-                    .getContainer()
-                    .getDom(),
-                  {
-                    width: 256,
-                    height: 256
+            const bp = ((this
+              .blueprintEditor as BlueprintEditor).getBpContainer() as BlueprintContainer).getBlueprint()
+            BlueprintExporter.exportGeometry(bp).then(res => {
+              const uri = 'data:model/gltf+json;base64,' + btoa(res)
+              OpenAsset.ImportAsset(this, uri, {
+                name: 'blueprintExport'
+              }).then(id => {
+                json.push({
+                  idAsset: id,
+                  position: [0, 0, 0],
+                  rotation: [0, 0, 0],
+                  scale: [1, 1, 1]
+                })
+
+                graph.foreachNode(n => {
+                  const position = n.getData<{ x: number; y: number }>(
+                    'position'
+                  )
+                  const scale = n.getData<{ x: number; y: number }>('dimension')
+                  const cache = n.getData<BpAssetCache | undefined>(
+                    'assetCache'
+                  )
+                  const asset = {
+                    idAsset: cache === undefined ? -1 : cache.id,
+                    position: [position.x / 100, position.y / 100, 0],
+                    rotation: [0, 0, n.getDataOrDefault<number>('rotation', 0)],
+                    scale:
+                      cache === undefined
+                        ? [scale.x / 100, scale.y / 100, 1]
+                        : [1, 1, 1]
                   }
-                )
-                .then(res => {
-                  console.log(res)
-                  API.put(
-                    this,
-                    '/resources/ergonomio-scenes',
-                    JSON.stringify({
-                      name: value,
-                      assetsNumber: json.assets.length,
-                      data: JSON.stringify(json),
-                      spawnX: 0,
-                      spawnY: 0,
-                      spawnZ: 0,
-                      idProject: 0,
-                      color: 0x3371ff,
-                      tags: '[]',
-                      picture: res,
-                      idProfile: 0
+                  json.push(asset)
+                })
+
+                const bpJson = bp.toJSON()
+
+                bp.foreachWallLink(l => {
+                  const p1 = l.getOriginNode().getData<V>('position')
+                  const p2 = l.getNode().getData<V>('position')
+                  const angle = (p2.subV(p1).angle() / (2 * Math.PI)) * 360
+                  l.getDataOrDefault<Array<{ assetId: number; xpos: number }>>(
+                    'furniture',
+                    []
+                  ).forEach(furniture => {
+                    const p = p1
+                      .multN(1 - furniture.xpos)
+                      .addV(p2.multN(furniture.xpos))
+                    json.push({
+                      idAsset: furniture.assetId,
+                      position: [p.x / 100, p.y / 100, 0],
+                      rotation: [0, 0, angle],
+                      scale: [1, 1, 1]
                     })
-                  ).catch(reason => {
-                    console.log(reason)
                   })
                 })
-            }
+                if (value !== null) {
+                  const v = value
+                  domtoimage
+                    .toJpeg(
+                      ((this
+                        .blueprintEditor as BlueprintEditor).getBpContainer() as BlueprintContainer)
+                        .getContainer()
+                        .getDom(),
+                      {
+                        width: 256,
+                        height: 256
+                      }
+                    )
+                    .then(res => {
+                      console.log(res)
+                      API.put(
+                        this,
+                        '/resources/ergonomio-scenes',
+                        JSON.stringify({
+                          name: value,
+                          assetsNumber: json.length,
+                          data: JSON.stringify(json),
+                          spawnX: 0,
+                          spawnY: 0,
+                          spawnZ: 0,
+                          idProject: 0,
+                          color: 0x3371ff,
+                          tags: '[]',
+                          picture: res,
+                          idProfile: 0
+                        })
+                      ).catch(reason => {
+                        console.log(reason)
+                      })
+                    })
+                }
+              })
+            })
           })
         }
         /*

@@ -160,6 +160,7 @@ export class BlueprintContainer {
     this.updateTheme()
     this.updateTransform()
     this.onModeChanged.notify(this.mode)
+    console.log(this.mode)
   }
 
   public _selectedAsset: BpAssetCache | null = null

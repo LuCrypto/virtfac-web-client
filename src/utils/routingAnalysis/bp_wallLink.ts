@@ -339,11 +339,12 @@ export class BpWallLink {
           this.container.getMode() === 'DOOR'
         )
 
-        console.log('preview : ' + this.container.getMode())
+        // console.log('preview : ' + this.container.getMode())
       }
       this.container.onMouseMove(e)
     }
     this.collider.getDom().onwheel = e => this.container.zoom(e)
+    this.collider.setStyle({ 'pointer-events': 'all' })
 
     this.link.onDataChanged().addMappedListener(
       'double',
