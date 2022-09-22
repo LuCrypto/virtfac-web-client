@@ -287,9 +287,9 @@ export default class AvatarManager extends Vue {
       })
   }
 
-  intervalID = setInterval(() => {
-    this.sendRandTransform()
-  }, 1000)
+  // intervalID = setInterval(() => {
+  //   this.sendRandTransform()
+  // }, 1000)
 
   sendRandTransform (): void {
     if (Unreal.check()) {
@@ -319,9 +319,7 @@ export default class AvatarManager extends Vue {
       boneFrame.handR = Math.random()
       boneFrame.rulaScore = Math.random() * 7
 
-      const object = { action: 'rula', data: boneFrame }
-
-      Unreal.send(object)
+      Unreal.send(new UnrealSend('rula', boneFrame))
     }
   }
 }
