@@ -656,6 +656,19 @@ export default class ModelViewer extends Vue {
     this.scene.add(this.floor)
   }
 
+  id: number | undefined = undefined
+  unmounted (): void {
+    if (this.id) {
+      window.cancelAnimationFrame(this.id)
+      console.log(`Remove animation frame ${this.id}.`)
+    }
+    this.id = undefined
+  }
+
+  onDeactivated (): void {
+    this.unmounted()
+  }
+
   mounted (): void {
     // Create scene
     const fogColor = new THREE.Color(0xa0a0a0)
@@ -1045,7 +1058,7 @@ export default class ModelViewer extends Vue {
 
   loop (): void {
     this.draw()
-    requestAnimationFrame(() => this.loop())
+    this.id = requestAnimationFrame(() => this.loop())
   }
 }
 </script>

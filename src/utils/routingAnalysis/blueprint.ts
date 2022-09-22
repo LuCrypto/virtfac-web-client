@@ -172,7 +172,6 @@ export class Blueprint extends MetaData {
         )
       )
     })
-    console.log('save json')
     return this.wallGraph.toJsonOBJ()
   }
 

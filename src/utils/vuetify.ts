@@ -14,6 +14,13 @@ import IconMorph from '@/components/icons/IconMorph.vue'
 import IconPlayerData from '@/components/icons/IconPlayerData.vue'
 import IconSettings from '@/components/icons/IconSettings.vue'
 import IconColours from '@/components/icons/IconColours.vue'
+import IconFlagEnglish from '@/components/icons/IconFlagEnglish.vue'
+import IconFlagGerman from '@/components/icons/IconFlagGerman.vue'
+import IconFlagFrench from '@/components/icons/IconFlagFrench.vue'
+
+import english from '@/utils/translations/english'
+import german from '@/utils/translations/german'
+import french from '@/utils/translations/french'
 
 class Themes {
   static themes = {
@@ -65,6 +72,15 @@ export default new Vuetify({
     themes: Themes.themes
   },
 
+  lang: {
+    locales: {
+      english,
+      french,
+      german
+    },
+    current: Session.getLanguage()
+  },
+
   icons: {
     values: {
       /* name of our custom icon */
@@ -78,7 +94,10 @@ export default new Vuetify({
       morph: { component: IconMorph },
       settings: { component: IconSettings },
       playerData: { component: IconPlayerData },
-      colours: { component: IconColours }
+      colours: { component: IconColours },
+      flagEnglish: { component: IconFlagEnglish },
+      flagGerman: { component: IconFlagGerman },
+      flagFrench: { component: IconFlagFrench }
     }
   }
 })

@@ -223,7 +223,6 @@ export class Graph extends MetaData {
         links: links
       })
     })
-    console.log(saveObject)
     return saveObject
   }
 

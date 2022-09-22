@@ -5,7 +5,7 @@
 </style>
 
 <template>
-  <v-dialog v-model="isOpen" :content-class="expand ? 'expand' : ''">
+  <v-dialog v-model="isOpen" :width="width" :max-width="maxWidth" :content-class="expand ? 'expand' : ''">
     <slot></slot>
   </v-dialog>
 </template>
@@ -19,6 +19,10 @@ import { Component, Prop, Vue } from 'vue-property-decorator'
 // @vuese
 // @group COMPONENTS
 export default class PopUp extends Vue {
+  // @vuese
+  // Application reference to select only compatible files
+  @Prop({ default: () => undefined }) private width!: string
+  @Prop({ default: () => undefined }) private maxWidth!: string
   @Prop({ default: () => false }) expand!: boolean
 
   isOpen = false

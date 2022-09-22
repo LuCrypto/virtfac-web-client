@@ -5,7 +5,9 @@
     :style="{
       width: `${this.size.x / this.zoom}px`,
       height: `${this.size.y / this.zoom}px`,
-      background: this.transparency ? 'transparent' : ''
+      background: this.transparency ? 'transparent' : '',
+      opacity: opacity,
+      transition: 'opacity ease-out 0.2s'
     }"
   >
     <!-- Display or not vue in fullpage -->
@@ -61,9 +63,12 @@ export default class App extends Vue {
     y: 0
   }
 
+  opacity = 0
+
   scrollbarWidth = 40
 
   mounted () {
+    this.opacity = 1
     // Unreal Engine handler
     window.addEventListener('resize', () => this.resize())
     this.resize()
@@ -86,6 +91,11 @@ export default class App extends Vue {
       Vue.prototype.$globals.set('user', undefined)
     })
 
+    // Reload page handler
+    this.$root.$on('reload', (to: any) => {
+      this.opacity = 0
+      window.location = to.path
+    })
     // Init Unreal
     Unreal.getResolution().then((resolution: number) => {
       // this.$root.$emit(

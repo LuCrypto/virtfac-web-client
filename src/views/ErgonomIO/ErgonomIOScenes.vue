@@ -9,8 +9,10 @@
       <v-container fluid style="max-height: 100%; overflow: auto;" class="pa-0">
         <v-col class="ma-0 pa-0">
           <!-- Title -->
-          <v-row no-gutters class="text-h5 text-center pa-4 primary black--text"
-            >Your scenes</v-row
+          <v-row
+            no-gutters
+            class="text-h5 text-center pa-4 primary black--text"
+            >{{ $vuetify.lang.t('$vuetify.scenes.yourScenes') }}</v-row
           >
 
           <!-- The different scene -->
@@ -26,8 +28,9 @@
               width="300px"
               elevation="5"
               @click="sendUnreal(scene)"
+              :id="'scene-' + scene.id"
             >
-              <v-img height="200" :src="scene.picture">
+              <v-img height="200" :src="scene.picture" :id="scene - scene.id">
                 <v-btn
                   @click="editNameScene(scene, $event)"
                   class="ma-2"
@@ -59,9 +62,13 @@
                 </v-chip-group>
               </v-card-subtitle>
               <v-card-text>
-                {{ scene.formatedCreationDate }}, assets number :
-                {{ scene.assetsNumber }}, id : {{ scene.id }}, owner :
-                {{ scene.idUserOwner }}, profil id : {{ scene.idProfile }}
+                {{ scene.formatedCreationDate }},
+                {{ $vuetify.lang.t('$vuetify.scenes.assetsNumber') }} :
+                {{ scene.assetsNumber }}, id : {{ scene.id }},
+                {{ $vuetify.lang.t('$vuetify.scenes.owner') }} :
+                {{ scene.idUserOwner }},
+                {{ $vuetify.lang.t('$vuetify.scenes.profil') }} id :
+                {{ scene.idProfile }}
               </v-card-text>
 
               <v-card-actions class="flex-wrap">
@@ -73,7 +80,7 @@
                         text
                         @click="ergonomioLayout($event)"
                       >
-                        Open in layout
+                        {{ $vuetify.lang.t('$vuetify.scenes.openInLayout') }}
                       </v-btn>
                     </v-row>
                     <v-row no-gutters>
@@ -82,7 +89,9 @@
                         text
                         @click="ergonomioVirtualTwin($event)"
                       >
-                        Open in virtual twin
+                        {{
+                          $vuetify.lang.t('$vuetify.scenes.openInVirtualTwin')
+                        }}
                       </v-btn>
                     </v-row>
                     <v-row
@@ -124,15 +133,16 @@
                   large
                   elevation="2"
                 >
-                  Create new empty scene
+                  {{ $vuetify.lang.t('$vuetify.scenes.createNewEmptyScene') }}
                 </v-btn>
                 <v-btn
                   @click="openUploadFile"
                   class="primary black--text flex-grow-1"
                   large
                   elevation="2"
+                  v-if="!unreal.check()"
                 >
-                  Load scene
+                  {{ $vuetify.lang.t('$vuetify.scenes.loadScene') }}
                   <input
                     accept="application/JSON"
                     ref="uploadFileInput"
@@ -141,31 +151,41 @@
                     @change="onUploadSceneUpdate"
                   />
                 </v-btn>
-                <v-btn
+                <!-- <v-btn
                   @click="addObjectInScene"
                   class="primary black--text flex-grow-1"
                   large
                   elevation="2"
+                  v-if="!this.multi"
                 >
-                  Add object in scene
-                </v-btn>
+                  {{ $vuetify.lang.t('$vuetify.scenes.addObjectInScene') }}
+                </v-btn> -->
                 <v-btn
                   @click="saveCurrentScene"
                   class="primary black--text flex-grow-1"
                   large
+                  v-if="!this.multi"
                   elevation="2"
                 >
-                  Save current scene
+                  {{ $vuetify.lang.t('$vuetify.scenes.saveCurrentScene') }}
+                </v-btn>
+                <v-btn
+                  @click="backToHome"
+                  class="primary black--text flex-grow-1"
+                  large
+                  elevation="2"
+                >
+                  {{ $vuetify.lang.t('$vuetify.scenes.backToHome') }}
                 </v-btn>
               </v-row>
-              <v-row no-gutters>
+              <!-- <v-row no-gutters v-if="!this.multi">
                 <v-select
                   :items="scenes.map(item => item.name)"
                   v-model="sceneForModif"
-                  label="Target scene"
+                  :label="$vuetify.lang.t('$vuetify.scenes.targetScene')"
                   dense
                 ></v-select>
-              </v-row>
+              </v-row> -->
             </v-col>
           </v-container>
 
@@ -189,7 +209,9 @@
           <!-- For create a scene with json -->
           <v-dialog v-model="createSceneJson" max-width="780">
             <v-card>
-              <v-card-title> Glisser un fichier scene json </v-card-title>
+              <v-card-title>
+                {{ $vuetify.lang.t('$vuetify.scenes.glisserJson') }}
+              </v-card-title>
 
               <v-card-actions>
                 <v-btn
@@ -198,7 +220,7 @@
                   @click="openUploadFile"
                 >
                   <v-icon v-text="'mdi-upload'"></v-icon>
-                  Upload new
+                  {{ $vuetify.lang.t('$vuetify.assetLibrary.uploadNew') }}
                   <input
                     ref="uploadFileInput"
                     hidden
@@ -221,13 +243,15 @@
           <!-- For modify the data of the scene -->
           <v-dialog v-model="modifyScene" max-width="780">
             <v-card>
-              <v-card-title> Modifier des données </v-card-title>
+              <v-card-title>
+                {{ $vuetify.lang.t('$vuetify.scenes.modifyData') }}
+              </v-card-title>
 
               <v-container fluid>
                 <v-row no-gutters>
                   <v-col cols="3">
                     <v-card-text>
-                      New title :
+                      {{ $vuetify.lang.t('$vuetify.assetLibrary.newTitle') }} :
                     </v-card-text>
                   </v-col>
 
@@ -241,7 +265,7 @@
                 <v-row no-gutters>
                   <v-col cols="3">
                     <v-card-text>
-                      New tag :
+                      {{ $vuetify.lang.t('$vuetify.assetLibrary.newTags') }} :
                     </v-card-text>
                   </v-col>
 
@@ -265,7 +289,7 @@
                   @click="openUploadFile"
                 >
                   <v-icon v-text="'mdi-upload'"></v-icon>
-                  Upload new
+                  {{ $vuetify.lang.t('$vuetify.assetLibrary.uploadNew') }}
                   <input
                     ref="uploadFileInput"
                     hidden
@@ -301,11 +325,11 @@
                   text
                   @click="copyScene(sceneChoose)"
                 >
-                  Do copy of scene
+                  {{ $vuetify.lang.t('$vuetify.scenes.doCopyOfScene') }}
                 </v-btn>
                 <v-spacer></v-spacer>
                 <v-btn color="primary darken-1" text @click="save(sceneChoose)">
-                  Save
+                  {{ $vuetify.lang.t('$vuetify.assetLibrary.save') }}
                 </v-btn>
               </v-card-actions>
             </v-card>
@@ -321,7 +345,6 @@ import { Component, Vue } from 'vue-property-decorator'
 import API from '@/utils/api'
 import Unreal from '@/utils/unreal'
 import CardScene from '@/utils/cardmodel'
-import { haguenauImageAsset } from '@/utils/defaultData'
 
 // Scene recue d'unreal
 class SceneReceived {
@@ -378,6 +401,7 @@ export default class ErgonomIOAssets extends Vue {
 
   sizeCard = 30
   sizeCardString = '30%'
+  multi = false
 
   sceneForModif = ''
   unreal = Unreal
@@ -386,29 +410,35 @@ export default class ErgonomIOAssets extends Vue {
     this.requeteAPI()
 
     // Get unreal answer
-    Unreal.callback.$on('unreal-message', (data: unknown) => {
+    Unreal.callback.$on('unreal-message', (data: any) => {
       this.$root.$emit('bottom-message', `Unreal : ${JSON.stringify(data)}`)
 
-      let maScene
-      try {
-        maScene = data as Autre
-      } catch (e) {
-        this.$root.$emit('bottom-message', `Unreal : ${e}`)
+      let maScene: Autre = new Autre({})
+      let maCard = new CardScene({})
+
+      if (data.message === 'infosMulti') {
+        this.multi = data.multi
+      } else {
+        try {
+          maScene = data as Autre
+        } catch (e) {
+          this.$root.$emit('bottom-message', `Unreal : ${e}`)
+        }
+
+        maCard = new CardScene({
+          assetsNumber: maScene?.scene.nombreAssets,
+          id: maScene?.scene.idScene,
+          data: JSON.stringify(maScene?.assets)
+        })
+
+        this.releaseScene(maCard)
       }
-
-      const maCard = new CardScene({
-        assetsNumber: maScene?.scene.nombreAssets,
-        id: maScene?.scene.idScene,
-        data: JSON.stringify(maScene?.assets)
-      })
-
-      this.releaseScene(maCard)
     })
   }
 
   // Get all scenes of API
   // @arg No arguments required
-  requeteAPI (): void {
+  requeteAPI (createNewScene = false): void {
     API.post(
       this,
       '/resources/ergonomio-scenes',
@@ -424,6 +454,19 @@ export default class ErgonomIOAssets extends Vue {
         this.scenes.push(this.scenes2[i])
       }
       this.scenes2 = []
+
+      // Scroll to this.scenes[this.scenes.length - 1]
+      if (createNewScene) {
+        this.$nextTick(() => {
+          const el = document.getElementById(
+            `scene-${this.scenes[this.scenes.length - 1].id}`
+          )
+
+          if (el) {
+            el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+          }
+        })
+      }
     })
   }
 
@@ -444,8 +487,22 @@ export default class ErgonomIOAssets extends Vue {
   createEmptyScene (): void {
     const scene = new CardScene({ id: this.scenes.length })
     scene.parsedTags.push('vide')
-    this.scenes.push(scene)
+    // this.scenes.push(scene)
     this.addSceneAPI(scene)
+  }
+
+  // Back to home and leave multi if needed
+  backToHome (): void {
+    const objectAsset = {
+      action: 'backToHome'
+    }
+
+    const object = {
+      menu: 'scene',
+      objet: objectAsset
+    }
+
+    Unreal.send(object)
   }
 
   // Create api request for add a new scene
@@ -472,7 +529,7 @@ export default class ErgonomIOAssets extends Vue {
         idProfile: scene.idProfile
       })
     ).then((response: Response) => {
-      this.refreshScenes()
+      this.refreshScenes(true)
     })
   }
 
@@ -657,9 +714,9 @@ export default class ErgonomIOAssets extends Vue {
 
   // Refresh scenes
   // @arg No arguments required
-  refreshScenes (): void {
+  refreshScenes (createNewScene = false): void {
     this.scenes = []
-    this.requeteAPI()
+    this.requeteAPI(createNewScene)
   }
 
   // Get file that is upload

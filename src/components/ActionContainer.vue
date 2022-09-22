@@ -108,6 +108,19 @@ export default class ActionContainer extends Vue {
   zoomMin = 0.1
   zoomMax = 8
 
+  id: number | undefined = undefined
+  unmounted (): void {
+    if (this.id) {
+      window.cancelAnimationFrame(this.id)
+      console.log(`Remove animation frame ${this.id}.`)
+    }
+    this.id = undefined
+  }
+
+  onDeactivated (): void {
+    this.unmounted()
+  }
+
   mounted (): void {
     this.actionContainer = this.$refs.actionContainer as HTMLElement
     this.resize()
@@ -263,7 +276,7 @@ export default class ActionContainer extends Vue {
 
   refreshLoop (): void {
     this.onWindowResize()
-    window.requestAnimationFrame(() => this.refreshLoop())
+    this.id = window.requestAnimationFrame(() => this.refreshLoop())
   }
 
   onWindowResize (): void {
