@@ -160,7 +160,6 @@ export class BlueprintContainer {
     this.updateTheme()
     this.updateTransform()
     this.onModeChanged.notify(this.mode)
-    console.log(this.mode)
   }
 
   public _selectedAsset: BpAssetCache | null = null
@@ -212,7 +211,6 @@ export class BlueprintContainer {
       })
     }
     this.updateTheme()
-    console.log('update theme')
   }
 
   /**
@@ -583,9 +581,7 @@ export class BlueprintContainer {
         e.preventDefault()
       }
       edit.getDom().onmouseup = e => {
-        console.log('hello')
-        if (e.button === 1) {
-          console.log('hello 2')
+        if (e.button === 0) {
           this.askMachineAsset(node)
 
           /* .then(res => {

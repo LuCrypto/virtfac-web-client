@@ -614,6 +614,7 @@ export default class BlueprintEditorContainer extends Vue {
     this.machineSelectCallback = asset => {
       if (asset !== null) {
         node.setData<BpAssetCache>('assetCache', asset)
+        ;(this.$refs.machineLibraryPopUp as PopUp).close()
       }
     }
 
