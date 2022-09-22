@@ -152,6 +152,7 @@ export class Blueprint extends MetaData {
   public toJSON (): GraphJSON {
     this.wallGraph.nodeFields.set('position', 'Vec2')
     this.wallGraph.graphFields.set('scale', 'number')
+    this.wallGraph.setData<number>('scale', this.getData<number>('scale'))
     this.wallGraph.linkFields.set(
       'furniture',
       '{ xpos: number, assetId: number }[]'
@@ -171,6 +172,7 @@ export class Blueprint extends MetaData {
         )
       )
     })
+    console.log('save json')
     return this.wallGraph.toJsonOBJ()
   }
 
@@ -185,6 +187,7 @@ export class Blueprint extends MetaData {
       }
     })
     this.nextId = maxId
+    this.setData<number>('scale', this.wallGraph.getDataOrDefault<number>('scale', 1))
   }
 
   public constructor () {

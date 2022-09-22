@@ -455,11 +455,10 @@ export default class BlueprintEditorContainer extends Vue {
             }
           )
         }
-        /*
+        const a = document.createElement('a')
         a.href = URL.createObjectURL(file)
         a.download = 'blueprint.json'
         a.click()
-        */
       })
     )
 
