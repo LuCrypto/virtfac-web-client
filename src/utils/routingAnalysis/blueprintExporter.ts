@@ -10,7 +10,7 @@ import {
 import { GLTFExporter } from 'three/examples/jsm/exporters/GLTFExporter'
 import Delaunator from 'delaunator'
 import { Destroyable } from './bp_window'
-import { BpWallHole } from './bp_wallLink'
+// import { BpWallHole } from './bp_wallLink'
 import V from '@/utils/vector'
 
 export class BlueprintExporter {
@@ -186,388 +186,388 @@ export class BlueprintExporter {
       }
     }
 
-    blueprint.foreachWallNode(node => {
-      const pos = node
-        .getData<V>('position')
-        .divN(blueprint.getData<number>('scale') * 100)
-      node.foreachLink(l => {
-        const pos2 = l
-          .getNode()
-          .getData<V>('position')
-          .divN(blueprint.getData<number>('scale') * 100)
+    // blueprint.foreachWallNode(node => {
+    //   const pos = node
+    //     .getData<V>('position')
+    //     .divN(blueprint.getData<number>('scale') * 100)
+    //   node.foreachLink(l => {
+    //     const pos2 = l
+    //       .getNode()
+    //       .getData<V>('position')
+    //       .divN(blueprint.getData<number>('scale') * 100)
 
-        const length = pos.distanceTo(pos2)
+    //     const length = pos.distanceTo(pos2)
 
-        let normal = pos2
-          .subV(pos)
-          .rotate90()
-          .normalize()
-          .multN(-1)
-        if (l.getData<boolean>('double')) {
-          // todo
-        } else {
-          let reverse = false
-          if (
-            !blueprint.isInside(
-              pos
-                .addV(pos2)
-                .divN(2)
-                .addV(normal.multN(0.001))
-                .multN(blueprint.getData<number>('scale') * 100)
-            )
-          ) {
-            normal = normal.multN(-1)
-            reverse = true
-          }
+    //     let normal = pos2
+    //       .subV(pos)
+    //       .rotate90()
+    //       .normalize()
+    //       .multN(-1)
+    //     if (l.getData<boolean>('double')) {
+    //       // todo
+    //     } else {
+    //       let reverse = false
+    //       if (
+    //         !blueprint.isInside(
+    //           pos
+    //             .addV(pos2)
+    //             .divN(2)
+    //             .addV(normal.multN(0.001))
+    //             .multN(blueprint.getData<number>('scale') * 100)
+    //         )
+    //       ) {
+    //         normal = normal.multN(-1)
+    //         reverse = true
+    //       }
 
-          // adding holes for windows and doors
-          const holes = l.getDataOrDefault<Map<Destroyable, BpWallHole>>(
-            'holes',
-            new Map<Destroyable, BpWallHole>()
-          )
-          const hArray = new Array<{
-            x: number
-            dx: number
-            by: number
-            ty: number
-            tunnelId: number
-          }>()
-          holes.forEach(value => {
-            hArray.push({
-              x: value.x(l) / 100 - value.xsize(l) / 2,
-              dx: value.xsize(l),
-              by: value.yBottom(l),
-              ty: value.yTop(l),
-              tunnelId: value.tunnel()
-            })
-          })
-          hArray.sort((a, b) => {
-            return a.x - b.x
-          })
+    //       // adding holes for windows and doors
+    //       const holes = l.getDataOrDefault<Map<Destroyable, BpWallHole>>(
+    //         'holes',
+    //         new Map<Destroyable, BpWallHole>()
+    //       )
+    //       const hArray = new Array<{
+    //         x: number
+    //         dx: number
+    //         by: number
+    //         ty: number
+    //         tunnelId: number
+    //       }>()
+    //       holes.forEach(value => {
+    //         hArray.push({
+    //           x: value.x(l) / 100 - value.xsize(l) / 2,
+    //           dx: value.xsize(l),
+    //           by: value.yBottom(l),
+    //           ty: value.yTop(l),
+    //           tunnelId: value.tunnel()
+    //         })
+    //       })
+    //       hArray.sort((a, b) => {
+    //         return a.x - b.x
+    //       })
 
-          /*
-            generating mesh for a wall of type : [node 1] --- [holes ?] --- [node 2]
+    //       /*
+    //         generating mesh for a wall of type : [node 1] --- [holes ?] --- [node 2]
 
-            logic of vertex name :
-              - 1 => nearest node : node 1.
-              - 2 => nearest node : node 2.
-              - t => top
-              - b => bottom
-              - m => middle quad
-              - h => hole
+    //         logic of vertex name :
+    //           - 1 => nearest node : node 1.
+    //           - 2 => nearest node : node 2.
+    //           - t => top
+    //           - b => bottom
+    //           - m => middle quad
+    //           - h => hole
 
-            example : hmt1 means vertex of a hole at the node 1 side and at the top of the middle quad of the wall.
+    //         example : hmt1 means vertex of a hole at the node 1 side and at the top of the middle quad of the wall.
 
-            shape of the generated part of mesh :
-                [t1]-----[ht1]------[ht2]-----[t2]
-                  |        |          |         |
-                [mt1]----[hmt1]-----[hmt2]----[mt2]
-                  |        |          |         |
-                [mb1]----[hmb1]-----[hmb2]----[mb2]
-                  |        |          |         |
-                [b1]-----[hb1]------[hb2]-----[b2]
+    //         shape of the generated part of mesh :
+    //             [t1]-----[ht1]------[ht2]-----[t2]
+    //               |        |          |         |
+    //             [mt1]----[hmt1]-----[hmt2]----[mt2]
+    //               |        |          |         |
+    //             [mb1]----[hmb1]-----[hmb2]----[mb2]
+    //               |        |          |         |
+    //             [b1]-----[hb1]------[hb2]-----[b2]
 
-          */
+    //       */
 
-          let b1 = addVertex(pos.x, pos.y, 0, normal, length)
-          let mb1 = addVertex(pos.x, pos.y, h / 3, normal, length)
-          let mt1 = addVertex(pos.x, pos.y, (h / 3) * 2, normal, length)
-          let t1 = addVertex(pos.x, pos.y, h, normal, length)
+    //       let b1 = addVertex(pos.x, pos.y, 0, normal, length)
+    //       let mb1 = addVertex(pos.x, pos.y, h / 3, normal, length)
+    //       let mt1 = addVertex(pos.x, pos.y, (h / 3) * 2, normal, length)
+    //       let t1 = addVertex(pos.x, pos.y, h, normal, length)
 
-          const b2 = addVertex(pos2.x, pos2.y, 0, normal, 0)
-          const mb2 = addVertex(pos2.x, pos2.y, h / 3, normal, 0)
-          const mt2 = addVertex(pos2.x, pos2.y, (h / 3) * 2, normal, 0)
-          const t2 = addVertex(pos2.x, pos2.y, h, normal, 0)
+    //       const b2 = addVertex(pos2.x, pos2.y, 0, normal, 0)
+    //       const mb2 = addVertex(pos2.x, pos2.y, h / 3, normal, 0)
+    //       const mt2 = addVertex(pos2.x, pos2.y, (h / 3) * 2, normal, 0)
+    //       const t2 = addVertex(pos2.x, pos2.y, h, normal, 0)
 
-          const dir = pos2.subV(pos).normalize()
-          for (let i = 0; i < hArray.length; i++) {
-            const c = hArray[i]
+    //       const dir = pos2.subV(pos).normalize()
+    //       for (let i = 0; i < hArray.length; i++) {
+    //         const c = hArray[i]
 
-            const p1 = pos.addV(dir.multN(c.x))
-            const hb1 = addVertex(p1.x, p1.y, 0, normal, length - c.x)
-            const hmb1 = addVertex(
-              p1.x,
-              p1.y,
-              c.by || h / 3,
-              normal,
-              length - c.x
-            )
-            const hmt1 = addVertex(
-              p1.x,
-              p1.y,
-              c.ty || (h / 3) * 2,
-              normal,
-              length - c.x
-            )
-            const ht1 = addVertex(p1.x, p1.y, h, normal, length - c.x)
+    //         const p1 = pos.addV(dir.multN(c.x))
+    //         const hb1 = addVertex(p1.x, p1.y, 0, normal, length - c.x)
+    //         const hmb1 = addVertex(
+    //           p1.x,
+    //           p1.y,
+    //           c.by || h / 3,
+    //           normal,
+    //           length - c.x
+    //         )
+    //         const hmt1 = addVertex(
+    //           p1.x,
+    //           p1.y,
+    //           c.ty || (h / 3) * 2,
+    //           normal,
+    //           length - c.x
+    //         )
+    //         const ht1 = addVertex(p1.x, p1.y, h, normal, length - c.x)
 
-            const p2 = pos.addV(dir.multN(c.x + c.dx))
-            const hb2 = addVertex(p2.x, p2.y, 0, normal, length - (c.x + c.dx))
-            const hmb2 = addVertex(
-              p2.x,
-              p2.y,
-              c.by || h / 3,
-              normal,
-              length - (c.x + c.dx)
-            )
-            const hmt2 = addVertex(
-              p2.x,
-              p2.y,
-              c.ty || (h / 3) * 2,
-              normal,
-              length - (c.x + c.dx)
-            )
-            const ht2 = addVertex(p2.x, p2.y, h, normal, length - (c.x + c.dx))
+    //         const p2 = pos.addV(dir.multN(c.x + c.dx))
+    //         const hb2 = addVertex(p2.x, p2.y, 0, normal, length - (c.x + c.dx))
+    //         const hmb2 = addVertex(
+    //           p2.x,
+    //           p2.y,
+    //           c.by || h / 3,
+    //           normal,
+    //           length - (c.x + c.dx)
+    //         )
+    //         const hmt2 = addVertex(
+    //           p2.x,
+    //           p2.y,
+    //           c.ty || (h / 3) * 2,
+    //           normal,
+    //           length - (c.x + c.dx)
+    //         )
+    //         const ht2 = addVertex(p2.x, p2.y, h, normal, length - (c.x + c.dx))
 
-            addQuad(mt1, hmt1, ht1, t1, reverse)
-            addQuad(mb1, hmb1, hmt1, mt1, reverse)
-            addQuad(b1, hb1, hmb1, mb1, reverse)
-            if (c.by > 0) addQuad(hb1, hb2, hmb2, hmb1, reverse)
-            addQuad(hmt1, hmt2, ht2, ht1, reverse)
+    //         addQuad(mt1, hmt1, ht1, t1, reverse)
+    //         addQuad(mb1, hmb1, hmt1, mt1, reverse)
+    //         addQuad(b1, hb1, hmb1, mb1, reverse)
+    //         if (c.by > 0) addQuad(hb1, hb2, hmb2, hmb1, reverse)
+    //         addQuad(hmt1, hmt2, ht2, ht1, reverse)
 
-            b1 = hb2
-            mb1 = hmb2
-            mt1 = hmt2
-            t1 = ht2
+    //         b1 = hb2
+    //         mb1 = hmb2
+    //         mt1 = hmt2
+    //         t1 = ht2
 
-            if (c.tunnelId !== -1) {
-              if (tunnel.has(c.tunnelId)) {
-                const otherHole = tunnel.get(c.tunnelId)
-                if (otherHole !== undefined) {
-                  const matLayer = c.by > 0 ? 1 : 2
-                  if (
-                    v3Dist(otherHole.t1pos, { x: p1.x, y: p1.y, z: c.ty }) <
-                    v3Dist(otherHole.t2pos, { x: p1.x, y: p1.y, z: c.ty })
-                  ) {
-                    addCopyQuad(
-                      hmb1,
-                      hmt1,
-                      otherHole.t1,
-                      otherHole.b1,
-                      false,
-                      matLayer
-                    )
-                    addCopyQuad(
-                      hmt1,
-                      hmt2,
-                      otherHole.t2,
-                      otherHole.t1,
-                      false,
-                      matLayer
-                    )
-                    addCopyQuad(
-                      hmb2,
-                      hmt2,
-                      otherHole.t2,
-                      otherHole.b2,
-                      false,
-                      matLayer
-                    )
-                    if (c.by > 0) {
-                      addCopyQuad(
-                        hmb1,
-                        hmb2,
-                        otherHole.b2,
-                        otherHole.b1,
-                        false,
-                        matLayer
-                      )
-                    }
+    //         if (c.tunnelId !== -1) {
+    //           if (tunnel.has(c.tunnelId)) {
+    //             const otherHole = tunnel.get(c.tunnelId)
+    //             if (otherHole !== undefined) {
+    //               const matLayer = c.by > 0 ? 1 : 2
+    //               if (
+    //                 v3Dist(otherHole.t1pos, { x: p1.x, y: p1.y, z: c.ty }) <
+    //                 v3Dist(otherHole.t2pos, { x: p1.x, y: p1.y, z: c.ty })
+    //               ) {
+    //                 addCopyQuad(
+    //                   hmb1,
+    //                   hmt1,
+    //                   otherHole.t1,
+    //                   otherHole.b1,
+    //                   false,
+    //                   matLayer
+    //                 )
+    //                 addCopyQuad(
+    //                   hmt1,
+    //                   hmt2,
+    //                   otherHole.t2,
+    //                   otherHole.t1,
+    //                   false,
+    //                   matLayer
+    //                 )
+    //                 addCopyQuad(
+    //                   hmb2,
+    //                   hmt2,
+    //                   otherHole.t2,
+    //                   otherHole.b2,
+    //                   false,
+    //                   matLayer
+    //                 )
+    //                 if (c.by > 0) {
+    //                   addCopyQuad(
+    //                     hmb1,
+    //                     hmb2,
+    //                     otherHole.b2,
+    //                     otherHole.b1,
+    //                     false,
+    //                     matLayer
+    //                   )
+    //                 }
 
-                    addCopyQuad(
-                      hmb1,
-                      hmt1,
-                      otherHole.t1,
-                      otherHole.b1,
-                      true,
-                      matLayer
-                    )
-                    addCopyQuad(
-                      hmt1,
-                      hmt2,
-                      otherHole.t2,
-                      otherHole.t1,
-                      true,
-                      matLayer
-                    )
-                    addCopyQuad(
-                      hmb2,
-                      hmt2,
-                      otherHole.t2,
-                      otherHole.b2,
-                      true,
-                      matLayer
-                    )
-                    if (c.by > 0) {
-                      addCopyQuad(
-                        hmb1,
-                        hmb2,
-                        otherHole.b2,
-                        otherHole.b1,
-                        true,
-                        matLayer
-                      )
-                    } else {
-                      addCopyQuad(
-                        hb1,
-                        hmb1,
-                        otherHole.b1,
-                        otherHole.bb1,
-                        false,
-                        matLayer
-                      )
-                      addCopyQuad(
-                        hb1,
-                        hmb1,
-                        otherHole.b1,
-                        otherHole.bb1,
-                        true,
-                        matLayer
-                      )
+    //                 addCopyQuad(
+    //                   hmb1,
+    //                   hmt1,
+    //                   otherHole.t1,
+    //                   otherHole.b1,
+    //                   true,
+    //                   matLayer
+    //                 )
+    //                 addCopyQuad(
+    //                   hmt1,
+    //                   hmt2,
+    //                   otherHole.t2,
+    //                   otherHole.t1,
+    //                   true,
+    //                   matLayer
+    //                 )
+    //                 addCopyQuad(
+    //                   hmb2,
+    //                   hmt2,
+    //                   otherHole.t2,
+    //                   otherHole.b2,
+    //                   true,
+    //                   matLayer
+    //                 )
+    //                 if (c.by > 0) {
+    //                   addCopyQuad(
+    //                     hmb1,
+    //                     hmb2,
+    //                     otherHole.b2,
+    //                     otherHole.b1,
+    //                     true,
+    //                     matLayer
+    //                   )
+    //                 } else {
+    //                   addCopyQuad(
+    //                     hb1,
+    //                     hmb1,
+    //                     otherHole.b1,
+    //                     otherHole.bb1,
+    //                     false,
+    //                     matLayer
+    //                   )
+    //                   addCopyQuad(
+    //                     hb1,
+    //                     hmb1,
+    //                     otherHole.b1,
+    //                     otherHole.bb1,
+    //                     true,
+    //                     matLayer
+    //                   )
 
-                      addCopyQuad(
-                        hb2,
-                        hmb2,
-                        otherHole.b2,
-                        otherHole.bb2,
-                        false,
-                        matLayer
-                      )
-                      addCopyQuad(
-                        hb2,
-                        hmb2,
-                        otherHole.b2,
-                        otherHole.bb2,
-                        true,
-                        matLayer
-                      )
-                    }
-                  } else {
-                    addCopyQuad(
-                      hmb1,
-                      hmt1,
-                      otherHole.t2,
-                      otherHole.b2,
-                      false,
-                      matLayer
-                    )
-                    addCopyQuad(
-                      hmt1,
-                      hmt2,
-                      otherHole.t1,
-                      otherHole.t2,
-                      false,
-                      matLayer
-                    )
-                    addCopyQuad(
-                      hmb2,
-                      hmt2,
-                      otherHole.t1,
-                      otherHole.b1,
-                      false,
-                      matLayer
-                    )
-                    if (c.by > 0) {
-                      addCopyQuad(
-                        hmb1,
-                        hmb2,
-                        otherHole.b1,
-                        otherHole.b2,
-                        false,
-                        matLayer
-                      )
-                    }
+    //                   addCopyQuad(
+    //                     hb2,
+    //                     hmb2,
+    //                     otherHole.b2,
+    //                     otherHole.bb2,
+    //                     false,
+    //                     matLayer
+    //                   )
+    //                   addCopyQuad(
+    //                     hb2,
+    //                     hmb2,
+    //                     otherHole.b2,
+    //                     otherHole.bb2,
+    //                     true,
+    //                     matLayer
+    //                   )
+    //                 }
+    //               } else {
+    //                 addCopyQuad(
+    //                   hmb1,
+    //                   hmt1,
+    //                   otherHole.t2,
+    //                   otherHole.b2,
+    //                   false,
+    //                   matLayer
+    //                 )
+    //                 addCopyQuad(
+    //                   hmt1,
+    //                   hmt2,
+    //                   otherHole.t1,
+    //                   otherHole.t2,
+    //                   false,
+    //                   matLayer
+    //                 )
+    //                 addCopyQuad(
+    //                   hmb2,
+    //                   hmt2,
+    //                   otherHole.t1,
+    //                   otherHole.b1,
+    //                   false,
+    //                   matLayer
+    //                 )
+    //                 if (c.by > 0) {
+    //                   addCopyQuad(
+    //                     hmb1,
+    //                     hmb2,
+    //                     otherHole.b1,
+    //                     otherHole.b2,
+    //                     false,
+    //                     matLayer
+    //                   )
+    //                 }
 
-                    addCopyQuad(
-                      hmb1,
-                      hmt1,
-                      otherHole.t2,
-                      otherHole.b2,
-                      true,
-                      matLayer
-                    )
-                    addCopyQuad(
-                      hmt1,
-                      hmt2,
-                      otherHole.t1,
-                      otherHole.t2,
-                      true,
-                      matLayer
-                    )
-                    addCopyQuad(
-                      hmb2,
-                      hmt2,
-                      otherHole.t1,
-                      otherHole.b1,
-                      true,
-                      matLayer
-                    )
-                    if (c.by > 0) {
-                      addCopyQuad(
-                        hmb1,
-                        hmb2,
-                        otherHole.b1,
-                        otherHole.b2,
-                        true,
-                        matLayer
-                      )
-                    } else {
-                      addCopyQuad(
-                        hb1,
-                        hmb1,
-                        otherHole.b2,
-                        otherHole.bb2,
-                        false,
-                        matLayer
-                      )
-                      addCopyQuad(
-                        hb1,
-                        hmb1,
-                        otherHole.b2,
-                        otherHole.bb2,
-                        true,
-                        matLayer
-                      )
+    //                 addCopyQuad(
+    //                   hmb1,
+    //                   hmt1,
+    //                   otherHole.t2,
+    //                   otherHole.b2,
+    //                   true,
+    //                   matLayer
+    //                 )
+    //                 addCopyQuad(
+    //                   hmt1,
+    //                   hmt2,
+    //                   otherHole.t1,
+    //                   otherHole.t2,
+    //                   true,
+    //                   matLayer
+    //                 )
+    //                 addCopyQuad(
+    //                   hmb2,
+    //                   hmt2,
+    //                   otherHole.t1,
+    //                   otherHole.b1,
+    //                   true,
+    //                   matLayer
+    //                 )
+    //                 if (c.by > 0) {
+    //                   addCopyQuad(
+    //                     hmb1,
+    //                     hmb2,
+    //                     otherHole.b1,
+    //                     otherHole.b2,
+    //                     true,
+    //                     matLayer
+    //                   )
+    //                 } else {
+    //                   addCopyQuad(
+    //                     hb1,
+    //                     hmb1,
+    //                     otherHole.b2,
+    //                     otherHole.bb2,
+    //                     false,
+    //                     matLayer
+    //                   )
+    //                   addCopyQuad(
+    //                     hb1,
+    //                     hmb1,
+    //                     otherHole.b2,
+    //                     otherHole.bb2,
+    //                     true,
+    //                     matLayer
+    //                   )
 
-                      addCopyQuad(
-                        hb2,
-                        hmb2,
-                        otherHole.b1,
-                        otherHole.bb1,
-                        false,
-                        matLayer
-                      )
-                      addCopyQuad(
-                        hb2,
-                        hmb2,
-                        otherHole.b1,
-                        otherHole.bb1,
-                        true,
-                        matLayer
-                      )
-                    }
-                  }
-                }
-              } else {
-                tunnel.set(c.tunnelId, {
-                  t1: copyVertex(hmt1, (normal = dir.normalize())),
-                  b1: copyVertex(hmb1, (normal = dir.normalize())),
-                  t2: copyVertex(hmt2, (normal = dir.normalize().multN(-1))),
-                  b2: copyVertex(hmb2, (normal = dir.normalize().multN(-1))),
-                  bb1: hb1,
-                  bb2: hb2,
-                  t1pos: { x: p1.x, y: p1.y, z: c.ty },
-                  t2pos: { x: p2.x, y: p2.y, z: c.ty }
-                })
-              }
-            }
-          }
-          addQuad(mt1, mt2, t2, t1, reverse)
-          addQuad(mb1, mb2, mt2, mt1, reverse)
-          addQuad(b1, b2, mb2, mb1, reverse)
-        }
-      })
-    })
+    //                   addCopyQuad(
+    //                     hb2,
+    //                     hmb2,
+    //                     otherHole.b1,
+    //                     otherHole.bb1,
+    //                     false,
+    //                     matLayer
+    //                   )
+    //                   addCopyQuad(
+    //                     hb2,
+    //                     hmb2,
+    //                     otherHole.b1,
+    //                     otherHole.bb1,
+    //                     true,
+    //                     matLayer
+    //                   )
+    //                 }
+    //               }
+    //             }
+    //           } else {
+    //             tunnel.set(c.tunnelId, {
+    //               t1: copyVertex(hmt1, (normal = dir.normalize())),
+    //               b1: copyVertex(hmb1, (normal = dir.normalize())),
+    //               t2: copyVertex(hmt2, (normal = dir.normalize().multN(-1))),
+    //               b2: copyVertex(hmb2, (normal = dir.normalize().multN(-1))),
+    //               bb1: hb1,
+    //               bb2: hb2,
+    //               t1pos: { x: p1.x, y: p1.y, z: c.ty },
+    //               t2pos: { x: p2.x, y: p2.y, z: c.ty }
+    //             })
+    //           }
+    //         }
+    //       }
+    //       addQuad(mt1, mt2, t2, t1, reverse)
+    //       addQuad(mb1, mb2, mt2, mt1, reverse)
+    //       addQuad(b1, b2, mb2, mb1, reverse)
+    //     }
+    //   })
+    // })
 
     //
     // ceiling and floor

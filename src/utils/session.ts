@@ -15,12 +15,20 @@ export class User {
 }
 
 export class Session {
-  static getTheme (): string | null {
-    return window.localStorage.getItem('virtfac-theme')
+  static getTheme (): string {
+    return window.localStorage.getItem('virtfac-theme') || 'light'
   }
 
   static setTheme (theme: string): void {
     window.localStorage.setItem('virtfac-theme', theme)
+  }
+
+  static getLanguage (): string {
+    return window.localStorage.getItem('virtfac-language') || 'french'
+  }
+
+  static setLanguage (language: string): void {
+    window.localStorage.setItem('virtfac-language', language)
   }
 
   static getUser (): User | null {

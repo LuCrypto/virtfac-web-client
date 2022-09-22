@@ -7,8 +7,8 @@
 <template>
   <v-container
     fluid
-    style="height: 100%; max-height: 100%"
-    class="overflow-y-auto black rounded-lg"
+    style="height: 100%; max-height: 100%; padding: 0;"
+    class="overflow-y-auto rounded-lg"
   >
     <!-- To assign a position to an event -->
     <v-dialog v-model="modifyPositionBooleen">
@@ -85,7 +85,7 @@
           <!-- To save the position of the event -->
           <v-col align="center">
             <v-btn color="primary" text @click="save()">
-              Save
+              {{ $vuetify.lang.t('$vuetify.assetLibrary.save') }}
             </v-btn>
           </v-col>
         </v-row>
@@ -99,7 +99,7 @@
           <!-- For the title -->
           <v-row align="center" no-gutters>
             <v-col cols="1" align="center">
-              Title :
+              {{ $vuetify.lang.t('$vuetify.dynamicsObject.title') }} :
             </v-col>
             <v-col cols="11" align="center">
               <v-text-field
@@ -128,7 +128,7 @@
               </v-col>
               <!-- Position -->
               <v-col align="center">
-                Position :
+                {{ $vuetify.lang.t('$vuetify.dynamicsObject.position') }} :
               </v-col>
               <v-col align="center">
                 <v-text-field
@@ -159,7 +159,7 @@
               </v-col>
               <!-- Rotation -->
               <v-col align="center">
-                Rotation :
+                {{ $vuetify.lang.t('$vuetify.dynamicsObject.rotation') }} :
               </v-col>
               <v-col align="center">
                 <v-text-field
@@ -201,7 +201,7 @@
               small
               @click="saveProfil"
             >
-              Save Profil
+              {{ $vuetify.lang.t('$vuetify.dynamicsObject.saveProfil') }}
             </v-btn>
           </v-col>
         </v-row>
@@ -254,7 +254,7 @@
           </v-btn>
           <v-btn icon>
             <v-icon
-              @click="moveToEvent(child)"
+              @click="moveToEvent(child, false)"
               class="ml-2"
               v-text="'mdi-map-marker'"
               left
@@ -273,179 +273,174 @@
     </v-list>
 
     <!-- The different buttons -->
-    <v-container class="d-flex flex-wrap flex-nowrap">
-      <v-row align="center">
-        <!-- Allows you to start a profile with the selected object -->
-        <v-col align="center">
-          <v-btn
-            class="primary black--text my-2"
-            @click="startProfil()"
-            large
-            elevation="2"
-          >
-            Start profil
-          </v-btn>
-        </v-col>
-        <!-- Allows to start with all the objects of the scene -->
-        <v-col align="center">
-          <v-btn
-            class="primary black--text my-2"
-            @click="startProfilGlobal()"
-            large
-            elevation="2"
-          >
-            Start global profil
-          </v-btn>
-        </v-col>
-        <!-- Allows you to delete the active profile -->
-        <v-col align="center">
-          <v-btn
-            class="primary black--text my-2"
-            @click="deleteProfil()"
-            large
-            elevation="2"
-          >
-            Delete profil
-          </v-btn>
-        </v-col>
-        <!-- Allows you to attach one object to another -->
-        <v-col align="center">
-          <v-btn
-            class="primary black--text my-2"
-            @click="attacherObjet()"
-            large
-            elevation="2"
-          >
-            Attach an object
-          </v-btn>
-        </v-col>
-        <!-- Add an event -->
-        <v-col align="center">
-          <v-btn
-            @click="addEvent"
-            class="primary black--text my-2"
-            large
-            elevation="2"
-          >
-            Add an event
-          </v-btn>
-        </v-col>
-
-        <v-col align="center">
-          <v-btn
-            @click="pathObjectSelected"
-            class="primary black--text my-2"
-            large
-            elevation="2"
-          >
-            Selected path asset
-          </v-btn>
-        </v-col>
-
-        <v-col align="center">
-          <v-btn
-            @click="globalPath"
-            class="primary black--text my-2"
-            large
-            elevation="2"
-          >
-            Global path
-          </v-btn>
-        </v-col>
-      </v-row>
-    </v-container>
-
-    <!-- Second button bar -->
-    <v-container class="d-flex flex-wrap flex-nowrap">
-      <v-row align="center">
-        <v-col align="center">
-          <v-btn
-            class="primary black--text my-2"
-            @click="assignProfilScene()"
-            large
-            elevation="2"
-          >
-            Assign a profil to scene
-          </v-btn>
-        </v-col>
-
-        <!-- Selected profile -->
-        <v-col align="center">
-          <v-select
-            class="black--text"
-            label="Selected profil"
-            v-model="selectedProfil"
-            :items="this.profils.map(item => item.title)"
-            dense
-          >
-          </v-select>
-        </v-col>
-
-        <!-- Selected scene -->
-        <v-col align="center">
-          <v-select
-            class="black--text"
-            label="Selected scene"
-            v-model="selectedScene"
-            :items="this.scenes.map(item => item.name)"
-            dense
-          >
-          </v-select>
-        </v-col>
-      </v-row>
-    </v-container>
-
-    <!-- Third button bar -->
     <v-container
-      v-if="!unrealContext.check()"
-      class="d-flex flex-wrap flex-nowrap"
+      fluid
+      class="d-flex flex-wrap justify-center align-center"
+      style="padding: 0;"
     >
-      <v-row align="center">
+      <v-container
+        class="d-flex justify-space-around align-center"
+        style="background-color: rgb(45,45,45); margin: 0; max-width: 100%;"
+      >
+        <!-- Allows you to start a profile with the selected object -->
+        <v-btn
+          class="primary black--text my-2"
+          @click="startProfil()"
+          large
+          elevation="2"
+        >
+          {{ $vuetify.lang.t('$vuetify.dynamicsObject.startProfil') }}
+        </v-btn>
+        <!-- Allows to start with all the objects of the scene -->
+        <v-btn
+          class="primary black--text my-2"
+          @click="startProfilGlobal()"
+          large
+          elevation="2"
+        >
+          {{ $vuetify.lang.t('$vuetify.dynamicsObject.startGlobalProfil') }}
+        </v-btn>
+      </v-container>
+
+      <v-container
+        class="d-flex justify-space-around align-center"
+        style="background-color: rgb(30,30,30); margin: 0; max-width: 100%;"
+      >
+        <v-btn
+          @click="pathObjectSelected"
+          class="primary black--text my-2"
+          large
+          elevation="2"
+        >
+          {{ $vuetify.lang.t('$vuetify.dynamicsObject.selectedPathAsset') }}
+        </v-btn>
+        <v-btn
+          @click="globalPath"
+          class="primary black--text my-2"
+          large
+          elevation="2"
+        >
+          {{ $vuetify.lang.t('$vuetify.dynamicsObject.globalPath') }}
+        </v-btn>
+      </v-container>
+
+      <v-container
+        class="d-flex justify-space-around align-center"
+        style="background-color: rgb(45,45,45); margin: 0; max-width: 100%;"
+      >
         <!-- Allows you to load a witness file for a profile -->
-        <v-col align="center">
-          <v-btn
-            @click="openUploadFile"
-            class="primary black--text my-2"
-            large
-            elevation="2"
-          >
-            Load a profil file
-            <input
-              accept="application/JSON"
-              ref="uploadFileInput"
-              hidden
-              type="file"
-              @change="onUploadSceneUpdate"
-            />
-          </v-btn>
-        </v-col>
+        <v-btn
+          v-if="!unrealContext.check()"
+          @click="openUploadFile"
+          class="primary black--text my-2"
+          large
+          elevation="2"
+        >
+          {{ $vuetify.lang.t('$vuetify.dynamicsObject.loadAProfilFile') }}
+          <input
+            accept="application/JSON"
+            ref="uploadFileInput"
+            hidden
+            type="file"
+            @change="onUploadSceneUpdate"
+          />
+        </v-btn>
 
         <!-- Allows you to edit the current profile -->
-        <v-col align="center">
-          <v-btn
-            @click="editProfil"
-            class="primary black--text my-2"
-            large
-            elevation="2"
-          >
-            Edit the current profil
-          </v-btn>
-        </v-col>
+        <v-btn
+          @click="editProfil"
+          class="primary black--text my-2"
+          large
+          elevation="2"
+        >
+          {{ $vuetify.lang.t('$vuetify.dynamicsObject.editTheCurrentProfil') }}
+        </v-btn>
 
-        <!-- Allows to listen on the server -->
-        <v-col align="center">
+        <!-- Allows you to delete the active profile -->
+        <v-btn
+          class="primary black--text my-2"
+          @click="deleteProfil()"
+          large
+          elevation="2"
+        >
+          {{ $vuetify.lang.t('$vuetify.dynamicsObject.deleteProfil') }}
+        </v-btn>
+      </v-container>
+
+      <v-container
+        class="d-flex justify-space-around align-center"
+        style="background-color: rgb(30,30,30); margin: 0; max-width: 100%;"
+      >
+        <!-- Add an event -->
+        <v-btn
+          @click="addEvent"
+          class="primary black--text my-2"
+          large
+          elevation="2"
+        >
+          {{ $vuetify.lang.t('$vuetify.dynamicsObject.addAnEvent') }}
+        </v-btn>
+
+        <!-- Allows you to attach one object to another -->
+        <v-btn
+          class="primary black--text my-2"
+          @click="attacherObjet()"
+          large
+          elevation="2"
+        >
+          {{ $vuetify.lang.t('$vuetify.dynamicsObject.attachAnObject') }}
+        </v-btn>
+
+        <div class="d-flex justify-space-around align-center mx-1">
+          <!-- Allows to listen on the server -->
           <v-btn
-            class="primary black--text my-2"
+            class="primary black--text mx-1"
             @click="listenServer()"
             large
             elevation="2"
           >
-            Listen id of server (do nothing)
+            {{ $vuetify.lang.t('$vuetify.dynamicsObject.listenIdOfServer') }}
           </v-btn>
-        </v-col>
-      </v-row>
-    </v-container>
 
+          <div
+            class="rounded-circle mx-1"
+            :class="activeListenOpcua"
+            style="width: 30px; height: 30px;"
+          ></div>
+        </div>
+      </v-container>
+
+      <v-container
+        class="d-flex justify-space-around align-center"
+        style="background-color: rgb(45,45,45); margin: 0; max-width: 100%;"
+      >
+        <v-btn
+          class="primary black--text mx-2"
+          @click="assignProfilScene()"
+          large
+          elevation="2"
+        >
+          {{ $vuetify.lang.t('$vuetify.dynamicsObject.assignAProfilToScene') }}
+        </v-btn>
+
+        <!-- Selected profile -->
+        <v-select
+          class="black--text mx-2"
+          :label="$vuetify.lang.t('$vuetify.dynamicsObject.selectedProfil')"
+          v-model="selectedProfil"
+          :items="this.profils.map(item => item.title)"
+        >
+        </v-select>
+        <!-- Selected scene -->
+        <v-select
+          class="black--text mx-2"
+          :label="$vuetify.lang.t('$vuetify.dynamicsObject.selectedScene')"
+          v-model="selectedScene"
+          :items="this.scenes.map(item => item.name)"
+        >
+        </v-select>
+      </v-container>
+    </v-container>
     <!-- Dynamique object -->
     <v-container
       v-if="selectedObjectDynamique"
@@ -454,7 +449,7 @@
       <v-row align="center">
         <!-- Allows you to load a witness file for a profile -->
         <v-col align="center">
-          Object dynamique selected !
+          {{ $vuetify.lang.t('$vuetify.dynamicsObject.objetDynamicSelected') }}
         </v-col>
       </v-row>
     </v-container>
@@ -510,7 +505,9 @@ class Values {
   datetime = -1
   idParent = -1
   position: Vector3 = new Vector3(0)
+  modificationPosition = false
   rotation: Vector3 = new Vector3(0)
+  modificationRotation = false
 
   constructor (params: Partial<Values>) {
     Object.assign(this, params)
@@ -551,7 +548,7 @@ export default class ErgonomIOAssets extends Vue {
 
   transformArray = ['Location', 'Rotation', 'Scale']
   axesArray = ['', 'X', 'Y', 'Z']
-  axesColorsArray = ['black', 'red', 'green', 'blue']
+  axesColorsArray = ['black', 'red', 'green', 'green']
   textFieldValue = ''
   counter = 0
   positionEvent = new Vector3(0, 0, 0)
@@ -562,6 +559,7 @@ export default class ErgonomIOAssets extends Vue {
   scenes: CardModel[] = []
   firstTime = true
   editProfilBooleen = false
+  activeListenOpcua = 'red'
   selectedObjectDynamique = false
   profilEdit: Profil = new Profil({})
 
@@ -574,7 +572,9 @@ export default class ErgonomIOAssets extends Vue {
           name: 'Evenement 1',
           values: new Values({
             position: new Vector3(0.0, 0.0, 0.0),
+            modificationPosition: false,
             rotation: new Vector3(0.0, 0.0, 0.0),
+            modificationRotation: false,
             idParent: -1,
             datetime: -1
           })
@@ -583,7 +583,9 @@ export default class ErgonomIOAssets extends Vue {
           name: 'Evenement 2',
           values: new Values({
             position: new Vector3(100.0, 0.0, 0.0),
+            modificationPosition: true,
             rotation: new Vector3(0.0, 0.0, 0.0),
+            modificationRotation: false,
             idParent: -1,
             datetime: -1
           })
@@ -592,7 +594,9 @@ export default class ErgonomIOAssets extends Vue {
           name: 'Evenement 3',
           values: new Values({
             position: new Vector3(0.0, 300.0, 0.0),
+            modificationPosition: true,
             rotation: new Vector3(0.0, 0.0, 0.0),
+            modificationRotation: false,
             idParent: -1,
             datetime: -1
           })
@@ -617,8 +621,31 @@ export default class ErgonomIOAssets extends Vue {
       }
 
       const test = data as message
-      // When we get an event
-      if (test.message === 'envoieEvenement') {
+
+      // When get event, go active him
+      if (test.message === 'activeEvent') {
+        const test2 = test.object as evenementClass
+
+        // Find selected profil
+        let trouver = -1
+        for (let i = 0; i < this.profils.length; i++) {
+          const element = this.profils[i].active
+          if (element) trouver = i
+        }
+
+        // Find event from string
+        let indexEvent = -1
+        for (let i = 0; i < this.profils[trouver].items.length; i++) {
+          const element = this.profils[trouver].items[i]
+          if (element.name === test2.evenement) {
+            indexEvent = i
+          }
+        }
+
+        // Move selected object to the value of the event
+        this.moveToEvent(this.profils[trouver].items[indexEvent], true)
+        // Not used, obsolete
+      } else if (test.message === 'envoieEvenement') {
         const test2 = test.object as evenementClass
         Unreal.send(test2)
 
@@ -631,7 +658,9 @@ export default class ErgonomIOAssets extends Vue {
           name: test2.evenement,
           values: new Values({
             position: new Vector3(0.0, 0.0, 0.0),
+            modificationPosition: false,
             rotation: new Vector3(0.0, 0.0, 0.0),
+            modificationRotation: false,
             idParent: -1,
             datetime: -1
           })
@@ -675,6 +704,7 @@ export default class ErgonomIOAssets extends Vue {
             }
           }
         }
+        // Get the event list opc ua with profil index/id
       } else if (test.message === 'envoieListeEvenementProfil') {
         let indiceChercher = -1
         for (let i = 0; i < this.profils.length; i++) {
@@ -704,7 +734,9 @@ export default class ErgonomIOAssets extends Vue {
       } else if (test.message === 'selectedObjectDynamique') {
         Unreal.send('selectedObjectDynamique')
         this.selectedObjectDynamique = true
+        // Get information of selected asset
       } else if (test.message === 'infosObjetDynamique') {
+        Unreal.send('DEBUT INFOS')
         const indiceProfil = test.object.idProfil
 
         let indiceProfilTableau = -1
@@ -731,6 +763,12 @@ export default class ErgonomIOAssets extends Vue {
               this.profils[indiceProfilTableau].items[
                 i
               ].values.rotation = new Vector3(0.0, 0.0, 0.0)
+              this.profils[indiceProfilTableau].items[
+                i
+              ].values.modificationPosition = false
+              this.profils[indiceProfilTableau].items[
+                i
+              ].values.modificationRotation = false
             }
           } else {
             // Update array
@@ -743,6 +781,14 @@ export default class ErgonomIOAssets extends Vue {
                 test.object.tableau_position[i]
               this.profils[indiceProfilTableau].items[i].values.rotation =
                 test.object.tableau_rotation[i]
+              this.profils[indiceProfilTableau].items[
+                i
+              ].values.modificationPosition =
+                test.object.tableau_modification_pos[i]
+              this.profils[indiceProfilTableau].items[
+                i
+              ].values.modificationRotation =
+                test.object.tableau_modification_rot[i]
             }
           }
 
@@ -851,6 +897,7 @@ export default class ErgonomIOAssets extends Vue {
       if (element) trouver = i
     }
 
+    // Passing of parameters
     this.editProfilBooleen = true
     this.profilEdit = this.profils[trouver]
   }
@@ -955,7 +1002,9 @@ export default class ErgonomIOAssets extends Vue {
               name: evenementName,
               values: new Values({
                 position: new Vector3(0.0, 0.0, 0.0),
+                modificationPosition: false,
                 rotation: new Vector3(0.0, 0.0, 0.0),
+                modificationRotation: false,
                 idParent: -1,
                 datetime: datetimeInput
               })
@@ -1058,11 +1107,13 @@ export default class ErgonomIOAssets extends Vue {
                   elementObjet.values.position.y,
                   elementObjet.values.position.z
                 ),
+                modificationPosition: false,
                 rotation: new Vector3(
                   elementObjet.values.rotation.x,
                   elementObjet.values.rotation.y,
                   elementObjet.values.rotation.z
                 ),
+                modificationRotation: false,
                 idParent: elementObjet.values.idParent,
                 datetime: -1
               })
@@ -1076,11 +1127,13 @@ export default class ErgonomIOAssets extends Vue {
                   elementObjet.values.position[1],
                   elementObjet.values.position[2]
                 ),
+                modificationPosition: false,
                 rotation: new Vector3(
                   elementObjet.values.rotation[0],
                   elementObjet.values.rotation[1],
                   elementObjet.values.rotation[2]
                 ),
+                modificationRotation: false,
                 idParent: elementObjet.values.idParent,
                 datetime: -1
               })
@@ -1179,6 +1232,20 @@ export default class ErgonomIOAssets extends Vue {
   // @arg No arguments required
   listenServer (): void {
     console.log('listenServer !')
+
+    this.activeListenOpcua = this.activeListenOpcua === 'red' ? 'green' : 'red'
+
+    const objectOpcua = {
+      action: 'listenServer'
+    }
+
+    const object = {
+      menu: 'opcua',
+      objet: objectOpcua
+    }
+
+    // On envoie la position de l'évènement
+    Unreal.send(object)
   }
 
   // Delete an event of a profil
@@ -1210,11 +1277,17 @@ export default class ErgonomIOAssets extends Vue {
 
   // For start an event
   // @arg No arguments required
-  moveToEvent (child: Evenement): void {
+  moveToEvent (child: Evenement, opcua: boolean): void {
     const objectOpcua = {
       action: 'bougerEvenement',
-      position: child.values.position
+      position: child.values.position,
+      rotation: child.values.rotation,
+      modificationPosition: child.values.modificationPosition,
+      modificationRotation: child.values.modificationRotation,
+      isOpcua: opcua
     }
+
+    console.log(this.profils)
 
     const object = {
       menu: 'opcua',

@@ -6,6 +6,18 @@ import { imageAsset } from '@/utils/defaultData'
 import { min } from 'd3'
 import V from './vector'
 
+export class APIGroup {
+  id = 0
+  idUserOwner = 0
+  name = ''
+  color = 0
+  groupAccess = 0
+
+  constructor (attributes?: Partial<APIGroup>) {
+    Object.assign(this, attributes)
+  }
+}
+
 export interface APIDatabaseField {
   name: string
   type: string

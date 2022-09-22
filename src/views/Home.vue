@@ -1,5 +1,5 @@
 <template>
-  <odoo-i-frame src="http://10.244.77.203/"></odoo-i-frame>
+  <odoo-i-frame src="/"></odoo-i-frame>
 </template>
 
 <script lang="ts">

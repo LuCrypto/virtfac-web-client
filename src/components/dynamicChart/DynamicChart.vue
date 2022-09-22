@@ -219,6 +219,19 @@ export default class DynamicChart extends Vue {
   private fullscreen = false
   private settingsPopUp: PopUp | null = null
 
+  id: number | undefined = undefined
+  unmounted (): void {
+    if (this.id) {
+      window.cancelAnimationFrame(this.id)
+      console.log(`Remove animation frame ${this.id}.`)
+    }
+    this.id = undefined
+  }
+
+  onDeactivated (): void {
+    this.unmounted()
+  }
+
   mounted (): void {
     this.container = this.$refs.container as HTMLElement
     this.content = this.$refs.content as HTMLElement
@@ -259,7 +272,7 @@ export default class DynamicChart extends Vue {
       this.reset()
     }
     this.updateSize()
-    requestAnimationFrame(() => this.loop())
+    this.id = requestAnimationFrame(() => this.loop())
   }
 
   // Convert SVG element to base 64 URI string
