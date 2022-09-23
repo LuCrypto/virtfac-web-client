@@ -6,18 +6,18 @@
         >Tool for drawing building plan and export it in 3D</v-card-subtitle
       >
     </v-card>
-    <drawing-shop-component></drawing-shop-component>
+    <BlueprintEditorContainer></BlueprintEditorContainer>
   </v-container>
 </template>
 
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator'
-import DrawingShopComponent from '@/components/DrawingShopComponent.vue'
+import BlueprintEditorContainer from '@/components/BlueprintEditorContainer.vue'
 
 @Component({
-  name: 'DrawingShop',
+  name: 'BlueprintDrawer',
   components: {
-    DrawingShopComponent
+    BlueprintEditorContainer
   }
 })
 // @vuese

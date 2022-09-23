@@ -6,6 +6,7 @@ import { BlueprintContainer } from './blueprintContainer'
 import { BpWindow, Destroyable } from '@/utils/routingAnalysis/bp_window'
 import V from '@/utils/vector'
 import { BpWallFurniture } from './blueprint'
+import { BpAPICache } from './bp_APICache'
 
 export class BpWallLink {
   private link: Link
@@ -120,7 +121,9 @@ export class BpWallLink {
           this.container.getMode() === 'DOOR'
         )
         */
-        this.addFurniture(dist, -1)
+        if (this.container.selectedAsset !== null) {
+          this.addFurniture(dist, this.container.selectedAsset.id)
+        }
 
         /*
         link
@@ -336,11 +339,12 @@ export class BpWallLink {
           this.container.getMode() === 'DOOR'
         )
 
-        console.log('preview : ' + this.container.getMode())
+        // console.log('preview : ' + this.container.getMode())
       }
       this.container.onMouseMove(e)
     }
     this.collider.getDom().onwheel = e => this.container.zoom(e)
+    this.collider.setStyle({ 'pointer-events': 'all' })
 
     this.link.onDataChanged().addMappedListener(
       'double',
@@ -495,17 +499,37 @@ export class BpWallLink {
   }
 
   addFurniture (xpos: number, assetId: number): void {
-    const w = new BpWindow(this.container)
-    this.furnitures.add(w)
+    BpAPICache.instance()
+      .getAsset(assetId)
+      .then(asset => {
+        let behaviour = asset.behaviours.get('Wall/Door')
+        if (behaviour === undefined) {
+          behaviour = asset.behaviours.get('Wall/Window')
+        }
+        if (behaviour === undefined) throw new Error('Invalid Asset : ' + asset)
 
-    w.setPosition(this.link.getOriginNode(), this.link, xpos, 150, false)
+        const w = new BpWindow(this.container)
+        this.furnitures.add(w)
 
-    this.link
-      .getOrAddData<Map<Destroyable, BpWallFurniture>>(
-        'furnitures',
-        new Map<Destroyable, BpWallFurniture>()
-      )
-      .set(w, new BpWallFurniture(xpos, assetId))
+        w.setPosition(
+          this.link.getOriginNode(),
+          this.link,
+          xpos,
+          ((behaviour.data as Record<string, unknown>).width as number) * 100,
+          false
+        )
+
+        this.link
+          .getOrAddData<Map<Destroyable, BpWallFurniture>>(
+            'furnitures',
+            new Map<Destroyable, BpWallFurniture>()
+          )
+          .set(w, new BpWallFurniture(xpos, assetId))
+        this.link.onDataChanged().notify({
+          key: 'furnitures',
+          arg: { value: this.link.getData('furnitures') }
+        })
+      })
   }
 
   destroy (): void {

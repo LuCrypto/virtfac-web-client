@@ -1,4 +1,34 @@
 export default {
+  general: {
+    openFile: 'Open File',
+    import: 'Import',
+    export: 'Export',
+    menuLabels: 'Menu labels',
+    confirm: 'Confirm',
+    cancel: 'Cancel',
+    open: 'Open',
+    close: 'Close',
+    enterName: 'Enter Name'
+  },
+  routingAnalysis: {
+    saveRoutingGraph: 'Save Routing Graph',
+    showHideFeedbacklink: 'Show/Hide Feedback Link',
+    showHideTransitiveLink: 'Show/Hide Transitive Link',
+    levelLayout: 'Level Layout',
+    clusteringPartMachine: 'Clustering Part/Machine',
+    clusteringMachineMachine: 'Clustering Machine/Machine',
+    showMatrix: 'Show Matrix',
+    defaultRoutingGraphName: 'unnamed routing graph',
+    importFileType: 'Import File Type',
+    routingFile: 'Routing File',
+    partMachineMatrix: 'Part/Machine Matrix',
+    machineMachineMatrix: 'Machine/Machine Matrix',
+    machineOrderMatrix: 'Machine Order Matrix',
+    clustering: 'Clustering',
+    alpha: 'Alpha',
+    interclassRatio: 'Interclass ratio (%)',
+    nbClass: 'Number of Class'
+  },
   gestureAnalysis: {
     gestureAnalysis: 'Gesture Analysis',
     openClassicBVH: 'Open classic BVH',
@@ -91,6 +121,7 @@ export default {
   },
   mainMenu: {
     groups: 'Groups',
+    files: 'Files',
     dynamicsObjects: 'Dynamics objects',
     scenes: 'Scenes',
     assetsLibrary: 'Assets library',
@@ -118,6 +149,7 @@ export default {
 
     // Subnames
     groupManagement: 'Groups management',
+    fileManagement: 'Files management',
     akaDrawingShop: 'a.k.a. Drawing Shop',
     shareDynamicsFiles: 'share Dynamics Files',
     DynamicsAnalysis: 'Dynamics analysis',
@@ -136,5 +168,14 @@ export default {
     OfVueProject: 'Of vue project',
     ErgonomicsLogin: 'Ergonomics login',
     ErgonomicsAndFlowAnalysis: 'Ergonomics and flow analysis'
+  },
+  application: {
+    ergonomio: 'Ergonom.io',
+    routinganalysis: 'Routing Analysis',
+    blueprinteditor: 'Blueprint Editor',
+    ergonomioanalysis: 'Ergonom.io Analysis',
+    contradictionanalysis: 'Contradiction Analysis',
+    dynamicsinput: 'Dynamics Input',
+    dynamicsoutput: 'Dynamics Output'
   }
 }

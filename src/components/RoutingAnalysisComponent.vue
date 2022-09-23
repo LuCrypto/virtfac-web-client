@@ -19,7 +19,9 @@
                 <v-icon v-text="menuItem.icon"></v-icon>
               </v-list-item-icon>
               <v-list-item-content>
-                <v-list-item-title v-text="menuItem.text"></v-list-item-title>
+                <v-list-item-title
+                  v-text="$vuetify.lang.t(menuItem.text)"
+                ></v-list-item-title>
               </v-list-item-content>
             </v-list-item>
           </v-list-item-group>
@@ -65,6 +67,7 @@
         <matrix-viewer ref="matrixViewer"></matrix-viewer>
       </pop-up>
       <select-pop-up ref="selectPopUp"></select-pop-up>
+      <input-field-pop-up ref="inputFieldPopUp"></input-field-pop-up>
     </v-card>
   </maximizable-container>
 </template>
@@ -89,6 +92,9 @@ import SelectPopUp from './popup/SelectPopUp.vue'
 import MaximizableContainer from './MaximizableContainer.vue'
 import { VAlert } from 'vuetify/lib'
 import { APIFile } from '@/utils/models'
+import InputFieldPopUp from './popup/InputFieldPopUp.vue'
+import API from '@/utils/api'
+import V from '@/utils/vector'
 
 class Poste {
   name: string
@@ -132,7 +138,8 @@ interface ClassifSolution {
     PopUp,
     MatrixViewer,
     SelectPopUp,
-    MaximizableContainer
+    MaximizableContainer,
+    InputFieldPopUp
   }
 })
 // @vuese
@@ -167,14 +174,55 @@ export default class RoutingAnalysisComponent extends Vue {
     // this.graphViewer.setGraph(graph)
 
     this.menuItemList.push(
-      new MenuItem('Open File', 'mdi-file-document', () => {
+      new MenuItem('$vuetify.general.openFile', 'mdi-file-document', () => {
         (this.$refs.filePopUp as PopUp).open()
       }),
-      new MenuItem('Import', 'mdi-application-import', () => {
+      new MenuItem(
+        '$vuetify.routingAnalysis.saveRoutingGraph',
+        'mdi-content-save',
+        () => {
+          //
+          (this.$refs.inputFieldPopUp as InputFieldPopUp).open(
+            '$vuetify.general.enterName',
+            '$vuetify.routingAnalysis.defaultRoutingGraphName',
+            '$vuetify.routingAnalysis.defaultRoutingGraphName',
+            value => {
+              if (value !== null && this.postPostGraph !== null) {
+                const json = JSON.stringify(this.postPostGraph.toJsonOBJ())
+                const file = new Blob([json], {
+                  type: 'application/json;application=virtfac/blueprint/routing'
+                })
+                const reader = new FileReader()
+                reader.onload = () => {
+                  const f = new APIFile({
+                    name: value,
+                    uri: reader.result as string
+                  })
+                  API.put(
+                    this,
+                    '/resources/files',
+                    JSON.stringify(f.toJSON())
+                  ).catch(reason => {
+                    console.log(reason)
+                  })
+                }
+                reader.readAsDataURL(file)
+                /*
+              const a = document.createElement('a')
+              a.href = URL.createObjectURL(file)
+              a.download = value
+              a.click()
+              */
+              }
+            }
+          )
+        }
+      ),
+      new MenuItem('$vuetify.general.import', 'mdi-application-import', () => {
         (this.$refs.selectPopUp as SelectPopUp).open(
           [
             {
-              text: 'Import file type',
+              text: '$vuetify.routingAnalysis.importFileType',
               value: 'txt',
               align: 'left',
               sortable: false,
@@ -185,7 +233,7 @@ export default class RoutingAnalysisComponent extends Vue {
           ],
           [
             {
-              txt: 'Routing file',
+              txt: '$vuetify.routingAnalysis.routingFile',
               callback: () => {
                 // console.log('Article/Poste Matrix')
                 const input = document.createElement('input')
@@ -196,7 +244,7 @@ export default class RoutingAnalysisComponent extends Vue {
               }
             },
             {
-              txt: 'Part/Machine Matrix',
+              txt: '$vuetify.routingAnalysis.partMachineMatrix',
               callback: () => {
                 // console.log('Article/Poste Matrix')
                 const input = document.createElement('input')
@@ -207,7 +255,7 @@ export default class RoutingAnalysisComponent extends Vue {
               }
             },
             {
-              txt: 'Machine/Machine Matrix',
+              txt: '$vuetify.routingAnalysis.machineMachineMatrix',
               callback: () => {
                 // console.log('Article/Poste Matrix')
                 const input = document.createElement('input')
@@ -218,7 +266,7 @@ export default class RoutingAnalysisComponent extends Vue {
               }
             },
             {
-              txt: 'Clustering',
+              txt: '$vuetify.routingAnalysis.clustering',
               callback: () => {
                 const input = document.createElement('input')
                 input.type = 'file'
@@ -235,11 +283,11 @@ export default class RoutingAnalysisComponent extends Vue {
           }
         )
       }),
-      new MenuItem('Export', 'mdi-application-export', () => {
+      new MenuItem('$vuetify.general.export', 'mdi-application-export', () => {
         (this.$refs.selectPopUp as SelectPopUp).open(
           [
             {
-              text: 'Export file type',
+              text: '$vuetify.routingAnalysis.importFileType',
               value: 'txt',
               align: 'left',
               sortable: false,
@@ -250,15 +298,21 @@ export default class RoutingAnalysisComponent extends Vue {
           ],
           [
             {
-              txt: 'Part/Machine Matrix',
+              txt: '$vuetify.routingAnalysis.partMachineMatrix',
               callback: () => {
                 this.saveArticlePosteMatrix()
               }
             },
             {
-              txt: 'Machine/Machine Matrix',
+              txt: '$vuetify.routingAnalysis.machineMachineMatrix',
               callback: () => {
                 this.savePostePosteMatrix()
+              }
+            },
+            {
+              txt: '$vuetify.routingAnalysis.machineOrderMatrix',
+              callback: () => {
+                this.savePosteOrderMatrix()
               }
             },
             {
@@ -275,7 +329,7 @@ export default class RoutingAnalysisComponent extends Vue {
           }
         )
       }),
-      new MenuItem('Show/Hide feedback link', 'mdi-backspace', () => {
+      new MenuItem('$vuetify.routingAnalysis.showHideFeedbacklink', 'mdi-backspace', () => {
         if (this.postPostGraph !== null && this.graphViewer !== null) {
           this.displayFeedbackLinks = !this.displayFeedbackLinks
           const map = this.postPostGraph.getData<Map<Link, Array<Node>>>(
@@ -313,7 +367,7 @@ export default class RoutingAnalysisComponent extends Vue {
         }
       }),
       new MenuItem(
-        'Show/Hide transitive link',
+        '$vuetify.routingAnalysis.showHideTransitiveLink',
         'mdi-chart-sankey-variant',
         () => {
           if (this.postPostGraph !== null) {
@@ -356,7 +410,7 @@ export default class RoutingAnalysisComponent extends Vue {
           }
         }
       ),
-      new MenuItem('Level layout', 'mdi-file-tree', () => {
+      new MenuItem('$vuetify.routingAnalysis.levelLayout', 'mdi-file-tree', () => {
         if (this.postPostGraph !== null && this.graphViewer !== null) {
           const nbLevel = GraphUtils.computeLevels(
             this.postPostGraph,
@@ -386,7 +440,7 @@ export default class RoutingAnalysisComponent extends Vue {
           this.graphViewer.setGraph(this.postPostGraph)
         }
       }),
-      new MenuItem('Clustering Part/Machine', 'mdi-matrix', () => {
+      new MenuItem('$vuetify.routingAnalysis.clusteringPartMachine', 'mdi-matrix', () => {
         if (this.articlePostGraph !== null) {
           if (this.articlePostMatrix === null) {
             this.articlePostMatrix = MatrixUtils.matrixFromBipartiGraph(
@@ -474,12 +528,12 @@ export default class RoutingAnalysisComponent extends Vue {
           }
           ;(this.$refs.selectPopUp as SelectPopUp).open(
             [
-              SelectPopUp.createNumberHeader('Alpha', 'alpha'),
+              SelectPopUp.createNumberHeader('$vuetify.routingAnalysis.alpha', 'alpha'),
               SelectPopUp.createNumberHeader(
-                'Interclass ratio (%)',
+                '$vuetify.routingAnalysis.interclassRatio',
                 'interclassRatio'
               ),
-              SelectPopUp.createNumberHeader('Nb Class', 'nbClass')
+              SelectPopUp.createNumberHeader('$vuetify.routingAnalysis.nbClass', 'nbClass')
             ],
             solutions,
             item => {
@@ -488,7 +542,7 @@ export default class RoutingAnalysisComponent extends Vue {
           )
         }
       }),
-      new MenuItem('Clustering Machine/Machine', 'mdi-matrix', () => {
+      new MenuItem('$vuetify.routingAnalysis.clusteringMachineMachine', 'mdi-matrix', () => {
         if (this.postPostGraph !== null) {
           const m = MatrixUtils.matrixFromGraph(this.postPostGraph, 'index')
           m.printMat()
@@ -580,7 +634,7 @@ export default class RoutingAnalysisComponent extends Vue {
           )
         }
       }),
-      new MenuItem('Show matrix', 'mdi-database', () => {
+      new MenuItem('$vuetify.routingAnalysis.showMatrix', 'mdi-database', () => {
         const choices = new Array<Record<string, unknown>>()
         if (this.postPostGraph !== null) {
           if (this.postPostMatrix === null) {
@@ -590,7 +644,7 @@ export default class RoutingAnalysisComponent extends Vue {
             )
           }
           choices.push({
-            txt: 'Machine/Machine Matrix',
+            txt: '$vuetify.routingAnalysis.machineMachineMatrix',
             callback: () => {
               (this.$refs.matrixEditor as PopUp).open()
               this.displayClassifMatrix(
@@ -610,7 +664,7 @@ export default class RoutingAnalysisComponent extends Vue {
             )
           }
           choices.push({
-            txt: 'Part/Machine Matrix',
+            txt: '$vuetify.routingAnalysis.partMachineMatrix',
             callback: () => {
               (this.$refs.matrixEditor as PopUp).open()
               this.displayClassifMatrix(
@@ -629,7 +683,7 @@ export default class RoutingAnalysisComponent extends Vue {
           (this.$refs.selectPopUp as SelectPopUp).open(
             [
               {
-                text: 'Import file type',
+                text: '$vuetify.routingAnalysis.importFileType',
                 value: 'txt',
                 align: 'left',
                 sortable: false,
@@ -759,6 +813,65 @@ export default class RoutingAnalysisComponent extends Vue {
         n.foreachLink(l => {
           data[index][
             l.getNode().getData<number>('__index')
+          ] = l.getDataOrDefault<number>('weight', 1)
+        })
+      })
+
+      data[0][0] = 'names'
+      const ws = XLSX.utils.aoa_to_sheet(data)
+      const wb = XLSX.utils.book_new()
+
+      /*
+      ws.B2.s = {
+        fill: {
+          patternType: 'solid',
+          fgColor: { rgb: 'F5F4ED', theme: 3, tint: 0.3999755851924192 },
+          bgColor: { indexed: 64 }
+        }
+      }
+      */
+
+      wb.SheetNames = ['Machine Matrix']
+
+      wb.Sheets['Machine Matrix'] = ws
+
+      const uri = XLSX.write(wb, { bookType: 'xlsx', type: 'binary' })
+      const buf = new ArrayBuffer(uri.length)
+      const view = new Uint8Array(buf)
+      for (let i = 0; i < uri.length; i++) view[i] = uri.charCodeAt(i) & 0xff
+      const a = document.createElement('a')
+      const blob = new Blob([buf], {
+        type:
+          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      })
+      const file = new File([blob], 'machine matrix.xlsx')
+      a.href = URL.createObjectURL(file)
+      a.download = 'machine matrix.xlsx'
+      a.click()
+    }
+  }
+
+  // @vuese
+  // Download the part/part matrix in xlsx format to the client
+  savePosteOrderMatrix () {
+    if (this.postPostGraph !== null) {
+      const data = new Array<Array<unknown>>()
+      let nbNode = 1
+      this.postPostGraph.foreachNode(() => {
+        nbNode++
+      })
+      for (let i = 0; i < nbNode; i++) {
+        data.push(new Array(nbNode).fill(0))
+      }
+
+      this.postPostGraph.foreachNode(n => {
+        const index = n.getData<number>('order') + 1
+        const name = n.getData<string>('name')
+        data[0][index] = name
+        data[index][0] = name
+        n.foreachLink(l => {
+          data[index][
+            l.getNode().getData<number>('order') + 1
           ] = l.getDataOrDefault<number>('weight', 1)
         })
       })
@@ -1200,17 +1313,27 @@ export default class RoutingAnalysisComponent extends Vue {
       return XLSX.utils.encode_cell({ c: x, r: y })
     }
 
+    interface MachineData {
+      name: string
+      coord: { x: number; y: number }
+      size: { x: number; y: number }
+    }
     const itemRefMap = new Map<string, string>()
-    const posteRefMap = new Map<string, string>()
+    const posteRefMap = new Map<string, MachineData>()
 
     let i = 1
     while (itemSheet[nameOf(0, i)] !== undefined) {
       itemRefMap.set(itemSheet[nameOf(0, i)].v, itemSheet[nameOf(1, i)].v)
       i++
     }
+
     i = 1
     while (posteSheet[nameOf(0, i)] !== undefined) {
-      posteRefMap.set(posteSheet[nameOf(0, i)].v, posteSheet[nameOf(1, i)].v)
+      posteRefMap.set(posteSheet[nameOf(0, i)].v, {
+        name: posteSheet[nameOf(1, i)].v,
+        coord: { x: posteSheet[nameOf(3, i)].v, y: posteSheet[nameOf(4, i)].v },
+        size: { x: posteSheet[nameOf(5, i)].v, y: posteSheet[nameOf(6, i)].v }
+      })
       i++
     }
 
@@ -1225,15 +1348,28 @@ export default class RoutingAnalysisComponent extends Vue {
 
     const orderGraph = GraphUtils.genOrderGraph()
     this.postPostGraph = orderGraph.graph
+    this.postPostGraph.nodeFields.set('name', 'string')
+    this.postPostGraph.nodeFields.set('color', 'string')
+    this.postPostGraph.nodeFields.set('position', '{x:number, y:number}')
+    this.postPostGraph.nodeFields.set('xlsxPosition', '{x:number, y:number}')
+    this.postPostGraph.nodeFields.set('dimension', '{x:number, y:number}')
+    this.postPostGraph.nodeFields.set('classifGroup', 'number')
     this.articlePostGraph = new Graph()
 
+    const _machineData = posteRefMap.get(nodeValue) as MachineData
     posteMap.set(
       nodeValue,
       orderGraph.graph.addNode(
-        new Node().setData<string>(
-          'name',
-          posteRefMap.get(nodeValue) as string
-        ) as Node
+        new Node()
+          .setData<string>('name', _machineData.name)
+          .setData('xlsxPosition', {
+            x: _machineData.coord.x * 100,
+            y: _machineData.coord.y * 100
+          })
+          .setData('dimension', {
+            x: _machineData.size.x * 100,
+            y: _machineData.size.y * 100
+          }) as Node
       )
     )
 
@@ -1250,7 +1386,7 @@ export default class RoutingAnalysisComponent extends Vue {
       nodeValue,
       this.articlePostGraph.addNode(
         new Node()
-          .setData<string>('name', posteRefMap.get(nodeValue) as string)
+          .setData<string>('name', _machineData.name)
           .setData<'row' | 'col'>('matCelltype', 'col')
           .setData<number>('nbOF', 1)
           .setData<Set<Node>>(
@@ -1285,20 +1421,27 @@ export default class RoutingAnalysisComponent extends Vue {
         }
         if (!posteMap.has(nextNode)) {
           // console.log(('add Node : ' + posteRefMap.get(nextNode)) as string)
+          const machineData = posteRefMap.get(nextNode) as MachineData
           posteMap.set(
             nextNode,
             orderGraph.graph.addNode(
-              new Node().setData<string>(
-                'name',
-                posteRefMap.get(nextNode) as string
-              ) as Node
+              new Node()
+                .setData<string>('name', machineData.name)
+                .setData('xlsxPosition', {
+                  x: machineData.coord.x * 100,
+                  y: machineData.coord.y * 100
+                })
+                .setData('dimension', {
+                  x: machineData.size.x * 100,
+                  y: machineData.size.y * 100
+                }) as Node
             )
           )
           posteMapforArticle.set(
             nextNode,
             this.articlePostGraph.addNode(
               new Node()
-                .setData<string>('name', posteRefMap.get(nextNode) as string)
+                .setData<string>('name', machineData.name)
                 .setData<'row' | 'col'>('matCelltype', 'col')
                 .setData<number>('nbOF', 1)
                 .setData<Set<Node>>(
@@ -1382,6 +1525,18 @@ export default class RoutingAnalysisComponent extends Vue {
       xOffset,
       linkCount / nbNode
     )
+
+    const nodesArray = new Array<{ n: Node; order: number }>()
+    orderGraph.graph.foreachNode(n => {
+      nodesArray.push({ n: n, order: n.getData<V>('position').x })
+    })
+    nodesArray.sort((a, b) => {
+      return a.order - b.order
+    })
+    nodesArray.forEach((n, i) => {
+      n.n.setData<number>('order', i)
+    })
+
     if (this.graphViewer !== null) {
       this.graphViewer.setGraph(orderGraph.displayGraph)
     }

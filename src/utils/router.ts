@@ -6,6 +6,7 @@ import Home from '@/views/Home.vue'
 
 // Administration
 import AdminGroups from '@/views/Administration/AdminGroups.vue'
+import AdminFiles from '@/views/Administration/AdminFiles.vue'
 
 // Contradiction analysis
 import AboutContradictionAnalysis from '@/views/ContradictionAnalysis/AboutContradictionAnalysis.vue'
@@ -87,6 +88,16 @@ export const routes: Array<Route> = [
     category: 'Administration',
     restricted: true,
     component: AdminGroups
+  }),
+  new Route({
+    icon: 'mdi-folder-multiple',
+    name: 'files',
+    subname: 'fileManagement',
+    path: '/admin-files',
+    alias: '/',
+    category: 'Administration',
+    restricted: true,
+    component: AdminFiles
   }),
 
   // Contradiction analyse

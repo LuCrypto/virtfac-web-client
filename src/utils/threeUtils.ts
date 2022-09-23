@@ -61,7 +61,7 @@ export default class ThreeUtils {
         uniform float bottom;
 
         void main() {
-            float depth = (pos.y+bottom)/(top-bottom);
+            float depth = clamp((pos.y+bottom)/(top-bottom), 0.0f, 1.0f);
             depth = 0.3f + depth*0.4f;
             gl_FragColor = vec4(depth, depth, depth, 1);
             // gl_FragColor = vec4(0.0f,pos.y,0.0f,1.0f);
@@ -76,6 +76,7 @@ export default class ThreeUtils {
     box.getSize(s)
     box.getCenter(c)
 
+    /* dynamic grey scale
     const mat = new ShaderMaterial({
       uniforms: {
         top: { value: c.y + s.y / 2 },
@@ -84,6 +85,18 @@ export default class ThreeUtils {
       vertexShader: shader.vertex,
       fragmentShader: shader.fragment
     })
+    */
+
+    //* static grey scale
+    const mat = new ShaderMaterial({
+      uniforms: {
+        top: { value: 2 },
+        bottom: { value: 0 }
+      },
+      vertexShader: shader.vertex,
+      fragmentShader: shader.fragment
+    })
+    /**/
 
     clone.traverse(obj => {
       if (obj instanceof Mesh) {
@@ -177,14 +190,18 @@ export default class ThreeUtils {
     const size = new Vector3()
     box.getSize(size)
 
-    const width = Math.sqrt(size.x * size.x + size.z * size.z) * 1.2
+    const width = Math.max(
+      Math.sqrt(size.x * size.x + size.z * size.z) * 1.2,
+      Math.sqrt(size.y * size.y + size.z * size.z) * 1.2
+    )
     const s = size.clone()
     s.x = -s.x
     const camPos = center.clone().sub(
       s
         .clone()
         .divideScalar(2)
-        .add(new Vector3(-0.2, 0, 0.2))
+        .multiply(new Vector3(0.8, 0, 2))
+        .add(new Vector3(-0.2, 0, Math.max(s.x, s.z) + 0.2))
     )
     camPos.y = 1.7
     const camera = new OrthographicCamera(
@@ -192,8 +209,8 @@ export default class ThreeUtils {
       width / 2,
       width / 2,
       width / -2,
-      0.1,
-      Math.max(size.length() * 1.1 + 0.2, 3)
+      0.01,
+      Math.max(size.length() * 3 + 0.2, 3)
     )
     camera.position.copy(camPos)
     // camera.rotation.set(-90, 0, 0)

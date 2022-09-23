@@ -300,12 +300,56 @@ export default class ErgonomIOAssetContainer extends Vue {
               dlLink.click()
               */
             },
-            512,
-            512,
+            256,
+            256,
             true,
             true
           )
         }
+      })
+    )
+    this.menuItemList.push(
+      new MenuItem('Save On API', 'mdi-content-save-move', () => {
+        new Promise<APIAsset>(resolve => {
+          if (this.viewer !== null) {
+            let apiAsset: APIAsset | null = null
+            if (this.$refs.assetInfoComponent !== undefined) {
+              apiAsset = (this.$refs.assetInfoComponent as AssetInfo).getData()
+            }
+            if (apiAsset === null) {
+              this.ObjectToGLTFUri(this.currentAsset as Group).then(gltf => {
+                apiAsset = new APIAsset({
+                  uri: gltf,
+                  id: this.currentAssetApiId,
+                  name: this.currentAssetName,
+                  picture: this.currentAssetPicture,
+                  layoutSprite: this.currentLayoutSprite,
+                  behaviours: JSON.stringify(
+                    (this.viewer as ModelViewer).getBehaviours()
+                  ),
+                  boundingBox: JSON.stringify(this.currentBoundingBox)
+                })
+                resolve(apiAsset)
+              })
+            } else {
+              apiAsset.behaviours = JSON.stringify(this.viewer.getBehaviours())
+              resolve(apiAsset)
+            }
+          }
+        }).then(asset => {
+          if (asset === null) throw new Error('invalid asset')
+          API.patch(
+            this,
+            '/resources/assets/' + asset.id,
+            JSON.stringify(asset)
+          )
+            .then(res => {
+              console.log(res)
+            })
+            .catch(err => {
+              console.log(err)
+            })
+        })
       })
     )
     /*
@@ -612,7 +656,8 @@ export default class ErgonomIOAssetContainer extends Vue {
           this.currentBoundingBox = JSON.parse(
             file.boundingBox
           ) as APIBoundingBox
-          console.log(this.currentBoundingBox)
+          console.log(file)
+          this.viewer.setAPIAsset(file)
         }
       })
     } else {

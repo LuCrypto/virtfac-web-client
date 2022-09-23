@@ -184,7 +184,7 @@
                 fab
                 x-small
                 color="primary"
-                :disabled="mimeToExtension.get(item.mime) === undefined"
+                :disabled="mimeToExtension.get(item.mime) === 'disable'"
               >
                 <v-icon
                   @click="downloadFileData(item)"
@@ -423,6 +423,8 @@ export default class OpenFilePopUp extends Vue {
 */
   mimeToExtension = new Map<string, string>([
     ['application/json', 'json'],
+    ['application/json;application=virtfac/blueprint/routing', 'json'],
+    ['application/json;application=virtfac/blueprint/building', 'json'],
     ['text/csv', 'csv'],
     [
       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
@@ -587,37 +589,58 @@ export default class OpenFilePopUp extends Vue {
   // Load formats from API
   // @arg No arguments required
   getAllFormats (): void {
-    API.get(this, '/application/formats/' + this.application, null).then(
-      (response: Response) => {
-        this.myFormatList = []
-        const formatList = (response as unknown) as string[]
-        this.getAllFiles(
-          JSON.stringify({
-            select: [
-              'id',
-              'idUserOwner',
-              'idProject',
-              'creationDate',
-              'modificationDate',
-              'name',
-              'color',
-              'tags',
-              'mime'
-            ],
-            where: formatList.map(format => {
-              return {
-                mime: format
-              }
-            })
-          })
-        )
+    if (this.application === 'all') {
+      this.myFormatList = []
+      this.getAllFiles(
+        JSON.stringify({
+          select: [
+            'id',
+            'idUserOwner',
+            'idProject',
+            'creationDate',
+            'modificationDate',
+            'name',
+            'color',
+            'tags',
+            'mime'
+          ]
+        })
+      )
 
-        this.myFormatList = formatList.map(MIME =>
-          APIFileMIME.parseFromString(MIME)
-        )
-        this.waitingTasks -= 1
-      }
-    )
+      this.waitingTasks -= 1
+    } else {
+      API.get(this, '/application/formats/' + this.application, null).then(
+        (response: Response) => {
+          this.myFormatList = []
+          const formatList = (response as unknown) as string[]
+          this.getAllFiles(
+            JSON.stringify({
+              select: [
+                'id',
+                'idUserOwner',
+                'idProject',
+                'creationDate',
+                'modificationDate',
+                'name',
+                'color',
+                'tags',
+                'mime'
+              ],
+              where: formatList.map(format => {
+                return {
+                  mime: format
+                }
+              })
+            })
+          )
+
+          this.myFormatList = formatList.map(MIME =>
+            APIFileMIME.parseFromString(MIME)
+          )
+          this.waitingTasks -= 1
+        }
+      )
+    }
   }
 
   // @vuese
@@ -766,9 +789,11 @@ export default class OpenFilePopUp extends Vue {
     }
     const a = document.createElement('a')
     a.href = uri
-    a.download = (item.name +
-      '.' +
-      this.mimeToExtension.get(item.mime)) as string
+    a.download =
+      item.name +
+      (this.mimeToExtension.get(item.mime) !== undefined
+        ? (('.' + this.mimeToExtension.get(item.mime)) as string)
+        : '')
     a.click()
   }
 

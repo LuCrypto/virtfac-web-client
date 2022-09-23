@@ -1,4 +1,30 @@
 export default {
+  general: {
+    openFile: 'Ouvrir un Fichier',
+    import: 'Importer',
+    export: 'Exporter',
+    menuLabels: 'Nom des Menus',
+    confirm: 'Confirmer',
+    cancel: 'Annuler',
+    open: 'Ouvrir',
+    close: 'Fermer',
+    enterName: 'Entrer un Nom'
+  },
+  routingAnalysis: {
+    saveRoutingGraph: 'Save Routing Graph',
+    showHideFeedbacklink: 'Show/Hide Feedback Link',
+    showHideTransitiveLink: 'Show/Hide Transitive Link',
+    levelLayout: 'Level Layout',
+    clusteringPartMachine: 'Clustering Part/Machine',
+    clusteringMachineMachine: 'Clustering Machine/Machine',
+    showMatrix: 'Show Matrix',
+    defaultRoutingGraphName: 'unnamed routing graph',
+    importFileType: 'Import File Type',
+    routingFile: 'Routing File',
+    partMachineMatrix: 'Routing File',
+    machineMachineMatrix: 'Routing File',
+    clustering: 'Clustering'
+  },
   gestureAnalysis: {
     gestureAnalysis: 'Analyse des gestes',
     openClassicBVH: 'Ouvrir BVH classique',

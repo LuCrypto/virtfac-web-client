@@ -606,6 +606,66 @@ export default class OpenAssetPopUp extends Vue {
       })
   }
 
+  public static ImportAsset (
+    component: Vue,
+    gltf: string | File,
+    data: Partial<APIAsset>
+  ): Promise<number> {
+    return new Promise<number>(resolve => {
+      let uri = ''
+      if (gltf instanceof File) {
+        const reader = new FileReader()
+        reader.onload = () => {
+          uri = reader.result as string
+        }
+        reader.readAsDataURL(gltf)
+      } else {
+        uri = gltf
+      }
+      ThreeUtils.loadGLTFFromPath(uri).then(object => {
+        const sprite = ThreeUtils.captureImage(
+          object.scene,
+          ThreeUtils.getTopDownCamera(object.scene)
+        )
+        const box = new Box3()
+        box.setFromObject(object.scene)
+        const c = new Vector3(0, 0, 0)
+        const s = new Vector3(0, 0, 0)
+        const min = box.getCenter(c).sub(box.getSize(s).divideScalar(2))
+        const max = box
+          .getCenter(new Vector3())
+          .add(box.getSize(new Vector3()).divideScalar(2))
+        const b = new APIBoundingBox(
+          { x: min.x, y: min.y, z: min.z },
+          { x: max.x, y: max.y, z: max.z }
+        )
+        const scene = ThreeUtils.defaultScene().then(scene => {
+          scene.add(object.scene)
+          const icon = ThreeUtils.capture(
+            ThreeUtils.defaultRenderer(256, 256),
+            scene,
+            ThreeUtils.getSideCamera(object.scene)
+          )
+          API.put(
+            component,
+            '/resources/assets',
+            JSON.stringify(
+              new APIAsset({
+                name: data.name || 'unnamed asset',
+                uri: uri,
+                boundingBox: JSON.stringify(b),
+                layoutSprite: sprite,
+                picture: icon
+              })
+            )
+          ).then(res => {
+            resolve(((res as unknown) as number[])[0])
+          })
+        })
+      })
+    })
+  }
+
   updateUploadFile (e: Event): void {
     if (e.target == null) return
     const target = e.target as HTMLInputElement
@@ -638,7 +698,7 @@ export default class OpenAssetPopUp extends Vue {
             const scene = ThreeUtils.defaultScene().then(scene => {
               scene.add(object.scene)
               const icon = ThreeUtils.capture(
-                ThreeUtils.defaultRenderer(512, 512),
+                ThreeUtils.defaultRenderer(256, 256),
                 scene,
                 ThreeUtils.getSideCamera(object.scene)
               )
