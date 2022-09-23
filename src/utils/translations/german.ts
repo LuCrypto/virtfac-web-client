@@ -91,6 +91,7 @@ export default {
     scene: 'Szene'
   },
   mainMenu: {
+    groups: 'Gruppen',
     dynamicsObjects: 'Dynamische Objekte',
     scenes: 'Szenen',
     assetsLibrary: 'Anlagenbibliothek',
@@ -117,6 +118,7 @@ export default {
     home: 'Zuhause',
 
     // Subnames
+    groupManagement: 'Gruppenverwaltung',
     akaDrawingShop: 'Alias Drawing Shop',
     shareDynamicsFiles: 'Feeds teilen',
     DynamicsAnalysis: 'Analyse von Flows',

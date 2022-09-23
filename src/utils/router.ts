@@ -2,7 +2,10 @@ import Vue, { ComponentOptions, AsyncComponent } from 'vue'
 import VueRouter, { RouteConfig } from 'vue-router'
 
 // Home
-import Home from '../views/Home.vue'
+import Home from '@/views/Home.vue'
+
+// Administration
+import AdminGroups from '@/views/Administration/AdminGroups.vue'
 
 // Contradiction analysis
 import AboutContradictionAnalysis from '@/views/ContradictionAnalysis/AboutContradictionAnalysis.vue'
@@ -72,6 +75,18 @@ export const routes: Array<Route> = [
     category: 'About us',
     restricted: false,
     component: Home
+  }),
+
+  // Administration pages
+  new Route({
+    icon: 'mdi-account-multiple',
+    name: 'groups',
+    subname: 'groupManagement',
+    path: '/admin-groups',
+    alias: '/',
+    category: 'Administration',
+    restricted: true,
+    component: AdminGroups
   }),
 
   // Contradiction analyse

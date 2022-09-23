@@ -92,6 +92,7 @@ export default {
     scene: 'Scène'
   },
   mainMenu: {
+    groups: 'Groupes',
     dynamicsObjects: 'Objets dynamiques',
     scenes: 'Scenes',
     assetsLibrary: "Bibliothèque d'objets",
@@ -118,6 +119,7 @@ export default {
     home: 'Accueil',
 
     // Subnames
+    groupManagement: 'Gestion des groupes',
     akaDrawingShop: 'Alias Drawing Shop',
     shareDynamicsFiles: 'Partager les flux',
     DynamicsAnalysis: 'Analyse des flux',
