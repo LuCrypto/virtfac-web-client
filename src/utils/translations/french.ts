@@ -23,6 +23,7 @@ export default {
     displayTags: 'Afficher les balises',
     categories: 'Catégories',
     loadAnAsset: 'Charger un object',
+    deleteModeAsset: 'Supprimer un objet',
     assetData: "Données d'objet",
     name: 'Nom',
     tags: 'Tags',

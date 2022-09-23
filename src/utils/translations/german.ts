@@ -23,6 +23,7 @@ export default {
     displayTags: 'Tags anzeigen',
     categories: 'Kategorien',
     loadAnAsset: 'Vermögenswert laden',
+    deleteModeAsset: 'Modus-Asset löschen',
     assetData: 'Vermögenswertdaten',
     name: 'Name',
     tags: 'Tags',
