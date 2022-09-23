@@ -686,36 +686,37 @@ export class BlueprintContainer {
               'position'
             )
             if (vec !== undefined) {
+              const pos = { x: vec.x * scale, y: vec.y * scale }
               rect.style.transformOrigin = `${val.x / 2}px ${val.y / 2}px`
               rect.style.setProperty(
                 'transform',
-                `translate(${vec.x - val.x / 2}px, ${vec.y -
+                `translate(${pos.x - val.x / 2}px, ${pos.y -
                   val.y / 2}px) rotate(${rotate}deg)`
               )
               text.style.setProperty(
                 'transform',
-                `translate(${vec.x - val.x / 2}px, ${vec.y - val.y / 2}px)`
+                `translate(${pos.x - val.x / 2}px, ${pos.y - val.y / 2}px)`
               )
               sprite.style.transformOrigin = `${val.x / 2}px ${val.y / 2}px`
               sprite.style.setProperty(
                 'transform',
-                `translate(${vec.x - val.x / 2}px, ${vec.y -
+                `translate(${pos.x - val.x / 2}px, ${pos.y -
                   val.y / 2}px) rotate(${rotate}deg)`
               )
               displayer.move.setStyle({
-                transform: `translate(${vec.x -
+                transform: `translate(${pos.x -
                 val.x / 2 /** scale */ +
-                  2}px, ${vec.y - val.y / 2 /** scale */ + 2}px)`
+                  2}px, ${pos.y - val.y / 2 /** scale */ + 2}px)`
               })
               displayer.edit.setStyle({
-                transform: `translate(${vec.x -
+                transform: `translate(${pos.x -
                 val.x / 2 /** scale */ +
-                  26}px, ${vec.y - val.y / 2 /** scale */ + 2}px)`
+                  26}px, ${pos.y - val.y / 2 /** scale */ + 2}px)`
               })
               displayer.rotate.setStyle({
-                transform: `translate(${vec.x -
+                transform: `translate(${pos.x -
                 val.x / 2 /** scale */ +
-                  2}px, ${vec.y - val.y / 2 /** scale */ + 26}px)`
+                  2}px, ${pos.y - val.y / 2 /** scale */ + 26}px)`
               })
             }
           }
