@@ -65,6 +65,7 @@
           </div>
         </div>
 
+        <!-- For join a room with a token-->
         <v-row no-gutters dense class="pa-2" style="width: 55%">
           <v-col align-self="center" class="ma-2">
             <v-btn
@@ -286,7 +287,7 @@ export default class ErgonomIORooms extends Vue {
       this.$root.$emit('bottom-message', `Unreal : ${JSON.stringify(data)}`)
 
       // For debugging
-      Unreal.send(data)
+      // Unreal.send(data)
 
       let roomChoisie = 0
       let nameRoom = ''
@@ -294,9 +295,7 @@ export default class ErgonomIORooms extends Vue {
       // We treat the different cases of message
       switch (data.message) {
         case 'creer':
-          Unreal.send('Bien recu 1 : ' + JSON.stringify(data))
           this.rooms.push(data.dataRoom)
-          Unreal.send('Bien recu 2 !')
           break
         case 'refresh':
           this.refreshRoomCurrent()
@@ -372,8 +371,6 @@ export default class ErgonomIORooms extends Vue {
 
   // Join room with token
   joinRoom (): void {
-    console.log('join room : ', this.sendToken)
-
     const objectAsset = {
       action: 'joinRoomWithToken',
       token: this.sendToken,
@@ -421,6 +418,7 @@ export default class ErgonomIORooms extends Vue {
     this.getRoomTokenBoolean = true
   }
 
+  // Display the popup for get the room token
   displayJoinRoom (room: Room): void {
     this.joinRoomWithToken = true
     this.roomVisee = room
@@ -442,9 +440,8 @@ export default class ErgonomIORooms extends Vue {
     Unreal.send(object)
   }
 
-  // temporary function
+  // Temporary function
   testToken (): void {
-    // Option 1
     API.post(
       this,
       '/login',
@@ -458,8 +455,6 @@ export default class ErgonomIORooms extends Vue {
         Session.setUser(user)
         this.$root.$emit('bottom-message', `Welcome back ${user.pseudo}.`)
         this.$root.$emit('user-connection', user)
-        // this.login = ''
-        // this.password = ''
         this.$emit('close')
 
         const objectAsset = {
@@ -516,9 +511,6 @@ export default class ErgonomIORooms extends Vue {
       }
     }
 
-    console.log('INFOOOS')
-    console.log(this.scenes[idSceneModif].idProfile)
-
     // Make request
     const objectAsset = {
       name: this.scenes[idSceneModif].name,
@@ -543,8 +535,6 @@ export default class ErgonomIORooms extends Vue {
   // For delete a session
   // @arg No arguments required
   deleteSession (): void {
-    console.assert('deleteSession')
-
     // Si on a pas de scene à charger
     if (this.roomSelectedDelete === '') {
       return
@@ -567,13 +557,6 @@ export default class ErgonomIORooms extends Vue {
   // Join room 1
   // @arg No arguments required
   joinSession1 (room: Room): void {
-    Unreal.send('joinSession 1 : ' + room.name)
-    Unreal.send('joinSession 1 : ' + room.nameScene)
-    Unreal.send('joinSession 1 : ' + room.host)
-    Unreal.send('joinSession 1 : ' + room.action)
-    Unreal.send('joinSession 1 : ' + room.dateCreation)
-    Unreal.send('joinSession 1 : ' + room.players)
-
     let idSceneModif = -1
     for (let i = 0; i < this.scenes.length; i++) {
       if (room.nameScene === this.scenes[i].name) {

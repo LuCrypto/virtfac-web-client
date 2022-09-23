@@ -15,15 +15,17 @@ export default {
     },
     input: {
       type: String
-    }
+    },
+    theme: String
   },
   data: () => ({
     keyboard: null
   }),
   mounted () {
-    this.keyboard = new Keyboard(this.keyboardClass, {
+    this.keyboard = new Keyboard({
       onChange: this.onChange,
-      onKeyPress: this.onKeyPress
+      onKeyPress: this.onKeyPress,
+      theme: this.theme
     })
   },
   methods: {
