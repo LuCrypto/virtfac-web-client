@@ -273,131 +273,137 @@
     </v-list>
 
     <!-- The different buttons -->
-    <v-container
-      fluid
-      class="d-flex flex-wrap justify-center align-center"
-      style="padding: 0;"
-    >
-      <v-container
-        class="d-flex justify-space-around align-center"
-        style="background-color: rgb(45,45,45); margin: 0; max-width: 100%;"
-      >
-        <!-- Allows you to start a profile with the selected object -->
-        <v-btn
-          class="primary black--text my-2"
-          @click="startProfil()"
-          large
-          elevation="2"
-        >
-          {{ $vuetify.lang.t('$vuetify.dynamicsObject.startProfil') }}
-        </v-btn>
-        <!-- Allows to start with all the objects of the scene -->
-        <v-btn
-          class="primary black--text my-2"
-          @click="startProfilGlobal()"
-          large
-          elevation="2"
-        >
-          {{ $vuetify.lang.t('$vuetify.dynamicsObject.startGlobalProfil') }}
-        </v-btn>
-      </v-container>
-
-      <v-container
-        class="d-flex justify-space-around align-center"
-        style="background-color: rgb(30,30,30); margin: 0; max-width: 100%;"
-      >
-        <v-btn
-          @click="pathObjectSelected"
-          class="primary black--text my-2"
-          large
-          elevation="2"
-        >
-          {{ $vuetify.lang.t('$vuetify.dynamicsObject.selectedPathAsset') }}
-        </v-btn>
-        <v-btn
-          @click="globalPath"
-          class="primary black--text my-2"
-          large
-          elevation="2"
-        >
-          {{ $vuetify.lang.t('$vuetify.dynamicsObject.globalPath') }}
-        </v-btn>
-      </v-container>
-
-      <v-container
-        class="d-flex justify-space-around align-center"
-        style="background-color: rgb(45,45,45); margin: 0; max-width: 100%;"
-      >
-        <!-- Allows you to load a witness file for a profile -->
-        <v-btn
-          v-if="!unrealContext.check()"
-          @click="openUploadFile"
-          class="primary black--text my-2"
-          large
-          elevation="2"
-        >
-          {{ $vuetify.lang.t('$vuetify.dynamicsObject.loadAProfilFile') }}
-          <input
-            accept="application/JSON"
-            ref="uploadFileInput"
-            hidden
-            type="file"
-            @change="onUploadSceneUpdate"
-          />
-        </v-btn>
-
-        <!-- Allows you to edit the current profile -->
-        <v-btn
-          @click="editProfil"
-          class="primary black--text my-2"
-          large
-          elevation="2"
-        >
-          {{ $vuetify.lang.t('$vuetify.dynamicsObject.editTheCurrentProfil') }}
-        </v-btn>
-
-        <!-- Allows you to delete the active profile -->
-        <v-btn
-          class="primary black--text my-2"
-          @click="deleteProfil()"
-          large
-          elevation="2"
-        >
-          {{ $vuetify.lang.t('$vuetify.dynamicsObject.deleteProfil') }}
-        </v-btn>
-      </v-container>
-
-      <v-container
-        class="d-flex justify-space-around align-center"
-        style="background-color: rgb(30,30,30); margin: 0; max-width: 100%;"
-      >
-        <!-- Add an event -->
-        <v-btn
-          @click="addEvent"
-          class="primary black--text my-2"
-          large
-          elevation="2"
-        >
-          {{ $vuetify.lang.t('$vuetify.dynamicsObject.addAnEvent') }}
-        </v-btn>
-
-        <!-- Allows you to attach one object to another -->
-        <v-btn
-          class="primary black--text my-2"
-          @click="attacherObjet()"
-          large
-          elevation="2"
-        >
-          {{ $vuetify.lang.t('$vuetify.dynamicsObject.attachAnObject') }}
-        </v-btn>
-
-        <div class="d-flex justify-space-around align-center mx-1">
-          <!-- Allows to listen on the server -->
+    <v-card flat>
+      <v-row fluid style="max-width:100%" class="pa-4">
+        <v-col :cols="4" style="min-height:64px">
+          <!-- Allows you to start a profile with the selected object -->
           <v-btn
-            class="primary black--text mx-1"
+            class="primary black--text"
+            @click="startProfil()"
+            large
+            elevation="2"
+            style="width:100%; height:100%"
+          >
+            {{ $vuetify.lang.t('$vuetify.dynamicsObject.startProfil') }}
+          </v-btn>
+        </v-col>
+        <v-col :cols="4" style="min-height:64px"> </v-col>
+        <!-- Allows to start with all the objects of the scene -->
+        <v-col :cols="4" style="min-height:64px">
+          <v-btn
+            class="primary black--text"
+            @click="startProfilGlobal()"
+            fluid
+            large
+            style="width:100%; height:100%"
+            elevation="2"
+          >
+            {{ $vuetify.lang.t('$vuetify.dynamicsObject.startGlobalProfil') }}
+          </v-btn>
+        </v-col>
+
+        <v-col :cols="4" style="min-height:64px">
+          <v-btn
+            @click="pathObjectSelected"
+            class="primary black--text"
+            large
+            elevation="2"
+            style="width:100%; height:100%"
+          >
+            {{ $vuetify.lang.t('$vuetify.dynamicsObject.selectedPathAsset') }}
+          </v-btn>
+        </v-col>
+        <v-col :cols="4" style="min-height:64px"> </v-col>
+        <v-col :cols="4" style="min-height:64px">
+          <v-btn
+            @click="globalPath"
+            class="primary black--text"
+            large
+            elevation="2"
+            style="width:100%; height:100%"
+          >
+            {{ $vuetify.lang.t('$vuetify.dynamicsObject.globalPath') }}
+          </v-btn>
+        </v-col>
+
+        <v-col :cols="4" style="min-height:64px">
+          <!-- Allows you to load a witness file for a profile -->
+          <v-btn
+            v-if="!unrealContext.check()"
+            @click="openUploadFile"
+            class="primary black--text"
+            large
+            elevation="2"
+            style="width:100%; height:100%"
+          >
+            {{ $vuetify.lang.t('$vuetify.dynamicsObject.loadAProfilFile') }}
+            <input
+              accept="application/JSON"
+              ref="uploadFileInput"
+              hidden
+              type="file"
+              @change="onUploadSceneUpdate"
+            />
+          </v-btn>
+        </v-col>
+        <v-col :cols="4" style="min-height:64px">
+          <!-- Allows you to edit the current profile -->
+          <v-btn
+            @click="editProfil"
+            class="primary black--text"
+            large
+            elevation="2"
+            style="width:100%; height:100%"
+          >
+            {{
+              $vuetify.lang.t('$vuetify.dynamicsObject.editTheCurrentProfil')
+            }}
+          </v-btn>
+        </v-col>
+        <v-col :cols="4" style="min-height:64px">
+          <!-- Allows you to delete the active profile -->
+          <v-btn
+            class="primary black--text"
+            @click="deleteProfil()"
+            large
+            elevation="2"
+            style="width:100%; height:100%"
+          >
+            {{ $vuetify.lang.t('$vuetify.dynamicsObject.deleteProfil') }}
+          </v-btn>
+        </v-col>
+
+        <v-col :cols="4" style="min-height:64px">
+          <!-- Add an event -->
+          <v-btn
+            @click="addEvent"
+            class="primary black--text"
+            large
+            elevation="2"
+            style="width:100%; height:100%"
+          >
+            {{ $vuetify.lang.t('$vuetify.dynamicsObject.addAnEvent') }}
+          </v-btn>
+        </v-col>
+        <v-col :cols="4" style="min-height:64px">
+          <!-- Allows you to attach one object to another -->
+          <v-btn
+            class="primary black--text"
+            @click="attacherObjet()"
+            large
+            elevation="2"
+            style="width:100%; height:100%"
+          >
+            {{ $vuetify.lang.t('$vuetify.dynamicsObject.attachAnObject') }}
+          </v-btn>
+        </v-col>
+        <v-col :cols="4" style="min-height:64px; position:relative">
+          <v-btn
+            class="primary black--text"
             @click="listenServer()"
             large
             elevation="2"
+            style="width:100%; height:100%"
           >
             {{ $vuetify.lang.t('$vuetify.dynamicsObject.listenIdOfServer') }}
           </v-btn>
@@ -405,42 +411,44 @@
           <div
             class="rounded-circle mx-1"
             :class="activeListenOpcua"
-            style="width: 30px; height: 30px;"
+            style="width: 30px; height: 30px; position: absolute; top:50%; right:0px; transform: translate(-50%, -50%);"
           ></div>
-        </div>
-      </v-container>
+        </v-col>
 
-      <v-container
-        class="d-flex justify-space-around align-center"
-        style="background-color: rgb(45,45,45); margin: 0; max-width: 100%;"
-      >
-        <v-btn
-          class="primary black--text mx-2"
-          @click="assignProfilScene()"
-          large
-          elevation="2"
+        <v-container
+          class="d-flex justify-space-around align-center"
+          style="margin: 0; max-width: 100%;"
         >
-          {{ $vuetify.lang.t('$vuetify.dynamicsObject.assignAProfilToScene') }}
-        </v-btn>
+          <v-btn
+            class="primary black--text mx-2"
+            @click="assignProfilScene()"
+            large
+            elevation="2"
+          >
+            {{
+              $vuetify.lang.t('$vuetify.dynamicsObject.assignAProfilToScene')
+            }}
+          </v-btn>
 
-        <!-- Selected profile -->
-        <v-select
-          class="black--text mx-2"
-          :label="$vuetify.lang.t('$vuetify.dynamicsObject.selectedProfil')"
-          v-model="selectedProfil"
-          :items="this.profils.map(item => item.title)"
-        >
-        </v-select>
-        <!-- Selected scene -->
-        <v-select
-          class="black--text mx-2"
-          :label="$vuetify.lang.t('$vuetify.dynamicsObject.selectedScene')"
-          v-model="selectedScene"
-          :items="this.scenes.map(item => item.name)"
-        >
-        </v-select>
-      </v-container>
-    </v-container>
+          <!-- Selected profile -->
+          <v-select
+            class="black--text mx-2"
+            :label="$vuetify.lang.t('$vuetify.dynamicsObject.selectedProfil')"
+            v-model="selectedProfil"
+            :items="this.profils.map(item => item.title)"
+          >
+          </v-select>
+          <!-- Selected scene -->
+          <v-select
+            class="black--text mx-2"
+            :label="$vuetify.lang.t('$vuetify.dynamicsObject.selectedScene')"
+            v-model="selectedScene"
+            :items="this.scenes.map(item => item.name)"
+          >
+          </v-select>
+        </v-container>
+      </v-row>
+    </v-card>
     <!-- Dynamique object -->
     <v-container
       v-if="selectedObjectDynamique"

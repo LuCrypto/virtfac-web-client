@@ -8,7 +8,9 @@ export default {
     cancel: 'Cancel',
     open: 'Open',
     close: 'Close',
-    enterName: 'Enter Name'
+    enterName: 'Enter Name',
+    enterText: 'Enter Text',
+    inputField: 'Input Field'
   },
   routingAnalysis: {
     saveRoutingGraph: 'Save Routing Graph',

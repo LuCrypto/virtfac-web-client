@@ -7,11 +7,7 @@
 </style>
 
 <template>
-  <v-container
-    fluid
-    style="max-height: 100%; overflow: auto; padding: 0;"
-    class="rounded-lg"
-  >
+  <v-container class="spacing-playground pa-6 d-flex flex-column" fluid>
     <!-- <template>
       <div id="app">
         <input
@@ -35,264 +31,258 @@
       ></asset-info>
     </pop-up>
     <!-- Title -->
-    <v-container
-      v-if="!this.fullpage"
-      class="spacing-playground contradiction-analysis"
-      style="padding: 0;"
-      fluid
-    >
-      <v-card elevation="3" class="mb-2 flex-grow-1">
-        <v-card-title>
-          {{ $vuetify.lang.t('$vuetify.assetLibrary.assetLibrary') }}
-        </v-card-title>
-        <v-card-subtitle>
-          {{ $vuetify.lang.t('$vuetify.assetLibrary.listOfAllAssets') }}
-        </v-card-subtitle>
-      </v-card>
-    </v-container>
+    <v-card elevation="3" class="mb-4" v-if="!this.fullpage">
+      <v-card-title>
+        {{ $vuetify.lang.t('$vuetify.assetLibrary.assetLibrary') }}
+      </v-card-title>
+      <v-card-subtitle>
+        {{ $vuetify.lang.t('$vuetify.assetLibrary.listOfAllAssets') }}
+      </v-card-subtitle>
+    </v-card>
 
     <!-- Modify data of scene -->
-    <v-row justify="center">
+    <v-card elevation="3" class="pa-0 d-flex flex-grow-1 flex-column" fluid style="overflow-y:scroll">
       <v-dialog v-model="modifyAsset" max-width="780">
-        <v-card>
-          <v-card-title>
-            {{ $vuetify.lang.t('$vuetify.assetLibrary.assetData') }}
-          </v-card-title>
+        <v-row justify="center">
+          <v-card>
+            <v-card-title>
+              {{ $vuetify.lang.t('$vuetify.assetLibrary.assetData') }}
+            </v-card-title>
 
-          <!-- Change title of asset -->
-          <v-container fluid>
-            <v-row>
-              <v-col cols="3">
-                <v-card-text>
-                  {{ $vuetify.lang.t('$vuetify.assetLibrary.newTitle') }} :
-                </v-card-text>
-              </v-col>
+            <!-- Change title of asset -->
+            <v-container fluid>
+              <v-row>
+                <v-col cols="3">
+                  <v-card-text>
+                    {{ $vuetify.lang.t('$vuetify.assetLibrary.newTitle') }} :
+                  </v-card-text>
+                </v-col>
 
-              <v-col cols="4">
-                <v-text-field v-model="search"> </v-text-field>
-              </v-col>
-            </v-row>
-          </v-container>
+                <v-col cols="4">
+                  <v-text-field v-model="search"> </v-text-field>
+                </v-col>
+              </v-row>
+            </v-container>
 
-          <!-- Add tags -->
-          <v-container fluid>
-            <v-row>
-              <v-col cols="3">
-                <v-card-text>
-                  {{ $vuetify.lang.t('$vuetify.assetLibrary.newTags') }} :
-                </v-card-text>
-              </v-col>
+            <!-- Add tags -->
+            <v-container fluid>
+              <v-row>
+                <v-col cols="3">
+                  <v-card-text>
+                    {{ $vuetify.lang.t('$vuetify.assetLibrary.newTags') }} :
+                  </v-card-text>
+                </v-col>
 
-              <v-col cols="4">
-                <v-text-field v-model="newTag"> </v-text-field>
-              </v-col>
+                <v-col cols="4">
+                  <v-text-field v-model="newTag"> </v-text-field>
+                </v-col>
 
-              <v-col cols="3">
-                <v-btn v-on:click="addTag(assetChoose, newTag)" icon>
-                  <v-icon v-text="'mdi-plus'"></v-icon>
-                </v-btn>
-              </v-col>
-            </v-row>
-          </v-container>
-          <!-- Change preview of asset -->
-          <v-container fluid>
-            <v-img height="270" :src="newImage"> </v-img>
-            <v-btn
-              class="ml-6 mt-6 flex-grow-1"
-              color="green"
-              @click="openUploadFile"
-            >
-              <v-icon v-text="'mdi-upload'"></v-icon>
-              {{ $vuetify.lang.t('$vuetify.assetLibrary.uploadNew') }}
-              <input
-                ref="uploadFileInput"
-                hidden
-                type="file"
-                @change="updateUploadFile"
-              />
-            </v-btn>
-          </v-container>
-
-          <!-- Delete tags -->
-          <v-container
-            fluid
-            :key="indexTag2"
-            v-for="(tag, indexTag2) in assetChoose.parsedTags"
-          >
-            <v-row>
-              <v-col cols="2">
-                <v-card-text>
-                  {{ tag }}
-                </v-card-text>
-              </v-col>
-
-              <v-col cols="3">
-                <v-btn v-on:click="deleteTag(assetChoose, tag)" icon>
-                  <v-icon v-text="'mdi-delete'"></v-icon>
-                </v-btn>
-              </v-col>
-            </v-row>
-          </v-container>
-
-          <!-- Save changes -->
-          <v-card-actions>
-            <v-spacer></v-spacer>
-            <v-btn color="primary" text @click="save(assetChoose)">
-              {{ $vuetify.lang.t('$vuetify.assetLibrary.save') }}
-            </v-btn>
-          </v-card-actions>
-        </v-card>
-      </v-dialog>
-    </v-row>
-
-    <!-- Middle of the page: the different assets cards -->
-    <v-container
-      v-if="this.multi"
-      class="d-flex align-center justify-center"
-      style="height: 100%;"
-    >
-      <h1>
-        {{ $vuetify.lang.t('$vuetify.assetLibrary.uCantUse') }}
-      </h1>
-    </v-container>
-
-    <v-card
-      v-if="!this.multi"
-      class="d-flex flex-column"
-      :rounded="unrealContext.check() ? 'xl' : 'md'"
-    >
-      <v-card
-        :class="!this.fullpage ? 'my-8' : 'my-8'"
-        class="d-flex justify-space-around"
-        width="100%"
-        :height="!this.fullpage ? '700' : '850'"
-        :rounded="unrealContext.check() ? 'xl' : 'md'"
-        style="overflow:hidden"
-        elevation="0"
-      >
-        <!-- The different categories -->
-        <v-card width="25%">
-          <v-btn width="90%" class="ma-2" v-on:click="clearCategory()">
-            {{ $vuetify.lang.t('$vuetify.assetLibrary.resetFilter') }}
-          </v-btn>
-          <v-checkbox
-            class="mx-2"
-            v-model="displayTag"
-            :label="$vuetify.lang.t('$vuetify.assetLibrary.displayTags')"
-          ></v-checkbox>
-          <v-card-title>
-            {{ $vuetify.lang.t('$vuetify.assetLibrary.categories') }} :
-          </v-card-title>
-
-          <v-card-text>
-            <v-treeview
-              :items="rootItem.children"
-              item-key="id"
-              activatable
-              open-on-click
-              @update:active="values => scrollOnElement(values)"
-            >
-              <template v-slot:prepend="{ open }">
-                <v-icon :class="open ? 'primary--text' : ''">
-                  {{ open ? 'mdi-folder-open' : 'mdi-folder' }}
-                </v-icon>
-              </template>
-            </v-treeview>
-          </v-card-text>
-        </v-card>
-
-        <!-- The different assets -->
-        <v-container
-          class="d-flex flex-wrap justify-space-around overflow-y-auto"
-          style="background-color: rgb(45, 45, 45); width: 75%;"
-        >
-          <v-card
-            :width="sizeCardString"
-            :key="indexCard"
-            v-for="(asset, indexCard) in useCategory ? cardsSort : assets"
-            style="background-color: rgb(45, 45, 45);"
-            class="mx-2 my-2"
-          >
-            <v-list-item :key="asset.name">
-              <!-- Asset image  -->
-              <v-hover>
-                <template v-slot:default="{ hover }">
-                  <v-btn
-                    :style="{ filter: hover ? 'brightness(90%)' : 'none' }"
-                    class="mr-1"
-                    v-on:click="sendUnreal(asset)"
-                    height="90"
-                    width="90"
-                  >
-                    <v-img
-                      max-width="90"
-                      :src="asset.picture"
-                      class="mr-1"
-                    ></v-img>
+                <v-col cols="3">
+                  <v-btn v-on:click="addTag(assetChoose, newTag)" icon>
+                    <v-icon v-text="'mdi-plus'"></v-icon>
                   </v-btn>
-                </template>
-              </v-hover>
+                </v-col>
+              </v-row>
+            </v-container>
+            <!-- Change preview of asset -->
+            <v-container fluid>
+              <v-img height="270" :src="newImage"> </v-img>
+              <v-btn
+                class="ml-6 mt-6 flex-grow-1"
+                color="green"
+                @click="openUploadFile"
+              >
+                <v-icon v-text="'mdi-upload'"></v-icon>
+                {{ $vuetify.lang.t('$vuetify.assetLibrary.uploadNew') }}
+                <input
+                  ref="uploadFileInput"
+                  hidden
+                  type="file"
+                  @change="updateUploadFile"
+                />
+              </v-btn>
+            </v-container>
 
-              <v-list-item-content>
-                <v-list-item-title
-                  style="margin-left: 10px;"
-                  v-html="asset.name"
-                >
-                </v-list-item-title>
-
-                <v-container v-if="displayTag" class="flex-row">
-                  <v-chip
-                    :key="indexTag"
-                    v-for="(tag, indexTag) in asset.parsedTags"
-                    class="ma-1 overflow-y-auto"
-                  >
+            <!-- Delete tags -->
+            <v-container
+              fluid
+              :key="indexTag2"
+              v-for="(tag, indexTag2) in assetChoose.parsedTags"
+            >
+              <v-row>
+                <v-col cols="2">
+                  <v-card-text>
                     {{ tag }}
-                  </v-chip>
-                </v-container>
+                  </v-card-text>
+                </v-col>
 
-                <v-list-item-action>
-                  <v-btn v-on:click="editNameAsset(asset)" icon>
-                    <v-icon color="grey lighten-1">mdi-pencil</v-icon>
+                <v-col cols="3">
+                  <v-btn v-on:click="deleteTag(assetChoose, tag)" icon>
+                    <v-icon v-text="'mdi-delete'"></v-icon>
                   </v-btn>
-                </v-list-item-action>
-              </v-list-item-content>
-            </v-list-item>
+                </v-col>
+              </v-row>
+            </v-container>
+
+            <!-- Save changes -->
+            <v-card-actions>
+              <v-spacer></v-spacer>
+              <v-btn color="primary" text @click="save(assetChoose)">
+                {{ $vuetify.lang.t('$vuetify.assetLibrary.save') }}
+              </v-btn>
+            </v-card-actions>
           </v-card>
+        </v-row>
+      </v-dialog>
+
+      <!-- Middle of the page: the different assets cards -->
+      <v-container
+        v-if="this.multi"
+        class="d-flex align-center justify-center"
+        style="height: 100%;"
+      >
+        <h1>
+          {{ $vuetify.lang.t('$vuetify.assetLibrary.uCantUse') }}
+        </h1>
+      </v-container>
+
+      <v-card
+        v-if="!this.multi"
+        class="d-flex flex-column flex-grow-1"
+        style="overflow-y: hidden;"
+        :rounded="unrealContext.check() ? 'xl' : 'md'"
+      >
+        <v-card
+          class="d-flex flex-grow-1 justify-space-around"
+          fluid
+          :rounded="unrealContext.check() ? 'xl' : 'md'"
+          style="overflow-y: scroll;"
+          flat
+        >
+          <!-- The different categories -->
+          <v-card width="25%">
+            <v-btn width="90%" class="ma-2" v-on:click="clearCategory()">
+              {{ $vuetify.lang.t('$vuetify.assetLibrary.resetFilter') }}
+            </v-btn>
+            <v-checkbox
+              class="mx-2"
+              v-model="displayTag"
+              :label="$vuetify.lang.t('$vuetify.assetLibrary.displayTags')"
+            ></v-checkbox>
+            <v-card-title>
+              {{ $vuetify.lang.t('$vuetify.assetLibrary.categories') }} :
+            </v-card-title>
+
+            <v-card-text>
+              <v-treeview
+                :items="rootItem.children"
+                item-key="id"
+                activatable
+                open-on-click
+                @update:active="values => scrollOnElement(values)"
+              >
+                <template v-slot:prepend="{ open }">
+                  <v-icon :class="open ? 'primary--text' : ''">
+                    {{ open ? 'mdi-folder-open' : 'mdi-folder' }}
+                  </v-icon>
+                </template>
+              </v-treeview>
+            </v-card-text>
+          </v-card>
+
+          <!-- The different assets -->
+          <v-card
+            class="d-flex flex-wrap justify-space-around overflow-y-auto"
+            flat
+            style="width: 75%;"
+          >
+            <v-card
+              :width="sizeCardString"
+              :key="indexCard"
+              v-for="(asset, indexCard) in useCategory ? cardsSort : assets"
+              class="mx-2 my-2"
+            >
+              <v-list-item :key="asset.name" class="px-2">
+                <!-- Asset image  -->
+                <v-hover>
+                  <template v-slot:default="{ hover }">
+                    <v-btn
+                      :style="{ filter: hover ? 'brightness(90%)' : 'none' }"
+                      class="mr-1"
+                      v-on:click="sendUnreal(asset)"
+                      height="90"
+                      width="90"
+                    >
+                      <v-img
+                        max-width="90"
+                        :src="asset.picture"
+                        class="mr-1"
+                      ></v-img>
+                    </v-btn>
+                  </template>
+                </v-hover>
+
+                <v-list-item-content>
+                  <v-list-item-title
+                    style="margin-left: 10px;"
+                    v-html="asset.name"
+                  >
+                  </v-list-item-title>
+
+                  <v-container v-if="displayTag" class="flex-row">
+                    <v-chip
+                      :key="indexTag"
+                      v-for="(tag, indexTag) in asset.parsedTags"
+                      class="ma-1 overflow-y-auto"
+                    >
+                      {{ tag }}
+                    </v-chip>
+                  </v-container>
+
+                  <v-list-item-action>
+                    <v-btn v-on:click="editNameAsset(asset)" icon>
+                      <v-icon color="grey lighten-1">mdi-pencil</v-icon>
+                    </v-btn>
+                  </v-list-item-action>
+                </v-list-item-content>
+              </v-list-item>
+            </v-card>
+          </v-card>
+        </v-card>
+
+        <!-- The different buttons -->
+        <v-container
+          class="d-flex justify-space-around align-center"
+          style="width: 75%; margin-left: 25%;"
+        >
+          <!-- Button to load an asset -->
+          <v-btn
+            v-on:click="loadAsset"
+            class="primary black--text"
+            large
+            elevation="2"
+          >
+            {{ $vuetify.lang.t('$vuetify.assetLibrary.loadAnAsset') }}
+            <input
+              accept="application/JSON"
+              ref="uploadFileInput"
+              hidden
+              type="file"
+              @change="updateUploadFileChargerAsset"
+            />
+          </v-btn>
+          <div>
+            <!-- Allows you to reduce the size of your assets -->
+            <v-btn v-on:click="decreaseSizeCard()" icon>
+              <v-icon v-text="'mdi-minus'"></v-icon>
+            </v-btn>
+            <!-- Allows to increase the size of the assets -->
+            <v-btn v-on:click="increaseSizeCard()" icon>
+              <v-icon v-text="'mdi-plus'"></v-icon>
+            </v-btn>
+          </div>
         </v-container>
       </v-card>
-
-      <!-- The different buttons -->
-      <v-container
-        class="d-flex justify-space-around align-center"
-        style="width: 75%; margin-left: 25%;"
-      >
-        <!-- Button to load an asset -->
-        <v-btn
-          v-on:click="loadAsset"
-          class="primary black--text"
-          large
-          elevation="2"
-        >
-          {{ $vuetify.lang.t('$vuetify.assetLibrary.loadAnAsset') }}
-          <input
-            accept="application/JSON"
-            ref="uploadFileInput"
-            hidden
-            type="file"
-            @change="updateUploadFileChargerAsset"
-          />
-        </v-btn>
-        <div>
-          <!-- Allows you to reduce the size of your assets -->
-          <v-btn v-on:click="decreaseSizeCard()" icon>
-            <v-icon v-text="'mdi-minus'"></v-icon>
-          </v-btn>
-          <!-- Allows to increase the size of the assets -->
-          <v-btn v-on:click="increaseSizeCard()" icon>
-            <v-icon v-text="'mdi-plus'"></v-icon>
-          </v-btn>
-        </div>
-      </v-container>
     </v-card>
   </v-container>
 </template>

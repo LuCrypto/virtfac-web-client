@@ -1,6 +1,6 @@
 <template>
-  <v-container class="spacing-playground pa-6 contradiction-analysis" fluid>
-    <v-card elevation="3" class="mx-auto mb-6 flex-grow-1">
+  <v-container class="spacing-playground pa-6 contradiction-analysis d-flex flex-column" fluid>
+    <v-card elevation="3" class="mb-6">
       <v-card-title>Ergonom.io Avatars</v-card-title>
       <v-card-subtitle>Avatar custom tool for ergonom.io</v-card-subtitle>
     </v-card>
