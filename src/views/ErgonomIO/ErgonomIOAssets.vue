@@ -271,6 +271,14 @@
               @change="updateUploadFileChargerAsset"
             />
           </v-btn>
+          <v-btn
+            v-on:click="deleteModeAsset"
+            class="primary black--text"
+            large
+            elevation="2"
+          >
+            {{ $vuetify.lang.t('$vuetify.assetLibrary.deleteModeAsset') }}
+          </v-btn>
           <div>
             <!-- Allows you to reduce the size of your assets -->
             <v-btn v-on:click="decreaseSizeCard()" icon>
@@ -297,9 +305,9 @@ import PopUp from '@/components/PopUp.vue'
 import VueRouter from 'vue-router'
 import SimpleKeyboard from '@/views/ErgonomIO/SimpleKeyboard.vue'
 
-// Classe pour les assets
+// Class for assets
 class CardAsset {
-  // Initialisation
+  // Initialization
   name = 'Asset1.json'
   picture = 'https://cdn.vuetifyjs.com/images/cards/house.jpg'
   tags = '[]'
@@ -315,12 +323,12 @@ class CardAsset {
   mime = ''
   parsedTags: string[] = []
 
-  // Permet de récupérer une date en format string
+  // Allows you to retrieve a date in string format
   get formatedCreationDate (): string {
     return new Date(this.creationDate).toLocaleString()
   }
 
-  // Permet de construire un asset
+  // Allows you to build an asset
   constructor (params: Partial<CardAsset>) {
     Object.assign(this, params)
     try {
@@ -363,11 +371,9 @@ class MessageAsset {
 // @vuese
 // @group VIEWS
 export default class ErgonomIOAssets extends Vue {
-  // Initialisation
+  // Initialization
   assets: CardAsset[] = []
   assets2: CardAsset[] = []
-
-  // keyboard: SimpleKeyboard | null = null
 
   useCategory = false
   cardsSort: CardAsset[] = []
@@ -395,6 +401,7 @@ export default class ErgonomIOAssets extends Vue {
   query = this.router.currentRoute.query
   fullpage: boolean = this.query.fullpage === 'true'
   multi = false
+  deleteMode = false
 
   rootItem: TreeItem = {
     id: 0,
@@ -416,14 +423,20 @@ export default class ErgonomIOAssets extends Vue {
         case 'recupererAsset':
           monObjet = data as MessageAsset
 
+          // Unreal.send('Oui je suis recupererAsset')
+          // Unreal.send(monObjet.id)
+
           API.post(
             this,
             '/resources/assets',
             JSON.stringify({
               select: [],
-              where: [{ id: monObjet.id }]
+              where: [{ id: 46 }]
             })
           ).then((response: Response) => {
+            // Unreal.send('response')
+            // Unreal.send(response)
+
             const monAssetTableau = ((response as unknown) as Array<
               Partial<CardAsset>
             >).map((asset: Partial<CardAsset>) => new CardAsset(asset))
@@ -458,18 +471,18 @@ export default class ErgonomIOAssets extends Vue {
   }
 
   // Keyboard
-  // Quand le input change
+  // When the input changes
   onChange (input: any): void {
-    console.log('input : ', input)
+    // console.log('input : ', input)
     this.input = input
   }
 
-  // Quand on appuie sur un bouton
+  // When a button is pressed
   onKeyPress (button: any): void {
     console.log('button', button)
   }
 
-  // Quand l'input change
+  // When the input changes
   onInputChange (input: any): void {
     this.input = input.target.value
   }
@@ -478,6 +491,8 @@ export default class ErgonomIOAssets extends Vue {
   // @arg No arguments required
   createCategory (): void {
     let idUnique = 1
+
+    // Create the root
     for (let i = 0; i < 5; i++) {
       const test: TreeItem = {
         id: idUnique,
@@ -487,6 +502,7 @@ export default class ErgonomIOAssets extends Vue {
       }
       idUnique++
 
+      // Create the children
       for (let j = 0; j < 3; j++) {
         const test2: TreeItem = {
           id: idUnique,
@@ -513,7 +529,7 @@ export default class ErgonomIOAssets extends Vue {
         : card.uri
   }
 
-  // api request for get the different assets
+  // Api request for get the different assets
   // @arg No arguments required
   requeteAPI (): void {
     API.post(
@@ -644,9 +660,9 @@ export default class ErgonomIOAssets extends Vue {
   downloadAsset (asset: CardAsset): void {
     const data = JSON.stringify(asset)
     const blob = new Blob([data], { type: 'text/plain' })
-
     const url = URL.createObjectURL(blob)
     const pom = document.createElement('a')
+
     pom.setAttribute('style', 'display: none;')
     pom.href = url
     pom.setAttribute('download', asset.name + '.json')
@@ -656,8 +672,24 @@ export default class ErgonomIOAssets extends Vue {
   // Load scene from scene file
   // @arg No arguments required
   loadAsset (): void {
-    console.log('Charger asset')
     this.openUploadFile()
+  }
+
+  // Can switch in destruction mode
+  deleteModeAsset (): void {
+    this.deleteMode = !this.deleteMode
+
+    const objectAsset = {
+      action: 'deleteModeAsset',
+      deleteMode: this.deleteMode
+    }
+
+    const object = {
+      menu: 'asset',
+      objet: objectAsset
+    }
+
+    Unreal.send(object)
   }
 
   // Load asset
@@ -725,10 +757,10 @@ export default class ErgonomIOAssets extends Vue {
   // Display asset of the category
   // @arg No arguments required
   sortWithCategory (categorie: string): void {
-    // Active le trie
+    // Activate the sorting
     this.useCategory = true
 
-    // Trie les différents assets en fonction de la catégorie
+    // Sorts the different assets according to the category
     this.cardsSort = []
     for (let i = 0; i < this.assets.length; i++) {
       const asset = this.assets[i]

@@ -31,6 +31,7 @@
               :id="'scene-' + scene.id"
             >
               <v-img height="200" :src="scene.picture" :id="scene - scene.id">
+                <!-- For edit the scene -->
                 <v-btn
                   @click="editNameScene(scene, $event)"
                   class="ma-2"
@@ -61,6 +62,7 @@
                   </v-chip>
                 </v-chip-group>
               </v-card-subtitle>
+              <!-- Display the scene's description -->
               <v-card-text>
                 {{ scene.formatedCreationDate }},
                 {{ $vuetify.lang.t('$vuetify.scenes.assetsNumber') }} :
@@ -99,15 +101,18 @@
                       justify="space-between"
                       class="pt-3 flex-wrap"
                     >
+                      <!-- For download the scene -->
                       <v-btn @click="downloadScene(scene, $event)" icon>
                         <v-icon v-text="'mdi-download'"></v-icon>
                       </v-btn>
                       <v-btn @click="outline(scene, $event)" icon>
                         <v-icon v-text="'mdi-eye'"></v-icon>
                       </v-btn>
+                      <!-- Display popup with information of scene -->
                       <v-btn @click="clickScene(scene, $event)" icon>
                         <v-icon v-text="'mdi-information'"></v-icon>
                       </v-btn>
+                      <!-- Delete the scene -->
                       <v-btn @click="deleteObjet(scene, $event)" icon>
                         <v-icon v-text="'mdi-delete'"></v-icon>
                       </v-btn>
@@ -151,15 +156,6 @@
                     @change="onUploadSceneUpdate"
                   />
                 </v-btn>
-                <!-- <v-btn
-                  @click="addObjectInScene"
-                  class="primary black--text flex-grow-1"
-                  large
-                  elevation="2"
-                  v-if="!this.multi"
-                >
-                  {{ $vuetify.lang.t('$vuetify.scenes.addObjectInScene') }}
-                </v-btn> -->
                 <v-btn
                   @click="saveCurrentScene"
                   class="primary black--text flex-grow-1"
@@ -178,14 +174,6 @@
                   {{ $vuetify.lang.t('$vuetify.scenes.backToHome') }}
                 </v-btn>
               </v-row>
-              <!-- <v-row no-gutters v-if="!this.multi">
-                <v-select
-                  :items="scenes.map(item => item.name)"
-                  v-model="sceneForModif"
-                  :label="$vuetify.lang.t('$vuetify.scenes.targetScene')"
-                  dense
-                ></v-select>
-              </v-row> -->
             </v-col>
           </v-container>
 
@@ -346,7 +334,7 @@ import API from '@/utils/api'
 import Unreal from '@/utils/unreal'
 import CardScene from '@/utils/cardmodel'
 
-// Scene recue d'unreal
+// Scene collected from unreal
 class SceneReceived {
   name = ''
   position = []
@@ -382,7 +370,7 @@ class Autre {
 
 @Component
 export default class ErgonomIOAssets extends Vue {
-  // Initialisation
+  // Initialization
   scenes: CardScene[] = []
   scenes2: CardScene[] = []
 
@@ -487,7 +475,6 @@ export default class ErgonomIOAssets extends Vue {
   createEmptyScene (): void {
     const scene = new CardScene({ id: this.scenes.length })
     scene.parsedTags.push('vide')
-    // this.scenes.push(scene)
     this.addSceneAPI(scene)
   }
 
@@ -549,7 +536,7 @@ export default class ErgonomIOAssets extends Vue {
     this.openUploadFile()
   }
 
-  // Allow adding objects
+  // Allow adding objects (not used)
   // @arg No arguments required
   addObjectInScene (): void {
     let idSceneModif
@@ -603,7 +590,6 @@ export default class ErgonomIOAssets extends Vue {
     event.stopPropagation()
 
     const index2 = this.scenes.indexOf(scene, 0)
-
     if (index2 > -1) {
       this.scenes.splice(index2, 1)
     }
@@ -623,7 +609,7 @@ export default class ErgonomIOAssets extends Vue {
     this.releaseScene(new CardScene({ id: 1 }))
   }
 
-  // Aymeric todo
+  // Outline
   // @arg No arguments required
   outline (scene: CardScene, event: Event): void {
     event.stopPropagation()
@@ -644,7 +630,6 @@ export default class ErgonomIOAssets extends Vue {
 
     const data = JSON.stringify(scene)
     const blob = new Blob([data], { type: 'text/plain' })
-
     const url = URL.createObjectURL(blob)
     const pom = document.createElement('a')
 
@@ -695,7 +680,7 @@ export default class ErgonomIOAssets extends Vue {
   // Update a scene
   // @arg No arguments required
   releaseScene (scene: CardScene): void {
-    // Requête API pour mettre à jour la scène
+    // API request to update the scene
     API.patch(
       this,
       `/resources/ergonomio-scenes/${scene.id}`,
@@ -706,7 +691,6 @@ export default class ErgonomIOAssets extends Vue {
     )
       .then((response: Response) => {
         Unreal.send(response)
-        // Refresh scenes
         this.refreshScenes()
       })
       .catch(e => console.error(e))

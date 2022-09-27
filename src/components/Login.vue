@@ -67,7 +67,14 @@
 
     <template v-if="unreal.check()">
       <div id="app">
-        <SimpleKeyboard @onKeyPress="onKeyPress" />
+        <SimpleKeyboard
+          @onKeyPress="onKeyPress"
+          :theme="
+            $vuetify.theme.dark
+              ? 'hg-theme-default myTheme1'
+              : 'hg-theme-default'
+          "
+        />
       </div>
     </template>
   </v-card>
@@ -79,6 +86,7 @@ import { Session, User } from '@/utils/session'
 import API from '@/utils/api'
 import Unreal from '@/utils/unreal'
 import SimpleKeyboard from '@/views/ErgonomIO/SimpleKeyboard.vue'
+import './Login.css'
 
 @Component({
   name: 'Login',

@@ -55,6 +55,7 @@ export default {
     displayTags: 'Display tags',
     categories: 'Categories',
     loadAnAsset: 'Load an asset',
+    deleteModeAsset: 'Delete mode asset',
     assetData: 'Asset data',
     name: 'Name',
     tags: 'Tags',

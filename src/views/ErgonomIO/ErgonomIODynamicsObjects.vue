@@ -16,7 +16,7 @@
         <!-- X, Y et Z -->
         <v-row align="center">
           <v-col align="center">
-            <!-- Axe -->
+            <!-- Axis -->
             <v-sheet max-width="25" :color="axesColorsArray[1]" elevation="1">
               {{ axesArray[1] }}
             </v-sheet>
@@ -39,7 +39,7 @@
             />
           </v-col>
           <v-col align="center">
-            <!-- Axe -->
+            <!-- Axis -->
             <v-sheet max-width="25" :color="axesColorsArray[2]" elevation="1">
               {{ axesArray[2] }}
             </v-sheet>
@@ -61,7 +61,7 @@
             />
           </v-col>
           <v-col align="center">
-            <!-- Axe -->
+            <!-- Axis -->
             <v-sheet max-width="25" :color="axesColorsArray[3]" elevation="1">
               {{ axesArray[3] }}
             </v-sheet>
@@ -472,7 +472,7 @@ import VueRouter from 'vue-router'
 import { Vector3 } from 'three'
 import CardModel from '@/utils/cardmodel'
 
-// Classe d'un évènement
+// Class of an event
 interface evenementClass {
   evenement: string
 }
@@ -487,9 +487,9 @@ class message {
   }
 }
 
-// Classe pour les assets
+// Class for assets
 class OpcuaModel {
-  // Initialisation
+  // Initialization
   name = 'Asset1.json'
   id = 0
   creationDate = 0
@@ -498,17 +498,18 @@ class OpcuaModel {
   modificationDate = 0
   events = ''
 
-  // Permet de récupérer une date en format string
+  // Allows you to retrieve a date in string format
   get formatedCreationDate (): string {
     return new Date(this.creationDate).toLocaleString()
   }
 
-  // Permet de construire un asset
+  // Allows you to build an asset
   constructor (params: Partial<OpcuaModel>) {
     Object.assign(this, params)
   }
 }
 
+// Class for value of profile
 class Values {
   datetime = -1
   idParent = -1
@@ -522,7 +523,7 @@ class Values {
   }
 }
 
-// Type Evenement
+// Type Event
 class Evenement {
   name = ''
   values: Values = new Values({})
@@ -532,7 +533,7 @@ class Evenement {
   }
 }
 
-// Type Profil
+// Profile type
 class Profil {
   action = ''
   title = ''
@@ -889,7 +890,6 @@ export default class ErgonomIOAssets extends Vue {
         where: []
       })
     ).then((response: Response) => {
-      console.log('response ', response)
       this.scenes = ((response as unknown) as Array<Partial<CardModel>>).map(
         (scene: Partial<CardModel>) => new CardModel(scene)
       )
@@ -1002,7 +1002,6 @@ export default class ErgonomIOAssets extends Vue {
           // Chaque ligne du fichier
           for (let i = 0; i < tableau.length; i++) {
             const tableau2: string[] = tableau[i].split(':')
-
             const datetimeInput = Number(tableau2[0])
             const evenementName = tableau2[1]
 
@@ -1018,11 +1017,11 @@ export default class ErgonomIOAssets extends Vue {
               })
             }
 
-            // Ajoute évènement au profil
+            // Add event to profile
             this.profils[this.profils.length - 1].items.push(objet)
           }
 
-          // Mettre à jour l'API
+          // Update the API
           this.addAPIProfil(this.profils[this.profils.length - 1])
         }
 
@@ -1040,11 +1039,11 @@ export default class ErgonomIOAssets extends Vue {
   saveProfil (): void {
     this.editProfilBooleen = false
 
-    // Mettre à jour le profil
+    // Update the profile
     this.updateProfil(this.profilEdit)
   }
 
-  // api request for adding the profil to API
+  // Api request for adding the profil to API
   // @arg No arguments required
   addAPIProfil (profil: Profil): void {
     API.put(
@@ -1056,7 +1055,6 @@ export default class ErgonomIOAssets extends Vue {
         idProject: 0
       })
     ).then((response: Response) => {
-      console.log('api ajouter profil : ', response)
       this.getProfils()
     })
   }
@@ -1091,7 +1089,6 @@ export default class ErgonomIOAssets extends Vue {
         where: []
       })
     ).then((response: Response) => {
-      console.log('response : ', response)
       const monAssetTableau = ((response as unknown) as Array<
         Partial<OpcuaModel>
       >).map((opcua: Partial<OpcuaModel>) => new OpcuaModel(opcua))
@@ -1174,13 +1171,14 @@ export default class ErgonomIOAssets extends Vue {
       objet: objectOpcua
     }
 
-    // On envoie le profil
+    // We send the profile
     Unreal.send(object)
   }
 
   // Start the simulation of profil for all assets
   // @arg No arguments required
   startProfilGlobal (): void {
+    // We select the profile
     let trouver = -1
     for (let i = 0; i < this.profils.length; i++) {
       const element = this.profils[i].active
@@ -1214,7 +1212,7 @@ export default class ErgonomIOAssets extends Vue {
     // Delete
     this.profils.splice(trouver, 1)
 
-    // Faire requete api
+    // Make api request
     this.deleteAPIProfil(this.profils[trouver])
   }
 
@@ -1239,8 +1237,6 @@ export default class ErgonomIOAssets extends Vue {
   // For listening the server
   // @arg No arguments required
   listenServer (): void {
-    console.log('listenServer !')
-
     this.activeListenOpcua = this.activeListenOpcua === 'red' ? 'green' : 'red'
 
     const objectOpcua = {
@@ -1259,21 +1255,21 @@ export default class ErgonomIOAssets extends Vue {
   // Delete an event of a profil
   // @arg No arguments required
   deleteEvent (indexChild: number): void {
-    // On trouve le profil
+    // We find the profile
     let trouver = -1
     for (let i = 0; i < this.profils.length; i++) {
       const element = this.profils[i].active
       if (element) trouver = i
     }
 
-    // On enleve l'element
+    // We remove the element
     const tableauIntermediaire = []
     for (let i = 0; i < this.profils[trouver].items.length; i++) {
       const element = this.profils[trouver].items[i]
       if (i !== indexChild) tableauIntermediaire.push(element)
     }
 
-    // On mets à jour le tableau d'evenements
+    // We update the events table
     this.profils[trouver].items = []
     for (let i = 0; i < tableauIntermediaire.length; i++) {
       this.profils[trouver].items.push(tableauIntermediaire[i])
@@ -1295,14 +1291,12 @@ export default class ErgonomIOAssets extends Vue {
       isOpcua: opcua
     }
 
-    console.log(this.profils)
-
     const object = {
       menu: 'opcua',
       objet: objectOpcua
     }
 
-    // On envoie la position de l'évènement
+    // We send the position of the event
     Unreal.send(object)
   }
 
@@ -1325,7 +1319,7 @@ export default class ErgonomIOAssets extends Vue {
   // Modify the position of an event
   // @arg No arguments required
   modifyPosition (event: Event, child: Evenement): void {
-    // Consume l'event
+    // Consume the event
     event.stopPropagation()
 
     this.childSave = child
