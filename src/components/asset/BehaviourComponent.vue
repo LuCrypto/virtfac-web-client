@@ -9,12 +9,31 @@
           style="text-align: right; padding-right:10px"
           class="black--text pt-1 pb-1"
         >
-          {{ name }}
+          {{
+            $vuetify.lang.t(
+              '$vuetify.behaviours.' +
+                component.name
+                  .replaceAll(' ', '')
+                  .toLowerCase()
+                  .replaceAll('/', '') +
+                '.name'
+            )
+          }}
         </td>
       </tr>
       <tr v-for="item in component.ui" v-bind:key="item.label">
         <td class="pl-2">
-          {{ item.label }}
+          {{
+            $vuetify.lang.t(
+              '$vuetify.behaviours.' +
+                component.name
+                  .replaceAll(' ', '')
+                  .toLowerCase()
+                  .replaceAll('/', '') +
+                '.fields.' +
+                item.label.replaceAll(' ', '').toLowerCase()
+            )
+          }}
         </td>
         <td v-if="item.inputType === 'number'">
           <v-text-field

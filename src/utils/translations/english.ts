@@ -10,9 +10,80 @@ export default {
     close: 'Close',
     enterName: 'Enter Name',
     enterText: 'Enter Text',
-    inputField: 'Input Field'
+    inputField: 'Input Field',
+    name: 'Name',
+    date: 'Date',
+    download: 'Download',
+    delete: 'Delete'
+  },
+  assetEditor: {
+    title: 'Ergonom.io Asset',
+    description: 'Asset editing tool for ergonom.io',
+    openAsset: 'Open Asset',
+    assetData: 'Asset Data',
+    applyTransform: 'Apply Transform',
+    switchAxisMode: 'Switch Axis Mode',
+    switchSnapMode: 'switch Snap Mode',
+    applyScale: 'Apply Scale',
+    captureImage: 'Capture Image',
+    saveOnAPI: 'Save On API'
+  },
+  blueprintEditor: {
+    title: 'Blueprint Editor',
+    description: 'Tool for drawing building plan and export it in 3D',
+    openFile: 'Open File',
+    defineScale: 'Define Scale',
+    defineScalePlaceholder: 'enter reference distance (in meters):',
+    exportGLTF: 'Export GLTF',
+    saveBlueprint: 'Save Blueprint',
+    saveScene: 'Save Scene',
+    selectFurniture: 'Select Furniture',
+    placeFurniture: 'Place Furniture',
+    placeWall: 'Place Wall',
+    removeWall: 'Remove Wall'
+  },
+  constraintAnalysis: {
+    title: 'Contradiction Analysis',
+    description: 'Contradiction analysis via a expert approach',
+    openFile: 'Open File',
+    saveShape: 'Save Shape',
+    loadShape: 'Load Shape',
+    layouts: 'Layouts',
+    downloadImage: 'Download Image',
+    defaultLayout: 'Default Layout',
+    verticalHierarchy: 'Vertical Hierarchy',
+    horizontalHierarchy: 'Horiziontal Hierarchy',
+    circle: 'Circle',
+    horizontalOrdering: 'Horizontal Ordering'
+  },
+  selectPopUp: {
+    selectItem: 'Select Item'
+  },
+  behaviours: {
+    category: {
+      miscellaneous: 'Miscellaneous',
+      wall: 'Wall'
+    },
+    walldoor: {
+      name: 'Door',
+      fields: {
+        width: 'width',
+        top: 'top'
+      }
+    },
+    wallwindow: {
+      name: 'Window',
+      fields: {
+        width: 'width',
+        top: 'top',
+        bottom: 'bottom'
+      }
+    }
   },
   routingAnalysis: {
+    title: 'Routing Analysis',
+    description:
+      'Routing analysis using algorithmic operations related to graph management.',
     saveRoutingGraph: 'Save Routing Graph',
     showHideFeedbacklink: 'Show/Hide Feedback Link',
     showHideTransitiveLink: 'Show/Hide Transitive Link',
@@ -22,6 +93,7 @@ export default {
     showMatrix: 'Show Matrix',
     defaultRoutingGraphName: 'unnamed routing graph',
     importFileType: 'Import File Type',
+    exportFileType: 'Export File Type',
     routingFile: 'Routing File',
     partMachineMatrix: 'Part/Machine Matrix',
     machineMachineMatrix: 'Machine/Machine Matrix',
@@ -29,7 +101,8 @@ export default {
     clustering: 'Clustering',
     alpha: 'Alpha',
     interclassRatio: 'Interclass ratio (%)',
-    nbClass: 'Number of Class'
+    nbClass: 'Number of Class',
+    matrixType: 'Matrix type'
   },
   gestureAnalysis: {
     gestureAnalysis: 'Gesture Analysis',

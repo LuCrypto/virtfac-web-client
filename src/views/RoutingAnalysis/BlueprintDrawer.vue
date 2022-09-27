@@ -1,10 +1,15 @@
 <template>
-  <v-container class="spacing-playground pa-6 contradiction-analysis d-flex flex-column" fluid>
+  <v-container
+    class="spacing-playground pa-6 contradiction-analysis d-flex flex-column"
+    fluid
+  >
     <v-card elevation="3" class="mb-6">
-      <v-card-title>Blueprint Editor</v-card-title>
-      <v-card-subtitle
-        >Tool for drawing building plan and export it in 3D</v-card-subtitle
-      >
+      <v-card-title>{{
+        $vuetify.lang.t('$vuetify.blueprintEditor.title')
+      }}</v-card-title>
+      <v-card-subtitle>{{
+        $vuetify.lang.t('$vuetify.blueprintEditor.description')
+      }}</v-card-subtitle>
     </v-card>
     <BlueprintEditorContainer></BlueprintEditorContainer>
   </v-container>

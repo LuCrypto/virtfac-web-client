@@ -5,7 +5,7 @@
       <v-toolbar color="primary" flat>
         <v-toolbar-title class="black--text">
           <v-icon left v-text="'mdi-format-list-checks'"></v-icon>
-          Select Item
+          {{ $vuetify.lang.t('$vuetify.selectPopUp.selectItem') }}
         </v-toolbar-title>
       </v-toolbar>
 
@@ -71,7 +71,7 @@
                 class="black--text"
                 color="primary"
                 @click="cancel"
-                >Cancel</v-btn
+                >{{ $vuetify.lang.t('$vuetify.general.cancel') }}</v-btn
               >
             </v-card>
           </v-layout>

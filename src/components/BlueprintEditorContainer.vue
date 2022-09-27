@@ -25,7 +25,9 @@
                 <v-icon v-text="menuItem.icon"></v-icon>
               </v-list-item-icon>
               <v-list-item-content>
-                <v-list-item-title v-text="menuItem.text"></v-list-item-title>
+                <v-list-item-title>{{
+                  $vuetify.lang.t(menuItem.text)
+                }}</v-list-item-title>
               </v-list-item-content>
             </v-list-item>
             <v-list-item
@@ -36,7 +38,9 @@
                 <v-icon>mdi-chair-rolling</v-icon>
               </v-list-item-icon>
               <v-list-item-content>
-                <v-list-item-title>Select Furniture</v-list-item-title>
+                <v-list-item-title>{{
+                  $vuetify.lang.t('$vuetify.blueprintEditor.selectFurniture')
+                }}</v-list-item-title>
               </v-list-item-content>
             </v-list-item>
             <v-list-item
@@ -369,57 +373,70 @@ export default class BlueprintEditorContainer extends Vue {
     )
     */
     this.menuItemList.push(
-      new MenuItem('Open File', 'mdi-file-document', () => {
-        (this.$refs.filePopUp as PopUp).open()
-      })
+      new MenuItem(
+        '$vuetify.blueprintEditor.openFile',
+        'mdi-file-document',
+        () => {
+          (this.$refs.filePopUp as PopUp).open()
+        }
+      )
     )
     this.menuItemList.push(
-      new MenuItem('Define Scale', 'mdi-pencil-ruler', () => {
-        let dist = 1
-        if (this.inputField != null) {
-          this.inputField.open(
-            'enter reference distance (in meters):',
-            '1',
-            '1',
-            input => {
-              if (input != null) {
-                dist = +input
-                  .replaceAll(',', '.')
-                  .replaceAll(' ', '')
-                  .replaceAll('m', '')
-                if (
-                  (this.blueprintEditor as BlueprintEditor).getBpContainer() !=
-                  null
-                ) {
-                  ((this
-                    .blueprintEditor as BlueprintEditor).getBpContainer() as BlueprintContainer).defineScaleMode(
-                    dist
-                  )
+      new MenuItem(
+        '$vuetify.blueprintEditor.defineScale',
+        'mdi-pencil-ruler',
+        () => {
+          let dist = 1
+          if (this.inputField != null) {
+            this.inputField.open(
+              'enter reference distance (in meters):',
+              '1',
+              '1',
+              input => {
+                if (input != null) {
+                  dist = +input
+                    .replaceAll(',', '.')
+                    .replaceAll(' ', '')
+                    .replaceAll('m', '')
+                  if (
+                    (this
+                      .blueprintEditor as BlueprintEditor).getBpContainer() !=
+                    null
+                  ) {
+                    ((this
+                      .blueprintEditor as BlueprintEditor).getBpContainer() as BlueprintContainer).defineScaleMode(
+                      dist
+                    )
+                  }
                 }
               }
-            }
-          )
+            )
+          }
         }
-      })
+      )
     )
     this.menuItemList.push(
-      new MenuItem('export GLTF', 'mdi-cube-scan', () => {
-        BlueprintExporter.exportGeometry(
-          ((this
-            .blueprintEditor as BlueprintEditor).getBpContainer() as BlueprintContainer).getBlueprint()
-        ).then(gltf => {
-          const a = document.createElement('a')
-          const file = new Blob([gltf], {
-            type: 'text/plain'
+      new MenuItem(
+        '$vuetify.blueprintEditor.exportGLTF',
+        'mdi-cube-scan',
+        () => {
+          BlueprintExporter.exportGeometry(
+            ((this
+              .blueprintEditor as BlueprintEditor).getBpContainer() as BlueprintContainer).getBlueprint()
+          ).then(gltf => {
+            const a = document.createElement('a')
+            const file = new Blob([gltf], {
+              type: 'model/gltf+json'
+            })
+            a.href = URL.createObjectURL(file)
+            a.download = 'layout.gltf'
+            a.click()
           })
-          a.href = URL.createObjectURL(file)
-          a.download = 'layout.gltf'
-          a.click()
-        })
-      })
+        }
+      )
     )
     this.menuItemList.push(
-      new MenuItem('Download blueprint', 'mdi-download', () => {
+      new MenuItem('$vuetify.blueprintEditor.saveBlueprint', 'mdi-download', () => {
         const json = ((this
           .blueprintEditor as BlueprintEditor).getBpContainer() as BlueprintContainer)
           .getBlueprint()
@@ -431,7 +448,7 @@ export default class BlueprintEditorContainer extends Vue {
 
         if (this.inputField != null) {
           this.inputField.open(
-            'Enter file name',
+            '$vuetify.general.enterName',
             'blueprint',
             'blueprint',
             value => {
@@ -455,129 +472,145 @@ export default class BlueprintEditorContainer extends Vue {
             }
           )
         }
-        const a = document.createElement('a')
-        a.href = URL.createObjectURL(file)
-        a.download = 'blueprint.json'
-        a.click()
-      })
-    )
-
-    this.menuItemList.push(
-      new MenuItem('Save Scene', 'mdi-content-save', () => {
-        const graph = ((this
-          .blueprintEditor as BlueprintEditor).getBpContainer() as BlueprintContainer)
-          .routingGraph
-
-        const json = new Array<{
-          idAsset: number
-          position: number[]
-          rotation: number[]
-          scale: number[]
-        }>()
-
-        if (this.inputField != null) {
-          this.inputField.open('Enter scene name', 'scene', 'scene', value => {
-            const bp = ((this
-              .blueprintEditor as BlueprintEditor).getBpContainer() as BlueprintContainer).getBlueprint()
-            BlueprintExporter.exportGeometry(bp).then(res => {
-              const uri = 'data:model/gltf+json;base64,' + btoa(res)
-              OpenAsset.ImportAsset(this, uri, {
-                name: 'blueprintExport'
-              }).then(id => {
-                json.push({
-                  idAsset: id,
-                  position: [0, 0, 0],
-                  rotation: [0, 0, 0],
-                  scale: [1, 1, 1]
-                })
-
-                graph.foreachNode(n => {
-                  const position = n.getData<{ x: number; y: number }>(
-                    'position'
-                  )
-                  const scale = n.getData<{ x: number; y: number }>('dimension')
-                  const cache = n.getData<BpAssetCache | undefined>(
-                    'assetCache'
-                  )
-                  const asset = {
-                    idAsset: cache === undefined ? -1 : cache.id,
-                    position: [position.x / 100, position.y / 100, 0],
-                    rotation: [0, 0, n.getDataOrDefault<number>('rotation', 0)],
-                    scale:
-                      cache === undefined
-                        ? [scale.x / 100, scale.y / 100, 1]
-                        : [1, 1, 1]
-                  }
-                  json.push(asset)
-                })
-
-                const bpJson = bp.toJSON()
-
-                bp.foreachWallLink(l => {
-                  const p1 = l.getOriginNode().getData<V>('position')
-                  const p2 = l.getNode().getData<V>('position')
-                  const angle = (p2.subV(p1).angle() / (2 * Math.PI)) * 360
-                  l.getDataOrDefault<Array<{ assetId: number; xpos: number }>>(
-                    'furniture',
-                    []
-                  ).forEach(furniture => {
-                    const p = p1
-                      .multN(1 - furniture.xpos)
-                      .addV(p2.multN(furniture.xpos))
-                    json.push({
-                      idAsset: furniture.assetId,
-                      position: [p.x / 100, p.y / 100, 0],
-                      rotation: [0, 0, angle],
-                      scale: [1, 1, 1]
-                    })
-                  })
-                })
-                if (value !== null) {
-                  const v = value
-                  domtoimage
-                    .toJpeg(
-                      ((this
-                        .blueprintEditor as BlueprintEditor).getBpContainer() as BlueprintContainer)
-                        .getContainer()
-                        .getDom(),
-                      {
-                        width: 256,
-                        height: 256
-                      }
-                    )
-                    .then(res => {
-                      console.log(res)
-                      API.put(
-                        this,
-                        '/resources/ergonomio-scenes',
-                        JSON.stringify({
-                          name: value,
-                          assetsNumber: json.length,
-                          data: JSON.stringify(json),
-                          spawnX: 0,
-                          spawnY: 0,
-                          spawnZ: 0,
-                          idProject: 0,
-                          color: 0x3371ff,
-                          tags: '[]',
-                          picture: res,
-                          idProfile: 0
-                        })
-                      ).catch(reason => {
-                        console.log(reason)
-                      })
-                    })
-                }
-              })
-            })
-          })
-        }
         /*
+        const a = document.createElement('a')
         a.href = URL.createObjectURL(file)
         a.download = 'blueprint.json'
         a.click()
         */
       })
+    )
+
+    this.menuItemList.push(
+      new MenuItem(
+        '$vuetify.blueprintEditor.saveScene',
+        'mdi-content-save',
+        () => {
+          const graph = ((this
+            .blueprintEditor as BlueprintEditor).getBpContainer() as BlueprintContainer)
+            .routingGraph
+
+          const json = new Array<{
+            idAsset: number
+            position: number[]
+            rotation: number[]
+            scale: number[]
+          }>()
+
+          if (this.inputField != null) {
+            this.inputField.open(
+              '$vuetify.general.enterName',
+              'scene',
+              'scene',
+              value => {
+                const bp = ((this
+                  .blueprintEditor as BlueprintEditor).getBpContainer() as BlueprintContainer).getBlueprint()
+                BlueprintExporter.exportGeometry(bp).then(res => {
+                  const uri = 'data:model/gltf+json;base64,' + btoa(res)
+                  OpenAsset.ImportAsset(this, uri, {
+                    name: 'blueprintExport'
+                  }).then(id => {
+                    json.push({
+                      idAsset: id,
+                      position: [0, 0, 0],
+                      rotation: [0, 0, 0],
+                      scale: [1, 1, 1]
+                    })
+
+                    graph.foreachNode(n => {
+                      const position = n.getData<{ x: number; y: number }>(
+                        'position'
+                      )
+                      const scale = n.getData<{ x: number; y: number }>(
+                        'dimension'
+                      )
+                      const cache = n.getData<BpAssetCache | undefined>(
+                        'assetCache'
+                      )
+                      const asset = {
+                        idAsset: cache === undefined ? -1 : cache.id,
+                        position: [position.x / 100, position.y / 100, 0],
+                        rotation: [
+                          0,
+                          0,
+                          n.getDataOrDefault<number>('rotation', 0)
+                        ],
+                        scale:
+                          cache === undefined
+                            ? [scale.x / 100, scale.y / 100, 1]
+                            : [1, 1, 1]
+                      }
+                      json.push(asset)
+                    })
+
+                    const bpJson = bp.toJSON()
+
+                    bp.foreachWallLink(l => {
+                      const p1 = l.getOriginNode().getData<V>('position')
+                      const p2 = l.getNode().getData<V>('position')
+                      const angle = (p2.subV(p1).angle() / (2 * Math.PI)) * 360
+                      l.getDataOrDefault<
+                        Array<{ assetId: number; xpos: number }>
+                      >('furniture', []).forEach(furniture => {
+                        const p = p1
+                          .multN(1 - furniture.xpos)
+                          .addV(p2.multN(furniture.xpos))
+                        json.push({
+                          idAsset: furniture.assetId,
+                          position: [p.x / 100, p.y / 100, 0],
+                          rotation: [0, 0, angle],
+                          scale: [1, 1, 1]
+                        })
+                      })
+                    })
+                    if (value !== null) {
+                      const v = value
+                      domtoimage
+                        .toJpeg(
+                          ((this
+                            .blueprintEditor as BlueprintEditor).getBpContainer() as BlueprintContainer)
+                            .getContainer()
+                            .getDom(),
+                          {
+                            width: 256,
+                            height: 256
+                          }
+                        )
+                        .then(res => {
+                          console.log(res)
+                          API.put(
+                            this,
+                            '/resources/ergonomio-scenes',
+                            JSON.stringify({
+                              name: value,
+                              assetsNumber: json.length,
+                              data: JSON.stringify(json),
+                              spawnX: 0,
+                              spawnY: 0,
+                              spawnZ: 0,
+                              idProject: 0,
+                              color: 0x3371ff,
+                              tags: '[]',
+                              picture: res,
+                              idProfile: 0
+                            })
+                          ).catch(reason => {
+                            console.log(reason)
+                          })
+                        })
+                    }
+                  })
+                })
+              }
+            )
+          }
+          /*
+        a.href = URL.createObjectURL(file)
+        a.download = 'blueprint.json'
+        a.click()
+        */
+        }
+      )
     )
     // const mapper = new Mapper(CAEExampleFormat1)
   }

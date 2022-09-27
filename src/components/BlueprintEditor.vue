@@ -20,10 +20,10 @@
           class="flex-grow-1"
           style="margin-bottom:5px;"
           ><v-icon style="position:absolute; left:0; margin-right:10px"
-            >mdi-door-closed</v-icon
+            >mdi-chair-rolling</v-icon
           >
           <p style="width:30px"></p>
-          Place doors
+          {{ $vuetify.lang.t('$vuetify.blueprintEditor.placeFurniture') }}
         </v-btn>
         <v-btn
           medium
@@ -35,7 +35,7 @@
             >mdi-wall</v-icon
           >
           <p style="width:30px"></p>
-          Place walls
+          {{ $vuetify.lang.t('$vuetify.blueprintEditor.placeWall') }}
         </v-btn>
         <v-btn
           medium
@@ -47,9 +47,9 @@
             >mdi-wall-fire</v-icon
           >
           <p style="width:30px"></p>
-          remove walls
+          {{ $vuetify.lang.t('$vuetify.blueprintEditor.removeWall') }}
         </v-btn>
-        <v-btn
+        <!-- <v-btn
           medium
           @click.stop="setMode('WINDOW')"
           class="flex-grow-1"
@@ -60,7 +60,7 @@
           >
           <p style="width:30px"></p>
           Place windows
-        </v-btn>
+        </v-btn> -->
       </v-btn-toggle>
     </div>
   </div>

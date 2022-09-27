@@ -1,29 +1,109 @@
 export default {
   general: {
-    openFile: 'Ouvrir un Fichier',
+    openFile: 'Ouvrir Fichier',
     import: 'Importer',
     export: 'Exporter',
-    menuLabels: 'Nom des Menus',
+    menuLabels: 'Menu labels',
     confirm: 'Confirmer',
     cancel: 'Annuler',
     open: 'Ouvrir',
     close: 'Fermer',
-    enterName: 'Entrer un Nom'
+    enterName: 'Entrer Nom',
+    enterText: 'Entrer Text',
+    inputField: 'Champ de text',
+    name: 'Nom',
+    date: 'Date',
+    download: 'Télécherger',
+    delete: 'Supprimer'
+  },
+  assetEditor: {
+    title: "Ergonom.io Editeur d'Objet",
+    description: "Outil d'édition d'objet 3D pour ergonom.io",
+    openAsset: 'Ouvrir Objet',
+    assetData: "Données de l'Objet",
+    applyTransform: 'Appliquer Transformation',
+    switchAxisMode: "Changer de mode d'Axe",
+    switchSnapMode: "Changer mode d'accrochage",
+    applyScale: "Changer l'échelle",
+    captureImage: 'Capturer une Image',
+    saveOnAPI: "Sauvegarder sur l'API"
+  },
+  blueprintEditor: {
+    title: 'Éditeur de plan',
+    description:
+      "Outil pour l'édition de plan d'usine et d'export en scene ergonom.io",
+    openFile: 'Ouvrir Fichier',
+    defineScale: 'Définir Échelle',
+    defineScalePlaceholder: 'entrer la distance de référence (en mètre) :',
+    exportGLTF: 'Exporter GLTF',
+    saveBlueprint: 'Sauvegarder Plan',
+    saveScene: 'Sauvegarder Scene',
+    selectFurniture: 'Sélectionner Fourniture',
+    placeFurniture: 'Placer Fourniture',
+    placeWall: 'Placer Mur',
+    removeWall: 'Supprimer Mur'
+  },
+  constraintAnalysis: {
+    title: 'Analyse de Contradiction',
+    description: "Outil d'analyse de contradictions par un expert",
+    openFile: 'Ouvrir Fichier',
+    saveShape: 'Sauvegarder Disposition',
+    loadShape: 'Charger Disposition',
+    layouts: 'Dispositions',
+    downloadImage: 'Télécharger Image',
+    defaultLayout: 'Disposition par défaut',
+    verticalHierarchy: 'Hiérarchie Verticale',
+    horizontalHierarchy: 'Hiérarchie Horizontale',
+    circle: 'Cercle',
+    horizontalOrdering: 'Arrangement Horizontale'
+  },
+  selectPopUp: {
+    selectItem: 'Sélectionner Item'
+  },
+  behaviours: {
+    category: {
+      miscellaneous: 'Divers',
+      wall: 'Mur'
+    },
+    walldoor: {
+      name: 'Porte',
+      fields: {
+        width: 'Largeur',
+        top: 'Sommet'
+      }
+    },
+    wallwindow: {
+      name: 'Fenêtre',
+      fields: {
+        width: 'Largeur',
+        top: 'Sommet',
+        bottom: 'Bas'
+      }
+    }
   },
   routingAnalysis: {
-    saveRoutingGraph: 'Save Routing Graph',
-    showHideFeedbacklink: 'Show/Hide Feedback Link',
-    showHideTransitiveLink: 'Show/Hide Transitive Link',
-    levelLayout: 'Level Layout',
-    clusteringPartMachine: 'Clustering Part/Machine',
-    clusteringMachineMachine: 'Clustering Machine/Machine',
-    showMatrix: 'Show Matrix',
-    defaultRoutingGraphName: 'unnamed routing graph',
-    importFileType: 'Import File Type',
-    routingFile: 'Routing File',
-    partMachineMatrix: 'Routing File',
-    machineMachineMatrix: 'Routing File',
-    clustering: 'Clustering'
+    title: 'Analyse de Gamme',
+    description:
+      'Analyse de gamme utilisant des opérations algorithmique de gestion de graphe',
+    saveRoutingGraph: 'Sauvegarder la Gamme',
+    showHideFeedbacklink: 'Affcher/Masquer Retour Arrière',
+    showHideTransitiveLink: 'Affcher/Masquer Liens Transitifs',
+    levelLayout: 'Disposition par Niveau',
+    clusteringPartMachine: 'Classification Article/Poste',
+    clusteringMachineMachine: 'Classification Poste/Poste',
+    showMatrix: 'Afficher Matrice',
+    defaultRoutingGraphName: 'gamme sans nom',
+    importFileType: 'Type de fichier à importer',
+    exportFileType: 'Type de fichier à exporter',
+    routingFile: 'Fichier de Gamme',
+    partMachineMatrix: 'Matrice Article/Poste',
+    machineMachineMatrix: 'Matrice Poste/Poste',
+    machineOrderMatrix: "Order Matrice d'ordre sur les postes",
+    clustering: 'Classification',
+    alpha: 'Alpha',
+    interclassRatio: 'Taux Interclasse (%)',
+    nbClass: 'Nombre de classes',
+    matrixType: 'Type de Matrice'
   },
   gestureAnalysis: {
     gestureAnalysis: 'Analyse des gestes',
@@ -119,6 +199,7 @@ export default {
   },
   mainMenu: {
     groups: 'Groupes',
+    files: 'Fichiers',
     dynamicsObjects: 'Objets dynamiques',
     scenes: 'Scenes',
     assetsLibrary: "Bibliothèque d'objets",

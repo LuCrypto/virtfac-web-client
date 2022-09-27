@@ -287,7 +287,7 @@ export default class RoutingAnalysisComponent extends Vue {
         (this.$refs.selectPopUp as SelectPopUp).open(
           [
             {
-              text: '$vuetify.routingAnalysis.importFileType',
+              text: '$vuetify.routingAnalysis.exportFileType',
               value: 'txt',
               align: 'left',
               sortable: false,
@@ -683,7 +683,7 @@ export default class RoutingAnalysisComponent extends Vue {
           (this.$refs.selectPopUp as SelectPopUp).open(
             [
               {
-                text: '$vuetify.routingAnalysis.importFileType',
+                text: '$vuetify.routingAnalysis.matrixType',
                 value: 'txt',
                 align: 'left',
                 sortable: false,
