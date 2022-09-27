@@ -53,8 +53,12 @@ export class BpWallNode {
     this.collider.getDom().onmousedown = e => {
       e.preventDefault()
       if (this.container.getMode() === 'WALL') {
-        if (e.button === 2) this.container.moveNodeMode(this.getNode())
-        else this.container.onMouseDown(e)
+        if (e.button === 2) {
+          this.container.moveNodeMode(
+            this.getNode(),
+            this.container.getBlueprint().getGraph()
+          )
+        } else this.container.onMouseDown(e)
       }
     }
     // exit move node mode

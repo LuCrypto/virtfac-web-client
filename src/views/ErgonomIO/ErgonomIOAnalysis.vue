@@ -239,7 +239,8 @@ import ModelViewer2 from '@/components/ModelViewer2.vue'
 import OpenFile, { FileProcessing } from '@/components/OpenFile.vue'
 import { APIFile } from '@/utils/models'
 import * as THREE from 'three'
-import RULA, { RULA_LABELS } from '@/utils/rula'
+import RULA, { RULA_LABELS, GET_SCORE_PARAMS_BY_BONE_NAME } from '@/utils/rula'
+import Unreal from '@/utils/unreal'
 
 import PopUp from '@/components/PopUp.vue'
 import GraphChart from '@/components/charts/graphChart.vue'
@@ -289,6 +290,35 @@ class DataFrame {
   }
 }
 
+class BoneTransform {
+  boneName = ''
+  location: number[] = [0, 0, 0]
+  rotation: number[] = [0, 0, 0]
+  scale: number[] = [1, 1, 1]
+}
+class RULAFrame {
+  shoulderL = 0
+  shoulderR = 0
+  elbowL = 0
+  elbowR = 0
+  spine = 0
+  neck = 0
+  handL = 0
+  handR = 0
+  rulaScore = 0
+  skeletPose: BoneTransform[] = []
+}
+
+class UnrealSend {
+  action = ''
+  data = null
+
+  constructor (action: string, data: any) {
+    this.action = action
+    this.data = data
+  }
+}
+
 interface SkeletonUtilsModule {
   retargetClip: (
     target: THREE.Skeleton | THREE.Object3D,
@@ -325,6 +355,144 @@ export default class AvatarAnimationComponent extends Vue {
   menuItemList: MenuItem[] = []
   viewer: ModelViewer2 | null = null
   animationValue = 0
+
+  // Unreal skeletton bones names
+  UnrealBoneNames = [
+    'root002',
+    'pelvis',
+    'spine_01',
+    'spine_02',
+    'spine_03',
+    'clavicle_l',
+    'upperarm_l',
+    'lowerarm_l',
+    'hand_l',
+    'index_01_l',
+    'index_02_l',
+    'index_03_l',
+    'middle_01_l',
+    'middle_02_l',
+    'middle_03_l',
+    'pinky_01_l',
+    'pinky_02_l',
+    'pinky_03_l',
+    'ring_01_l',
+    'ring_02_l',
+    'ring_03_l',
+    'thumb_01_l',
+    'thumb_02_l',
+    'thumb_03_l',
+    'clavicle_r',
+    'upperarm_r',
+    'lowerarm_r',
+    'hand_r',
+    'index_01_r',
+    'index_02_r',
+    'index_03_r',
+    'middle_01_r',
+    'middle_02_r',
+    'middle_03_r',
+    'pinky_01_r',
+    'pinky_02_r',
+    'pinky_03_r',
+    'ring_01_r',
+    'ring_02_r',
+    'ring_03_r',
+    'thumb_01_r',
+    'thumb_02_r',
+    'thumb_03_r',
+    'neck_01',
+    'head',
+    'foot_l',
+    'ball_l',
+    'thigh_l',
+    'calf_l',
+    'foot_r',
+    'ball_r',
+    'thigh_r',
+    'calf_r',
+    'lowerarm_twist_01_r',
+    'lowerarm_twist_01_l',
+    'upperarm_twist_01_r',
+    'upperarm_twist_01_l',
+    'calf_twist_01_l',
+    'calf_twist_01_r',
+    'thigh_twist_01_l',
+    'thigh_twist_01_r',
+    'ik_foot_root',
+    'ik_foot_l',
+    'ik_foot_r',
+    'ik_hand_root',
+    'ik_hand_gun',
+    'ik_hand_l',
+    'ik_hand_r'
+  ]
+
+  axisNeuronBonesNames = [
+    'Hips',
+    'RightUpLeg',
+    'RightLeg',
+    'RightFoot',
+    'RightToeBase',
+    'LeftUpLeg',
+    'LeftLeg',
+    'LeftFoot',
+    'LeftToeBase',
+    'Spine',
+    'Spine1',
+    'Spine2',
+    'Spine3',
+    'Neck',
+    'Head',
+    'RightShoulder',
+    'RightArm',
+    'RightForeArm',
+    'RightHand',
+    'RightHandThumb1',
+    'RightHandThumb2',
+    'RightHandThumb3',
+    'RightHandThumb4',
+    'RightInHandIndex',
+    'RightHandIndex1',
+    'RightHandIndex2',
+    'RightHandIndex3',
+    'RightInHandMiddle',
+    'RightHandMiddle1',
+    'RightHandMiddle2',
+    'RightHandMiddle3',
+    'RightInHandRing',
+    'RightHandRing1',
+    'RightHandRing2',
+    'RightHandRing3',
+    'RightInHandPinky',
+    'RightHandPinky1',
+    'RightHandPinky2',
+    'RightHandPinky3',
+    'LeftShoulder',
+    'LeftArm',
+    'LeftForeArm',
+    'LeftHand',
+    'LeftHandThumb1',
+    'LeftHandThumb2',
+    'LeftHandThumb3',
+    'LeftHandThumb4',
+    'LeftInHandIndex',
+    'LeftHandIndex1',
+    'LeftHandIndex2',
+    'LeftHandIndex3',
+    'LeftInHandMiddle',
+    'LeftHandMiddle1',
+    'LeftHandMiddle2',
+    'LeftHandMiddle3',
+    'LeftInHandRing',
+    'LeftHandRing1',
+    'LeftHandRing2',
+    'LeftHandRing3',
+    'LeftInHandPinky',
+    'LeftHandPinky1',
+    'LeftHandPinky2',
+    'LeftHandPinky3'
+  ]
 
   // Time controlers
   animationTime = 0
@@ -902,6 +1070,8 @@ export default class AvatarAnimationComponent extends Vue {
     this.gltfMixer.setTime(this.animationTime)
     this.bvhMixer.setTime(this.animationTime)
 
+    if (Unreal.check()) this.sendUnrealFrame()
+
     if (!this.rula) return
 
     const frame = Math.floor(this.animationTime * 30) % this.data.length
@@ -933,6 +1103,57 @@ export default class AvatarAnimationComponent extends Vue {
       console.error('Unable to open selected file.')
       this.$root.$emit('bottom-message', 'Unable to open selected file.')
     }
+  }
+
+  sendUnrealFrame () {
+    const boneFrame: RULAFrame = new RULAFrame()
+    boneFrame.neck =
+      (this.rula?.compute().get('NECK') || 0) /
+      GET_SCORE_PARAMS_BY_BONE_NAME.Head.max
+    boneFrame.shoulderR =
+      (this.rula?.compute().get('RIGHT_SHOULDER') || 0) /
+      GET_SCORE_PARAMS_BY_BONE_NAME.RightArm.max
+    boneFrame.shoulderL =
+      (this.rula?.compute().get('LEFT_SHOULDER') || 0) /
+      GET_SCORE_PARAMS_BY_BONE_NAME.LeftArm.max
+    boneFrame.handL =
+      (this.rula?.compute().get('LEFT_WRIST') || 0) /
+      GET_SCORE_PARAMS_BY_BONE_NAME.LeftHand.max
+    boneFrame.handR =
+      (this.rula?.compute().get('RIGHT_WRIST') || 0) /
+      GET_SCORE_PARAMS_BY_BONE_NAME.RightHand.max
+    boneFrame.spine =
+      (this.rula?.compute().get('TRUNK_POSTURE') || 0) /
+      GET_SCORE_PARAMS_BY_BONE_NAME.Spine.max
+    boneFrame.elbowL =
+      (this.rula?.compute().get('RIGHT_ELBOW') || 0) /
+      GET_SCORE_PARAMS_BY_BONE_NAME.LeftForeArm.max
+    boneFrame.elbowR =
+      (this.rula?.compute().get('LEFT_ELBOW') || 0) /
+      GET_SCORE_PARAMS_BY_BONE_NAME.RightForeArm.max
+    boneFrame.rulaScore = this.rula?.compute().get('FINAL_SCORE') || 0
+
+    const root = this.bvhMixer?.getRoot() as THREE.SkeletonHelper
+
+    const skeleton: BoneTransform[] = []
+
+    root.bones.forEach(child => {
+      this.axisNeuronBonesNames.forEach(element => {
+        if (child.name === element) {
+          const bone = new BoneTransform()
+          bone.boneName = element
+          bone.location = child.getWorldPosition(new THREE.Vector3()).toArray()
+          bone.rotation = child
+            .getWorldQuaternion(new THREE.Quaternion())
+            .toArray()
+
+          skeleton.push(bone)
+        }
+      })
+    })
+
+    boneFrame.skeletPose = skeleton
+    Unreal.send(new UnrealSend('rula', boneFrame))
   }
 }
 </script>

@@ -304,6 +304,41 @@ const RULA_TABLE_C = [
   [5, 5, 6, 7, 7, 7, 7]
 ]
 
+export const GET_SCORE_PARAMS_BY_BONE_NAME = {
+  Spine: {
+    label: 'TRUNK_POSTURE',
+    max: 6
+  },
+  Head: {
+    label: 'NECK',
+    max: 6
+  },
+  RightArm: {
+    label: 'RIGHT_SHOULDER',
+    max: 6
+  },
+  RightForeArm: {
+    label: 'RIGHT_ELBOW',
+    max: 3
+  },
+  RightHand: {
+    label: 'RIGHT_WRIST',
+    max: 2
+  },
+  LeftArm: {
+    label: 'LEFT_SHOULDER',
+    max: 6
+  },
+  LeftForeArm: {
+    label: 'LEFT_ELBOW',
+    max: 3
+  },
+  LeftHand: {
+    label: 'LEFT_WRIST',
+    max: 2
+  }
+}
+
 interface RULABonesSettings {
   boneName: string
   axeMarker: THREE.AxesHelper | null
@@ -747,41 +782,6 @@ export default class RULA {
     markerType: number,
     selectedMarker: THREE.AxesHelper | null
   ): void {
-    const getScoreParamsByBoneName = {
-      Spine: {
-        label: 'TRUNK_POSTURE',
-        max: 6
-      },
-      Head: {
-        label: 'NECK',
-        max: 6
-      },
-      RightArm: {
-        label: 'RIGHT_SHOULDER',
-        max: 6
-      },
-      RightForeArm: {
-        label: 'RIGHT_ELBOW',
-        max: 3
-      },
-      RightHand: {
-        label: 'RIGHT_WRIST',
-        max: 2
-      },
-      LeftArm: {
-        label: 'LEFT_SHOULDER',
-        max: 6
-      },
-      LeftForeArm: {
-        label: 'LEFT_ELBOW',
-        max: 3
-      },
-      LeftHand: {
-        label: 'LEFT_WRIST',
-        max: 2
-      }
-    }
-
     this.boneSettings.forEach(setting => {
       if (!setting.pointMarker || !setting.axeMarker) return
 
@@ -814,9 +814,9 @@ export default class RULA {
       const marker = setting.pointMarker
       if (marker instanceof THREE.Mesh) {
         const name = setting.boneName
-        if (name in getScoreParamsByBoneName) {
-          const key = name as keyof typeof getScoreParamsByBoneName
-          const scoreParams = getScoreParamsByBoneName[key]
+        if (name in GET_SCORE_PARAMS_BY_BONE_NAME) {
+          const key = name as keyof typeof GET_SCORE_PARAMS_BY_BONE_NAME
+          const scoreParams = GET_SCORE_PARAMS_BY_BONE_NAME[key]
 
           if (markerValues.has(scoreParams.label)) {
             const value = markerValues.get(scoreParams.label) as number

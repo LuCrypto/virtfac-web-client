@@ -73,6 +73,12 @@ import { Graph } from '@/utils/graph/graph'
 import { BlueprintContainer } from '@/utils/routingAnalysis/blueprintContainer'
 
 import Component from 'vue-class-component'
+import { APIAsset } from '@/utils/models'
+import { BpAPICache, BpAssetCache } from '@/utils/routingAnalysis/bp_APICache'
+import PopUp from './PopUp.vue'
+import AssetLibrary from './AssetLibrary.vue'
+import { Prop } from 'vue-property-decorator'
+import { Node } from '@/utils/graph/node'
 
 @Component({
   name: 'BlueprintEditor',
@@ -85,6 +91,10 @@ import Component from 'vue-class-component'
 // @group COMPONENTS
 // Content of the DrawingShopComponent
 export default class BlueprintEditor extends Vue {
+  @Prop({ default: () => null }) private selectAsset!: {
+    (node: Node): void
+  } | null
+
   private container: Element | null = null
   private mode:
     | 'WALL'
@@ -102,9 +112,26 @@ export default class BlueprintEditor extends Vue {
     return this.bpContainer
   }
 
+  private _selectedFurniture: BpAssetCache | null = null
+  public get selectedFurniture (): BpAssetCache | null {
+    return this._selectedFurniture
+  }
+
+  public set selectedFurniture (value: BpAssetCache | null) {
+    this._selectedFurniture = value
+    ;(this.bpContainer as BlueprintContainer).selectedAsset = value
+  }
+
   mounted (): void {
+    BpAPICache.instance().component = this
     this.container = this.$refs.container as Element
-    this.bpContainer = new BlueprintContainer(this.container as HTMLElement)
+    if (this.selectAsset === null) throw new Error()
+    this.bpContainer = new BlueprintContainer(
+      this.container as HTMLElement,
+      node => {
+        if (this.selectAsset !== null) this.selectAsset(node)
+      }
+    )
     this.bpContainer.onModeChanged.addListener(mode => {
       this.mode = mode
     })

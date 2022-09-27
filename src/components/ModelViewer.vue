@@ -18,9 +18,13 @@
   <v-container
     fluid
     ref="mainContainer"
-    style="height:100%"
+    style="height:100%;"
     class="pa-0 ma-0 d-flex flex-row flex-grow-1"
   >
+    <PopUp ref="addBehaviour">
+      <SelectBehaviourComponent :onSelected="onBehaviourSelected">
+      </SelectBehaviourComponent>
+    </PopUp>
     <div
       ref="viewerContainer"
       class="viewer-3d"
@@ -67,116 +71,139 @@
     </div>
     <v-container
       ref="hierarchy"
-      style="max-width:50%; height: 100%; width:500px; right:0%; overflow-y: auto; overflow-x: hidden;"
+      style="max-width:40%; max-height: 100%; height: 100%; width:400px; right:0%; overflow-y:scroll; overflow-x: hidden; position: relative;"
       class="ma-0 pa-0 d-flex flex-column"
-      v-if="inspectorActive"
+      v-if="inspectorActive && apiAsset !== null"
     >
-      <!-- Hierarchy -->
-      <v-card height="50%" width="100%" class="mb-12 flex-grow-1">
-        <v-toolbar dense color="primary" flat>
+      <v-container
+        style="position: absolute;"
+        class="ma-0 pa-0 d-flex flex-column"
+      >
+        <!-- Hierarchy -->
+        <v-card
+          height="50%"
+          width="100%"
+          flat
+          style="max-height:100%; min-height: 300px"
+          class="flex-grow-1"
+        >
+          <v-toolbar dense color="primary" flat>
+            <v-toolbar-title dense class="black--text">
+              <v-icon left v-text="'mdi-file-tree'"></v-icon>
+              Hierarchy
+            </v-toolbar-title>
+          </v-toolbar>
+
+          <v-card class="fill-height pt-2" flat>
+            <tree-explorer
+              ref="hierarchyTree"
+              @onMouseEnterItem="
+                item => {
+                  setHighlightObj(item, true)
+                }
+              "
+              @onMouseLeaveItem="
+                item => {
+                  setHighlightObj(item, false)
+                }
+              "
+              @onItemSelected="selectItem"
+              @mounted="refreshSceneHierarchy"
+            ></tree-explorer>
+          </v-card>
+        </v-card>
+
+        <!-- Transform -->
+        <!-- <v-card width="100%" flat> -->
+        <v-toolbar dense color="primary" flat style="flex-grow: unset;">
           <v-toolbar-title dense class="black--text">
-            <v-icon left v-text="'mdi-file-tree'"></v-icon>
-            Hierarchy
+            <v-icon left v-text="'mdi-axis'"></v-icon>
+            Transform
           </v-toolbar-title>
         </v-toolbar>
 
-        <v-card class="fill-height pt-2" flat>
-          <tree-explorer
-            ref="hierarchyTree"
-            @onMouseEnterItem="
-              item => {
-                setHighlightObj(item, true)
-              }
-            "
-            @onMouseLeaveItem="
-              item => {
-                setHighlightObj(item, false)
-              }
-            "
-            @onItemSelected="selectItem"
-            @mounted="refreshSceneHierarchy"
-          ></tree-explorer>
+        <v-card flat>
+          <v-simple-table dense
+            ><template v-slot:default>
+              <thead>
+                <tr>
+                  <th class="text-left">
+                    Name
+                  </th>
+                  <th class="text-left" style="color:#E74C3C">
+                    X
+                  </th>
+                  <th class="text-left" style="color:#27AE60">
+                    Y
+                  </th>
+                  <th class="text-left" style="color:#3498DB">
+                    Z
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="item in transformMatrix" v-bind:key="item.name">
+                  <td>{{ item.name }}</td>
+                  <td>
+                    <v-text-field
+                      v-model="item.x"
+                      dense
+                      single-line
+                      type="number"
+                      @change="applyTransformMatrix"
+                      @mouseup="applyTransformMatrix"
+                    ></v-text-field>
+                  </td>
+                  <td>
+                    <v-text-field
+                      v-model="item.y"
+                      dense
+                      single-line
+                      type="number"
+                      @change="applyTransformMatrix"
+                      @mouseup="applyTransformMatrix"
+                    ></v-text-field>
+                  </td>
+                  <td>
+                    <v-text-field
+                      v-model="item.z"
+                      dense
+                      single-line
+                      type="number"
+                      @change="applyTransformMatrix"
+                      @mouseup="applyTransformMatrix"
+                    ></v-text-field>
+                  </td>
+                </tr>
+              </tbody>
+            </template>
+          </v-simple-table>
         </v-card>
-      </v-card>
-
-      <!-- Transform -->
-      <!-- <v-card width="100%" flat> -->
-      <v-toolbar dense color="primary" flat style="flex-grow: unset;">
-        <v-toolbar-title dense class="black--text">
-          <v-icon left v-text="'mdi-axis'"></v-icon>
-          Transform
-        </v-toolbar-title>
-      </v-toolbar>
-
-      <v-card flat>
-        <v-simple-table dense
-          ><template v-slot:default>
-            <thead>
-              <tr>
-                <th class="text-left">
-                  Name
-                </th>
-                <th class="text-left" style="color:#E74C3C">
-                  X
-                </th>
-                <th class="text-left" style="color:#27AE60">
-                  Y
-                </th>
-                <th class="text-left" style="color:#3498DB">
-                  Z
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="item in transformMatrix" v-bind:key="item.name">
-                <td>{{ item.name }}</td>
-                <td>
-                  <v-text-field
-                    v-model="item.x"
-                    dense
-                    single-line
-                    type="number"
-                    @change="applyTransformMatrix"
-                    @mouseup="applyTransformMatrix"
-                  ></v-text-field>
-                </td>
-                <td>
-                  <v-text-field
-                    v-model="item.y"
-                    dense
-                    single-line
-                    type="number"
-                    @change="applyTransformMatrix"
-                    @mouseup="applyTransformMatrix"
-                  ></v-text-field>
-                </td>
-                <td>
-                  <v-text-field
-                    v-model="item.z"
-                    dense
-                    single-line
-                    type="number"
-                    @change="applyTransformMatrix"
-                    @mouseup="applyTransformMatrix"
-                  ></v-text-field>
-                </td>
-              </tr>
-            </tbody>
-          </template>
-        </v-simple-table>
-      </v-card>
-      <v-btn dense color="primary" class="ma-2 black--text d-flex flex-row">
-        <v-toolbar-title dense class="black--text" style="width:100%">
-          <v-icon left v-text="'mdi-plus'"></v-icon>
-        </v-toolbar-title>
-      </v-btn>
-      <!-- </v-card> -->
+        <v-container
+          v-for="b in behaviours"
+          v-bind:key="b.name"
+          class="ma-0 pa-0"
+        >
+          <BehaviourComponent :behaviourInstance="b"> </BehaviourComponent>
+        </v-container>
+        <v-btn
+          dense
+          color="primary"
+          class="ma-2 black--text d-flex flex-row"
+          @click="openSelectBehaviour()"
+        >
+          <v-toolbar-title dense class="black--text" style="width:100%">
+            <v-icon left v-text="'mdi-plus'"></v-icon>
+          </v-toolbar-title>
+        </v-btn>
+        <!-- </v-card> -->
+      </v-container>
     </v-container>
     <v-btn
       fab
       x-small
       elevation="0"
-      v-if="displayInspector"
+      v-if="displayInspector && apiAsset !== null"
       class="ma-1 black--text"
       style="position:absolute; top:0px; right:33px"
       color="primary"
@@ -217,6 +244,11 @@ import TreeExplorer from '@/components/TreeExplorer.vue'
 import ModelViewerStats from '@/components/ModelViewerStats.vue'
 import { UndoManager, Action } from '@/utils/undoManager'
 import ThreeUtils from '@/utils/threeUtils'
+import { Behaviour, BehaviourInstance } from '@/utils/assets/behaviour'
+import BehaviourComponent from './asset/BehaviourComponent.vue'
+import PopUp from './PopUp.vue'
+import SelectBehaviourComponent from './asset/SelectBehaviourComponent.vue'
+import { APIAsset } from '@/utils/models'
 
 // import AVATAR from '@/utils/avatar'
 
@@ -224,7 +256,10 @@ import ThreeUtils from '@/utils/threeUtils'
   name: 'ModelViewer',
   components: {
     TreeExplorer,
-    ModelViewerStats
+    ModelViewerStats,
+    BehaviourComponent,
+    PopUp,
+    SelectBehaviourComponent
   }
 })
 // @vuese
@@ -240,6 +275,19 @@ export default class ModelViewer extends Vue {
   undoManager = new UndoManager()
 
   private inspectorActive = false
+
+  private apiAsset: APIAsset | null = null
+
+  public setAPIAsset (asset: APIAsset): void {
+    this.apiAsset = asset
+    this.behaviours = JSON.parse(
+      this.apiAsset.behaviours
+    ) as BehaviourInstance[]
+
+    if (this.behaviours.push === undefined) {
+      this.behaviours = new Array<BehaviourInstance>()
+    }
+  }
 
   // @vuese
   // Switch active state of the inspector
@@ -297,6 +345,8 @@ export default class ModelViewer extends Vue {
   controls: OrbitControls
   mixer: THREE.AnimationMixer | null = null
   clock = new THREE.Clock()
+
+  private behaviours: Array<BehaviourInstance> = new Array<BehaviourInstance>()
 
   private userObjects = new Set<Group>()
   private boxHelpers = new Map<Group, BoxHelper>()
@@ -659,6 +709,18 @@ export default class ModelViewer extends Vue {
     this.fov = 75
 
     this.undoManager.bind()
+
+    /*
+    this.behaviours = new Array<BehaviourInstance>(
+      new BehaviourInstance('Wall/Door', { width: 150, top: 50 }),
+      new BehaviourInstance('Test', {
+        string: 'hello',
+        number: 5,
+        boolean: false,
+        object: undefined
+      })
+    )
+    */
     // Update scene
     this.updateSize()
     this.loop()
@@ -771,6 +833,7 @@ export default class ModelViewer extends Vue {
       ThreeUtils.getSideCamera(object)
     )
     */
+    /*
     const cam = ThreeUtils.getSideCamera(object)
 
     this.scene.add(
@@ -781,6 +844,7 @@ export default class ModelViewer extends Vue {
     // helper.update()
     helper.matrix = cam.matrix
     this.scene.add(helper)
+    */
   }
 
   // @vuese
@@ -956,6 +1020,21 @@ export default class ModelViewer extends Vue {
     }
   }
 
+  openSelectBehaviour () {
+    (this.$refs.addBehaviour as PopUp).open()
+  }
+
+  onBehaviourSelected (behaviour: Behaviour) {
+    (this.$refs.addBehaviour as PopUp).close()
+    console.log(this.behaviours, this.behaviours.push, typeof this.behaviours)
+    this.behaviours.push(
+      behaviour.createBehaviourInstance(this.apiAsset as APIAsset)
+    )
+  }
+
+  getBehaviours (): BehaviourInstance[] {
+    return this.behaviours
+  }
   /*
   A regarder pour le mappage du BVH sur un modèle :
   https://rawcdn.githack.com/mrdoob/three.js/r105/examples/webgl_loader_sea3d_bvh_retarget.html

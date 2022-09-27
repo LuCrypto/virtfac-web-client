@@ -14,11 +14,16 @@ export class BpWallFurniture {
 
   public constructor (xpos: number, assetId: number) {
     this.xpos = xpos
+    this.assetId = assetId
   }
 }
 
 export class Blueprint extends MetaData {
   private wallGraph: Graph
+
+  public getGraph (): Graph {
+    return this.wallGraph
+  }
 
   public onWallNodeAdded (): LocalEvent<{ graph: Graph; node: Node }> {
     return this.wallGraph.onNodeAdded()
@@ -52,6 +57,10 @@ export class Blueprint extends MetaData {
 
   public foreachWallNode (func: { (node: Node): void }): void {
     this.wallGraph.foreachNode(func)
+  }
+
+  public foreachWallLink (func: { (link: Link): void }): void {
+    this.wallGraph.foreachLink(func)
   }
 
   private nextId = 0
@@ -143,6 +152,7 @@ export class Blueprint extends MetaData {
   public toJSON (): GraphJSON {
     this.wallGraph.nodeFields.set('position', 'Vec2')
     this.wallGraph.graphFields.set('scale', 'number')
+    this.wallGraph.setData<number>('scale', this.getData<number>('scale'))
     this.wallGraph.linkFields.set(
       'furniture',
       '{ xpos: number, assetId: number }[]'
@@ -176,6 +186,7 @@ export class Blueprint extends MetaData {
       }
     })
     this.nextId = maxId
+    this.setData<number>('scale', this.wallGraph.getDataOrDefault<number>('scale', 1))
   }
 
   public constructor () {

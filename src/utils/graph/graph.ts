@@ -172,6 +172,7 @@ export class Graph extends MetaData {
     const graphData = {} as Record<string, unknown>
 
     this.graphFields.forEach((value, key) => {
+      // console.log(value, key, this)
       graphData[key] = this.getData(key)
     })
 
@@ -240,6 +241,7 @@ export class Graph extends MetaData {
       Object.entries(types).forEach(entry => {
         let caster: { (json: unknown): unknown } | undefined
         switch (entry[1]) {
+          case '{x:number, y:number}':
           case 'Vec2':
             caster = (json: unknown) => {
               const vals = json as { x: number; y: number }
@@ -273,6 +275,16 @@ export class Graph extends MetaData {
       metadata.setData(key, v)
     }
 
+    Object.entries(object.graphData as Record<string, unknown>).forEach(
+      metaData => {
+        setMetaData(
+          graphFieldsCasterMap,
+          this as Graph,
+          metaData[0],
+          metaData[1]
+        )
+      }
+    )
     const nodeMap = new Map<string, Node>()
     this.foreachNode(node => {
       nodeMap.set('' + node.getData<unknown>(object.nodeIdField), node)
@@ -321,8 +333,6 @@ export class Graph extends MetaData {
         )
       })
     })
-
-    console.log(this)
   }
   // #endregion
   ///

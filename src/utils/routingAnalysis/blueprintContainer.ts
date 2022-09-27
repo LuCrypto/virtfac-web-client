@@ -12,6 +12,9 @@ import { LocalEvent } from '../graph/localEvent'
 import { Session } from '../session'
 import V from '@/utils/vector'
 import { APIAsset, APIBoundingBox } from '../models'
+import { BpAssetCache } from './bp_APICache'
+import { Graph } from '@/utils/graph/graph'
+import { html } from 'd3'
 
 class Grid {
   private center: V
@@ -122,8 +125,14 @@ export class BlueprintContainer {
     return this.mode
   }
 
-  public getSelectedAsset (): BlueprintAPIAsset|null {
-    return this.selectedAsset
+  private askMachineAsset: { (node: Node): void }
+
+  public get selectedAsset (): BpAssetCache | null {
+    return this._selectedAsset
+  }
+
+  public set selectedAsset (value: BpAssetCache | null) {
+    this._selectedAsset = value
   }
 
   public onModeChanged = new LocalEvent<
@@ -153,7 +162,7 @@ export class BlueprintContainer {
     this.onModeChanged.notify(this.mode)
   }
 
-  public selectedAsset: BlueprintAPIAsset | null = null
+  public _selectedAsset: BpAssetCache | null = null
 
   // #region SETTINGS
   /**
@@ -202,7 +211,6 @@ export class BlueprintContainer {
       })
     }
     this.updateTheme()
-    console.log('update theme')
   }
 
   /**
@@ -238,6 +246,10 @@ export class BlueprintContainer {
    */
   private svgFurnitureLayer: NvEl
 
+  private svgRoutingLayer: NvEl
+
+  private svgRoutingLinkLayer: NvEl
+
   /**
    * html components for the global scale displayer |--------|
    */
@@ -255,6 +267,16 @@ export class BlueprintContainer {
 
   public getBlueprint (): Blueprint {
     return this.bp
+  }
+
+  public getContainer (): NvEl {
+    return this.container
+  }
+
+  private _routingGraph: Graph
+
+  public get routingGraph (): Graph {
+    return this._routingGraph
   }
 
   /**
@@ -318,8 +340,12 @@ export class BlueprintContainer {
     }
   }
 
-  public constructor (parentNode: HTMLElement) {
+  public constructor (
+    parentNode: HTMLElement,
+    selectMachineAsset: { (node: Node): void }
+  ) {
     // init UI elements
+    this.askMachineAsset = selectMachineAsset
     this.theme = new BpTheme()
     this.bp = new Blueprint()
     this.parentNode = parentNode
@@ -328,6 +354,8 @@ export class BlueprintContainer {
     this.svgNodeLayer = new NvEl('svg')
     this.svgLinkLayer = new NvEl('svg')
     this.svgFurnitureLayer = new NvEl('svg')
+    this.svgRoutingLayer = new NvEl('svg')
+    this.svgRoutingLinkLayer = new NvEl('svg')
     this.img = new NvEl('img')
     this.content.appendChild(this.img)
     parentNode.appendChild(this.content.getDom())
@@ -335,6 +363,8 @@ export class BlueprintContainer {
     parentNode.appendChild(this.svgLinkLayer.getDom())
     parentNode.appendChild(this.svgNodeLayer.getDom())
     parentNode.appendChild(this.svgFurnitureLayer.getDom())
+    parentNode.appendChild(this.svgRoutingLinkLayer.getDom())
+    parentNode.appendChild(this.svgRoutingLayer.getDom())
     this.updateTransform()
     this.defaultMode()
     this.container.getDom().onwheel = e => this.zoom(e)
@@ -359,11 +389,14 @@ export class BlueprintContainer {
       width: '100px',
       height: '100px',
       'transform-origin': '0px 0px',
-      overflow: 'visible'
+      overflow: 'visible',
+      'pointer-events': 'none'
     }
     this.svgLinkLayer.setStyle(layerStyle)
     this.svgNodeLayer.setStyle(layerStyle)
     this.svgFurnitureLayer.setStyle(layerStyle)
+    this.svgRoutingLayer.setStyle(layerStyle)
+    this.svgRoutingLinkLayer.setStyle(layerStyle)
 
     // init inputs listeners
     this.container.getDom().oncontextmenu = e => {
@@ -456,6 +489,282 @@ export class BlueprintContainer {
       this.wallLinkMap.delete(arg.link)
     })
 
+    this._routingGraph = new Graph()
+
+    interface RoutingNode {
+      rect: NvEl
+      text: NvEl
+      move: NvEl
+      edit: NvEl
+      sprite: NvEl
+      rotate: NvEl
+    }
+
+    this._routingGraph
+      .onNodeDataChanged()
+      .addMappedListener('assetCache', arg => {
+        const node = arg.node
+        const asset = node.getData<BpAssetCache>('assetCache')
+        node.setData('dimension', {
+          x:
+            (asset.boundingBox.maxCorner.x - asset.boundingBox.minCorner.x) *
+            100,
+          y:
+            (asset.boundingBox.maxCorner.z - asset.boundingBox.minCorner.z) *
+            100
+        })
+        const display = node.getData<RoutingNode>('blueprintDisplayer')
+        const sprite = display.sprite.getDom() as SVGImageElement
+        sprite.setAttribute('href', asset.layoutSprite)
+        // sprite.setAttribute('width', )
+      })
+
+    this._routingGraph.onLinkAdded().addListener(arg => {
+      const path = new NvEl('path')
+      path.setStyle({
+        'pointer-events': 'none',
+        opacity: '0.5',
+        stroke: 'currentColor',
+        'stroke-width': '2'
+      })
+      const refresh = () => {
+        const p1 = arg.link
+          .getOriginNode()
+          .getData<{ x: number; y: number }>('position')
+        const p2 = arg.link
+          .getNode()
+          .getData<{ x: number; y: number }>('position')
+        path
+          .getDom()
+          .setAttribute(
+            'd',
+            `M${new V(p1.x, p1.y).toString()} L${new V(p2.x, p2.y).toString()}`
+          )
+      }
+      refresh()
+      arg.link
+        .getNode()
+        .onDataChanged()
+        .addMappedListener('position', refresh)
+      arg.link
+        .getOriginNode()
+        .onDataChanged()
+        .addMappedListener('position', refresh)
+      arg.link
+        .getNode()
+        .onDataChanged()
+        .addMappedListener('position', refresh)
+      this.svgRoutingLinkLayer.appendChild(path)
+    })
+    this._routingGraph.onNodeAdded().addListener(arg => {
+      const node = arg.node
+      const rect = new NvEl('rect')
+      const text = new NvEl('text')
+      const move = new NvEl('path')
+      const edit = new NvEl('path')
+      const rotate = new NvEl('path')
+      const sprite = new NvEl('image')
+      rect.setStyle({ 'pointer-events': 'none' })
+      text.setStyle({ 'pointer-events': 'none', 'user-select': 'none' })
+      sprite.setStyle({
+        'pointer-events': 'none',
+        'user-select': 'none',
+        filter: 'drop-shadow(rgba(0, 0, 0, 0.2) 0px 0px 6px)'
+      })
+      move
+        .getDom()
+        .setAttribute(
+          'd',
+          'M13,6V11H18V7.75L22.25,12L18,16.25V13H13V18H16.25L12,22.25L7.75,18H11V13H6V16.25L1.75,12L6,7.75V11H11V6H7.75L12,1.75L16.25,6H13Z'
+        )
+      edit
+        .getDom()
+        .setAttribute(
+          'd',
+          'M21,16.5C21,16.88 20.79,17.21 20.47,17.38L12.57,21.82C12.41,21.94 12.21,22 12,22C11.79,22 11.59,21.94 11.43,21.82L3.53,17.38C3.21,17.21 3,16.88 3,16.5V7.5C3,7.12 3.21,6.79 3.53,6.62L11.43,2.18C11.59,2.06 11.79,2 12,2C12.21,2 12.41,2.06 12.57,2.18L20.47,6.62C20.79,6.79 21,7.12 21,7.5V16.5M12,4.15L6.04,7.5L12,10.85L17.96,7.5L12,4.15Z'
+        )
+      rotate
+        .getDom()
+        .setAttribute(
+          'd',
+          'M7.47,21.5C4.2,19.93 1.86,16.76 1.5,13H0C0.5,19.16 5.66,24 11.95,24C12.18,24 12.39,24 12.61,23.97L8.8,20.15L7.47,21.5M12.05,0C11.82,0 11.61,0 11.39,0.04L15.2,3.85L16.53,2.5C19.8,4.07 22.14,7.24 22.5,11H24C23.5,4.84 18.34,0 12.05,0M16,14H18V8C18,6.89 17.1,6 16,6H10V8H16V14M8,16V4H6V6H4V8H6V16A2,2 0 0,0 8,18H16V20H18V18H20V16H8Z'
+        )
+      move.setStyle({ fill: 'currentColor', 'pointer-events': 'bounding-box' })
+      edit.setStyle({ fill: 'currentColor', 'pointer-events': 'bounding-box' })
+      rotate.setStyle({
+        fill: 'currentColor',
+        'pointer-events': 'bounding-box'
+      })
+      text.setStyle({ fill: 'currentColor' })
+      move.getDom().onmousedown = e => {
+        if (e.button === 2) {
+          this.moveNodeMode(node, this._routingGraph)
+        }
+        e.preventDefault()
+        // move.setStyle({ 'pointer-events': 'none' })
+      }
+      ;[move, edit, rotate].forEach(elem => {
+        elem.getDom().onmouseenter = e => {
+          elem.setStyle({ fill: '#f5a406' })
+          e.preventDefault()
+        }
+        elem.getDom().onmouseleave = e => {
+          elem.setStyle({ fill: 'currentColor' })
+          e.preventDefault()
+        }
+        elem.getDom().onmousemove = e => {
+          this.onMouseMove(e)
+        }
+      })
+      move.getDom().onmouseup = e => {
+        this.onMouseUp(e)
+      }
+      edit.getDom().onmousedown = e => {
+        e.preventDefault()
+      }
+      edit.getDom().onmouseup = e => {
+        if (e.button === 0) {
+          this.askMachineAsset(node)
+
+          /* .then(res => {
+            if (res !== null) {
+              node.setData<{ x: number; y: number }>('dimension', {
+                x: res.boundingBox.maxCorner.x - res.boundingBox.minCorner.x,
+                y: res.boundingBox.maxCorner.y - res.boundingBox.minCorner.y
+              })
+            }
+          })
+          */
+        }
+      }
+      rotate.getDom().onmousedown = e => {
+        e.preventDefault()
+      }
+      rotate.getDom().onmouseup = e => {
+        node.setData<number>(
+          'rotation',
+          (node.getDataOrDefault<number>('rotation', 0) + 90) % 360
+        )
+      }
+
+      move.getDom().onmousemove = this.container.getDom().onmousemove
+      this.svgRoutingLayer.appendChild(rect, sprite, text, move, edit, rotate)
+      node.setData<RoutingNode>('blueprintDisplayer', {
+        rect: rect,
+        text: text,
+        move: move,
+        edit: edit,
+        sprite: sprite,
+        rotate: rotate
+      })
+      rect.getDom().setAttribute('stroke', 'currentColor')
+      rect.setStyle({ fill: 'none' })
+      // rect.getDom().setAttribute('fill', 'rgba(128,128,128,0.1)')
+    })
+
+    // this._routingGraph.onNodeDataChanged('')
+    const updateRoutingNode = (node: Node) => {
+      const displayer = node.getData<RoutingNode>('blueprintDisplayer')
+      const rect = displayer.rect.getDom() as SVGRectElement
+      const text = displayer.text.getDom() as SVGTextElement
+      const sprite = displayer.sprite.getDom() as SVGImageElement
+
+      const rotate = node.getDataOrDefault<number>('rotation', 0)
+      const scale = this.bp.getDataOrDefault<number>('scale', 1)
+      {
+        const v = node.getData<{ x: number; y: number } | undefined>(
+          'dimension'
+        )
+        if (v !== undefined) {
+          const val = { x: v.x * scale, y: v.y * scale }
+          rect.setAttribute('width', val.x + '')
+          rect.setAttribute('height', val.y + '')
+          sprite.setAttribute('width', val.x + '')
+          sprite.setAttribute('height', val.y + '')
+          {
+            const vec = node.getData<{ x: number; y: number } | undefined>(
+              'position'
+            )
+            if (vec !== undefined) {
+              const pos = { x: vec.x * scale, y: vec.y * scale }
+              rect.style.transformOrigin = `${val.x / 2}px ${val.y / 2}px`
+              rect.style.setProperty(
+                'transform',
+                `translate(${pos.x - val.x / 2}px, ${pos.y -
+                  val.y / 2}px) rotate(${rotate}deg)`
+              )
+              text.style.setProperty(
+                'transform',
+                `translate(${pos.x - val.x / 2}px, ${pos.y - val.y / 2}px)`
+              )
+              sprite.style.transformOrigin = `${val.x / 2}px ${val.y / 2}px`
+              sprite.style.setProperty(
+                'transform',
+                `translate(${pos.x - val.x / 2}px, ${pos.y -
+                  val.y / 2}px) rotate(${rotate}deg)`
+              )
+              displayer.move.setStyle({
+                transform: `translate(${pos.x -
+                val.x / 2 /** scale */ +
+                  2}px, ${pos.y - val.y / 2 /** scale */ + 2}px)`
+              })
+              displayer.edit.setStyle({
+                transform: `translate(${pos.x -
+                val.x / 2 /** scale */ +
+                  26}px, ${pos.y - val.y / 2 /** scale */ + 2}px)`
+              })
+              displayer.rotate.setStyle({
+                transform: `translate(${pos.x -
+                val.x / 2 /** scale */ +
+                  2}px, ${pos.y - val.y / 2 /** scale */ + 26}px)`
+              })
+            }
+          }
+        }
+      }
+      {
+        const color = node.getData<string | undefined>('color')
+        if (color !== undefined) {
+          rect.style.setProperty('fill', color + '88')
+        }
+      }
+      text.innerHTML = node.getData<string>('name')
+    }
+
+    this.bp.onDataChanged().addMappedListener('scale', arg => {
+      this._routingGraph.foreachNode(n => updateRoutingNode(n))
+    })
+    this._routingGraph
+      .onNodeDataChanged()
+      .addMappedListener('dimension', arg => {
+        /*
+        const rect = arg.node
+          .getData<NvEl>('blueprintDisplayer')
+          .getDom() as SVGRectElement
+        const val = arg.value as { x: number; y: number }
+        rect.setAttribute('width', val.x + '')
+        rect.setAttribute('height', val.y + '')
+        */
+        updateRoutingNode(arg.node)
+      })
+
+    this._routingGraph
+      .onNodeDataChanged()
+      .addMappedListener('position', arg => {
+        /*
+        const rect = arg.node
+          .getData<NvEl>('blueprintDisplayer')
+          .getDom() as SVGRectElement
+        const vec = arg.value as { x: number; y: number }
+        rect.style.setProperty('transform', `translate(${vec.x}px, ${vec.y}px)`)
+        */
+        updateRoutingNode(arg.node)
+      })
+    this._routingGraph
+      .onNodeDataChanged()
+      .addMappedListener('rotation', arg => {
+        updateRoutingNode(arg.node)
+      })
     // alignement snapping display
     this.snapXLine = new NvEl('path')
     this.snapYLine = new NvEl('path')
@@ -508,6 +817,7 @@ export class BlueprintContainer {
       this.scaleDisplayer.leftPoint,
       this.scaleDisplayer.rightPoint
     )
+
     this.container.appendChild(scaleSvgContainer)
 
     this.updateTheme()
@@ -805,7 +1115,7 @@ export class BlueprintContainer {
     this.container.getDom().onmousemove = null
   }
 
-  public moveNodeMode (node: Node): void {
+  public moveNodeMode (node: Node, graph: Graph): void {
     this.container.getDom().onmousedown = null
     this.container.getDom().onmouseup = null
     this.container.getDom().onmousemove = null
@@ -819,7 +1129,7 @@ export class BlueprintContainer {
         let snapX: Node | null = null
         let snapY: Node | null = null
         // check for snapping line when moving node
-        this.wallNodeMap.forEach((value: BpWallNode, key: Node) => {
+        graph.foreachNode(key => {
           if (key === node) return
           const p = key.getData<V>('position')
           if (Math.abs(p2.x - p.x) < this.optAlignSnapDist) {
@@ -845,41 +1155,44 @@ export class BlueprintContainer {
         document.onmouseup = null
         this.defaultMode()
         this.hideSnap()
-        // check for merge on existing node
-        this.wallNodeMap.forEach(value => {
-          if (
-            value
-              .getNode()
-              .getData<V>('position')
-              .distanceTo(node.getData<V>('position')) < 2 &&
-            value.getNode() !== node
-          ) {
-            node.foreachLink(l => {
-              if (l.getNode() !== value.getNode()) {
-                // value.getNode().addLink(l.getNode())
-                if (
-                  l.getNode().getLink(value.getNode()) === undefined &&
-                  value.getNode().getLink(l.getNode()) === undefined
-                ) {
-                  this.bp.addWall(value.getNode(), l.getNode())
-                }
-              }
-            })
-            node
-              .getDataOrDefault<Set<Node>>('targetBy', new Set<Node>())
-              .forEach(item => {
-                if (item !== value.getNode()) {
+
+        if (graph === this.bp.getGraph()) {
+          // check for merge on existing node
+          this.wallNodeMap.forEach(value => {
+            if (
+              value
+                .getNode()
+                .getData<V>('position')
+                .distanceTo(node.getData<V>('position')) < 2 &&
+              value.getNode() !== node
+            ) {
+              node.foreachLink(l => {
+                if (l.getNode() !== value.getNode()) {
+                  // value.getNode().addLink(l.getNode())
                   if (
-                    item.getLink(value.getNode()) === undefined &&
-                    value.getNode().getLink(item) === undefined
+                    l.getNode().getLink(value.getNode()) === undefined &&
+                    value.getNode().getLink(l.getNode()) === undefined
                   ) {
-                    this.bp.addWall(item, value.getNode())
+                    this.bp.addWall(value.getNode(), l.getNode())
                   }
                 }
               })
-            this.bp.removeWallNode(node)
-          }
-        })
+              node
+                .getDataOrDefault<Set<Node>>('targetBy', new Set<Node>())
+                .forEach(item => {
+                  if (item !== value.getNode()) {
+                    if (
+                      item.getLink(value.getNode()) === undefined &&
+                      value.getNode().getLink(item) === undefined
+                    ) {
+                      this.bp.addWall(item, value.getNode())
+                    }
+                  }
+                })
+              this.bp.removeWallNode(node)
+            }
+          })
+        }
       }
     }
   }
@@ -976,15 +1289,32 @@ export class BlueprintContainer {
   updateTransform (): void {
     this.content.setStyle({
       transform: `scale(${this.size})`,
-      left: `${this.position.x * this.size}px`,
-      top: `${this.position.y * this.size}px`
+      left: `${this.position.x * this.size - 100}px`,
+      top: `${this.position.y * this.size - 100}px`
     })
-    this.svgLinkLayer.setStyle({
+    new Array<NvEl>(
+      this.svgLinkLayer,
+      this.svgNodeLayer,
+      this.svgFurnitureLayer,
+      this.svgRoutingLinkLayer,
+      this.svgRoutingLayer
+    ).forEach(htmlEl =>
+      htmlEl.setStyle({
+        transform: `translate(${this.position.x * this.size - 100}px, ${this
+          .position.y *
+          this.size -
+          100}px) scale(${this.size})`
+      })
+    )
+    /*
+    this.svgRoutingLayer.setStyle({
       transform: `translate(${this.position.x * this.size - 100}px, ${this
         .position.y *
         this.size -
-        100}px) scale(${this.size})`
+        100}px) scale(${this.size * this.bp.getData<number>('scale')})`
     })
+    */
+    /*
     this.svgNodeLayer.setStyle({
       transform: `translate(${this.position.x * this.size - 100}px, ${this
         .position.y *
@@ -997,6 +1327,7 @@ export class BlueprintContainer {
         this.size -
         100}px) scale(${this.size})`
     })
+    */
     this.refreshScaleViewer()
     if (this.grid === null) return
     this.container.setStyle({

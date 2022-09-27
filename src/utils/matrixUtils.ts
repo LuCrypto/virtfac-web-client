@@ -943,12 +943,21 @@ export class MatrixUtils {
     return matrix
   }
 
-  public static matrixFromGraph (graph: Graph, outputIndexField: string) {
+  public static matrixFromGraph (
+    graph: Graph,
+    indexField: string,
+    options: { indexFieldMode: 'OUTPUT' | 'INPUT' } = {
+      indexFieldMode: 'OUTPUT'
+    }
+  ) {
     const indexMap = new Map<Node, number>()
 
     graph.foreachNode(n => {
-      n.setData<number>(outputIndexField, indexMap.size)
-      indexMap.set(n, indexMap.size)
+      if (options.indexFieldMode === 'OUTPUT') {
+        n.setData<number>(indexField, indexMap.size)
+      }
+      const index = n.getData<number>(indexField)
+      indexMap.set(n, index)
     })
 
     const matrix = new Matrix(indexMap.size, indexMap.size, 0)

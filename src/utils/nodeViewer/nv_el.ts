@@ -12,7 +12,8 @@ export class NvEl {
       'defs',
       'rect',
       'text',
-      'circle'
+      'circle',
+      'image'
     ].includes(type)
       ? (this.dom = document.createElementNS(NVSVGNS, type))
       : (this.dom = document.createElement(type))

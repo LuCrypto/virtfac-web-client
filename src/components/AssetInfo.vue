@@ -139,6 +139,18 @@ export default class AssetInfo extends Vue {
 
   private isMobileView = false
 
+  public getData () {
+    return new APIAsset({
+      name: this.name,
+      picture: this.iconUri,
+      layoutSprite: this.layoutSprite,
+      uri: this.gltfUri ? this.gltfUri : '',
+      boundingBox: JSON.stringify(this.boundingBox),
+      id: this.id,
+      tags: JSON.stringify(this.tags)
+    })
+  }
+
   mounted (): void {
     console.log('mounted')
     API.post(
