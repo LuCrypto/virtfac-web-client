@@ -50,7 +50,7 @@
     <!--v-card of -->
     <v-card
       elevation="3"
-      height="700"
+      fluid
       class="d-flex flex-row flex-grow-1 pa-0 ma-0"
     >
       <!-- Popup windows-->

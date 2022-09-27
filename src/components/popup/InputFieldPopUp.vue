@@ -5,7 +5,7 @@
       <v-toolbar color="primary" flat>
         <v-toolbar-title class="black--text">
           <v-icon left v-text="'mdi-format-list-checks'"></v-icon>
-          {{ title }}
+          {{ $vuetify.lang.t(title) }}
         </v-toolbar-title>
       </v-toolbar>
 
@@ -27,7 +27,7 @@
             class="black--text"
             color="primary"
             @click="Confirm"
-            >Confirm</v-btn
+            >{{ $vuetify.lang.t('$vuetify.general.confirm') }}</v-btn
           >
         </v-card>
         <v-card xs6>
@@ -36,7 +36,7 @@
             class="black--text"
             color="primary"
             @click="Cancel"
-            >Cancel</v-btn
+            >{{ $vuetify.lang.t('$vuetify.general.cancel') }}</v-btn
           >
         </v-card>
       </v-card>
@@ -55,8 +55,8 @@ import Component from 'vue-class-component'
 // @group COMPONENTS
 export default class InputFieldPopUp extends Vue {
   show = false
-  title = 'Input Field'
-  placeHolder = 'Enter Text'
+  title = '$vuetify.general.inputField'
+  placeHolder = '$vuetify.general.enterText'
   text = ''
   callback: { (value: string | null): void } | null = null
 
@@ -67,7 +67,7 @@ export default class InputFieldPopUp extends Vue {
     callback: { (value: string | null): void }
   ): void {
     this.callback = callback
-    this.text = defaultValue
+    this.text = this.$vuetify.lang.t(defaultValue)
     this.title = title
     this.placeHolder = placeHolder
     this.show = true
