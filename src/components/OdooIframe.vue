@@ -30,7 +30,7 @@ import { Session } from '@/utils/session'
 // @vuese
 // @group VIEWS
 export default class OdooIFrame extends Vue {
-  private base = 'http://10.244.77.203'
+  private base = 'http://virtfac.icube.unistra.fr'
 
   @Prop({ default: () => '' })
   private src!: string
