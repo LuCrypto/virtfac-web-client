@@ -1,4 +1,109 @@
 export default {
+  general: {
+    openFile: 'Datei öffnen',
+    import: 'Importieren',
+    export: 'Export',
+    menuLabels: 'Menüetiketten',
+    confirm: 'Bestätigen',
+    cancel: 'Absagen',
+    open: 'Offen',
+    close: 'Nah dran',
+    enterName: 'Name eingeben',
+    enterText: 'Text eingeben',
+    inputField: 'Eingabefeld',
+    name: 'Name',
+    date: 'Datum',
+    download: 'Download',
+    delete: 'Löschen'
+  },
+  assetEditor: {
+    title: 'Ergonom.io-Asset',
+    description: 'Asset-Bearbeitungstool für ergonom.io',
+    openAsset: 'Asset öffnen',
+    assetData: 'Asset-Daten',
+    applyTransform: 'Transformation anwenden',
+    switchAxisMode: 'Achsenmodus wechseln',
+    switchSnapMode: 'Snap-Modus wechseln',
+    applyScale: 'Maßstab anwenden',
+    captureImage: 'Bild aufnehmen',
+    saveOnAPI: 'Sparen Sie bei der API'
+  },
+  blueprintEditor: {
+    title: 'Blueprint-Editor',
+    description: 'Werkzeug zum Zeichnen von Bauplänen und zum Exportieren in 3D',
+    openFile: 'Datei öffnen',
+    defineScale: 'Maßstab definieren',
+    defineScalePlaceholder: 'Bezugsabstand eingeben (in Metern):',
+    exportGLTF: 'GLTF exportieren',
+    saveBlueprint: 'Blaupause speichern',
+    saveScene: 'Szene speichern',
+    selectFurniture: 'Wählen Sie Möbel',
+    placeFurniture: 'Möbel platzieren',
+    placeWall: 'Wand platzieren',
+    removeWall: 'Wand entfernen'
+  },
+  constraintAnalysis: {
+    title: 'Widerspruchsanalyse',
+    description: 'Widerspruchsanalyse durch Expertenansatz',
+    openFile: 'Datei öffnen',
+    saveShape: 'Form speichern',
+    loadShape: 'Form laden',
+    layouts: 'Grundrisse',
+    downloadImage: 'Bild herunterladen',
+    defaultLayout: 'Standardlayout',
+    verticalHierarchy: 'Vertikale Hierarchie',
+    horizontalHierarchy: 'Horizontale Hierarchie',
+    circle: 'Kreis',
+    horizontalOrdering: 'Horizontale Anordnung'
+  },
+  selectPopUp: {
+    selectItem: 'Menüpunkt wählen'
+  },
+  behaviours: {
+    category: {
+      miscellaneous: 'Sonstig',
+      wall: 'Wand'
+    },
+    walldoor: {
+      name: 'Tür',
+      fields: {
+        width: 'Breite',
+        top: 'oben'
+      }
+    },
+    wallwindow: {
+      name: 'Fenster',
+      fields: {
+        width: 'Breite',
+        top: 'top',
+        bottom: 'Unterseite'
+      }
+    }
+  },
+  routingAnalysis: {
+    title: 'Routing-Analyse',
+    description:
+      'Routing-Analyse unter Verwendung von algorithmischen Operationen im Zusammenhang mit der Graphenverwaltung.',
+    saveRoutingGraph: 'Routing-Diagramm speichern',
+    showHideFeedbacklink: 'Feedback-Link anzeigen/ausblenden',
+    showHideTransitiveLink: 'Transitiven Link anzeigen/ausblenden',
+    levelLayout: 'Level-Layout',
+    clusteringPartMachine: 'Clustering von Teil/Maschine',
+    clusteringMachineMachine: 'Clustering-Maschine/Maschine',
+    showMatrix: 'Matrix anzeigen',
+    defaultRoutingGraphName: 'unbenannter Routing-Graph',
+    importFileType: 'Dateityp importieren',
+    exportFileType: 'Dateityp exportieren',
+    routingFile: 'Routing-Datei',
+    partMachineMatrix: 'Teile-/Maschinenmatrix',
+    machineMachineMatrix: 'Maschine/Maschinen-Matrix',
+    machineOrderMatrix: 'Maschinenauftragsmatrix',
+    clustering: 'Clustering',
+    alpha: 'Alpha',
+    interclassRatio: 'Klassenverhältnis (%)',
+    nbClass: 'Nummer der Klasse',
+    matrixType: 'Matrixtyp'
+  },
   gestureAnalysis: {
     gestureAnalysis: 'Gesten-Analyse',
     openClassicBVH: 'Klassiker öffnen BVH',
@@ -92,6 +197,7 @@ export default {
   },
   mainMenu: {
     groups: 'Gruppen',
+    files: 'Dateien',
     dynamicsObjects: 'Dynamische Objekte',
     scenes: 'Szenen',
     assetsLibrary: 'Anlagenbibliothek',

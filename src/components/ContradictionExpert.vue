@@ -19,7 +19,9 @@
                 <v-icon v-text="menuItem.icon"></v-icon>
               </v-list-item-icon>
               <v-list-item-content>
-                <v-list-item-title v-text="menuItem.text"></v-list-item-title>
+                <v-list-item-title>{{
+                  $vuetify.lang.t(menuItem.text)
+                }}</v-list-item-title>
               </v-list-item-content>
             </v-list-item>
           </v-list-item-group>
@@ -249,31 +251,47 @@ export default class ContradictionExpert extends Vue {
     this.inputFieldPopUp = this.$refs.inputFieldPopUp as InputFieldPopUp
 
     this.menuItemList.push(
-      new MenuItem('Open File', 'mdi-file-document', () => {
-        (this.$refs.filePopUp as PopUp).open()
-      })
+      new MenuItem(
+        '$vuetify.constraintAnalysis.openFile',
+        'mdi-file-document',
+        () => {
+          (this.$refs.filePopUp as PopUp).open()
+        }
+      )
     )
     this.menuItemList.push(
-      new MenuItem('Save shape', 'mdi-graph-outline', () => {
-        this.saveShape()
-      })
+      new MenuItem(
+        '$vuetify.constraintAnalysis.saveShape',
+        'mdi-graph-outline',
+        () => {
+          this.saveShape()
+        }
+      )
     )
     this.menuItemList.push(
-      new MenuItem('Load shape', 'mdi-graph-outline', () => {
-        this.loadShape()
-      })
+      new MenuItem(
+        '$vuetify.constraintAnalysis.loadShape',
+        'mdi-graph-outline',
+        () => {
+          this.loadShape()
+        }
+      )
     )
-    this.menuItemList.push(new MenuItem('Settings', 'mdi-cog', () => true))
+    // this.menuItemList.push(new MenuItem('Settings', 'mdi-cog', () => true))
     this.menuItemList.push(
-      new MenuItem('Layouts', 'mdi-graphql', () => {
+      new MenuItem('$vuetify.constraintAnalysis.layouts', 'mdi-graphql', () => {
         this.selectLayout()
       })
     )
     this.menuItemList.push(
-      new MenuItem('Save image', 'mdi-camera', () => {
-        (this.nodeViewer as NV).exportToPNG()
-        return true
-      })
+      new MenuItem(
+        '$vuetify.constraintAnalysis.downloadImage',
+        'mdi-camera',
+        () => {
+          (this.nodeViewer as NV).exportToPNG()
+          return true
+        }
+      )
     )
 
     // const mapper = new Mapper(CAEExampleFormat1)
@@ -400,31 +418,31 @@ export default class ContradictionExpert extends Vue {
         headers,
         [
           {
-            name: 'Default Layout',
+            name: '$vuetify.constraintAnalysis.defaultLayout',
             exec: () => {
               this.constraintGraph.refreshPosition()
             }
           },
           {
-            name: 'Vertical Hierarchy',
+            name: '$vuetify.constraintAnalysis.verticalHierarchy',
             exec: () => {
               GraphLayout.verticalHierarchyLayout(this.getGraph(), 500)
             }
           },
           {
-            name: 'Horizontal Hierarchy',
+            name: '$vuetify.constraintAnalysis.horizontalHierarchy',
             exec: () => {
               GraphLayout.horizontalHierarchyLayout(this.getGraph(), 500)
             }
           },
           {
-            name: 'Circle',
+            name: '$vuetify.constraintAnalysis.circle',
             exec: () => {
               GraphLayout.circleLayout(this.getGraph(), 500)
             }
           },
           {
-            name: 'Horizontal Ordering',
+            name: '$vuetify.constraintAnalysis.horizontalOrdering',
             exec: () => {
               GraphLayout.horizontalOrdering(this.getGraph(), 400)
             }
@@ -452,7 +470,7 @@ export default class ContradictionExpert extends Vue {
       sort: {(a: unknown, b: unknown): number }
         }>(
         {
-          text: 'Name',
+          text: '$vuetify.general.name',
           value: 'name',
           align: 'start',
           sortable: true,
@@ -461,7 +479,7 @@ export default class ContradictionExpert extends Vue {
           }
         },
         {
-          text: 'Date',
+          text: '$vuetify.general.date',
           value: 'date',
           align: 'end',
           sortable: true,
@@ -504,7 +522,7 @@ export default class ContradictionExpert extends Vue {
           action: {(item: unknown): void }
             }>(
             {
-              text: 'download',
+              text: '$vuetify.general.download',
               icon: 'mdi-download',
               action: item => {
                 const a = document.createElement('a')
@@ -521,7 +539,7 @@ export default class ContradictionExpert extends Vue {
               }
             },
             {
-              text: 'delete',
+              text: '$vuetify.general.delete',
               icon: 'mdi-delete-outline',
               action: () => {
                 console.log('delete item')

@@ -50,7 +50,9 @@
                 <v-icon v-text="menuItem.icon"></v-icon>
               </v-list-item-icon>
               <v-list-item-content>
-                <v-list-item-title v-text="menuItem.text"></v-list-item-title>
+                <v-list-item-title>{{
+                  $vuetify.lang.t(menuItem.text)
+                }}</v-list-item-title>
               </v-list-item-content>
             </v-list-item>
           </v-list-item-group>
@@ -213,82 +215,106 @@ export default class ErgonomIOAssetContainer extends Vue {
     this.viewer.setFogActive(false)
     this.updateTheme()
 
+    /*
     this.menuItemList.push(
       new MenuItem('Load local file', 'mdi-upload', () => {
         (this.$refs.objUpload as HTMLElement).click()
         return true
       })
     )
+    */
     this.menuItemList.push(
-      new MenuItem('Open Asset', 'mdi-file-document', () => {
-        (this.$refs.openFilePopUp as PopUp).open()
-      })
+      new MenuItem(
+        '$vuetify.assetEditor.openAsset',
+        'mdi-file-document',
+        () => {
+          (this.$refs.openFilePopUp as PopUp).open()
+        }
+      )
     )
     this.menuItemList.push(
-      new MenuItem('Asset Data', 'mdi-content-save-edit', () => {
-        // this.patchFileFromAsset()
-        (this.$refs.assetInfo as PopUp).open()
-        requestAnimationFrame(() => {
-          if (this.currentAsset !== null) {
-            this.ObjectToGLTFUri(this.currentAsset as Group).then(gltf => {
+      new MenuItem(
+        '$vuetify.assetEditor.assetData',
+        'mdi-content-save-edit',
+        () => {
+          // this.patchFileFromAsset()
+          (this.$refs.assetInfo as PopUp).open()
+          requestAnimationFrame(() => {
+            if (this.currentAsset !== null) {
+              this.ObjectToGLTFUri(this.currentAsset as Group).then(gltf => {
+                (this.$refs.assetInfoComponent as AssetInfo).setAssetData(
+                  this.currentAssetName,
+                  this.currentAssetPicture,
+                  gltf,
+                  this.currentAssetApiId,
+                  this.currentLayoutSprite,
+                  this.currentBoundingBox
+                )
+              })
+            } else {
               (this.$refs.assetInfoComponent as AssetInfo).setAssetData(
                 this.currentAssetName,
                 this.currentAssetPicture,
-                gltf,
+                null,
                 this.currentAssetApiId,
                 this.currentLayoutSprite,
                 this.currentBoundingBox
               )
-            })
-          } else {
-            (this.$refs.assetInfoComponent as AssetInfo).setAssetData(
-              this.currentAssetName,
-              this.currentAssetPicture,
-              null,
-              this.currentAssetApiId,
-              this.currentLayoutSprite,
-              this.currentBoundingBox
-            )
-          }
-        })
-      })
+            }
+          })
+        }
+      )
     )
+    /*
     this.menuItemList.push(
       new MenuItem('Download File', 'mdi-download', () => {
         this.exportGltf()
       })
     )
+    */
     this.menuItemList.push(
-      new MenuItem('Apply Transform', 'mdi-axis-arrow', () => {
-        this.applyTransform()
-      })
+      new MenuItem(
+        '$vuetify.assetEditor.applyTransform',
+        'mdi-axis-arrow',
+        () => {
+          this.applyTransform()
+        }
+      )
     )
     this.menuItemList.push(
-      new MenuItem('Switch Axis Mode', 'mdi-axis-z-arrow', () => {
-        this.switchAxisMode()
-      })
+      new MenuItem(
+        '$vuetify.assetEditor.switchAxisMode',
+        'mdi-axis-z-arrow',
+        () => {
+          this.switchAxisMode()
+        }
+      )
     )
     this.menuItemList.push(
-      new MenuItem('Switch Snap Mode', 'mdi-ruler', () => {
+      new MenuItem('$vuetify.assetEditor.switchSnapMode', 'mdi-ruler', () => {
         this.switchSnapMode()
       })
     )
     this.menuItemList.push(
-      new MenuItem('Apply Scale', 'mdi-pencil-ruler', () => {
-        if (this.currentAsset === null) return
-        if (this.inputField != null) {
-          this.inputField.open('enter scale multiplier', '1', '1', input => {
-            if (input != null) {
-              const scale = +input.replaceAll(',', '.').replaceAll(' ', '')
-              if (this.currentAsset === null) return
-              this.currentAsset.scale.multiplyScalar(scale)
-            }
-          })
+      new MenuItem(
+        '$vuetify.assetEditor.applyScale',
+        'mdi-pencil-ruler',
+        () => {
+          if (this.currentAsset === null) return
+          if (this.inputField != null) {
+            this.inputField.open('enter scale multiplier', '1', '1', input => {
+              if (input != null) {
+                const scale = +input.replaceAll(',', '.').replaceAll(' ', '')
+                if (this.currentAsset === null) return
+                this.currentAsset.scale.multiplyScalar(scale)
+              }
+            })
+          }
         }
-      })
+      )
     )
     this.menuItemList.push(
-      new MenuItem('Capture Image', 'mdi-camera', () => {
+      new MenuItem('$vuetify.assetEditor.captureImage', 'mdi-camera', () => {
         if (this.viewer !== null) {
           this.viewer.beginScreenshotSession(
             uri => {
@@ -309,48 +335,55 @@ export default class ErgonomIOAssetContainer extends Vue {
       })
     )
     this.menuItemList.push(
-      new MenuItem('Save On API', 'mdi-content-save-move', () => {
-        new Promise<APIAsset>(resolve => {
-          if (this.viewer !== null) {
-            let apiAsset: APIAsset | null = null
-            if (this.$refs.assetInfoComponent !== undefined) {
-              apiAsset = (this.$refs.assetInfoComponent as AssetInfo).getData()
-            }
-            if (apiAsset === null) {
-              this.ObjectToGLTFUri(this.currentAsset as Group).then(gltf => {
-                apiAsset = new APIAsset({
-                  uri: gltf,
-                  id: this.currentAssetApiId,
-                  name: this.currentAssetName,
-                  picture: this.currentAssetPicture,
-                  layoutSprite: this.currentLayoutSprite,
-                  behaviours: JSON.stringify(
-                    (this.viewer as ModelViewer).getBehaviours()
-                  ),
-                  boundingBox: JSON.stringify(this.currentBoundingBox)
+      new MenuItem(
+        '$vuetify.assetEditor.saveOnAPI',
+        'mdi-content-save-move',
+        () => {
+          new Promise<APIAsset>(resolve => {
+            if (this.viewer !== null) {
+              let apiAsset: APIAsset | null = null
+              if (this.$refs.assetInfoComponent !== undefined) {
+                apiAsset = (this.$refs
+                  .assetInfoComponent as AssetInfo).getData()
+              }
+              if (apiAsset === null) {
+                this.ObjectToGLTFUri(this.currentAsset as Group).then(gltf => {
+                  apiAsset = new APIAsset({
+                    uri: gltf,
+                    id: this.currentAssetApiId,
+                    name: this.currentAssetName,
+                    picture: this.currentAssetPicture,
+                    layoutSprite: this.currentLayoutSprite,
+                    behaviours: JSON.stringify(
+                      (this.viewer as ModelViewer).getBehaviours()
+                    ),
+                    boundingBox: JSON.stringify(this.currentBoundingBox)
+                  })
+                  resolve(apiAsset)
                 })
+              } else {
+                apiAsset.behaviours = JSON.stringify(
+                  this.viewer.getBehaviours()
+                )
                 resolve(apiAsset)
-              })
-            } else {
-              apiAsset.behaviours = JSON.stringify(this.viewer.getBehaviours())
-              resolve(apiAsset)
+              }
             }
-          }
-        }).then(asset => {
-          if (asset === null) throw new Error('invalid asset')
-          API.patch(
-            this,
-            '/resources/assets/' + asset.id,
-            JSON.stringify(asset)
-          )
-            .then(res => {
-              console.log(res)
-            })
-            .catch(err => {
-              console.log(err)
-            })
-        })
-      })
+          }).then(asset => {
+            if (asset === null) throw new Error('invalid asset')
+            API.patch(
+              this,
+              '/resources/assets/' + asset.id,
+              JSON.stringify(asset)
+            )
+              .then(res => {
+                console.log(res)
+              })
+              .catch(err => {
+                console.log(err)
+              })
+          })
+        }
+      )
     )
     /*
     this.menuItemList.push(

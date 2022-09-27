@@ -4,15 +4,20 @@
     <v-toolbar color="primary" flat>
       <v-toolbar-title class="black--text">
         <v-icon left v-text="'mdi-playlist-plus'"></v-icon>
-        Select Behaviour
+        {{ $vuetify.lang.t('$vuetify.behaviours.selectBehaviour') }}
       </v-toolbar-title>
     </v-toolbar>
     <v-container class="d-flex pa-5" fluid>
-      <v-card v-for="categ in behaviours" v-bind:key="categ.category" style="min-width: 200px" class="ma-2 d-flex flex-column">
+      <v-card
+        v-for="categ in behaviours"
+        v-bind:key="categ.category"
+        style="min-width: 200px"
+        class="ma-2 d-flex flex-column"
+      >
         <v-toolbar color="primary" flat style="max-height:64px; height:64px">
           <v-toolbar-title class="black--text">
             <v-icon left v-text="'mdi-playlist-plus'"></v-icon>
-            {{ categ.category }}
+            {{ $vuetify.lang.t('$vuetify.behaviours.category.' + categ.category.toLowerCase()) }}
           </v-toolbar-title>
         </v-toolbar>
         <v-btn
@@ -21,7 +26,16 @@
           class="ma-3"
           @click="onSelected(behaviour)"
         >
-          {{ behaviour.name.split('/').pop() }}
+          {{
+            $vuetify.lang.t(
+              '$vuetify.behaviours.' +
+                behaviour.name
+                  .replaceAll(' ', '')
+                  .toLowerCase()
+                  .replaceAll('/', '') +
+                '.name'
+            )
+          }}
         </v-btn>
       </v-card>
     </v-container>
