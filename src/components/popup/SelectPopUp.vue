@@ -59,7 +59,7 @@
                       </v-icon>
                     </v-avatar>
                   </template>
-                  <span>{{ action.text }}</span>
+                  <span>{{ $vuetify.lang.t(action.text) }}</span>
                 </v-tooltip>
               </template>
             </v-data-table>
@@ -170,10 +170,23 @@ export default class SelectPopUp extends Vue {
           return -1
         }
       })
-      this.items.forEach(item => {
-        (item as Record<string, unknown>).actions = actions
-      })
     }
+    this.headers.forEach(h => {
+      if (h.text.startsWith('$vuetify')) {
+        h.text = this.$vuetify.lang.t(h.text)
+      }
+    })
+    this.items.forEach(item => {
+      const it = item as Record<string, unknown>
+      Object.entries(it).forEach(value => {
+        if (typeof value[1] === 'string') {
+          if ((value[1] as string).startsWith('$vuetify')) {
+            it[value[0]] = this.$vuetify.lang.t(value[1] as string)
+          }
+        }
+      })
+      if (actions !== null) it.actions = actions
+    })
   }
   /*
   public open (
