@@ -35,6 +35,7 @@ import ErgonomIOAvatars from '@/views/ErgonomIO/ErgonomIOAvatars.vue'
 import ErgonomIOLogin from '@/views/ErgonomIO/ErgonomIOLogin.vue'
 import ErgonomioMainMenu from '@/components/ergonomio_ui/ErgonomioMainMenu.vue'
 import ErgonomIOProfiles from '@/views/WebMenus/WebMenuProfilesManager.vue'
+import ErgonomIOObjects from '@/views/WebMenus/MorphSettings.vue'
 
 // Documentation
 import DatabaseViewer from '@/views/APIDocumentation/DatabaseViewer.vue'
@@ -260,7 +261,8 @@ export const routes: Array<Route> = [
     subname: 'ProfilesManager',
     path: '/ergonom-io-profiles-manager',
     category: 'Ergonom.io',
-    component: ErgonomIOProfiles
+    component: ErgonomIOProfiles,
+    visibility: false
   }),
 
   // Documentation
@@ -310,6 +312,17 @@ export const routes: Array<Route> = [
     visibility: false
   }),
 
+  // Hidded menus
+  new Route({
+    icon: 'mdi-human',
+    name: 'ergonomioMorphs',
+    subname: 'ErgonomicMorphs',
+    path: '/ergonom-io-WMMorphs',
+    category: 'Ergonom.io',
+    component: ErgonomIOObjects,
+    visibility: false
+  }),
+
   new Route({
     icon: 'mdi-human',
     name: 'ergonomioMainMenu',
@@ -320,7 +333,6 @@ export const routes: Array<Route> = [
     visibility: false
   })
 ]
-
 const routesConfigs: Array<RouteConfig> = routes.map(
   route => route as RouteConfig
 )

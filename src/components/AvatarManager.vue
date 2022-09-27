@@ -17,7 +17,7 @@
         :key="indexProfile"
         v-for="(profile, indexProfile) in profiles"
         elevation="5"
-        @click="loadProfile(indexProfile)"
+        @click="loadProfile(profile)"
       >
         <v-row class="ma-1">
           <!-- Profile Picture -->
@@ -101,25 +101,6 @@ import Component from 'vue-class-component'
 import { APIProfile } from '@/utils/models'
 import Unreal from '@/utils/unreal'
 
-class BoneTransform {
-  boneName = ''
-  translation: number[] = [0, 0, 0]
-  rotation: number[] = [0, 0, 0]
-  scale: number[] = [0, 0, 0]
-}
-class RULAFrame {
-  shoulderL = 0
-  shoulderR = 0
-  elbowL = 0
-  elbowR = 0
-  spine = 0
-  neck = 0
-  handL = 0
-  handR = 0
-  rulaScore = 0
-  skeletPose: BoneTransform[] = []
-}
-
 class UnrealSend {
   action = ''
   data = null
@@ -159,71 +140,6 @@ export default class AvatarManager extends Vue {
 
   unreal = Unreal
 
-  boneNames = [
-    'pelvis',
-    'spine_01',
-    'spine_02',
-    'spine_03',
-    'clavicle_l',
-    'upperarm_l',
-    'lowerarm_l',
-    'hand_l',
-    'index_01_l',
-    'index_02_l',
-    'index_03_l',
-    'middle_01_l',
-    'middle_02_l',
-    'middle_03_l',
-    'pinky_01_l',
-    'pinky_02_l',
-    'pinky_03_l',
-    'ring_01_l',
-    'ring_02_l',
-    'ring_03_l',
-    'thumb_01_l',
-    'thumb_02_l',
-    'thumb_03_l',
-    'clavicle_r',
-    'upperarm_r',
-    'lowerarm_r',
-    'hand_r',
-    'index_01_r',
-    'index_02_r',
-    'index_03_r',
-    'middle_01_r',
-    'middle_02_r',
-    'middle_03_r',
-    'pinky_01_r',
-    'pinky_02_r',
-    'pinky_03_r',
-    'ring_01_r',
-    'ring_02_r',
-    'ring_03_r',
-    'thumb_01_r',
-    'thumb_02_r',
-    'thumb_03_r',
-    'neck_01',
-    'head',
-    'eye_l',
-    'eyebrow_l',
-    'eyelid_l',
-    'eye_r',
-    'eyebrow_r',
-    'eyelid_r',
-    'jaw',
-    'nose',
-    'toe_l',
-    'foot_l',
-    'ball_l',
-    'thigl_l',
-    'calf_l',
-    'toe_r',
-    'foot_r',
-    'ball_r',
-    'thigl_r',
-    'calf_r'
-  ]
-
   mounted (): void {
     this.getAPIProfiles()
   }
@@ -259,12 +175,11 @@ export default class AvatarManager extends Vue {
   // @vuese
   // Load profile in Unreal application or Avatar Manager
   // @arg indexProfile : id of chosen profile
-  loadProfile (indexProfile: number): void {
-    console.log(this.profiles[indexProfile])
+  loadProfile (profile: APIProfile): void {
     if (Unreal.check()) {
-      Unreal.send(new UnrealSend('profile', this.profiles[indexProfile]))
+      Unreal.send(new UnrealSend('profile', profile))
     } else {
-      this.$emit('fileInput', this.profiles[indexProfile])
+      this.$emit('fileInput', profile)
       this.$emit('close')
     }
   }
@@ -273,9 +188,8 @@ export default class AvatarManager extends Vue {
   // Delete profile from API
   // @arg profile : profile to delete
   deleteProfile (profile: APIProfile): void {
-    console.log(profile)
     API.delete(this, `/resources/ergonomio-profiles/${profile.id}`, '')
-      .then((response: Response) => {
+      .then(() => {
         this.$root.$emit(
           'bottom-message',
           'Profile ' + profile.name + ' removed with success'
@@ -285,42 +199,6 @@ export default class AvatarManager extends Vue {
       .catch(() => {
         console.error('Fail delete profile :', profile.name)
       })
-  }
-
-  // intervalID = setInterval(() => {
-  //   this.sendRandTransform()
-  // }, 1000)
-
-  sendRandTransform (): void {
-    if (Unreal.check()) {
-      const boneFrame: RULAFrame = new RULAFrame()
-      const skeleton: BoneTransform[] = []
-      this.boneNames.forEach(element => {
-        const translation = [0, 0, 0]
-        const rotation = [
-          Math.random() * 360,
-          Math.random() * 360,
-          Math.random() * 360
-        ]
-        const bone = new BoneTransform()
-        bone.boneName = element
-        bone.translation = translation
-        bone.rotation = rotation
-        skeleton.push(bone)
-      })
-      boneFrame.skeletPose = skeleton
-      boneFrame.shoulderL = Math.random()
-      boneFrame.shoulderR = Math.random()
-      boneFrame.elbowL = Math.random()
-      boneFrame.elbowR = Math.random()
-      boneFrame.spine = Math.random()
-      boneFrame.neck = Math.random()
-      boneFrame.handL = Math.random()
-      boneFrame.handR = Math.random()
-      boneFrame.rulaScore = Math.random() * 7
-
-      Unreal.send(new UnrealSend('rula', boneFrame))
-    }
   }
 }
 </script>
