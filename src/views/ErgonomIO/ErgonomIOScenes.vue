@@ -108,6 +108,9 @@
                       <v-btn @click="outline(scene, $event)" icon>
                         <v-icon v-text="'mdi-eye'"></v-icon>
                       </v-btn>
+                      <v-btn @click="exportGLTF(scene, $event)" icon>
+                        <v-icon v-text="'mdi-cube'"></v-icon>
+                      </v-btn>
                       <!-- Display popup with information of scene -->
                       <v-btn @click="clickScene(scene, $event)" icon>
                         <v-icon v-text="'mdi-information'"></v-icon>
@@ -333,6 +336,9 @@ import { Component, Vue } from 'vue-property-decorator'
 import API from '@/utils/api'
 import Unreal from '@/utils/unreal'
 import CardScene from '@/utils/cardmodel'
+import { Euler, Group, Vector3 } from 'three'
+import ThreeUtils from '@/utils/threeUtils'
+import { GLTFExporter } from 'three/examples/jsm/exporters/GLTFExporter'
 
 // Scene collected from unreal
 class SceneReceived {
@@ -613,6 +619,89 @@ export default class ErgonomIOAssets extends Vue {
   // @arg No arguments required
   outline (scene: CardScene, event: Event): void {
     event.stopPropagation()
+  }
+
+  exportGLTF (scene: CardScene, event: Event): void {
+    event.stopPropagation()
+    const sceneRoot = new Group()
+
+    const data = scene.parsedData as {
+      idAsset: number
+      position: number[]
+      rotation: number[]
+      scale: number[]
+    }[]
+
+    const assetMap = new Map<number, Group | string>()
+
+    data.forEach(asset => {
+      if (assetMap.get(asset.idAsset) === undefined) {
+        assetMap.set(asset.idAsset, '')
+      }
+    })
+
+    const where = new Array<{ id: number }>()
+
+    assetMap.forEach((value, key) => {
+      where.push({ id: key })
+    })
+
+    console.log('where: ' + JSON.stringify(where))
+    API.post(
+      this,
+      '/resources/assets',
+      JSON.stringify({
+        select: ['id', 'uri'],
+        where: where
+      })
+    ).then(res => {
+      let nbTasks = assetMap.size
+      ;((res as unknown) as { id: number; uri: string }[]).forEach(asset => {
+        ThreeUtils.loadGLTFFromPath(asset.uri).then(res => {
+          assetMap.set(asset.id, res.scene)
+          nbTasks--
+          if (nbTasks === 0) {
+            console.log('all loaded', assetMap)
+            data.forEach(asset => {
+              const clone = (assetMap.get(asset.idAsset) as Group).clone()
+              clone.position.copy(
+                new Vector3(
+                  asset.position[0],
+                  asset.position[2],
+                  asset.position[1]
+                )
+              )
+              clone.rotation.copy(
+                new Euler(
+                  (asset.rotation[0] / 360) * Math.PI * 2,
+                  (asset.rotation[2] / 360) * Math.PI * 2,
+                  (asset.rotation[1] / 360) * Math.PI * 2
+                )
+              )
+              clone.updateMatrix()
+              sceneRoot.add(clone)
+            })
+            const exporter = new GLTFExporter()
+            exporter.parse(
+              sceneRoot,
+              gltf => {
+                //*
+                const a = document.createElement('a')
+                const file = new Blob([JSON.stringify(gltf)], {
+                  type: 'text/plain'
+                })
+                a.href = URL.createObjectURL(file)
+                a.download = 'layout.gltf'
+                a.click()
+                /**/
+                // resolve(JSON.stringify(gltf))
+              },
+              {}
+            )
+          }
+        })
+      })
+    })
   }
 
   // Modify the name of scene

@@ -436,49 +436,53 @@ export default class BlueprintEditorContainer extends Vue {
       )
     )
     this.menuItemList.push(
-      new MenuItem('$vuetify.blueprintEditor.saveBlueprint', 'mdi-download', () => {
-        const json = ((this
-          .blueprintEditor as BlueprintEditor).getBpContainer() as BlueprintContainer)
-          .getBlueprint()
-          .toJSON()
-        // const a = document.createElement('a')
-        const file = new Blob([JSON.stringify(json)], {
-          type: 'application/json;application=virtfac/blueprint/building'
-        })
+      new MenuItem(
+        '$vuetify.blueprintEditor.saveBlueprint',
+        'mdi-download',
+        () => {
+          const json = ((this
+            .blueprintEditor as BlueprintEditor).getBpContainer() as BlueprintContainer)
+            .getBlueprint()
+            .toJSON()
+          // const a = document.createElement('a')
+          const file = new Blob([JSON.stringify(json)], {
+            type: 'application/json;application=virtfac/blueprint/building'
+          })
 
-        if (this.inputField != null) {
-          this.inputField.open(
-            '$vuetify.general.enterName',
-            'blueprint',
-            'blueprint',
-            value => {
-              if (value !== null) {
-                const reader = new FileReader()
-                reader.onload = () => {
-                  const f = new APIFile({
-                    name: value,
-                    uri: reader.result as string
-                  })
-                  API.put(
-                    this,
-                    '/resources/files',
-                    JSON.stringify(f.toJSON())
-                  ).catch(reason => {
-                    console.log(reason)
-                  })
+          if (this.inputField != null) {
+            this.inputField.open(
+              '$vuetify.general.enterName',
+              'blueprint',
+              'blueprint',
+              value => {
+                if (value !== null) {
+                  const reader = new FileReader()
+                  reader.onload = () => {
+                    const f = new APIFile({
+                      name: value,
+                      uri: reader.result as string
+                    })
+                    API.put(
+                      this,
+                      '/resources/files',
+                      JSON.stringify(f.toJSON())
+                    ).catch(reason => {
+                      console.log(reason)
+                    })
+                  }
+                  reader.readAsDataURL(file)
                 }
-                reader.readAsDataURL(file)
               }
-            }
-          )
-        }
-        /*
+            )
+          }
+          /*
         const a = document.createElement('a')
         a.href = URL.createObjectURL(file)
         a.download = 'blueprint.json'
         a.click()
         */
-      })
+        }
+      )
     )
 
     this.menuItemList.push(
@@ -548,7 +552,11 @@ export default class BlueprintEditorContainer extends Vue {
                     bp.foreachWallLink(l => {
                       const p1 = l.getOriginNode().getData<V>('position')
                       const p2 = l.getNode().getData<V>('position')
-                      const angle = (p2.subV(p1).angle() / (2 * Math.PI)) * 360
+                      let angle = (p2.subV(p1).angle() / (2 * Math.PI)) * 360
+                      angle = (angle + 90) % 360
+                      if (angle > 180) {
+                        angle = -(360 - angle)
+                      }
                       l.getDataOrDefault<
                         Array<{ assetId: number; xpos: number }>
                       >('furniture', []).forEach(furniture => {
